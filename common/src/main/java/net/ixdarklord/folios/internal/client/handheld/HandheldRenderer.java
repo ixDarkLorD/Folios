@@ -392,12 +392,14 @@ public final class HandheldRenderer {
         if (book.openSince == 0) book.openSince = now;
         float appear = net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings.transitions() ? easeOut(Math.min(1, (now - book.openSince) / 220.0F)) : 1;
         pose.pushPose();
-        // As far over the pages as the screen book's bar is over its own: its cover's rim, then the gap.
-        pose.translate(-(PW + EDGE), -SCREEN_BORDER - BAR_GAP - GuideBar.HEIGHT, 0);
+        // As far over the pages as the screen book's bar is over its own (its cover's rim, then the gap), and as wide,
+        // centred on the spine.
+        int wide = net.ixdarklord.folios.internal.client.screen.GuideScreen.BOOK_WIDTH;
+        pose.translate(-wide / 2.0F, -SCREEN_BORDER - BAR_GAP - GuideBar.HEIGHT, 0);
         book.barClip.set(toClip).mul(pose.last().pose());
         WorldPainter painter = new WorldPainter(pose, collector, light, bar.palette(), book.session, book, book.seconds(),
                 book.barPointer[0], book.barPointer[1], book.barHits).lightAs(PAGE_LIGHT);
-        bar.draw(painter, Math.round(2 * (PW + EDGE)), appear);
+        bar.draw(painter, wide, appear);
         painter.end();
         mergeTooltip(book, painter);
         pose.popPose();

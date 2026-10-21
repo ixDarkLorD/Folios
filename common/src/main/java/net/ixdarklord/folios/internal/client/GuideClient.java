@@ -63,7 +63,7 @@ public final class GuideClient {
         GuideHooks.opener = (book, hand) -> open(book, null, hand);
         // A book's data changing in the hand (marked as being read, and no longer) doesn't swap it out and back: it is
         // the same book while it names the same one.
-        net.ixdarklord.coolcatcore.api.client.item.HeldItemSwaps.quiet(net.ixdarklord.folios.internal.core.GuideRegistry.READING.get());
+        net.ixdarklord.coolcatcore.api.client.item.HeldItemSwaps.quiet(net.ixdarklord.folios.internal.core.GuideRegistry.READING);
         net.ixdarklord.coolcatcore.api.client.item.HeldItemSwaps.register((shown, next) -> shown.getItem() instanceof net.ixdarklord.folios.api.GuideBookItem
                 && next.is(shown.getItem()) && java.util.Objects.equals(net.ixdarklord.folios.api.GuideBooks.bookOf(shown), net.ixdarklord.folios.api.GuideBooks.bookOf(next)));
         GuideHooks.names = id -> {
