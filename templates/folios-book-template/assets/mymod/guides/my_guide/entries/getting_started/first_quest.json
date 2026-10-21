@@ -1,0 +1,26 @@
+{
+  "name": "First Quest",
+  "icon": "minecraft:compass",
+  "sort": -1,
+  "pages": [
+    {
+      "type": "quest",
+      "title": "Getting Going",
+      "text": "These tick themselves off as you play.",
+      "reward": "Bragging rights",
+      "objectives": [
+        {
+          "read": "getting_started/first_steps"
+        },
+        {
+          "item": "minecraft:oak_log",
+          "count": 8
+        },
+        {
+          "advancement": "minecraft:story/mine_stone",
+          "label": "Mine some stone"
+        }
+      ]
+    }
+  ]
+}

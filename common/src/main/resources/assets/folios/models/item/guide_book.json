@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "folios:item/guide_book",
+    "layer1": "folios:item/guide_book_trim"
+  }
+}

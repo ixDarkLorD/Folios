@@ -1,0 +1,29 @@
+{
+  "name": "First Steps",
+  "icon": "minecraft:wooden_pickaxe",
+  "featured": true,
+  "sort": 0,
+  "pages": [
+    {
+      "type": "text",
+      "title": "First Steps",
+      "text": "Text runs on over as many pages as it needs.\n\n## A heading\n- **bold**, *italic*, ~~struck~~\n- [a link to another entry](getting_started/recipes)\n- {#E06A3A}coloured words{/} and `code`\n\n> A note, set apart with a bar.\n\nPress {key:key.inventory} to open your inventory."
+    },
+    {
+      "type": "spotlight",
+      "item": "minecraft:diamond",
+      "title": "Diamonds",
+      "text": "One item shown large. Pressing this item anywhere in the book comes back here."
+    },
+    {
+      "type": "links",
+      "links": [
+        "getting_started/recipes",
+        {
+          "entry": "advanced/my_build",
+          "label": "Build a shrine"
+        }
+      ]
+    }
+  ]
+}

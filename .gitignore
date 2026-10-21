@@ -1,0 +1,31 @@
+build/
+*.ipr
+run/
+*.iws
+out/
+*.iml
+.gradle/
+output/
+bin/
+libs/
+
+.classpath
+.project
+.idea/
+classes/
+.metadata
+.vscode
+.settings
+*.launch
+
+# Claude Code project notes (local only), in any folder
+CLAUDE.md
+CLAUDE.local.md
+
+logs/
+
+# Smoke test output (tools/autotest/run.py)
+tools/autotest/results/
+
+# Page text, logo and screenshots for the mod's pages: kept locally, not in the repo
+publishing/

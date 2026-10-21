@@ -1,0 +1,220 @@
+package net.ixdarklord.folios.internal.client;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.ixdarklord.folios.api.client.GuideBook;
+import net.ixdarklord.folios.internal.core.Folios;
+import net.ixdarklord.folios.api.client.page.GuideText;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
+import org.jspecify.annotations.Nullable;
+
+import java.io.Reader;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Where a book model wants its cover lettering, marked in the model itself: an element whose name has {@code #title}
+ * in it is where the book's name goes, one with {@code #subtitle} where its subtitle goes, one with {@code #summary}
+ * where its summary goes (a book with a summary has its subtitle under its name instead; one without has its subtitle
+ * where the summary would go, if nothing marks a subtitle) (in Blockbench, rename the
+ * cube; a plate, or an invisible box, either works). The line is centred on the element's front (+z) face, as wide as
+ * most of it, as tall as about half of it, and lies just over it. A model's parents are followed for its elements.
+ * Read once per model, until resources reload.
+ */
+public final class CoverMarkers {
+    /** A marked line: where and how large, and the z of the face it lies on. */
+    public record Marked(GuideBook.CoverText.Line line, float z) {}
+
+    /** What a model marks; either may be null. */
+    public record Markers(@Nullable Marked title, @Nullable Marked subtitle, @Nullable Marked summary) {
+        public static final Markers NONE = new Markers(null, null, null);
+    }
+
+    /** What is lettered where: the book's name, its subtitle, its summary (up to {@code lines} lines), each its own colour. */
+    public record Lettering(Component text, GuideBook.CoverText.Line line, float z, int lines, Kind kind) {}
+
+    /** RULE: a soft rule with a diamond stud at its middle, its line's size its thickness, its width its length. */
+    public enum Kind { TITLE, SUBTITLE, SUMMARY, RULE }
+
+    /** How much of the title plate the name takes with the subtitle under it, and where each sits (of its height). */
+    private static final float NAME_SHARE = 0.5F;
+    private static final float SUBTITLE_SHARE = 0.29F;
+
+    /**
+     * A book's cover lettering, where the book says, else where the model marks it, else at the given defaults: its
+     * name; its subtitle under the name on the same plate when it has a summary (the summary on the lower plate), or
+     * on the lower plate when it hasn't. {@code z} is used where nothing is marked.
+     */
+    public static java.util.List<Lettering> layout(GuideBook book, Markers marked, GuideBook.CoverText.Line titleDefault,
+                                                   GuideBook.CoverText.Line lowerDefault, float z) {
+        GuideBook.CoverText text = book.coverText();
+        java.util.List<Lettering> out = new java.util.ArrayList<>();
+        GuideBook.CoverText.Line title = text.titleOr(marked.title() != null ? marked.title().line() : titleDefault);
+        float titleZ = marked.title() != null ? marked.title().z() : z;
+        Marked lowerMark = marked.summary() != null ? marked.summary() : marked.subtitle();
+        float lowerZ = lowerMark != null ? lowerMark.z() : z;
+        boolean hasSubtitle = !book.subtitle().isEmpty();
+        Component subtitle = hasSubtitle ? GuideText.inline(book.subtitle()) : Component.empty();
+        if (!text.summaryText().isEmpty()) {
+            // The plate's height, from its line (a marked line is UP of it); the name in its upper part, the subtitle under.
+            float plate = title.size() / UP;
+            boolean own = text.title() != null;
+            GuideBook.CoverText.Line name = !hasSubtitle || own ? title
+                    : new GuideBook.CoverText.Line(title.x(), title.y() + plate * 0.2F, plate * NAME_SHARE * UP * 1.15F, title.width());
+            out.add(new Lettering(book.title(), name, titleZ, 1, Kind.TITLE));
+            if (hasSubtitle) {
+                GuideBook.CoverText.Line under = text.subtitle() != null ? text.subtitle()
+                        : new GuideBook.CoverText.Line(title.x(), title.y() - plate * 0.28F, plate * SUBTITLE_SHARE, title.width() * 0.92F);
+                out.add(new Lettering(subtitle, under, titleZ, 1, Kind.SUBTITLE));
+                // Between them, a soft rule with a stud at its middle.
+                if (!own && text.subtitle() == null) {
+                    out.add(new Lettering(Component.empty(), new GuideBook.CoverText.Line(title.x(), title.y() - plate * 0.06F, plate * 0.035F, title.width() * 0.7F),
+                            titleZ, 1, Kind.RULE));
+                }
+            }
+            GuideBook.CoverText.Line summary = text.summary() != null ? text.summary() : lowerMark != null ? lowerMark.line() : lowerDefault;
+            out.add(new Lettering(GuideText.inline(text.summaryText()), summary, lowerZ, 2, Kind.SUMMARY));
+        } else {
+            out.add(new Lettering(book.title(), title, titleZ, 1, Kind.TITLE));
+            if (hasSubtitle) {
+                GuideBook.CoverText.Line lower = text.subtitleOr(lowerMark != null ? lowerMark.line() : lowerDefault);
+                out.add(new Lettering(subtitle, lower, lowerZ, 1, Kind.SUBTITLE));
+            }
+        }
+        return out;
+    }
+
+    /** A lettering's colour: the name in gilt, the subtitle and summary quieter, toward the cover. */
+    public static int color(Kind kind, int gilt, int cover) {
+        return kind == Kind.TITLE ? gilt : net.ixdarklord.folios.api.client.page.GuidePalette.mix(gilt, cover, kind == Kind.SUBTITLE ? 0.3F : 0.4F);
+    }
+
+    /**
+     * A soft rule's pieces, in model units about its middle: {x0, x1, alpha} runs of its line, fading out to its ends,
+     * then the stud's half size.
+     */
+    public static float[][] rule(GuideBook.CoverText.Line line) {
+        int steps = 24;
+        float half = line.width() / 2;
+        float stud = line.size() * 3.2F;
+        float gap = stud * 1.6F;
+        java.util.List<float[]> runs = new java.util.ArrayList<>();
+        for (int side = -1; side <= 1; side += 2) {
+            for (int step = 0; step < steps; step++) {
+                float a = gap + (half - gap) * step / steps;
+                float b = gap + (half - gap) * (step + 1) / steps;
+                float t = 1 - (step + 0.5F) / steps;
+                float alpha = t * t * (3 - 2 * t);
+                runs.add(side < 0 ? new float[]{-b, -a, alpha} : new float[]{a, b, alpha});
+            }
+        }
+        runs.add(new float[]{stud});
+        return runs.toArray(new float[0][]);
+    }
+
+    /** A lettering's rows of text and how large: {@code scale} model units to a font pixel, {@code top} the first row's y. */
+    public record Rows(java.util.List<net.minecraft.util.FormattedCharSequence> lines, float scale, float top) {}
+
+    /**
+     * Lays a lettering out in model units: a font line as tall as its size (rows sharing it when there are more), wrapped
+     * at its width at that size, then shrunk to fit across.
+     */
+    public static Rows rows(net.minecraft.client.gui.Font font, Lettering lettering) {
+        GuideBook.CoverText.Line line = lettering.line();
+        float full = line.size() * 1.6F / 9.0F;
+        float shared = lettering.lines() > 1 ? full / lettering.lines() * 0.64F : full;
+        // A summary of more than one line is set small enough for the whole of it to fit: it is wrapped narrower and
+        // narrower (smaller each time) until it fits its line count.
+        java.util.List<net.minecraft.util.FormattedCharSequence> lines = wrap(font, lettering, Math.round(line.width() / shared));
+        while (lettering.lines() > 1 && shared > full * 0.2F && font.split(lettering.text(), Math.round(line.width() / shared)).size() > lettering.lines()) {
+            shared *= 0.9F;
+            lines = wrap(font, lettering, Math.round(line.width() / shared));
+        }
+        float scale = shared;
+        for (net.minecraft.util.FormattedCharSequence row : lines) scale = Math.min(scale, line.width() / Math.max(1, font.width(row)));
+        return new Rows(lines, scale, -(lines.size() * 9 - 1) / 2.0F);
+    }
+
+    /**
+     * A lettering's text as lines no wider than {@code room} at size 1 (font pixels), at most its line count, the last
+     * cut short with an ellipsis if more is left.
+     */
+    public static java.util.List<net.minecraft.util.FormattedCharSequence> wrap(net.minecraft.client.gui.Font font, Lettering lettering, int room) {
+        if (lettering.lines() <= 1) return java.util.List.of(lettering.text().getVisualOrderText());
+        java.util.List<net.minecraft.util.FormattedCharSequence> split = font.split(lettering.text(), Math.max(20, room));
+        if (split.size() <= lettering.lines()) return split;
+        java.util.List<net.minecraft.util.FormattedCharSequence> kept = new java.util.ArrayList<>(split.subList(0, lettering.lines() - 1));
+        kept.add(net.minecraft.util.FormattedCharSequence.composite(split.get(lettering.lines() - 1), net.minecraft.util.FormattedCharSequence.forward("…", net.minecraft.network.chat.Style.EMPTY)));
+        return kept;
+    }
+
+    /** How much of a marked face the lettering takes: across, and up (a line's size is 1.6 units at 1). */
+    private static final float ACROSS = 0.9F;
+    private static final float UP = 0.56F;
+
+    private static final Map<Identifier, Markers> READ = new HashMap<>();
+
+    private CoverMarkers() {}
+
+    public static void clear() {
+        READ.clear();
+    }
+
+    /** The markers of a block or item model (its id as in "parent": {@code folios:item/guide_book_3d}). */
+    public static Markers of(Identifier model) {
+        return READ.computeIfAbsent(model, CoverMarkers::read);
+    }
+
+    private static Markers read(Identifier model) {
+        Identifier at = model;
+        for (int depth = 0; depth < 8 && at != null; depth++) {
+            JsonObject json = load(at);
+            if (json == null) return Markers.NONE;
+            if (json.has("elements")) return markers(json.getAsJsonArray("elements"));
+            at = json.has("parent") ? Identifier.parse(json.get("parent").getAsString()) : null;
+        }
+        return Markers.NONE;
+    }
+
+    private static @Nullable JsonObject load(Identifier model) {
+        Identifier file = model.withPath(path -> "models/" + path + ".json");
+        Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(file);
+        if (resource.isEmpty()) return null;
+        try (Reader reader = resource.get().openAsReader()) {
+            return JsonParser.parseReader(reader).getAsJsonObject();
+        } catch (Exception e) {
+            Folios.LOGGER.warn("Couldn't read the model {} for its cover markers: {}", file, e.getMessage());
+            return null;
+        }
+    }
+
+    private static Markers markers(JsonArray elements) {
+        Marked title = null;
+        Marked subtitle = null;
+        Marked summary = null;
+        for (JsonElement element : elements) {
+            JsonObject box = element.getAsJsonObject();
+            String name = box.has("name") ? box.get("name").getAsString() : "";
+            if (name.contains("#summary")) summary = marked(box);
+            else if (name.contains("#subtitle")) subtitle = marked(box);
+            else if (name.contains("#title")) title = marked(box);
+        }
+        return new Markers(title, subtitle, summary);
+    }
+
+    private static Marked marked(JsonObject box) {
+        JsonArray from = box.getAsJsonArray("from");
+        JsonArray to = box.getAsJsonArray("to");
+        float x0 = from.get(0).getAsFloat(), y0 = from.get(1).getAsFloat();
+        float x1 = to.get(0).getAsFloat(), y1 = to.get(1).getAsFloat();
+        float z = Math.max(from.get(2).getAsFloat(), to.get(2).getAsFloat());
+        GuideBook.CoverText.Line line = new GuideBook.CoverText.Line((x0 + x1) / 2, (y0 + y1) / 2, Math.abs(y1 - y0) * UP, Math.abs(x1 - x0) * ACROSS);
+        return new Marked(line, z + 0.01F);
+    }
+}

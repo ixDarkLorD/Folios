@@ -1,0 +1,29 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "compatibilityLevel": "JAVA_17",
+  "package": "net.ixdarklord.folios.internal.mixin",
+  "mixins": [
+    "PlayerAdvancementsMixin"
+  ],
+  "client": [
+    "client.AvatarRendererMixin",
+    "client.SharedBookPoseMixin",
+    "client.SharedBookRenderMixin",
+    "client.ClientAdvancementsAccessor",
+    "client.GameRendererMixin",
+    "client.GuiMixin",
+    "client.GuiGraphicsInvoker",
+    "client.GuiItemTintMixin",
+    "client.GuiRendererItemTintMixin",
+    "client.ItemInHandRendererMixin",
+    "client.ItemModelsAccessor",
+    "client.ItemTintSourcesAccessor",
+    "client.LevelRenderHookMixin",
+    "client.ShaderManagerMixin",
+    "client.SpecialModelRenderersAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
