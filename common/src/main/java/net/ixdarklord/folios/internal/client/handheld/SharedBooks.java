@@ -185,11 +185,11 @@ public final class SharedBooks {
         float open = own != null ? own.open(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false)) : shared.openNow();
         pose.pushPose();
         // In the reader's frame, z ahead of them; the book faces back at them, leaning back towards their eyes.
-        pose.mulPose(Axis.YP.rotationDegrees(-state.bodyRot));
+        pose.rotate(Axis.YP.rotationDegrees(-state.bodyRot));
         pose.scale(state.scale, state.scale, state.scale);
         pose.translate(0.0F, HELD_UP - (state.isCrouching ? CROUCHED : 0), HELD_AHEAD);
-        pose.mulPose(Axis.YP.rotationDegrees(180.0F));
-        pose.mulPose(Axis.XP.rotationDegrees(-LEAN));
+        pose.rotate(Axis.YP.rotationDegrees(180.0F));
+        pose.rotate(Axis.XP.rotationDegrees(-LEAN));
         pose.scale(HandheldRenderer.SCALE * SIZE, -HandheldRenderer.SCALE * SIZE, HandheldRenderer.SCALE * SIZE);
         pose.translate(0.0F, -GuideLayout.PAGE_HEIGHT / 2.0F, 0.0F);
         // Lit as its reader is, by the world round them.

@@ -151,10 +151,10 @@ public final class GuideObjective {
     private static Component advancementTitle(Identifier id) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.getConnection() != null) {
-            AdvancementNode node = minecraft.getConnection().getAdvancements().getTree().get(id);
+            AdvancementNode node = minecraft.getConnection().getAdvancements().tree().get(id);
             if (node != null) {
                 DisplayInfo display = node.holder().value().display().orElse(null);
-                if (display != null) return display.getTitle();
+                if (display != null) return display.title();
             }
         }
         String path = id.getPath();

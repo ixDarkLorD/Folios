@@ -55,7 +55,7 @@ public final class Celebrations {
 
     // A category read through: a toast, a chime, sparkles rising round the player.
     private static void category(Minecraft minecraft, GuideBook book, GuideCategory category) {
-        SystemToast.add(minecraft.getToastManager(), new SystemToast.SystemToastId(),
+        SystemToast.add(minecraft.gui.toastManager(), new SystemToast.SystemToastId(),
                 Component.translatableWithFallback("folios.celebrate.category", "Category complete: %s", category.title()), book.title());
         minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.PLAYER_LEVELUP, 1.2F, 0.6F));
         LocalPlayer player = minecraft.player;
@@ -70,7 +70,7 @@ public final class Celebrations {
 
     // The whole book mastered: a toast, the challenge fanfare, and fireworks in the book's colours over the player.
     private static void mastery(Minecraft minecraft, GuideBook book) {
-        SystemToast.add(minecraft.getToastManager(), new SystemToast.SystemToastId(),
+        SystemToast.add(minecraft.gui.toastManager(), new SystemToast.SystemToastId(),
                 Component.translatableWithFallback("folios.celebrate.mastery", "Mastered: %s", book.title()),
                 Component.translatableWithFallback("folios.celebrate.mastery.detail", "Every quest in the book is done"));
         minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 1.0F));
@@ -81,7 +81,7 @@ public final class Celebrations {
         for (int burst = 0; burst < 3; burst++) {
             double angle = burst / 3.0 * Math.PI * 2;
             minecraft.level.createFireworks(player.getX() + Math.cos(angle) * 2.5, player.getY() + 3.5 + burst * 0.8, player.getZ() + Math.sin(angle) * 2.5,
-                    0, 0, 0, List.of(new FireworkExplosion(shapes[burst], colours, fade, true, burst == 1)));
+                    0, 0, 0, List.of(new FireworkExplosion(shapes[burst], colours, fade, true, burst == 1)), true);
         }
         for (int index = 0; index < 30; index++) {
             double angle = index / 30.0 * Math.PI * 2;

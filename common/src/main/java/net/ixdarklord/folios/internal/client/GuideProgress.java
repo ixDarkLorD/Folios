@@ -57,7 +57,7 @@ public final class GuideProgress {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.getConnection() == null) return false;
         ClientAdvancements advancements = minecraft.getConnection().getAdvancements();
-        AdvancementNode node = advancements.getTree().get(advancement);
+        AdvancementNode node = advancements.tree().get(advancement);
         if (node == null) return false;
         AdvancementProgress progress = ((ClientAdvancementsAccessor) advancements).folios$progress().get(node.holder());
         return progress != null && progress.isDone();
