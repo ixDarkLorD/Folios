@@ -1,8 +1,10 @@
 package net.ixdarklord.folios.internal.client.handheld;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyledEditBox;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.screen.GuideBar;
+import net.ixdarklord.folios.internal.mixin.client.MouseHandlerAccessor;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -11,7 +13,6 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
@@ -132,7 +133,7 @@ public final class HandheldScreen extends Screen {
 
     @Override
     public void tick() {
-        if (HandheldBook.current() != book) this.minecraft.setScreen(null);
+        if (HandheldBook.current() != book) this.minecraft.gui.setScreen(null);
     }
 
     // ---- Looking about and walking while reading ----
@@ -180,10 +181,12 @@ public final class HandheldScreen extends Screen {
         if (on) {
             lookFromX = x * window.getGuiScale();
             lookFromY = y * window.getGuiScale();
-            GLFW.glfwSetInputMode(window.handle(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
+            // Grabbed as in play: SDL then reports how far the mouse moves, not where the hidden pointer sits.
+            ((MouseHandlerAccessor) this.minecraft.mouseHandler).folios$setMouseGrabbed(true);
+            InputConstants.grabMouse(window, lookFromX, lookFromY);
         } else {
-            GLFW.glfwSetInputMode(window.handle(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
-            GLFW.glfwSetCursorPos(window.handle(), lookFromX, lookFromY);
+            ((MouseHandlerAccessor) this.minecraft.mouseHandler).folios$setMouseGrabbed(false);
+            InputConstants.releaseMouse(window, lookFromX, lookFromY);
         }
     }
 
@@ -208,7 +211,7 @@ public final class HandheldScreen extends Screen {
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         // From outside, the pages can't be pressed; the mouse only turns the view.
         if (outside()) return true;
-        if (event.button() == 1 && book.book.handling().lookAround() && !this.bar.typing()) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_RIGHT && book.book.handling().lookAround() && !this.bar.typing()) {
             lookedAbout = true;
             this.look(true, event.x(), event.y());
             return true;
@@ -218,12 +221,12 @@ public final class HandheldScreen extends Screen {
             this.search.setFocused(false);
             this.setFocused(null);
         }
-        if (event.button() == 0 && book.barPlaced && this.press(book.barHits, book.barPointer, book.barClip)) return true;
-        if (event.button() == 3) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && book.barPlaced && this.press(book.barHits, book.barPointer, book.barClip)) return true;
+        if (event.button() == InputConstants.MOUSE_BUTTON_4) {
             book.turn(-1);
             return true;
         }
-        if (event.button() != 0) return false;
+        if (event.button() != InputConstants.MOUSE_BUTTON_LEFT) return false;
         // Held up shut: a press on its cover opens it, a press off it puts it away.
         if (book.isShut()) {
             if (!book.placed) return true;
@@ -264,12 +267,11 @@ public final class HandheldScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-        if (looking && event.button() == 1 && !outside()) {
-            // Turned as the view is turned in play, at the player's own sensitivity.
-            this.turn(dx, dy);
+        if (looking && event.button() == InputConstants.MOUSE_BUTTON_RIGHT && !outside()) {
+            // The mouse is grabbed meanwhile, so the game turns the view as in play.
             return true;
         }
-        if (dragging != null && draggedOn != null && event.button() == 0) {
+        if (dragging != null && draggedOn != null && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             // How far the pointer moved, carried onto the page's own plane.
             float[] now = HandheldRenderer.onPage(draggedOn, event.x(), event.y(), this.width, this.height);
             float[] before = HandheldRenderer.onPage(draggedOn, event.x() - dx, event.y() - dy, this.width, this.height);
@@ -281,11 +283,11 @@ public final class HandheldScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (event.button() == 1 && looking) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_RIGHT && looking) {
             this.look(false, 0, 0);
             return true;
         }
-        if (event.button() == 0) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             dragging = null;
             draggedOn = null;
         }
@@ -338,7 +340,7 @@ public final class HandheldScreen extends Screen {
             lastX = Double.NaN;
             return true;
         }
-        if (event.key() == GLFW.GLFW_KEY_F && event.hasControlDownWithQuirk() && this.search != null && book.isOpen()) {
+        if (event.key() == InputConstants.KEY_F && event.hasControlDownWithQuirk() && this.search != null && book.isOpen()) {
             this.setFocused(this.search);
             this.search.setFocused(true);
             return true;
@@ -349,7 +351,7 @@ public final class HandheldScreen extends Screen {
         boolean walking = this.walks(event);
         if (book.isShut()) {
             switch (event.key()) {
-                case GLFW.GLFW_KEY_RIGHT, GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_SPACE, GLFW.GLFW_KEY_D -> {
+                case InputConstants.KEY_RIGHT, InputConstants.KEY_RETURN, InputConstants.KEY_SPACE, InputConstants.KEY_D -> {
                     if (walking) break;
                     book.openCover();
                     return true;
@@ -362,19 +364,19 @@ public final class HandheldScreen extends Screen {
             return true;
         }
         switch (event.key()) {
-            case GLFW.GLFW_KEY_LEFT, GLFW.GLFW_KEY_PAGE_UP, GLFW.GLFW_KEY_A -> {
+            case InputConstants.KEY_LEFT, InputConstants.KEY_PAGEUP, InputConstants.KEY_A -> {
                 book.turn(-1);
                 return true;
             }
-            case GLFW.GLFW_KEY_RIGHT, GLFW.GLFW_KEY_PAGE_DOWN, GLFW.GLFW_KEY_D -> {
+            case InputConstants.KEY_RIGHT, InputConstants.KEY_PAGEDOWN, InputConstants.KEY_D -> {
                 book.turn(1);
                 return true;
             }
-            case GLFW.GLFW_KEY_BACKSPACE -> {
+            case InputConstants.KEY_BACKSPACE -> {
                 book.back();
                 return true;
             }
-            case GLFW.GLFW_KEY_HOME -> {
+            case InputConstants.KEY_HOME -> {
                 book.home();
                 return true;
             }

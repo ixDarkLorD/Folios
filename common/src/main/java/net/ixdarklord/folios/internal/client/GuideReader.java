@@ -739,7 +739,7 @@ public class GuideReader implements AbstractPainter.Navigator {
         if (target == null) return;
         Minecraft minecraft = Minecraft.getInstance();
         if (target.url() != null) {
-            ConfirmLinkScreen.confirmLinkNow(minecraft.screen, target.url());
+            ConfirmLinkScreen.confirmLinkNow(minecraft.gui.screen(), java.net.URI.create(target.url()));
         } else if (target.category() != null) {
             this.category(target.category());
         } else if (target.entry() != null) {

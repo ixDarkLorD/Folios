@@ -81,7 +81,7 @@ public record MultiblockPage(List<List<String>> pattern, Map<String, String> map
         SceneControl.Extra build = new SceneControl.Extra(Component.translatableWithFallback("folios.build.show", "Show in the world"), () -> {
             BuildGuide.start(buildName, blocks);
             net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
-            if (minecraft.screen != null) minecraft.screen.onClose();
+            if (minecraft.gui.screen() != null) minecraft.gui.screen().onClose();
         });
         // What it takes, under the window: up to two rows of six at a time, paged past that.
         Requirements needs = new Requirements(counts);

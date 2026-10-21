@@ -100,7 +100,7 @@ public final class BuildGuide {
     // The book being read now: on its screen, or in the hands.
     private static net.ixdarklord.folios.api.client.@Nullable GuideBook reading() {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.screen instanceof net.ixdarklord.folios.internal.client.screen.GuideScreen screen) return screen.reader().book;
+        if (minecraft.gui.screen() instanceof net.ixdarklord.folios.internal.client.screen.GuideScreen screen) return screen.reader().book;
         net.ixdarklord.folios.internal.client.handheld.HandheldBook held = net.ixdarklord.folios.internal.client.handheld.HandheldBook.current();
         return held != null ? held.book : null;
     }
@@ -140,7 +140,7 @@ public final class BuildGuide {
         boolean pressed = use && !guide.useHeld && !guide.handled;
         guide.useHeld = use;
         guide.handled = false;
-        if (pressed && minecraft.screen == null && minecraft.player.getMainHandItem().isEmpty() && minecraft.player.getOffhandItem().isEmpty()) {
+        if (pressed && minecraft.gui.screen() == null && minecraft.player.getMainHandItem().isEmpty() && minecraft.player.getOffhandItem().isEmpty()) {
             guide.use(minecraft.player.isShiftKeyDown());
             if (current == null) return;
         }
@@ -159,7 +159,7 @@ public final class BuildGuide {
         if (guide.anchor == null) return;
         if (guide.placed >= guide.parts.size()) {
             current = null;
-            SystemToast.add(minecraft.getToastManager(), new SystemToast.SystemToastId(),
+            SystemToast.add(minecraft.gui.toastManager(), new SystemToast.SystemToastId(),
                     Component.translatableWithFallback("folios.build.done", "Build complete: %s", guide.name), null);
             minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.PLAYER_LEVELUP, 1.4F, 0.5F));
             return;
@@ -178,7 +178,7 @@ public final class BuildGuide {
      */
     public static boolean onUse(boolean sneaking) {
         BuildGuide guide = current;
-        if (guide == null || Minecraft.getInstance().screen != null || !sneaking && guide.anchor != null) return false;
+        if (guide == null || Minecraft.getInstance().gui.screen() != null || !sneaking && guide.anchor != null) return false;
         guide.handled = true;
         guide.use(sneaking);
         return true;
@@ -265,13 +265,19 @@ public final class BuildGuide {
         if (boxes.isEmpty()) return;
         PoseStack pose = new PoseStack();
         pose.mulPose(new Matrix4f(camera.viewRotationMatrix));
-        SubmitNodeCollector collector = minecraft.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage();
+        net.minecraft.client.renderer.SubmitNodeStorage collector = new net.minecraft.client.renderer.SubmitNodeStorage();
         Matrix4f matrix = new Matrix4f(pose.last().pose());
         collector.submitCustomGeometry(pose, RenderTypes.entityTranslucent(WorldPainter.WHITE), (last, consumer) -> {
             for (float[] box : boxes) box(consumer, matrix, last, box, Float.floatToRawIntBits(box[6]));
         });
-        minecraft.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
-        minecraft.renderBuffers().bufferSource().endBatch();
+        net.minecraft.client.renderer.feature.FeatureRenderDispatcher features = minecraft.gameRenderer.featureRenderDispatcher();
+        com.mojang.blaze3d.pipeline.RenderTarget main = minecraft.gameRenderer.mainRenderTarget();
+        try (net.minecraft.client.renderer.feature.FeatureRenderDispatcher.PreparedFrame frame = features.prepareFrame(collector);
+             com.mojang.renderpearl.api.commands.RenderPass pass = com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder().createRenderPass(
+                     () -> "Folios build guide", main.getColorTextureView(), java.util.Optional.empty(), main.getDepthTextureView(), java.util.OptionalDouble.empty())) {
+            com.mojang.blaze3d.systems.RenderSystem.bindDefaultUniforms(pass);
+            net.minecraft.client.renderer.feature.FeatureRenderDispatcher.renderAllFeatures(pass, frame);
+        }
     }
 
     private static void box(VertexConsumer consumer, Matrix4f matrix, PoseStack.Pose normals, float[] b, int color) {
@@ -307,7 +313,7 @@ public final class BuildGuide {
     public static void hud(GuiGraphicsExtractor graphics) {
         BuildGuide guide = current;
         Minecraft minecraft = Minecraft.getInstance();
-        if (guide == null || minecraft.options.hideGui) return;
+        if (guide == null || minecraft.gui.hud.isHidden()) return;
         Font font = minecraft.font;
         net.ixdarklord.folios.api.client.GuideBook book = guide.book;
         int cover = book != null ? 0xFF000000 | book.cover() : 0xFF3B2618;

@@ -29,7 +29,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +44,8 @@ public final class GuideScreen extends Screen {
     /** How far the cover shows around the pages, and how wide the fold between them is. */
     public static final int BORDER = 7;
     private static final int SPINE = 6;
-    private static final int BOOK_WIDTH = PW * 2 + SPINE + BORDER * 2;
+    /** The open book across, its border included: as wide as its bar, and the handheld book's. */
+    public static final int BOOK_WIDTH = PW * 2 + SPINE + BORDER * 2;
     private static final int BOOK_HEIGHT = PH + BORDER * 2;
     private static final int BAR = GuideBar.HEIGHT;
     private static final int BAR_GAP = 5;
@@ -130,7 +131,7 @@ public final class GuideScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() == 3) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_4) {
             this.reader.back();
             return true;
         }
@@ -139,7 +140,7 @@ public final class GuideScreen extends Screen {
             this.search.setFocused(false);
             this.setFocused(null);
         }
-        if (event.button() != 0) return false;
+        if (event.button() != InputConstants.MOUSE_BUTTON_LEFT) return false;
         float x = this.bookX(event.x());
         float y = this.bookY(event.y());
         for (Hit hit : List.copyOf(this.hits)) {
@@ -183,7 +184,7 @@ public final class GuideScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-        if (this.dragging != null && event.button() == 0) {
+        if (this.dragging != null && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             this.dragging.moved((float) (dx / this.scale), (float) (dy / this.scale));
             return true;
         }
@@ -192,7 +193,7 @@ public final class GuideScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (event.button() == 0) this.dragging = null;
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT) this.dragging = null;
         return super.mouseReleased(event);
     }
 
@@ -221,26 +222,26 @@ public final class GuideScreen extends Screen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         boolean typing = this.bar.typing();
-        if (event.key() == GLFW.GLFW_KEY_F && event.hasControlDownWithQuirk() && this.search != null) {
+        if (event.key() == InputConstants.KEY_F && event.hasControlDownWithQuirk() && this.search != null) {
             this.setFocused(this.search);
             this.search.setFocused(true);
             return true;
         }
         if (!typing) {
             switch (event.key()) {
-                case GLFW.GLFW_KEY_LEFT, GLFW.GLFW_KEY_PAGE_UP -> {
+                case InputConstants.KEY_LEFT, InputConstants.KEY_PAGEUP -> {
                     this.reader.turn(-1);
                     return true;
                 }
-                case GLFW.GLFW_KEY_RIGHT, GLFW.GLFW_KEY_PAGE_DOWN -> {
+                case InputConstants.KEY_RIGHT, InputConstants.KEY_PAGEDOWN -> {
                     this.reader.turn(1);
                     return true;
                 }
-                case GLFW.GLFW_KEY_BACKSPACE -> {
+                case InputConstants.KEY_BACKSPACE -> {
                     this.reader.back();
                     return true;
                 }
-                case GLFW.GLFW_KEY_HOME -> {
+                case InputConstants.KEY_HOME -> {
                     this.reader.home();
                     return true;
                 }

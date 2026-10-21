@@ -125,9 +125,9 @@ public final class HandheldRenderer {
         float shutShift = (1 - Mth.clamp(open, 0, 1)) * (PW + EDGE) / 2.0F;
         pose.translate(-shutShift, -PH / 2.0F, 0.0F);
 
-        CameraRenderState camera = minecraft.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState;
+        CameraRenderState camera = minecraft.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
         Matrix4f projection = new Matrix4f().setPerspective(camera.hudFov * Mth.DEG_TO_RAD,
-                minecraft.getWindow().getWidth() / (float) Math.max(1, minecraft.getWindow().getHeight()), 0.05F, 100.0F, RenderSystem.getDevice().isZZeroToOne());
+                minecraft.getWindow().getWidth() / (float) Math.max(1, minecraft.getWindow().getHeight()), 0.05F, 100.0F, RenderSystem.getDevice().getDeviceInfo().isZZeroToOne());
         Matrix4f toClip = projection.mul(camera.viewRotationMatrix, new Matrix4f());
 
         boolean readable = book.isOpen();
@@ -151,7 +151,7 @@ public final class HandheldRenderer {
 
         // The right half: its board, its leaves, and its page.
         pose.pushPose();
-        pose.mulPose(Axis.YP.rotation(-fold));
+        pose.rotate(Axis.YP.rotation(-fold));
         if (!asItem) {
             body(pose, collector, light, book, false);
             paper(pose, collector, lit, palette, book.book.textures().page(), 0, 0, PW, PH, 0, !(staticRight instanceof GuidePage.SpreadHalf));
@@ -190,7 +190,7 @@ public final class HandheldRenderer {
         // The cover is lit as it is when shut, as the item is, however far it has swung: its normals turned back by
         // the swing, so it doesn't darken as it turns from the light.
         org.joml.Matrix3f shutNormals = new org.joml.Matrix3f(pose.last().normal()).rotateY(Mth.PI);
-        pose.mulPose(Axis.YP.rotation(coverAngle));
+        pose.rotate(Axis.YP.rotation(coverAngle));
         relight = shutNormals.mul(new org.joml.Matrix3f(pose.last().normal()).invert());
         if (!asItem) {
             body(pose, collector, light, book, true);
@@ -223,9 +223,7 @@ public final class HandheldRenderer {
         if (flip != null) leaf(pose, collector, lit, palette, book, flip, angle);
         pose.popPose();
 
-        // Drawn now, while the view of the hands is in place, as vanilla does at the end of its hands.
-        minecraft.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
-        minecraft.renderBuffers().bufferSource().endBatch();
+        // Drawn with the hands: vanilla renders what was submitted for them right after.
         return true;
     }
 
@@ -268,7 +266,7 @@ public final class HandheldRenderer {
         pose.translate(-(1 - Mth.clamp(open, 0, 1)) * (PW + EDGE) / 2.0F, 0, 0);
 
         pose.pushPose();
-        pose.mulPose(Axis.YP.rotation(rightAngle));
+        pose.rotate(Axis.YP.rotation(rightAngle));
         body(pose, collector, light, reader, false);
         paper(pose, collector, light, palette, reader.book.textures().page(), 0, 0, PW, PH, 0, !(staticRight instanceof GuidePage.SpreadHalf));
         if (pages && !(flip != null && angle < COVERED)) {
@@ -294,7 +292,7 @@ public final class HandheldRenderer {
         spine(pose, collector, light, reader, rightAngle, leftAngle);
 
         pose.pushPose();
-        pose.mulPose(Axis.YP.rotation(leftAngle));
+        pose.rotate(Axis.YP.rotation(leftAngle));
         body(pose, collector, light, reader, true);
         // Its front board's outside faces those in front of the reader: its name and subtitle on it.
         cover(pose, collector, light, reader);
@@ -392,12 +390,14 @@ public final class HandheldRenderer {
         if (book.openSince == 0) book.openSince = now;
         float appear = net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings.transitions() ? easeOut(Math.min(1, (now - book.openSince) / 220.0F)) : 1;
         pose.pushPose();
-        // As far over the pages as the screen book's bar is over its own: its cover's rim, then the gap.
-        pose.translate(-(PW + EDGE), -SCREEN_BORDER - BAR_GAP - GuideBar.HEIGHT, 0);
+        // As far over the pages as the screen book's bar is over its own (its cover's rim, then the gap), and as wide,
+        // centred on the spine.
+        int wide = net.ixdarklord.folios.internal.client.screen.GuideScreen.BOOK_WIDTH;
+        pose.translate(-wide / 2.0F, -SCREEN_BORDER - BAR_GAP - GuideBar.HEIGHT, 0);
         book.barClip.set(toClip).mul(pose.last().pose());
         WorldPainter painter = new WorldPainter(pose, collector, light, bar.palette(), book.session, book, book.seconds(),
                 book.barPointer[0], book.barPointer[1], book.barHits).lightAs(PAGE_LIGHT);
-        bar.draw(painter, Math.round(2 * (PW + EDGE)), appear);
+        bar.draw(painter, wide, appear);
         painter.end();
         mergeTooltip(book, painter);
         pose.popPose();
@@ -408,7 +408,7 @@ public final class HandheldRenderer {
     // apart while it is open. In the book's frame before it is scaled to page pixels (blocks, y up), so they follow it
     // wherever it is held and however it leans.
     private static void hands(PoseStack pose, SubmitNodeCollector collector, int light, LocalPlayer player, float open) {
-        AvatarRenderer<AbstractClientPlayer> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getPlayerRenderer(player);
+        @SuppressWarnings("unchecked") AvatarRenderer<AbstractClientPlayer> renderer = (AvatarRenderer<AbstractClientPlayer>) Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
         Identifier skin = player.getSkin().body().texturePath();
         float halfWide = Mth.lerp(Mth.clamp(open, 0, 1), (PW + EDGE) / 2.0F, PW + EDGE) * SCALE;
         float halfTall = (PH / 2.0F + EDGE) * SCALE;
@@ -418,10 +418,10 @@ public final class HandheldRenderer {
             // Vanilla's hands for a map, moved under this book's foot: they reach about a third of a block out from
             // where they are put, so they are put inside the corners, less far in as the book narrows to shut.
             pose.translate(invert * (halfWide * 0.58F - 0.306F), -halfTall + 0.38F, -(leaves + board) * SCALE);
-            pose.mulPose(Axis.YP.rotationDegrees(90.0F));
-            pose.mulPose(Axis.YP.rotationDegrees(92.0F));
-            pose.mulPose(Axis.XP.rotationDegrees(45.0F));
-            pose.mulPose(Axis.ZP.rotationDegrees(invert * -41.0F));
+            pose.rotate(Axis.YP.rotationDegrees(90.0F));
+            pose.rotate(Axis.YP.rotationDegrees(92.0F));
+            pose.rotate(Axis.XP.rotationDegrees(45.0F));
+            pose.rotate(Axis.ZP.rotationDegrees(invert * -41.0F));
             pose.translate(invert * 0.3F, -1.1F, 0.45F);
             if (arm == HumanoidArm.RIGHT) renderer.renderRightHand(pose, collector, light, skin, player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE));
             else renderer.renderLeftHand(pose, collector, light, skin, player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
@@ -456,12 +456,12 @@ public final class HandheldRenderer {
         pose.pushPose();
         // Lifted in the book's own frame, then swung about the spine.
         pose.translate(0, 0, lift);
-        pose.mulPose(Axis.YP.rotation(-angle));
+        pose.rotate(Axis.YP.rotation(-angle));
         WorldPainter.Surface surface = null;
         if (bend) {
             surface = new Curl((flip.forward() ? -1 : 1) * BEND * upright, !faceShown);
         } else if (!faceShown) {
-            pose.mulPose(Axis.YP.rotation(Mth.PI));
+            pose.rotate(Axis.YP.rotation(Mth.PI));
             pose.translate(-PW, 0, 0);
         }
         WorldPainter painter = new WorldPainter(pose, collector, light, palette, book.session, book, book.seconds(), Float.NaN, Float.NaN, NO_HITS, surface)
@@ -952,7 +952,7 @@ public final class HandheldRenderer {
     private static void cover(PoseStack pose, SubmitNodeCollector collector, int light, GuideReader book) {
         pose.pushPose();
         pose.translate(0, 0, -leaves - board - 0.26F);
-        pose.mulPose(Axis.YP.rotation(Mth.PI));
+        pose.rotate(Axis.YP.rotation(Mth.PI));
         int cover = 0xFF000000 | book.book.cover();
         Identifier texture = book.book.coverTexture();
         if (texture != null) {

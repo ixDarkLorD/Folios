@@ -19,7 +19,9 @@
     "client.ItemInHandRendererMixin",
     "client.ItemModelsAccessor",
     "client.ItemTintSourcesAccessor",
+    "client.HandsAtRestMixin",
     "client.LevelRenderHookMixin",
+    "client.MouseHandlerAccessor",
     "client.ShaderManagerMixin",
     "client.SpecialModelRenderersAccessor"
   ],

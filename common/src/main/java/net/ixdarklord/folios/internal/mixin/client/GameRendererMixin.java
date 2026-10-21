@@ -1,10 +1,11 @@
 package net.ixdarklord.folios.internal.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
 import net.ixdarklord.folios.internal.client.handheld.HandheldBook;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import org.joml.Matrix4fc;
+import net.minecraft.client.renderer.state.level.PlayerRenderState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,12 +26,12 @@ public abstract class GameRendererMixin {
     }
 
     @Inject(method = "renderItemInHand", at = @At("HEAD"))
-    private void folios$handsStart(CameraRenderState cameraState, float deltaPartialTick, Matrix4fc modelViewMatrix, CallbackInfo ci) {
+    private void folios$handsStart(CameraRenderState cameraState, PlayerRenderState playerState, GpuTextureView depth, CallbackInfo ci) {
         folios$drawingHands = true;
     }
 
     @Inject(method = "renderItemInHand", at = @At("RETURN"))
-    private void folios$handsEnd(CameraRenderState cameraState, float deltaPartialTick, Matrix4fc modelViewMatrix, CallbackInfo ci) {
+    private void folios$handsEnd(CameraRenderState cameraState, PlayerRenderState playerState, GpuTextureView depth, CallbackInfo ci) {
         folios$drawingHands = false;
     }
 
@@ -47,7 +48,7 @@ public abstract class GameRendererMixin {
         float walked = cameraState.entityRenderState.backwardsInterpolatedWalkDistance * net.minecraft.util.Mth.PI;
         float bob = cameraState.entityRenderState.bob * FOLIOS$BOB;
         poseStack.translate(net.minecraft.util.Mth.sin(walked) * bob * 0.5F, -Math.abs(net.minecraft.util.Mth.cos(walked) * bob), 0.0F);
-        poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(net.minecraft.util.Mth.sin(walked) * bob * 3.0F));
-        poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(Math.abs(net.minecraft.util.Mth.cos(walked - 0.2F) * bob) * 5.0F));
+        poseStack.rotate(com.mojang.math.Axis.ZP.rotationDegrees(net.minecraft.util.Mth.sin(walked) * bob * 3.0F));
+        poseStack.rotate(com.mojang.math.Axis.XP.rotationDegrees(Math.abs(net.minecraft.util.Mth.cos(walked - 0.2F) * bob) * 5.0F));
     }
 }

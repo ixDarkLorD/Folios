@@ -21,7 +21,7 @@ public abstract class SharedBookPoseMixin {
             return;
         }
         // A guide book held shut: its arm raised a little, the book lying on the hand.
-        if (state.attackTime > 0) return;
+        if (state.swingAnimation > 0) return;
         if (state.rightHandItemStack.getItem() instanceof net.ixdarklord.folios.api.GuideBookItem && state.rightArmPose == HumanoidModel.ArmPose.ITEM) model.rightArm.xRot -= 0.3F;
         if (state.leftHandItemStack.getItem() instanceof net.ixdarklord.folios.api.GuideBookItem && state.leftArmPose == HumanoidModel.ArmPose.ITEM) model.leftArm.xRot -= 0.3F;
     }
