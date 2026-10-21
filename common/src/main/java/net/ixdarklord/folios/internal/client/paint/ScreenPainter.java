@@ -1,16 +1,12 @@
 package net.ixdarklord.folios.internal.client.paint;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
-import com.mojang.blaze3d.textures.GpuTextureView;
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
 import net.ixdarklord.coolcatcanvas.internal.client.viewport.SceneViewportManager;
 import net.ixdarklord.folios.api.client.page.GuidePalette;
 import net.ixdarklord.folios.internal.client.GuideSession;
-import net.ixdarklord.folios.internal.mixin.client.GuiGraphicsInvoker;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.Identifier;
+import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.folios.internal.compat.RenderPipelines;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 
@@ -51,7 +47,7 @@ public final class ScreenPainter extends AbstractPainter {
     }
 
     @Override
-    public void texture(Identifier texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
+    public void texture(ResourceLocation texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
         graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, u0 * UV, v0 * UV, width, height,
                 Math.round((u1 - u0) * UV), Math.round((v1 - v0) * UV), UV, UV, argb);
     }
@@ -73,30 +69,23 @@ public final class ScreenPainter extends AbstractPainter {
     @Override
     public void scene(SceneViewport viewport, int x, int y, int width, int height) {
         viewport.use();
-        GpuTextureView view = SceneViewportManager.view(viewport);
+        int view = SceneViewportManager.textureId(viewport);
         // Drawn to at the start of the next frame the first time; and upside down, as every texture drawn to is.
-        if (view != null) {
-            graphics.blit(view, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR), x, y, x + width, y + height, 0.0F, 1.0F, 1.0F, 0.0F);
-        }
+        if (view >= 0) graphics.texture(view, x, y, x + width, y + height, 0.0F, 1.0F, 1.0F, 0.0F, 0xFFFFFFFF);
     }
 
     @Override
     public void scene(SceneViewport viewport, int x, int y, int width, int height, float u0, float u1) {
         viewport.use();
-        GpuTextureView view = SceneViewportManager.view(viewport);
-        if (view != null) {
-            graphics.blit(view, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR), x, y, x + width, y + height, u0, u1, 1.0F, 0.0F);
-        }
+        int view = SceneViewportManager.textureId(viewport);
+        if (view >= 0) graphics.texture(view, x, y, x + width, y + height, u0, u1, 1.0F, 0.0F, 0xFFFFFFFF);
     }
 
     @Override
     public void scene(SceneViewport viewport, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
         viewport.use();
-        GpuTextureView view = SceneViewportManager.view(viewport);
-        if (view != null) {
-            ((GuiGraphicsInvoker) graphics).folios$blit(RenderPipelines.GUI_TEXTURED, view, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR),
-                    x, y, x + width, y + height, u0, u1, 1 - v0, 1 - v1, argb);
-        }
+        int view = SceneViewportManager.textureId(viewport);
+        if (view >= 0) graphics.texture(view, x, y, x + width, y + height, u0, u1, 1 - v0, 1 - v1, argb);
     }
 
     @Override

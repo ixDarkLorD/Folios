@@ -55,7 +55,7 @@ public final class Celebrations {
 
     // A category read through: a toast, a chime, sparkles rising round the player.
     private static void category(Minecraft minecraft, GuideBook book, GuideCategory category) {
-        SystemToast.add(minecraft.getToastManager(), new SystemToast.SystemToastId(),
+        SystemToast.add(minecraft.getToasts(), new SystemToast.SystemToastId(),
                 Component.translatableWithFallback("folios.celebrate.category", "Category complete: %s", category.title()), book.title());
         minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.PLAYER_LEVELUP, 1.2F, 0.6F));
         LocalPlayer player = minecraft.player;
@@ -70,7 +70,7 @@ public final class Celebrations {
 
     // The whole book mastered: a toast, the challenge fanfare, and fireworks in the book's colours over the player.
     private static void mastery(Minecraft minecraft, GuideBook book) {
-        SystemToast.add(minecraft.getToastManager(), new SystemToast.SystemToastId(),
+        SystemToast.add(minecraft.getToasts(), new SystemToast.SystemToastId(),
                 Component.translatableWithFallback("folios.celebrate.mastery", "Mastered: %s", book.title()),
                 Component.translatableWithFallback("folios.celebrate.mastery.detail", "Every quest in the book is done"));
         minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 1.0F));

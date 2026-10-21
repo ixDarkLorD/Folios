@@ -6,7 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientAdvancements;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.AdvancementNode;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -17,7 +17,7 @@ import java.util.function.BooleanSupplier;
 // What has unlocked the player's books: the advancements the server says they have, and flags code sets. A server
 // without CoolCatLib sends nothing; then the advancements the client was shown are what counts.
 public final class GuideProgress {
-    private static final Set<Identifier> DONE = new HashSet<>();
+    private static final Set<ResourceLocation> DONE = new HashSet<>();
     private static final Map<String, BooleanSupplier> FLAGS = new ConcurrentHashMap<>();
     private static boolean heard;
     // Goes up whenever anything here changes, so what was laid out with locks in mind is laid out again.
@@ -52,7 +52,7 @@ public final class GuideProgress {
         return heard;
     }
 
-    public static synchronized boolean isDone(Identifier advancement) {
+    public static synchronized boolean isDone(ResourceLocation advancement) {
         if (heard) return DONE.contains(advancement);
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.getConnection() == null) return false;

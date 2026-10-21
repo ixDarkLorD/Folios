@@ -3,6 +3,11 @@
 ## v1.0 Release | Oct 21, 2026
 Folios's guide books were first made inside CoolCatLib; this is them as a mod of their own, built on CoolCatLib.
 
+On Minecraft 1.21 - 1.21.1, for Fabric, NeoForge and Forge, everything is as on later versions, with these differences:
+- A book's own item models (`"models"`: `"item"`, `"open"`) are block-format models: `"mymod:handbook"` is `assets/mymod/models/item/handbook.json` (later versions read item model definitions under `items/`).
+- Recipe pages read the recipes the client was sent as the player joined, rather than asking the server.
+- Model elements in books' models may be turned by any angle, as on later versions.
+
 ### ✨ New Features
 - Guide books (`net.ixdarklord.folios`: `api.GuideBooks`, `api.client.Guides`): in-game manuals written as JSON in a resource pack, so packs can add, translate and replace them, and `F3 + T` reloads them while you write.
 - A book is a folder, `assets/<namespace>/guides/<book>/`: `book.json` (name, subtitle, the first page's text, style, colours, icon: an item or a texture, the book's own item if it names none), `categories/*.json` and `entries/**/*.json`. Every text can be a translation key.

@@ -8,20 +8,16 @@
   ],
   "client": [
     "client.AvatarRendererMixin",
+    "client.BlockElementAngleMixin",
+    "client.SharedBookItemMixin",
     "client.SharedBookPoseMixin",
     "client.SharedBookRenderMixin",
     "client.ClientAdvancementsAccessor",
     "client.GameRendererMixin",
     "client.GuiMixin",
-    "client.GuiGraphicsInvoker",
-    "client.GuiItemTintMixin",
-    "client.GuiRendererItemTintMixin",
     "client.ItemInHandRendererMixin",
-    "client.ItemModelsAccessor",
-    "client.ItemTintSourcesAccessor",
     "client.LevelRenderHookMixin",
-    "client.ShaderManagerMixin",
-    "client.SpecialModelRenderersAccessor"
+    "client.ShaderManagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

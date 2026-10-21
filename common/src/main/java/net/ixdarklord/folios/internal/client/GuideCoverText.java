@@ -1,38 +1,27 @@
 package net.ixdarklord.folios.internal.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.ixdarklord.folios.api.GuideBooks;
 import net.ixdarklord.folios.api.client.GuideBook;
 import net.ixdarklord.folios.api.client.page.GuidePalette;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.special.SpecialModelRenderer;
+import net.ixdarklord.folios.internal.compat.SubmitNodeCollector;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.world.item.ItemStack;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Consumer;
-
-// The "folios:guide_cover_text" special item model: the name and subtitle of the stack's book, in gilt, on a
-// model's cover, so a book held or lying about shows what it is. Placed in the model's own units (0 to 16): "x" the
-// middle of the lines, "title_y" and "subtitle_y" each line's middle, "z" the face they lie on (facing +z), "width" the
-// room across, which longer lines shrink to fit. Used beside the book's model in a composite item model. With "markers",
-// a model whose elements mark the lettering (CoverMarkers), the lines go where it marks them instead; a book's own
+// The name and subtitle of a book, in gilt, on its item model's cover, so a book held or lying about shows what it is.
+// Placed in the model's own units (0 to 16): "x" the middle of the lines, "titleY" and "subtitleY" each line's middle,
+// "z" the face they lie on (facing +z), "width" the room across, which longer lines shrink to fit. With "markers", a
+// model whose elements mark the lettering (CoverMarkers), the lines go where it marks them instead; a book's own
 // "cover_text" wins over both.
-public record GuideCoverText(float x, float titleY, float subtitleY, float z, float width, @Nullable Identifier markers) implements SpecialModelRenderer<Identifier> {
-    public static final Identifier TYPE = Folios.rl("guide_cover_text");
+public record GuideCoverText(float x, float titleY, float subtitleY, float z, float width, @Nullable ResourceLocation markers) {
+    /** On Folios's own book model, where its markers put it. */
+    public static final GuideCoverText DEFAULT = new GuideCoverText(8.0F, 11.5F, 4.25F, 10.21F, 8.5F, Folios.rl("item/guide_book_3d"));
 
-    @Override
-    public void submit(@Nullable Identifier id, PoseStack pose, SubmitNodeCollector collector, int light, int overlay, boolean foil, int outline) {
+    public void submit(@Nullable ResourceLocation id, PoseStack pose, SubmitNodeCollector collector, int light) {
         GuideBook book = id != null ? GuideLibrary.book(id) : null;
         if (book == null) return;
         Font font = Minecraft.getInstance().font;
@@ -59,7 +48,7 @@ public record GuideCoverText(float x, float titleY, float subtitleY, float z, fl
         pose.pushPose();
         pose.translate(line.x() * unit, line.y() * unit, (lettering.z() + 0.005F) * unit);
         pose.scale(unit, unit, unit);
-        collector.submitCustomGeometry(pose, net.minecraft.client.renderer.rendertype.RenderTypes.entityCutout(net.ixdarklord.folios.internal.client.paint.WorldPainter.WHITE), (last, consumer) -> {
+        collector.submitCustomGeometry(pose, net.ixdarklord.folios.internal.compat.RenderTypes.entityCutout(net.ixdarklord.folios.internal.client.paint.WorldPainter.WHITE), (last, consumer) -> {
             for (int index = 0; index < runs.length - 1; index++) {
                 float[] run = runs[index];
                 if (run[2] < 0.05F) continue;
@@ -95,36 +84,4 @@ public record GuideCoverText(float x, float titleY, float subtitleY, float z, fl
         pose.popPose();
     }
 
-    @Override
-    public void getExtents(Consumer<Vector3fc> output) {
-        float unit = 1 / 16.0F;
-        output.accept(new Vector3f((x - width / 2) * unit, subtitleY * unit, z * unit));
-        output.accept(new Vector3f((x + width / 2) * unit, titleY * unit, z * unit));
-    }
-
-    @Override
-    public @Nullable Identifier extractArgument(ItemStack stack) {
-        return GuideBooks.bookOf(stack);
-    }
-
-    public record Unbaked(float x, float titleY, float subtitleY, float z, float width, java.util.Optional<Identifier> markers) implements SpecialModelRenderer.Unbaked<Identifier> {
-        public static final MapCodec<Unbaked> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-                Codec.FLOAT.optionalFieldOf("x", 8.0F).forGetter(Unbaked::x),
-                Codec.FLOAT.optionalFieldOf("title_y", 11.5F).forGetter(Unbaked::titleY),
-                Codec.FLOAT.optionalFieldOf("subtitle_y", 4.25F).forGetter(Unbaked::subtitleY),
-                Codec.FLOAT.optionalFieldOf("z", 10.21F).forGetter(Unbaked::z),
-                Codec.FLOAT.optionalFieldOf("width", 8.5F).forGetter(Unbaked::width),
-                Identifier.CODEC.optionalFieldOf("markers").forGetter(Unbaked::markers)
-        ).apply(instance, Unbaked::new));
-
-        @Override
-        public SpecialModelRenderer<Identifier> bake(SpecialModelRenderer.BakingContext context) {
-            return new GuideCoverText(x, titleY, subtitleY, z, width, markers.orElse(null));
-        }
-
-        @Override
-        public MapCodec<Unbaked> type() {
-            return MAP_CODEC;
-        }
-    }
 }

@@ -2,8 +2,8 @@ package net.ixdarklord.folios.api.client;
 
 import com.google.gson.JsonObject;
 import net.ixdarklord.folios.internal.client.GuideProgress;
-import net.minecraft.resources.Identifier;
-import org.jspecify.annotations.Nullable;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What keeps a category, entry or page closed until the player has earned it. In JSON these are fields of the thing
@@ -15,11 +15,11 @@ import org.jspecify.annotations.Nullable;
  *     <li>{@code "secret": true}: left out until it opens, where it would otherwise be shown locked.</li>
  * </ul>
  */
-public record GuideLock(@Nullable Identifier advancement, @Nullable String flag, boolean secret) {
+public record GuideLock(@Nullable ResourceLocation advancement, @Nullable String flag, boolean secret) {
     public static final GuideLock NONE = new GuideLock(null, null, false);
 
     public static GuideLock read(JsonObject json) {
-        Identifier advancement = json.has("advancement") ? Identifier.parse(json.get("advancement").getAsString()) : null;
+        ResourceLocation advancement = json.has("advancement") ? ResourceLocation.parse(json.get("advancement").getAsString()) : null;
         String flag = json.has("flag") ? json.get("flag").getAsString() : null;
         boolean secret = json.has("secret") && json.get("secret").getAsBoolean();
         return advancement == null && flag == null && !secret ? NONE : new GuideLock(advancement, flag, secret);

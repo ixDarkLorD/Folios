@@ -17,18 +17,18 @@ import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.page.Shapes;
 import net.ixdarklord.folios.internal.client.paint.ScreenPainter;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
+import net.ixdarklord.folios.internal.compat.KeyEvent;
+import net.ixdarklord.folios.internal.compat.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.ixdarklord.folios.internal.compat.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Util;
-import org.jspecify.annotations.Nullable;
+import net.minecraft.Util;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ import java.util.List;
 // a slim bar says where the reader is and holds search, a bookmark, light or dark paper and closing; ribbon tabs at
 // its edge open the front, each category and the bookmarks. Leaves turn by folding across the spine. Its pages are
 // the same as a handheld book's (GuideReader), drawn flat in the player's light or dark mode, tinted by the book.
-public final class GuideScreen extends Screen {
+public final class GuideScreen extends net.ixdarklord.folios.internal.compat.CompatScreen {
     private static final int PW = GuideLayout.PAGE_WIDTH;
     private static final int PH = GuideLayout.PAGE_HEIGHT;
     /** How far the cover shows around the pages, and how wide the fold between them is. */
@@ -246,7 +246,7 @@ public final class GuideScreen extends Screen {
                 }
                 default -> {}
             }
-            if (this.minecraft.options.keyInventory.matches(event)) {
+            if (this.minecraft.options.keyInventory.matches(event.key(), event.scancode())) {
                 this.onClose();
                 return true;
             }
@@ -277,7 +277,7 @@ public final class GuideScreen extends Screen {
     @Override
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         // The world stays in sight, dimmed more towards the edges so the book stands out.
-        Identifier backdrop = this.book.textures().backdrop();
+        ResourceLocation backdrop = this.book.textures().backdrop();
         if (backdrop != null) {
             layer(graphics, backdrop, 0, 0, this.width, this.height, GuidePalette.alpha(0xFFFFFFFF, Math.round(255 * this.opening())));
             return;
@@ -322,7 +322,7 @@ public final class GuideScreen extends Screen {
     }
 
     // A texture layer stretched over a rectangle, tinted.
-    private static void layer(GuiGraphicsExtractor graphics, Identifier texture, int x, int y, int width, int height, int tint) {
+    private static void layer(GuiGraphicsExtractor graphics, ResourceLocation texture, int x, int y, int width, int height, int tint) {
         int[] size = ConfigStyle.textureSize(texture);
         graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0, 0, width, height, size[0], size[1], size[0], size[1], tint);
     }

@@ -1,6 +1,6 @@
 package net.ixdarklord.folios.internal.client;
 
-import net.minecraft.util.Util;
+import net.minecraft.Util;
 
 import java.util.HashMap;
 import java.util.Map;

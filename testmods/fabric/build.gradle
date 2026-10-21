@@ -1,7 +1,7 @@
-apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4/fabric.gradle"
+apply from: "${rootProject.sharedScripts}/fabric.gradle"
 apply from: rootProject.file("testmods/testmod.gradle")
 
 dependencies {
-    implementation project(":fabric")
-    implementation("net.ixdarklord.coolcatlib:coolcatlib-fabric:${coolcatlib_version}") { transitive = false }
+    implementation project(path: ":fabric", configuration: "namedElements")
+    modImplementation("net.ixdarklord.coolcatlib:coolcatlib-fabric:${coolcatlib_version}") { transitive = false }
 }

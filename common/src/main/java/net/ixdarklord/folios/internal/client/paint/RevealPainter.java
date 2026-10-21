@@ -7,11 +7,10 @@ import net.ixdarklord.folios.api.client.page.GuidePainter;
 import net.ixdarklord.folios.api.client.page.GuidePalette;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FontDescription;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -26,7 +25,7 @@ public final class RevealPainter implements GuidePainter {
     /** How large the cells are that fills and pictures are cut into while an effect differs across them. */
     private static final int CELL = 6;
     private static final int PICTURE_CELL = 12;
-    private static final FontDescription RUNES = new FontDescription.Resource(Identifier.withDefaultNamespace("alt"));
+    private static final ResourceLocation RUNES = ResourceLocation.withDefaultNamespace("alt");
 
     private final GuidePainter painter;
     private final GuideReveal effect;
@@ -175,7 +174,7 @@ public final class RevealPainter implements GuidePainter {
     }
 
     @Override
-    public void texture(Identifier texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
+    public void texture(ResourceLocation texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
         if (this.even(x, y, x + width, y + height)) {
             GuideReveal.Look look = this.look(x + width / 2.0F, y + height / 2.0F);
             if (look.opacity() > 0.01F) this.moved(look, () -> painter.texture(texture, x, y, width, height, u0, v0, u1, v1, shaded(argb, look)));

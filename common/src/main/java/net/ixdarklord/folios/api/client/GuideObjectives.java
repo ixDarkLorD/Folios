@@ -1,8 +1,8 @@
 package net.ixdarklord.folios.api.client;
 
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.resources.Identifier;
-import org.jspecify.annotations.Nullable;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * }</pre>
  */
 public final class GuideObjectives {
-    private static final Map<Identifier, Source> SOURCES = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, Source> SOURCES = new ConcurrentHashMap<>();
 
     private GuideObjectives() {}
 
@@ -27,11 +27,11 @@ public final class GuideObjectives {
         float value(LocalPlayer player);
     }
 
-    public static void register(Identifier id, Source source) {
+    public static void register(ResourceLocation id, Source source) {
         SOURCES.put(id, source);
     }
 
-    public static @Nullable Source get(Identifier id) {
+    public static @Nullable Source get(ResourceLocation id) {
         return SOURCES.get(id);
     }
 }

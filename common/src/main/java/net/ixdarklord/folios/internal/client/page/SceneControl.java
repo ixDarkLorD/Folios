@@ -48,7 +48,7 @@ final class SceneControl {
      * across, draggable; the page's clasp in the window's first part, the reset clasp in its last.
      */
     void drawPart(GuidePainter painter, int x, int y, int width, int height, float u0, float u1, boolean first, boolean last,
-                  Shapes.@org.jspecify.annotations.Nullable Icon extra, @org.jspecify.annotations.Nullable Extra action) {
+                  Shapes.@org.jetbrains.annotations.Nullable Icon extra, @org.jetbrains.annotations.Nullable Extra action) {
         painter.scroll(x, y, width, height, this::zoomed);
         painter.drag(x, y, width, height, (dx, dy) -> {
             held = true;
@@ -71,8 +71,8 @@ final class SceneControl {
     }
 
     /** As {@link #draw(GuidePainter, int, int, int, int)}, with a clasp of the page's own in the window's other corner. */
-    void draw(GuidePainter painter, int x, int y, int width, int height, Shapes.@org.jspecify.annotations.Nullable Icon extra,
-              @org.jspecify.annotations.Nullable Extra action) {
+    void draw(GuidePainter painter, int x, int y, int width, int height, Shapes.@org.jetbrains.annotations.Nullable Icon extra,
+              @org.jetbrains.annotations.Nullable Extra action) {
         painter.scroll(x, y, width, height, this::zoomed);
         painter.drag(x, y, width, height, (dx, dy) -> {
             held = true;

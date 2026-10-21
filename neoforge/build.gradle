@@ -1,11 +1,13 @@
-apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4/neoforge.gradle"
+apply from: "${rootProject.sharedScripts}/neoforge.gradle"
 
 // Uploaded as <minecraft>+<mod version> (the shared scripts would prefix it with "<minecraft>-").
 publisher {
     setProjectVersion("${project.version}")
+    // Built and tested on NeoForge 21.1, which runs on Minecraft 1.21.1.
+    gameVersions.set(["1.21.1"])
 }
 
 // CoolCatLib, which Folios is built on: compiled against and in the dev runs, never bundled.
 dependencies {
-    implementation("net.ixdarklord.coolcatlib:coolcatlib-neoforge:${coolcatlib_version}") { transitive = false }
+    modImplementation("net.ixdarklord.coolcatlib:coolcatlib-neoforge:${coolcatlib_version}") { transitive = false }
 }

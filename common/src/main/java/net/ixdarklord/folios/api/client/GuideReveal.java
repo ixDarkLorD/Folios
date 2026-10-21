@@ -1,6 +1,6 @@
 package net.ixdarklord.folios.api.client;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * How a page's content shows once the page is turned to: everything drawn on it (text, pictures, items, scenes,
@@ -75,10 +75,10 @@ public interface GuideReveal {
      * A reveal: an effect, how long it takes in seconds, and whether it plays only the first time each spread is seen
      * (pages of entries read in an earlier game count as seen).
      */
-    record Use(Identifier effect, float seconds, boolean once) {
+    record Use(ResourceLocation effect, float seconds, boolean once) {
         public static final Use NONE = new Use(GuideReveals.NONE, 0, false);
 
-        public Use(Identifier effect, float seconds) {
+        public Use(ResourceLocation effect, float seconds) {
             this(effect, seconds, false);
         }
     }

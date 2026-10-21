@@ -19,23 +19,22 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.entity.player.AvatarRenderer;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.PlayerModelPart;
-import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.ixdarklord.folios.internal.compat.SubmitNodeCollector;
+import net.ixdarklord.folios.internal.compat.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.util.LightCoordsUtil;
+import net.ixdarklord.folios.internal.compat.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -125,10 +124,8 @@ public final class HandheldRenderer {
         float shutShift = (1 - Mth.clamp(open, 0, 1)) * (PW + EDGE) / 2.0F;
         pose.translate(-shutShift, -PH / 2.0F, 0.0F);
 
-        CameraRenderState camera = minecraft.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState;
-        Matrix4f projection = new Matrix4f().setPerspective(camera.hudFov * Mth.DEG_TO_RAD,
-                minecraft.getWindow().getWidth() / (float) Math.max(1, minecraft.getWindow().getHeight()), 0.05F, 100.0F, RenderSystem.getDevice().isZZeroToOne());
-        Matrix4f toClip = projection.mul(camera.viewRotationMatrix, new Matrix4f());
+        // Hands are drawn with their own projection and no turn of the view: what they are drawn with now.
+        Matrix4f toClip = new Matrix4f(RenderSystem.getProjectionMatrix()).mul(RenderSystem.getModelViewMatrix());
 
         boolean readable = book.isOpen();
         float turned = book.flipProgress();
@@ -224,7 +221,6 @@ public final class HandheldRenderer {
         pose.popPose();
 
         // Drawn now, while the view of the hands is in place, as vanilla does at the end of its hands.
-        minecraft.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
         minecraft.renderBuffers().bufferSource().endBatch();
         return true;
     }
@@ -256,7 +252,7 @@ public final class HandheldRenderer {
         float angle = flip == null ? 0 : easeInOut(flip.forward() ? turned : 1 - turned) * Mth.PI;
         GuidePage.Laid staticLeft = flip == null ? reader.page(reader.spot, 0) : flip.forward() ? flip.oldLeft() : flip.newLeft();
         GuidePage.Laid staticRight = flip == null ? reader.page(reader.spot, 1) : flip.forward() ? flip.newRight() : flip.oldRight();
-        Identifier frame = reader.book.textures().frame();
+        ResourceLocation frame = reader.book.textures().frame();
         // Held in someone's hands, any book lies part open, its halves leaning up from the spine; shut, its left half
         // lies over its right, the shut book's middle where the spine of the open one is.
         float fold = SKETCH_FOLD;
@@ -336,11 +332,10 @@ public final class HandheldRenderer {
         net.minecraft.world.item.ItemStack stack = player.getItemInHand(book.hand != null ? book.hand : InteractionHand.MAIN_HAND);
         if (!(stack.getItem() instanceof net.ixdarklord.folios.api.GuideBookItem)) return false;
         Minecraft minecraft = Minecraft.getInstance();
-        net.minecraft.client.renderer.item.ItemStackRenderState state = new net.minecraft.client.renderer.item.ItemStackRenderState();
-        minecraft.getItemModelResolver().updateForTopItem(state, stack, net.minecraft.world.item.ItemDisplayContext.NONE, minecraft.level, player, 0);
         pose.pushPose();
         pose.scale(1 / ITEM_FIT, 1 / ITEM_FIT, 1 / ITEM_FIT);
-        state.submit(pose, collector, light, OverlayTexture.NO_OVERLAY, 0);
+        minecraft.getItemRenderer().renderStatic(player, stack, net.minecraft.world.item.ItemDisplayContext.NONE, false, pose, collector.buffers(), minecraft.level,
+                light, OverlayTexture.NO_OVERLAY, 0);
         pose.popPose();
         return true;
     }
@@ -388,7 +383,7 @@ public final class HandheldRenderer {
             book.openSince = 0;
             return;
         }
-        long now = net.minecraft.util.Util.getMillis();
+        long now = net.minecraft.Util.getMillis();
         if (book.openSince == 0) book.openSince = now;
         float appear = net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings.transitions() ? easeOut(Math.min(1, (now - book.openSince) / 220.0F)) : 1;
         pose.pushPose();
@@ -408,8 +403,7 @@ public final class HandheldRenderer {
     // apart while it is open. In the book's frame before it is scaled to page pixels (blocks, y up), so they follow it
     // wherever it is held and however it leans.
     private static void hands(PoseStack pose, SubmitNodeCollector collector, int light, LocalPlayer player, float open) {
-        AvatarRenderer<AbstractClientPlayer> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getPlayerRenderer(player);
-        Identifier skin = player.getSkin().body().texturePath();
+        PlayerRenderer renderer = (PlayerRenderer) Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
         float halfWide = Mth.lerp(Mth.clamp(open, 0, 1), (PW + EDGE) / 2.0F, PW + EDGE) * SCALE;
         float halfTall = (PH / 2.0F + EDGE) * SCALE;
         for (HumanoidArm arm : HumanoidArm.values()) {
@@ -423,8 +417,8 @@ public final class HandheldRenderer {
             pose.mulPose(Axis.XP.rotationDegrees(45.0F));
             pose.mulPose(Axis.ZP.rotationDegrees(invert * -41.0F));
             pose.translate(invert * 0.3F, -1.1F, 0.45F);
-            if (arm == HumanoidArm.RIGHT) renderer.renderRightHand(pose, collector, light, skin, player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE));
-            else renderer.renderLeftHand(pose, collector, light, skin, player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
+            if (arm == HumanoidArm.RIGHT) renderer.renderRightHand(pose, collector.buffers(), light, player);
+            else renderer.renderLeftHand(pose, collector.buffers(), light, player);
             pose.popPose();
         }
     }
@@ -557,7 +551,7 @@ public final class HandheldRenderer {
     }
 
     /** The book item's leather (models/item/guide_book_3d.json), for the boards. */
-    private static final Identifier LEATHER = Identifier.fromNamespaceAndPath("folios", "textures/item/guide_book/leather.png");
+    private static final ResourceLocation LEATHER = ResourceLocation.fromNamespaceAndPath("folios", "textures/item/guide_book/leather.png");
 
     private static final List<AbstractPainter.Hit> NO_HITS = new ArrayList<>();
 
@@ -760,7 +754,7 @@ public final class HandheldRenderer {
         // middle ten texels across, fourteen down, the spine's side at the spine), so the book raised out of the hand
         // is the one that was in it. A book that names its own cover texture has that instead.
         boolean own = !book.book.textures().cover().equals(GuideBook.Textures.DEFAULT.cover());
-        Identifier leather = own ? book.book.textures().cover() : LEATHER;
+        ResourceLocation leather = own ? book.book.textures().cover() : LEATHER;
         // The outside lit as if it faced the viewer whichever way it is swung, so it keeps the item's brightness as the
         // cover opens instead of darkening as it turns from the light.
         Vector3f facing = pose.last().transformNormal(0, 0, -1, new Vector3f());
@@ -783,7 +777,7 @@ public final class HandheldRenderer {
             }
         });
         // What sits on the board's outside: corner caps, a clasp, bands over the spine.
-        Identifier ornaments = book.book.models().cover();
+        ResourceLocation ornaments = book.book.models().cover();
         CoverModel model = ornaments != null ? CoverModel.get(ornaments) : null;
         if (model != null) model.draw(pose, collector, light, left, PW + EDGE, -EDGE, PH + EDGE, -leaves - board - 0.26F, cover,
                 0xFF000000 | book.book.accent(), opened, left ? relight : null);
@@ -800,7 +794,7 @@ public final class HandheldRenderer {
     private static void spine(PoseStack pose, SubmitNodeCollector collector, int light, GuideReader book, float rightAngle, float leftAngle) {
         int cover = 0xFF000000 | book.book.cover();
         boolean own = !book.book.textures().cover().equals(GuideBook.Textures.DEFAULT.cover());
-        Identifier leather = own ? book.book.textures().cover() : LEATHER;
+        ResourceLocation leather = own ? book.book.textures().cover() : LEATHER;
         // The item's spine strip of its leather: its first column and a half, its middle fourteen rows.
         float u0 = own ? 0 : 0, u1 = own ? 0.1F : 1.5F / 16;
         float v0 = own ? 0 : 1 / 16.0F, v1 = own ? 1 : 15 / 16.0F;
@@ -851,7 +845,7 @@ public final class HandheldRenderer {
             }
         });
         // The cover model's bands round it, bending with it.
-        Identifier ornaments = book.book.models().cover();
+        ResourceLocation ornaments = book.book.models().cover();
         CoverModel model = ornaments != null ? CoverModel.get(ornaments) : null;
         if (model == null) return;
         float unit = (PW + EDGE) / 16.0F;
@@ -918,7 +912,7 @@ public final class HandheldRenderer {
      */
     private static final Vector3f PAGE_LIGHT = new Vector3f(0, 0, 1);
 
-    private static void paper(PoseStack pose, SubmitNodeCollector collector, int light, GuidePalette palette, Identifier texture, float x0, float y0, float x1, float y1, float z,
+    private static void paper(PoseStack pose, SubmitNodeCollector collector, int light, GuidePalette palette, ResourceLocation texture, float x0, float y0, float x1, float y1, float z,
                               boolean folded) {
         Matrix4f matrix = new Matrix4f(pose.last().pose());
         int paper = palette.paper();
@@ -954,7 +948,7 @@ public final class HandheldRenderer {
         pose.translate(0, 0, -leaves - board - 0.26F);
         pose.mulPose(Axis.YP.rotation(Mth.PI));
         int cover = 0xFF000000 | book.book.cover();
-        Identifier texture = book.book.coverTexture();
+        ResourceLocation texture = book.book.coverTexture();
         if (texture != null) {
             Matrix4f matrix = new Matrix4f(pose.last().pose());
             collector.submitCustomGeometry(pose, RenderTypes.entityCutout(texture), (last, consumer) ->
@@ -1051,7 +1045,7 @@ public final class HandheldRenderer {
     }
 
     /** The book item's model, whose marked lettering the cover follows (CoverMarkers). */
-    private static final Identifier ITEM_MODEL = Identifier.fromNamespaceAndPath("folios", "item/guide_book_3d");
+    private static final ResourceLocation ITEM_MODEL = ResourceLocation.fromNamespaceAndPath("folios", "item/guide_book_3d");
 
     /** How far the lettering on the cover stands out from the board: just over its plates' face, in page pixels. */
     private static final float PLATE_FACE = 1.4F;
@@ -1120,7 +1114,7 @@ public final class HandheldRenderer {
     }
 
     /** The item's page edges: its sheets edge on, worn. */
-    private static final Identifier PAGES = Identifier.fromNamespaceAndPath("folios", "textures/item/guide_book/pages.png");
+    private static final ResourceLocation PAGES = ResourceLocation.fromNamespaceAndPath("folios", "textures/item/guide_book/pages.png");
 
     // A face flat in x or in y, between two corners, its texture laid on (u along it, v across, in z). One face only:
     // these aren't culled, so it shows from both sides, and a second in the same place fought it.

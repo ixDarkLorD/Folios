@@ -5,8 +5,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.crafting.display.RecipeDisplay;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,15 +14,15 @@ import java.util.Optional;
 // can't know: the recipes a page shows (clients aren't sent recipes) and the advancements that unlock entries.
 public final class GuidePayloads {
     /** The book named in a {@link ReadingAt} saying none is open. */
-    public static final Identifier NO_BOOK = Folios.rl("none");
+    public static final ResourceLocation NO_BOOK = Folios.rl("none");
 
     private GuidePayloads() {}
 
     /** The server opening a book, at an entry or its start. */
-    public record Open(Identifier book, Optional<String> entry) implements CustomPacketPayload {
+    public record Open(ResourceLocation book, Optional<String> entry) implements CustomPacketPayload {
         public static final Type<Open> TYPE = new Type<>(Folios.rl("guide_open"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Open> STREAM_CODEC = StreamCodec.composite(
-                Identifier.STREAM_CODEC, Open::book,
+                ResourceLocation.STREAM_CODEC, Open::book,
                 ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs::optional), Open::entry,
                 Open::new);
 
@@ -51,11 +50,11 @@ public final class GuidePayloads {
      * A client saying which spread of the handheld book its player has open, or that none is ({@code open} false);
      * {@code shut} while it is held up shut, about to be opened.
      */
-    public record ReadingAt(boolean open, Identifier book, String chapter, int page, boolean shut) implements CustomPacketPayload {
+    public record ReadingAt(boolean open, ResourceLocation book, String chapter, int page, boolean shut) implements CustomPacketPayload {
         public static final Type<ReadingAt> TYPE = new Type<>(Folios.rl("guide_reading_at"));
         public static final StreamCodec<RegistryFriendlyByteBuf, ReadingAt> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.BOOL, ReadingAt::open,
-                Identifier.STREAM_CODEC, ReadingAt::book,
+                ResourceLocation.STREAM_CODEC, ReadingAt::book,
                 ByteBufCodecs.stringUtf8(256), ReadingAt::chapter,
                 ByteBufCodecs.VAR_INT, ReadingAt::page,
                 ByteBufCodecs.BOOL, ReadingAt::shut,
@@ -82,39 +81,16 @@ public final class GuidePayloads {
     }
 
     /** A client asking how recipes look. */
-    public record RecipeRequest(List<Identifier> recipes) implements CustomPacketPayload {
-        public static final Type<RecipeRequest> TYPE = new Type<>(Folios.rl("guide_recipe_request"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, RecipeRequest> STREAM_CODEC = StreamCodec.composite(
-                Identifier.STREAM_CODEC.apply(ByteBufCodecs.list(64)), RecipeRequest::recipes,
-                RecipeRequest::new);
-
-        @Override
-        public Type<RecipeRequest> type() {
-            return TYPE;
-        }
-    }
 
     /** How one recipe looks, as the recipe book shows it; empty for a recipe the server doesn't have. */
-    public record Recipe(Identifier id, List<RecipeDisplay> displays) implements CustomPacketPayload {
-        public static final Type<Recipe> TYPE = new Type<>(Folios.rl("guide_recipe"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, Recipe> STREAM_CODEC = StreamCodec.composite(
-                Identifier.STREAM_CODEC, Recipe::id,
-                RecipeDisplay.STREAM_CODEC.apply(ByteBufCodecs.list(16)), Recipe::displays,
-                Recipe::new);
-
-        @Override
-        public Type<Recipe> type() {
-            return TYPE;
-        }
-    }
 
     /** The advancements a player has completed: all of them ({@code reset}), or ones newly completed or revoked. */
-    public record Advancements(boolean reset, List<Identifier> done, List<Identifier> undone) implements CustomPacketPayload {
+    public record Advancements(boolean reset, List<ResourceLocation> done, List<ResourceLocation> undone) implements CustomPacketPayload {
         public static final Type<Advancements> TYPE = new Type<>(Folios.rl("guide_advancements"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Advancements> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.BOOL, Advancements::reset,
-                Identifier.STREAM_CODEC.apply(ByteBufCodecs.list()), Advancements::done,
-                Identifier.STREAM_CODEC.apply(ByteBufCodecs.list()), Advancements::undone,
+                ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list()), Advancements::done,
+                ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list()), Advancements::undone,
                 Advancements::new);
 
         @Override

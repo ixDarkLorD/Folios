@@ -11,18 +11,17 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 
 import java.util.List;
 import java.util.Optional;
 
 // A creature in a little window of its own, turning slowly (drag the window to turn it on a screen), named under it.
-public record EntityPage(Identifier entity, Optional<String> title, String text, float zoom, float spin, float yaw, int height) implements GuidePage {
+public record EntityPage(ResourceLocation entity, Optional<String> title, String text, float zoom, float spin, float yaw, int height) implements GuidePage {
     public static final MapCodec<EntityPage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Identifier.CODEC.fieldOf("entity").forGetter(EntityPage::entity),
+            ResourceLocation.CODEC.fieldOf("entity").forGetter(EntityPage::entity),
             Codec.STRING.optionalFieldOf("title").forGetter(EntityPage::title),
             Codec.STRING.optionalFieldOf("text", "").forGetter(EntityPage::text),
             Codec.floatRange(0.25F, 4.0F).optionalFieldOf("zoom", 1.0F).forGetter(EntityPage::zoom),
@@ -44,7 +43,7 @@ public record EntityPage(Identifier entity, Optional<String> title, String text,
             GuidePalette palette = painter.palette();
             EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getOptional(entity).orElse(null);
             if (shown[0] == null && type != null && Minecraft.getInstance().level != null) {
-                shown[0] = type.create(Minecraft.getInstance().level, EntitySpawnReason.LOAD);
+                shown[0] = type.create(Minecraft.getInstance().level);
                 if (shown[0] != null) {
                     view.entity(shown[0], 0, 0, 0, 0);
                     // Framed to fit the window whole: wide enough for it turned corner-on, and for all its height at the

@@ -1,6 +1,6 @@
 package net.ixdarklord.folios.internal.core;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +13,7 @@ public final class Folios {
 
     private Folios() {}
 
-    public static Identifier rl(String name) {
-        return Identifier.fromNamespaceAndPath(MOD_ID, name.toLowerCase(Locale.ROOT));
+    public static ResourceLocation rl(String name) {
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, name.toLowerCase(Locale.ROOT));
     }
 }

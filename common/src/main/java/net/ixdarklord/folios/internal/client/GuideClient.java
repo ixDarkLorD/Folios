@@ -22,13 +22,12 @@ import net.ixdarklord.folios.internal.client.page.SpotlightPage;
 import net.ixdarklord.folios.internal.client.page.TextPage;
 import net.ixdarklord.folios.internal.client.screen.GuideScreen;
 import net.ixdarklord.folios.internal.core.Folios;
-import net.ixdarklord.folios.internal.mixin.client.ItemModelsAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 // Sets up guide books on the client: the kinds of page and book, the item's model, and what opens a book.
 public final class GuideClient {
@@ -57,13 +56,13 @@ public final class GuideClient {
             GuideSession session = GuideLibrary.session(book.id());
             if (session != null) HandheldBook.open(book, session, at, hand);
         });
-        ItemModelsAccessor.folios$idMapper().put(GuideBookItemModel.TYPE, GuideBookItemModel.Unbaked.MAP_CODEC);
-        net.ixdarklord.folios.internal.mixin.client.ItemTintSourcesAccessor.folios$idMapper().put(GuideCoverTint.TYPE, GuideCoverTint.MAP_CODEC);
-        net.ixdarklord.folios.internal.mixin.client.SpecialModelRenderersAccessor.folios$idMapper().put(GuideCoverText.TYPE, GuideCoverText.Unbaked.MAP_CODEC);
+        // The book item is drawn in code, from models baked with the game's.
+        GuideBookItemModel.registerModels();
+        net.ixdarklord.coolcatcore.api.client.registry.ItemRendererRegistry.register(net.ixdarklord.folios.internal.core.GuideRegistry.BOOK_ITEM, GuideBookItemModel::render);
         GuideHooks.opener = (book, hand) -> open(book, null, hand);
         // A book's data changing in the hand (marked as being read, and no longer) doesn't swap it out and back: it is
         // the same book while it names the same one.
-        net.ixdarklord.coolcatcore.api.client.item.HeldItemSwaps.quiet(net.ixdarklord.folios.internal.core.GuideRegistry.READING.get());
+        net.ixdarklord.coolcatcore.api.client.item.HeldItemSwaps.quiet(net.ixdarklord.folios.internal.core.GuideRegistry.READING);
         net.ixdarklord.coolcatcore.api.client.item.HeldItemSwaps.register((shown, next) -> shown.getItem() instanceof net.ixdarklord.folios.api.GuideBookItem
                 && next.is(shown.getItem()) && java.util.Objects.equals(net.ixdarklord.folios.api.GuideBooks.bookOf(shown), net.ixdarklord.folios.api.GuideBooks.bookOf(next)));
         GuideHooks.names = id -> {
@@ -102,14 +101,14 @@ public final class GuideClient {
                         && net.ixdarklord.folios.internal.client.build.BuildGuide.onUse(player.isShiftKeyDown())
                         ? net.minecraft.world.InteractionResult.FAIL : net.minecraft.world.InteractionResult.PASS);
         net.ixdarklord.coolcatcore.api.event.v2.client.ClientGuiEvents.RENDER_HUD.register((graphics, delta) ->
-                net.ixdarklord.folios.internal.client.build.BuildGuide.hud(graphics));
+                net.ixdarklord.folios.internal.client.build.BuildGuide.hud(net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor.of(graphics)));
         ClientCommandEvents.REGISTER.register((dispatcher, context) -> dispatcher.register(
                 LiteralArgumentBuilder.<SharedSuggestionProvider>literal("folios")
                         .then(LiteralArgumentBuilder.<SharedSuggestionProvider>literal("guide")
                                 .then(RequiredArgumentBuilder.<SharedSuggestionProvider, String>argument("book", StringArgumentType.greedyString())
-                                        .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(GuideLibrary.books().keySet().stream().map(Identifier::toString), builder))
+                                        .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(GuideLibrary.books().keySet().stream().map(ResourceLocation::toString), builder))
                                         .executes(ctx -> {
-                                            Identifier id = Identifier.tryParse(StringArgumentType.getString(ctx, "book"));
+                                            ResourceLocation id = ResourceLocation.tryParse(StringArgumentType.getString(ctx, "book"));
                                             // A command's screen would be closed by the chat closing: open it a moment later.
                                             if (id == null || GuideLibrary.book(id) == null) {
                                                 ClientCommandEvents.sendError(Component.literal("No guide book with that id"));
@@ -121,7 +120,7 @@ public final class GuideClient {
     }
 
     /** Opens a book in its style: at an entry (with an optional "#anchor"), or where the player left off for null. */
-    public static boolean open(Identifier id, @Nullable String entry, @Nullable InteractionHand hand) {
+    public static boolean open(ResourceLocation id, @Nullable String entry, @Nullable InteractionHand hand) {
         GuideBook book = GuideLibrary.book(id);
         if (book == null) {
             Folios.LOGGER.warn("There is no guide book {}", id);

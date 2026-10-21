@@ -6,10 +6,10 @@ import net.ixdarklord.folios.api.client.page.GuidePainter;
 import net.ixdarklord.folios.api.client.page.GuidePalette;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -69,7 +69,7 @@ public final class EdgeFadePainter implements GuidePainter {
     }
 
     @Override
-    public void texture(Identifier texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
+    public void texture(ResourceLocation texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
         float fade = this.fade(x + width / 2.0F, y + height / 2.0F);
         if (fade > 0.01F) painter.texture(texture, x, y, width, height, u0, v0, u1, v1, faded(argb, fade));
     }

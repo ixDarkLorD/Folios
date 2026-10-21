@@ -7,20 +7,19 @@ import net.ixdarklord.folios.internal.client.paint.WorldPainter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.ixdarklord.coolcatcanvas.api.client.vfx.GhostBlocks;
-import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.ixdarklord.folios.internal.compat.SubmitNodeCollector;
+import net.ixdarklord.folios.internal.compat.RenderTypes;
+import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.LightCoordsUtil;
+import net.ixdarklord.folios.internal.compat.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -33,7 +32,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,7 +56,7 @@ public final class BuildGuide {
 
     private final Component name;
     // The book it came from, for the panel's colours: the one being read when it was shown; null for none.
-    private final net.ixdarklord.folios.api.client.@Nullable GuideBook book;
+    private final @Nullable net.ixdarklord.folios.api.client.GuideBook book;
     private final List<Part> parts = new ArrayList<>();
     private final BlockPos size;
     private @Nullable BlockPos anchor;
@@ -98,7 +97,7 @@ public final class BuildGuide {
     }
 
     // The book being read now: on its screen, or in the hands.
-    private static net.ixdarklord.folios.api.client.@Nullable GuideBook reading() {
+    private static @Nullable net.ixdarklord.folios.api.client.GuideBook reading() {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.screen instanceof net.ixdarklord.folios.internal.client.screen.GuideScreen screen) return screen.reader().book;
         net.ixdarklord.folios.internal.client.handheld.HandheldBook held = net.ixdarklord.folios.internal.client.handheld.HandheldBook.current();
@@ -159,14 +158,14 @@ public final class BuildGuide {
         if (guide.anchor == null) return;
         if (guide.placed >= guide.parts.size()) {
             current = null;
-            SystemToast.add(minecraft.getToastManager(), new SystemToast.SystemToastId(),
+            SystemToast.add(minecraft.getToasts(), new SystemToast.SystemToastId(),
                     Component.translatableWithFallback("folios.build.done", "Build complete: %s", guide.name), null);
             minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.PLAYER_LEVELUP, 1.4F, 0.5F));
             return;
         }
         if (minecraft.player.position().distanceTo(Vec3.atCenterOf(guide.anchor)) > WANDER) {
             current = null;
-            minecraft.player.sendOverlayMessage(Component.translatableWithFallback("folios.build.left", "You left the build behind"));
+            minecraft.player.displayClientMessage(Component.translatableWithFallback("folios.build.left", "You left the build behind"), true);
         }
     }
 
@@ -188,7 +187,7 @@ public final class BuildGuide {
         Minecraft minecraft = Minecraft.getInstance();
         if (sneaking) {
             current = null;
-            if (minecraft.player != null) minecraft.player.sendOverlayMessage(Component.translatableWithFallback("folios.build.cancelled", "Build guide put away"));
+            if (minecraft.player != null) minecraft.player.displayClientMessage(Component.translatableWithFallback("folios.build.cancelled", "Build guide put away"), true);
         } else if (anchor == null) {
             anchor = preview;
             age = 0;
@@ -229,14 +228,14 @@ public final class BuildGuide {
     // ---- Drawing in the world ----
 
     /** Draws the ghosts, after the level and before the hands. */
-    public static void render(CameraRenderState camera, float partialTick) {
+    public static void render(Camera camera, float partialTick) {
         BuildGuide guide = current;
         Minecraft minecraft = Minecraft.getInstance();
         if (guide == null || minecraft.level == null) return;
         float time = (guide.age + partialTick) / 20.0F;
         float breath = 0.5F + 0.5F * Mth.sin(time * 4.0F);
         boolean carried = guide.anchor == null;
-        Vec3 eye = camera.pos;
+        Vec3 eye = camera.getPosition();
         // The blocks themselves as ghosts, turned as the build is: the layer to build now clearer than the rest (all of
         // it while it is carried); a wrong block there is marked by a red box instead.
         List<GhostBlocks.Placed> now = new ArrayList<>();
@@ -264,13 +263,12 @@ public final class BuildGuide {
         GhostBlocks.draw(now, (clear << 24) | 0xE0F0FF, GhostBlocks.Show.IN_WORLD, true);
         if (boxes.isEmpty()) return;
         PoseStack pose = new PoseStack();
-        pose.mulPose(new Matrix4f(camera.viewRotationMatrix));
-        SubmitNodeCollector collector = minecraft.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage();
+        pose.mulPose(new Matrix4f().rotation(camera.rotation().conjugate(new org.joml.Quaternionf())));
+        SubmitNodeCollector collector = SubmitNodeCollector.of(minecraft.renderBuffers().bufferSource());
         Matrix4f matrix = new Matrix4f(pose.last().pose());
         collector.submitCustomGeometry(pose, RenderTypes.entityTranslucent(WorldPainter.WHITE), (last, consumer) -> {
             for (float[] box : boxes) box(consumer, matrix, last, box, Float.floatToRawIntBits(box[6]));
         });
-        minecraft.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
         minecraft.renderBuffers().bufferSource().endBatch();
     }
 

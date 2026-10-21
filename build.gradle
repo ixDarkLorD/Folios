@@ -1,14 +1,14 @@
 plugins {
-    alias libs.plugins.architectury.loom.noremap apply false
+    alias libs.plugins.architectury.loom apply false
     alias libs.plugins.architectury.plugin apply false
     alias libs.plugins.shadow apply false
     alias libs.plugins.modpublisher apply false
 }
 
 // Every project's Java, jar, resource and publishing setup.
-apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4/main.gradle"
+apply from: "${findProperty("shared_scripts_url") ?: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4"}/main.gradle"
 
-// Versions read <minecraft>+<mod version>, like 26.1.2+1.0 (the shared scripts' own form is 26.1.2-1).
+// Versions read <minecraft>+<mod version>, like 1.21.1+1.0 (the shared scripts' own form is 26.1.2-1).
 subprojects {
     version = "${libs.versions.minecraft.get()}+${mod_version}"
     // Every jar carries the mod's license (MPL-2.0).

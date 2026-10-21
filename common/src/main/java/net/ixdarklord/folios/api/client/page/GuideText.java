@@ -9,7 +9,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.util.FormattedCharSequence;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -414,7 +414,7 @@ public final class GuideText {
             flush();
             Style linkStyle = style.withInsertion(LINK + target);
             if (target.startsWith("http://") || target.startsWith("https://")) {
-                linkStyle = linkStyle.withHoverEvent(new HoverEvent.ShowText(Component.literal(target)));
+                linkStyle = linkStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(target)));
             }
             Component inner = new Inline(label).parse();
             out.append(Component.empty().withStyle(linkStyle).append(inner));

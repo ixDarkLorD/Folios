@@ -7,19 +7,19 @@ import net.ixdarklord.folios.internal.client.GuideSession;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.ixdarklord.folios.internal.compat.SubmitNodeCollector;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.RenderType;
+import net.ixdarklord.folios.internal.compat.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,7 +33,7 @@ import java.util.List;
 // surface, shapes and pictures are cut into strips that follow its curve, and writing and items are set one glyph
 // at a time along it.
 public final class WorldPainter extends AbstractPainter {
-    public static final Identifier WHITE = Folios.rl("textures/guide/white.png");
+    public static final ResourceLocation WHITE = Folios.rl("textures/guide/white.png");
     private static final float DEPTH = 0.004F;
     /** How high an item stands off the page, and how deep it is drawn: flattened so it never pokes through a leaf over it. */
     private static final float ITEM_LIFT = 0.45F;
@@ -247,7 +247,7 @@ public final class WorldPainter extends AbstractPainter {
     }
 
     @Override
-    public void texture(Identifier texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
+    public void texture(ResourceLocation texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
         this.picture(RenderTypes.entityTranslucent(texture), x, y, width, height, u0, v0, u1, v1, argb);
     }
 
@@ -256,7 +256,7 @@ public final class WorldPainter extends AbstractPainter {
      * ribbon's swallowtail, a plate's rounded corners) over things drawn after it, which a blended one's clear corners
      * would hide. Opaque only: its colour's alpha is ignored.
      */
-    public void cutout(Identifier texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
+    public void cutout(ResourceLocation texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
         this.picture(RenderTypes.entityCutout(texture), x, y, width, height, u0, v0, u1, v1, argb | 0xFF000000);
     }
 
@@ -270,7 +270,7 @@ public final class WorldPainter extends AbstractPainter {
     }
 
     /** The paper itself from a texture, tinted, under everything else, over a rectangle of the page. */
-    public void paper(float x0, float y0, float x1, float y1, int color, Identifier texture) {
+    public void paper(float x0, float y0, float x1, float y1, int color, ResourceLocation texture) {
         this.picture(RenderTypes.entityCutout(texture), x0, y0, x1, y1, 0, 0, 0, 1, 1, color, 0, 0, false);
     }
 
@@ -279,7 +279,7 @@ public final class WorldPainter extends AbstractPainter {
      * spine edge (its right edge for {@code spineRight}, else its left): the shadow of a book's fold, in the paper
      * itself so nothing lies over it.
      */
-    public void paper(float x0, float y0, float x1, float y1, int color, Identifier texture, float fold, int shade, boolean spineRight) {
+    public void paper(float x0, float y0, float x1, float y1, int color, ResourceLocation texture, float fold, int shade, boolean spineRight) {
         this.picture(RenderTypes.entityCutout(texture), x0, y0, x1, y1, 0, 0, 0, 1, 1, color, fold, shade, spineRight);
     }
 
@@ -347,8 +347,7 @@ public final class WorldPainter extends AbstractPainter {
     @Override
     protected void drawItem(ItemStack stack, int x, int y, int argb) {
         Minecraft minecraft = Minecraft.getInstance();
-        ItemStackRenderState state = new ItemStackRenderState();
-        minecraft.getItemModelResolver().updateForTopItem(state, stack, ItemDisplayContext.GUI, minecraft.level, null, 0);
+        BakedModel model = minecraft.getItemRenderer().getModel(stack, minecraft.level, null, 0);
         // Sat on the page: its depth squashed so a block's far side doesn't sink through the paper.
         float z = this.next() + ITEM_LIFT;
         pose.pushPose();
@@ -360,7 +359,8 @@ public final class WorldPainter extends AbstractPainter {
             float scale = this.pageScale();
             pose.scale(16 * scale, -16 * scale, ITEM_DEPTH);
         }
-        state.submit(pose, new PageItemCollector(collector, argb, this.itemLight()), light, OverlayTexture.NO_OVERLAY, 0);
+        minecraft.getItemRenderer().render(stack, ItemDisplayContext.GUI, false, pose, new PageItemCollector(collector.buffers(), argb, this.itemLight()),
+                light, OverlayTexture.NO_OVERLAY, model);
         pose.popPose();
         itemTop = Math.max(itemTop, z + ITEM_DEPTH / 2);
         if (stack.getCount() > 1) {

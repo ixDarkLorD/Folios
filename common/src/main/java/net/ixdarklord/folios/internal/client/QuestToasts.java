@@ -29,7 +29,7 @@ public final class QuestToasts {
                 if (!memory.markQuestDone(entry.id())) continue;
                 memory.save();
                 // Its own toast, so several done together are each shown.
-                SystemToast.add(Minecraft.getInstance().getToastManager(), new SystemToast.SystemToastId(),
+                SystemToast.add(Minecraft.getInstance().getToasts(), new SystemToast.SystemToastId(),
                         Component.translatableWithFallback("folios.quest.toast", "Quest complete: %s", entry.title()), book.title());
             }
         }

@@ -1,9 +1,9 @@
 // The mod's modules (common and one per loader) are in the root folder; the test mods (the demo books) in testmods/.
 def loaders = project_loaders.split(",").toList()
 (["common"] + loaders).each { include(":$it") }
-loaders.each { loader ->
+loaders.findAll { file("testmods/$it").exists() }.each { loader ->
     include(":testmod-$loader")
     project(":testmod-$loader").projectDir = file("testmods/$loader")
 }
 
-apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4/settings.gradle"
+apply from: "${providers.gradleProperty("shared_scripts_url").getOrElse("https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4")}/settings.gradle"

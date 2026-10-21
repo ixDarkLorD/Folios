@@ -3,14 +3,14 @@ package net.ixdarklord.folios.internal.client.handheld;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyledEditBox;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.screen.GuideBar;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
+import net.ixdarklord.folios.internal.compat.KeyEvent;
+import net.ixdarklord.folios.internal.compat.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
@@ -20,7 +20,7 @@ import java.util.List;
 // the bar is pressed with it, the wheel and the arrow keys turn the leaves, and closing it shuts the book and lowers
 // it. The bar's search field is a hidden text box here that takes the keys. As the book allows, the reader looks
 // about while holding the right button and walks with the movement keys.
-public final class HandheldScreen extends Screen {
+public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.CompatScreen {
     private final HandheldBook book;
     private final GuideBar bar;
     private @Nullable StyledEditBox search;
@@ -74,7 +74,7 @@ public final class HandheldScreen extends Screen {
     }
 
     /** Minecraft's own right-button icon, from its tutorial toasts. */
-    private static final net.minecraft.resources.Identifier RIGHT_CLICK = net.minecraft.resources.Identifier.withDefaultNamespace("toast/right_click");
+    private static final net.minecraft.resources.ResourceLocation RIGHT_CLICK = net.minecraft.resources.ResourceLocation.withDefaultNamespace("toast/right_click");
 
     /** How long (ms) the hint stays once the book lies open, then how long it takes to fade. */
     private static final long HINT_MILLIS = 6000;
@@ -93,9 +93,9 @@ public final class HandheldScreen extends Screen {
             hintY = Integer.MIN_VALUE;
             return;
         }
-        if (openedAt == 0) openedAt = net.minecraft.util.Util.getMillis();
+        if (openedAt == 0) openedAt = net.minecraft.Util.getMillis();
         if (lookedAbout || looking || !book.placed || !book.book.handling().lookAround()) return;
-        long shown = net.minecraft.util.Util.getMillis() - openedAt;
+        long shown = net.minecraft.Util.getMillis() - openedAt;
         if (shown > HINT_MILLIS + HINT_FADE) return;
         float alpha = shown <= HINT_MILLIS ? 1 : 1 - (shown - HINT_MILLIS) / (float) HINT_FADE;
         int fade = Math.round(alpha * 255);
@@ -113,7 +113,7 @@ public final class HandheldScreen extends Screen {
         int y = hintY;
         graphics.nextStratum();
         net.ixdarklord.folios.internal.client.GuideTooltips.frame(graphics, x, y, wide, tall, book.book, fade);
-        graphics.blitSprite(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, RIGHT_CLICK, x - 2, y - 2, 20, 20, alpha);
+        graphics.blitSprite(net.ixdarklord.folios.internal.compat.RenderPipelines.GUI_TEXTURED, RIGHT_CLICK, x - 2, y - 2, 20, 20, alpha);
         int ink = net.ixdarklord.folios.internal.client.GuideTooltips.titleColor(book.book);
         graphics.text(this.font, hint, x + 20, y + 4, (fade << 24) | (ink & 0xFFFFFF), true);
     }
@@ -153,8 +153,8 @@ public final class HandheldScreen extends Screen {
         double sensitivity = this.minecraft.options.sensitivity().get() * 0.6 + 0.2;
         double speed = sensitivity * sensitivity * sensitivity * 8.0;
         if (this.minecraft.player != null) {
-            this.minecraft.player.turn((this.minecraft.options.invertMouseX().get() ? -dx : dx) * scale * speed,
-                    (this.minecraft.options.invertMouseY().get() ? -dy : dy) * scale * speed);
+            this.minecraft.player.turn(dx * scale * speed,
+                    (this.minecraft.options.invertYMouse().get() ? -dy : dy) * scale * speed);
         }
     }
 
@@ -180,10 +180,10 @@ public final class HandheldScreen extends Screen {
         if (on) {
             lookFromX = x * window.getGuiScale();
             lookFromY = y * window.getGuiScale();
-            GLFW.glfwSetInputMode(window.handle(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
+            GLFW.glfwSetInputMode(window.getWindow(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
         } else {
-            GLFW.glfwSetInputMode(window.handle(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
-            GLFW.glfwSetCursorPos(window.handle(), lookFromX, lookFromY);
+            GLFW.glfwSetInputMode(window.getWindow(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
+            GLFW.glfwSetCursorPos(window.getWindow(), lookFromX, lookFromY);
         }
     }
 
@@ -193,14 +193,14 @@ public final class HandheldScreen extends Screen {
         var options = this.minecraft.options;
         for (net.minecraft.client.KeyMapping key : new net.minecraft.client.KeyMapping[]{options.keyUp, options.keyDown, options.keyLeft,
                 options.keyRight, options.keyJump, options.keyShift, options.keySprint}) {
-            if (key.matches(event)) return true;
+            if (key.matches(event.key(), event.scancode())) return true;
         }
         return false;
     }
 
     @Override
     public boolean keyReleased(KeyEvent event) {
-        if (this.walks(event)) net.minecraft.client.KeyMapping.set(com.mojang.blaze3d.platform.InputConstants.getKey(event), false);
+        if (this.walks(event)) net.minecraft.client.KeyMapping.set(com.mojang.blaze3d.platform.InputConstants.getKey(event.key(), event.scancode()), false);
         return super.keyReleased(event);
     }
 
@@ -330,7 +330,7 @@ public final class HandheldScreen extends Screen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         // The view cycles as in play; from outside, the mouse turns it freely.
-        if (this.minecraft.options.keyTogglePerspective.matches(event) && !this.bar.typing()) {
+        if (this.minecraft.options.keyTogglePerspective.matches(event.key(), event.scancode()) && !this.bar.typing()) {
             var options = this.minecraft.options;
             options.setCameraType(options.getCameraType().cycle());
             boolean free = outside() && book.book.handling().lookAround();
@@ -358,7 +358,7 @@ public final class HandheldScreen extends Screen {
             }
         }
         if (walking) {
-            net.minecraft.client.KeyMapping.set(com.mojang.blaze3d.platform.InputConstants.getKey(event), true);
+            net.minecraft.client.KeyMapping.set(com.mojang.blaze3d.platform.InputConstants.getKey(event.key(), event.scancode()), true);
             return true;
         }
         switch (event.key()) {
@@ -380,7 +380,7 @@ public final class HandheldScreen extends Screen {
             }
             default -> {}
         }
-        if (this.minecraft.options.keyInventory.matches(event)) {
+        if (this.minecraft.options.keyInventory.matches(event.key(), event.scancode())) {
             this.onClose();
             return true;
         }

@@ -2,8 +2,8 @@ package net.ixdarklord.folios.api.client.page;
 
 import com.mojang.serialization.MapCodec;
 import net.ixdarklord.folios.internal.core.Folios;
-import net.minecraft.resources.Identifier;
-import org.jspecify.annotations.Nullable;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
@@ -31,25 +31,25 @@ import java.util.concurrent.ConcurrentHashMap;
  * a {@link net.ixdarklord.folios.api.client.GuideLock}.
  */
 public final class GuidePageTypes {
-    private static final Map<Identifier, MapCodec<? extends GuidePage>> TYPES = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, MapCodec<? extends GuidePage>> TYPES = new ConcurrentHashMap<>();
 
     private GuidePageTypes() {}
 
     /** Adds a kind of page; register it while the client initialises, before resources load. */
-    public static void register(Identifier type, MapCodec<? extends GuidePage> codec) {
+    public static void register(ResourceLocation type, MapCodec<? extends GuidePage> codec) {
         TYPES.put(type, codec);
     }
 
-    public static @Nullable MapCodec<? extends GuidePage> get(Identifier type) {
+    public static @Nullable MapCodec<? extends GuidePage> get(ResourceLocation type) {
         return TYPES.get(type);
     }
 
-    public static Set<Identifier> types() {
+    public static Set<ResourceLocation> types() {
         return Set.copyOf(TYPES.keySet());
     }
 
     /** A page type as written: a bare name is CoolCatLib's. */
-    public static Identifier id(String written) {
-        return written.indexOf(':') >= 0 ? Identifier.parse(written) : Folios.rl(written);
+    public static ResourceLocation id(String written) {
+        return written.indexOf(':') >= 0 ? ResourceLocation.parse(written) : Folios.rl(written);
     }
 }

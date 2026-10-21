@@ -5,7 +5,7 @@ import net.ixdarklord.folios.api.client.GuideBook;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;

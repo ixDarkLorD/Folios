@@ -3,8 +3,8 @@ package net.ixdarklord.folios.api.client;
 import net.ixdarklord.folios.api.client.page.GuideLayout;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.ixdarklord.folios.api.client.page.GuidePainter;
-import net.minecraft.resources.Identifier;
-import org.jspecify.annotations.Nullable;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,20 +28,20 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ul>
  */
 public final class GuideReveals {
-    public static final Identifier NONE = Folios.rl("none");
-    public static final Identifier RISE = Folios.rl("rise");
-    public static final Identifier FADE = Folios.rl("fade");
-    public static final Identifier INK = Folios.rl("ink");
-    public static final Identifier SWEEP = Folios.rl("sweep");
-    public static final Identifier SCATTER = Folios.rl("scatter");
-    public static final Identifier BURN = Folios.rl("burn");
-    public static final Identifier RUNES = Folios.rl("runes");
+    public static final ResourceLocation NONE = Folios.rl("none");
+    public static final ResourceLocation RISE = Folios.rl("rise");
+    public static final ResourceLocation FADE = Folios.rl("fade");
+    public static final ResourceLocation INK = Folios.rl("ink");
+    public static final ResourceLocation SWEEP = Folios.rl("sweep");
+    public static final ResourceLocation SCATTER = Folios.rl("scatter");
+    public static final ResourceLocation BURN = Folios.rl("burn");
+    public static final ResourceLocation RUNES = Folios.rl("runes");
     /** The reveal a book has when book.json doesn't say. */
     public static final GuideReveal.Use DEFAULT = new GuideReveal.Use(RISE, 0.45F);
     /** How long an effect takes when book.json names it without a length. */
     public static final float DEFAULT_SECONDS = 0.45F;
 
-    private static final Map<Identifier, GuideReveal> EFFECTS = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, GuideReveal> EFFECTS = new ConcurrentHashMap<>();
 
     static {
         register(NONE, (progress, x, y) -> GuideReveal.Look.SHOWN);
@@ -176,8 +176,7 @@ public final class GuideReveals {
     private static final class Runes implements GuideReveal {
         private static final int GLOW = 0x7FD8FF;
         private static final String SYMBOLS = "abcdefghijklmnopqrstuvwxyz";
-        private static final net.minecraft.network.chat.FontDescription FONT =
-                new net.minecraft.network.chat.FontDescription.Resource(Identifier.withDefaultNamespace("alt"));
+        private static final ResourceLocation FONT = ResourceLocation.withDefaultNamespace("alt");
 
         @Override
         public Look look(float progress, float x, float y) {
@@ -226,12 +225,12 @@ public final class GuideReveals {
     }
 
     /** Adds an effect, or replaces the one with that id. Safe to call while mods load. */
-    public static void register(Identifier id, GuideReveal effect) {
+    public static void register(ResourceLocation id, GuideReveal effect) {
         EFFECTS.put(id, effect);
     }
 
     /** The effect with that id; null when there is none. */
-    public static @Nullable GuideReveal get(Identifier id) {
+    public static @Nullable GuideReveal get(ResourceLocation id) {
         return EFFECTS.get(id);
     }
 }
