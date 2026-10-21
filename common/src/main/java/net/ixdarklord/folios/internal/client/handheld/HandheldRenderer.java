@@ -79,6 +79,10 @@ public final class HandheldRenderer {
         HandheldBook book = HandheldBook.current();
         if (book == null) return false;
         Minecraft minecraft = Minecraft.getInstance();
+        // Lit by the level's two lights as they stand in the world (as 26.1 lights the hands), whatever the level left
+        // set: the pages, tabs and bar are lit as facing the viewer, and lights turned with the camera would brighten
+        // and darken them as the head turns. Set before anything is drawn, as most render types draw as the next starts.
+        com.mojang.blaze3d.systems.RenderSystem.setShaderLights(LIGHT_0, LIGHT_1);
         float raise = book.raise(partialTick);
         float open = book.open(partialTick);
         // As thick as the item, shut or open: the same book in the hands as in the hotbar.
@@ -224,6 +228,10 @@ public final class HandheldRenderer {
         minecraft.renderBuffers().bufferSource().endBatch();
         return true;
     }
+
+    // Vanilla's two level lights (Lighting.DIFFUSE_LIGHT_0 and _1), unturned.
+    private static final Vector3f LIGHT_0 = new Vector3f(0.2F, 1.0F, -0.7F).normalize();
+    private static final Vector3f LIGHT_1 = new Vector3f(-0.2F, 1.0F, 0.7F).normalize();
 
     /**
      * Draws a book lying open as someone else reads it, for those around to read along: the spread they have open,
@@ -387,12 +395,14 @@ public final class HandheldRenderer {
         if (book.openSince == 0) book.openSince = now;
         float appear = net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings.transitions() ? easeOut(Math.min(1, (now - book.openSince) / 220.0F)) : 1;
         pose.pushPose();
-        // As far over the pages as the screen book's bar is over its own: its cover's rim, then the gap.
-        pose.translate(-(PW + EDGE), -SCREEN_BORDER - BAR_GAP - GuideBar.HEIGHT, 0);
+        // As far over the pages as the screen book's bar is over its own (its cover's rim, then the gap), and as wide,
+        // centred on the spine.
+        int wide = net.ixdarklord.folios.internal.client.screen.GuideScreen.BOOK_WIDTH;
+        pose.translate(-wide / 2.0F, -SCREEN_BORDER - BAR_GAP - GuideBar.HEIGHT, 0);
         book.barClip.set(toClip).mul(pose.last().pose());
         WorldPainter painter = new WorldPainter(pose, collector, light, bar.palette(), book.session, book, book.seconds(),
                 book.barPointer[0], book.barPointer[1], book.barHits).lightAs(PAGE_LIGHT);
-        bar.draw(painter, Math.round(2 * (PW + EDGE)), appear);
+        bar.draw(painter, wide, appear);
         painter.end();
         mergeTooltip(book, painter);
         pose.popPose();
@@ -402,6 +412,9 @@ public final class HandheldRenderer {
     // The reader's hands under the book's lower corners, holding it as they hold a map in both hands, a little further
     // apart while it is open. In the book's frame before it is scaled to page pixels (blocks, y up), so they follow it
     // wherever it is held and however it leans.
+    /** While the book's hands are drawn: the arms take no pose for what they hold (AvatarRendererMixin). */
+    public static boolean drawingHands;
+
     private static void hands(PoseStack pose, SubmitNodeCollector collector, int light, LocalPlayer player, float open) {
         PlayerRenderer renderer = (PlayerRenderer) Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
         float halfWide = Mth.lerp(Mth.clamp(open, 0, 1), (PW + EDGE) / 2.0F, PW + EDGE) * SCALE;
@@ -417,8 +430,15 @@ public final class HandheldRenderer {
             pose.mulPose(Axis.XP.rotationDegrees(45.0F));
             pose.mulPose(Axis.ZP.rotationDegrees(invert * -41.0F));
             pose.translate(invert * 0.3F, -1.1F, 0.45F);
-            if (arm == HumanoidArm.RIGHT) renderer.renderRightHand(pose, collector.buffers(), light, player);
-            else renderer.renderLeftHand(pose, collector.buffers(), light, player);
+            // With no pose of the arm's own (AvatarRendererMixin): this version poses a hand drawn alone as the arm is
+            // posed for what it holds, so the hands turned as the book went from held shut to being read.
+            drawingHands = true;
+            try {
+                if (arm == HumanoidArm.RIGHT) renderer.renderRightHand(pose, collector.buffers(), light, player);
+                else renderer.renderLeftHand(pose, collector.buffers(), light, player);
+            } finally {
+                drawingHands = false;
+            }
             pose.popPose();
         }
     }

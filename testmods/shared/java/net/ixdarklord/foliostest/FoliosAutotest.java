@@ -54,6 +54,16 @@ public final class FoliosAutotest {
             new Step(70, minecraft -> shot(minecraft, "03_open")),
             new Step(1, minecraft -> GuideClient.open(JOURNAL, "crafting/tools", InteractionHand.MAIN_HAND)),
             new Step(70, minecraft -> shot(minecraft, "04_recipes")),
+            // The same spread looked at from another way: the pages, tabs and bar must keep their light.
+            new Step(1, minecraft -> {
+                minecraft.player.setYRot(135.0F);
+                minecraft.player.setXRot(-15.0F);
+            }),
+            new Step(20, minecraft -> shot(minecraft, "04b_recipes_turned")),
+            new Step(1, minecraft -> {
+                minecraft.player.setYRot(0.0F);
+                minecraft.player.setXRot(0.0F);
+            }),
             new Step(1, minecraft -> GuideClient.open(JOURNAL, "world/builds", InteractionHand.MAIN_HAND)),
             new Step(90, minecraft -> shot(minecraft, "05_multiblock")),
             new Step(1, minecraft -> minecraft.options.setCameraType(CameraType.THIRD_PERSON_FRONT)),
