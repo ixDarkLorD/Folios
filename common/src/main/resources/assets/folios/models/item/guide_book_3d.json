@@ -1,4 +1,5 @@
 {
+  "gui_light": "front",
   "textures": {
     "leather": "folios:item/guide_book/leather",
     "pages": "folios:item/guide_book/pages",
