@@ -76,7 +76,7 @@ public record GuideCoverText(float x, float titleY, float subtitleY, float z, fl
         pose.pushPose();
         pose.translate(line.x() * unit, line.y() * unit, lettering.z() * unit);
         float scale = rows.scale() * unit;
-        pose.scale(scale, -scale, scale);
+        net.ixdarklord.folios.internal.compat.Compat.scale(pose, scale, -scale, scale);
         for (int index = 0; index < rows.lines().size(); index++) {
             FormattedCharSequence row = rows.lines().get(index);
             collector.submitText(pose, -font.width(row) / 2.0F, rows.top() + index * 9, row, false, Font.DisplayMode.POLYGON_OFFSET, light, color, 0, 0);

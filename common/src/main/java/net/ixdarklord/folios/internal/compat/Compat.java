@@ -31,6 +31,22 @@ public final class Compat {
         last.normal().mul(new Matrix3f(matrix).normal());
     }
 
+    /**
+     * PoseStack.scale as later versions do it. 1.20.1's takes a cube root by a trick that breaks on a negative
+     * product, so mirroring one axis (y, to turn page pixels upright) left the normals garbage and every face lit
+     * at the ambient floor.
+     */
+    public static void scale(PoseStack pose, float x, float y, float z) {
+        PoseStack.Pose last = pose.last();
+        last.pose().scale(x, y, z);
+        if (Math.abs(x) == Math.abs(y) && Math.abs(y) == Math.abs(z)) {
+            if (x < 0 || y < 0 || z < 0) last.normal().scale(Math.signum(x), Math.signum(y), Math.signum(z));
+            return;
+        }
+        float size = (float) Math.cbrt(Math.abs(x * y * z));
+        last.normal().scale(size / x, size / y, size / z);
+    }
+
     /** PoseStack.Pose.transformNormal: a direction turned by the pose, normalized. */
     public static Vector3f transformNormal(PoseStack.Pose pose, float x, float y, float z, Vector3f out) {
         return pose.normal().transform(out.set(x, y, z)).normalize();

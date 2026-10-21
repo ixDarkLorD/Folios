@@ -7,7 +7,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.ixdarklord.coolcatcore.api.client.registry.ExtraModels;
 import net.ixdarklord.folios.api.GuideBooks;
 import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.api.client.GuideStyles;
 import net.ixdarklord.folios.internal.compat.SubmitNodeCollector;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.ixdarklord.folios.internal.core.GuideRegistry;
@@ -30,17 +29,13 @@ import java.util.Set;
 
 // The guide book item, drawn in code (its item model is "builtin/entity"): the model a stack's book asks for in its
 // book.json ("models"/"item", a model id like "mymod:handbook" for assets/mymod/models/item/handbook.json), or Folios's
-// own; and while its holder reads it in their hands, as others see them, the book's open model ("models"/"open") or
-// Folios's. In inventory slots it is the flat icon, unless the book asks for its model there ("models"/"gui": "model").
+// own; and while its holder reads it in their hands, as others see them, the book's open model ("models"/"open"), if
+// it names one. In inventory slots it is the flat icon, unless the book asks for its model there ("models"/"gui": "model").
 // Each model is drawn with its own display transform, its tinted faces in the book's colours (tint 0 the cover, 1 the
 // book's own colour), and Folios's own 3D model with the book's name lettered on its cover.
 public final class GuideBookItemModel {
     private static final ResourceLocation MODEL = Folios.rl("item/guide_book_3d");
     private static final ResourceLocation FLAT = Folios.rl("item/guide_book_flat");
-    /** The open book others see a reader hold, for books that name none of their own. */
-    private static final ResourceLocation OPEN = Folios.rl("item/guide_book_open");
-    // A screen book is held part open while its screen is up, its halves leaning up from the spine.
-    private static final ResourceLocation HALF_OPEN = Folios.rl("item/guide_book_half_open");
     private static final int FALLBACK = 0xFF3A2E58;
     private static final int FALLBACK_ACCENT = 0xFF8B6CFF;
     private static final RandomSource RANDOM = RandomSource.create();
@@ -54,7 +49,7 @@ public final class GuideBookItemModel {
 
     // The models books name, read from their book.json files as the resources load.
     private static Collection<ResourceLocation> models(ResourceManager resources) {
-        Set<ResourceLocation> models = new LinkedHashSet<>(List.of(MODEL, FLAT, OPEN, HALF_OPEN));
+        Set<ResourceLocation> models = new LinkedHashSet<>(List.of(MODEL, FLAT));
         resources.listResources("guides", id -> id.getPath().endsWith("/book.json")).forEach((file, resource) -> {
             try (Reader reader = resource.openAsReader()) {
                 JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
@@ -81,10 +76,7 @@ public final class GuideBookItemModel {
         boolean thirdPerson = context == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
         ResourceLocation model = book != null && book.itemModel() != null ? itemModel(book.itemModel()) : null;
         // Held up open by someone reading it, seen from outside them: the book's open model.
-        if (GuideRegistry.isReading(stack) && thirdPerson) {
-            model = book != null && book.models().open() != null ? itemModel(book.models().open())
-                    : book != null && !book.style().equals(GuideStyles.HANDHELD) ? HALF_OPEN : OPEN;
-        }
+        if (GuideRegistry.isReading(stack) && thirdPerson && book != null && book.models().open() != null) model = itemModel(book.models().open());
         boolean lettered = false;
         if (model == null) {
             boolean flatInSlots = book == null || !book.models().guiModel();

@@ -353,11 +353,11 @@ public final class WorldPainter extends AbstractPainter {
         pose.pushPose();
         if (surface == null) {
             pose.translate(x + 8, y + 8, z);
-            pose.scale(16, -16, ITEM_DEPTH);
+            net.ixdarklord.folios.internal.compat.Compat.scale(pose, 16, -16, ITEM_DEPTH);
         } else {
             this.onSurface(surface, this.pageX(x + 8), this.pageY(y + 8), z + SURFACE_LIFT);
             float scale = this.pageScale();
-            pose.scale(16 * scale, -16 * scale, ITEM_DEPTH);
+            net.ixdarklord.folios.internal.compat.Compat.scale(pose, 16 * scale, -16 * scale, ITEM_DEPTH);
         }
         minecraft.getItemRenderer().render(stack, ItemDisplayContext.GUI, false, pose, new PageItemCollector(collector.buffers(), argb, this.itemLight()),
                 light, OverlayTexture.NO_OVERLAY, model);
