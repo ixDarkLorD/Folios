@@ -211,7 +211,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
         SceneControl.Extra show = new SceneControl.Extra(Component.translatableWithFallback("folios.build.show", "Show in the world"), () -> {
             BuildGuide.start(name, blocks);
             Minecraft minecraft = Minecraft.getInstance();
-            if (minecraft.screen != null) minecraft.screen.onClose();
+            if (minecraft.gui.screen() != null) minecraft.gui.screen().onClose();
         });
         return part -> {
             int[] range = part.clip(LEFT + INNER, LEFT + WIDTH - INNER);

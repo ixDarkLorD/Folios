@@ -132,7 +132,7 @@ public final class HandheldScreen extends Screen {
 
     @Override
     public void tick() {
-        if (HandheldBook.current() != book) this.minecraft.setScreen(null);
+        if (HandheldBook.current() != book) this.minecraft.gui.setScreen(null);
     }
 
     // ---- Looking about and walking while reading ----
