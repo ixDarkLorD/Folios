@@ -1,0 +1,1156 @@
+{
+  "textures": {
+    "leather": "folios:item/guide_book/leather",
+    "metal": "folios:item/guide_book/metal",
+    "ornaments": "folios:item/guide_book/ornaments"
+  },
+  "elements": [
+    {
+      "name": "strap #shut",
+      "from": [
+        15.36,
+        7.3143,
+        -1.078
+      ],
+      "to": [
+        16.56,
+        8.6857,
+        0.24
+      ],
+      "faces": {
+        "north": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            7,
+            1.5,
+            9
+          ],
+          "tintindex": 0
+        },
+        "south": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            7,
+            1.5,
+            9
+          ],
+          "tintindex": 0
+        },
+        "east": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            7,
+            1.5,
+            9
+          ],
+          "tintindex": 0
+        },
+        "west": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            7,
+            1.5,
+            9
+          ],
+          "tintindex": 0
+        },
+        "up": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            7,
+            1.5,
+            9
+          ],
+          "tintindex": 0
+        },
+        "down": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            7,
+            1.5,
+            9
+          ],
+          "tintindex": 0
+        }
+      }
+    },
+    {
+      "name": "title plate #title",
+      "from": [
+        1.6,
+        11.0286,
+        0.0
+      ],
+      "to": [
+        14.4,
+        14.0,
+        0.128
+      ],
+      "faces": {
+        "north": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            14.5,
+            1.5,
+            16
+          ],
+          "tintindex": 0
+        },
+        "south": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            14.5,
+            1.5,
+            16
+          ],
+          "tintindex": 0
+        },
+        "east": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            14.5,
+            1.5,
+            16
+          ],
+          "tintindex": 0
+        },
+        "west": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            14.5,
+            1.5,
+            16
+          ],
+          "tintindex": 0
+        },
+        "up": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            14.5,
+            1.5,
+            16
+          ],
+          "tintindex": 0
+        },
+        "down": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            14.5,
+            1.5,
+            16
+          ],
+          "tintindex": 0
+        }
+      },
+      "board": "front"
+    },
+    {
+      "name": "title plate rim top",
+      "from": [
+        1.2,
+        14.0,
+        0.0
+      ],
+      "to": [
+        14.8,
+        14.2857,
+        0.24
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "up": {
+          "texture": "#metal"
+        },
+        "down": {
+          "texture": "#metal"
+        }
+      },
+      "board": "front"
+    },
+    {
+      "name": "title plate rim foot",
+      "from": [
+        1.2,
+        10.7429,
+        0.0
+      ],
+      "to": [
+        14.8,
+        11.0286,
+        0.24
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "up": {
+          "texture": "#metal"
+        },
+        "down": {
+          "texture": "#metal"
+        }
+      },
+      "board": "front"
+    },
+    {
+      "name": "title plate rim left",
+      "from": [
+        1.2,
+        11.0286,
+        0.0
+      ],
+      "to": [
+        1.6,
+        14.0,
+        0.24
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "up": {
+          "texture": "#metal"
+        },
+        "down": {
+          "texture": "#metal"
+        }
+      },
+      "board": "front"
+    },
+    {
+      "name": "title plate rim right",
+      "from": [
+        14.4,
+        11.0286,
+        0.0
+      ],
+      "to": [
+        14.8,
+        14.0,
+        0.24
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "up": {
+          "texture": "#metal"
+        },
+        "down": {
+          "texture": "#metal"
+        }
+      },
+      "board": "front"
+    },
+    {
+      "name": "summary plate #summary",
+      "from": [
+        1.6,
+        2.0,
+        0.0
+      ],
+      "to": [
+        14.4,
+        4.8571,
+        0.128
+      ],
+      "faces": {
+        "north": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            14.5,
+            1.5,
+            16
+          ],
+          "tintindex": 0
+        },
+        "south": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            14.5,
+            1.5,
+            16
+          ],
+          "tintindex": 0
+        },
+        "east": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            14.5,
+            1.5,
+            16
+          ],
+          "tintindex": 0
+        },
+        "west": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            14.5,
+            1.5,
+            16
+          ],
+          "tintindex": 0
+        },
+        "up": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            14.5,
+            1.5,
+            16
+          ],
+          "tintindex": 0
+        },
+        "down": {
+          "texture": "#leather",
+          "uv": [
+            0,
+            14.5,
+            1.5,
+            16
+          ],
+          "tintindex": 0
+        }
+      },
+      "board": "front"
+    },
+    {
+      "name": "summary plate rim top",
+      "from": [
+        1.2,
+        4.8571,
+        0.0
+      ],
+      "to": [
+        14.8,
+        5.1429,
+        0.24
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "up": {
+          "texture": "#metal"
+        },
+        "down": {
+          "texture": "#metal"
+        }
+      },
+      "board": "front"
+    },
+    {
+      "name": "summary plate rim foot",
+      "from": [
+        1.2,
+        1.7143,
+        0.0
+      ],
+      "to": [
+        14.8,
+        2.0,
+        0.24
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "up": {
+          "texture": "#metal"
+        },
+        "down": {
+          "texture": "#metal"
+        }
+      },
+      "board": "front"
+    },
+    {
+      "name": "summary plate rim left",
+      "from": [
+        1.2,
+        2.0,
+        0.0
+      ],
+      "to": [
+        1.6,
+        4.8571,
+        0.24
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "up": {
+          "texture": "#metal"
+        },
+        "down": {
+          "texture": "#metal"
+        }
+      },
+      "board": "front"
+    },
+    {
+      "name": "summary plate rim right",
+      "from": [
+        14.4,
+        2.0,
+        0.0
+      ],
+      "to": [
+        14.8,
+        4.8571,
+        0.24
+      ],
+      "faces": {
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "up": {
+          "texture": "#metal"
+        },
+        "down": {
+          "texture": "#metal"
+        }
+      },
+      "board": "front"
+    },
+    {
+      "name": "corner front head arm",
+      "from": [
+        12.0,
+        15.1429,
+        0.0
+      ],
+      "to": [
+        16.4,
+        16.2857,
+        0.48
+      ],
+      "faces": {
+        "north": {
+          "texture": "#ornaments",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        },
+        "south": {
+          "texture": "#ornaments",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        },
+        "east": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "west": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "up": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "down": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "corner front head leg",
+      "from": [
+        14.8,
+        13.1429,
+        0.0
+      ],
+      "to": [
+        16.4,
+        15.1429,
+        0.48
+      ],
+      "faces": {
+        "north": {
+          "texture": "#ornaments",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        },
+        "south": {
+          "texture": "#ornaments",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        },
+        "east": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "west": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "up": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "down": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "corner front foot arm",
+      "from": [
+        12.0,
+        -0.2857,
+        0.0
+      ],
+      "to": [
+        16.4,
+        0.8571,
+        0.48
+      ],
+      "faces": {
+        "north": {
+          "texture": "#ornaments",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        },
+        "south": {
+          "texture": "#ornaments",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        },
+        "east": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "west": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "up": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "down": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "corner front foot leg",
+      "from": [
+        14.8,
+        0.8571,
+        0.0
+      ],
+      "to": [
+        16.4,
+        2.8571,
+        0.48
+      ],
+      "faces": {
+        "north": {
+          "texture": "#ornaments",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        },
+        "south": {
+          "texture": "#ornaments",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        },
+        "east": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "west": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "up": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "down": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "emblem setting",
+      "from": [
+        5.76,
+        6.4,
+        0.0
+      ],
+      "to": [
+        10.24,
+        9.6,
+        0.4
+      ],
+      "faces": {
+        "north": {
+          "texture": "#ornaments",
+          "uv": [
+            8,
+            0,
+            12,
+            4
+          ]
+        },
+        "south": {
+          "texture": "#ornaments",
+          "uv": [
+            8,
+            0,
+            12,
+            4
+          ]
+        },
+        "east": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "west": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "up": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "down": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        }
+      },
+      "board": "front",
+      "rotation": {
+        "origin": [
+          8.0,
+          8.0,
+          0.0
+        ],
+        "axis": "z",
+        "angle": 45
+      }
+    },
+    {
+      "name": "emblem gem",
+      "from": [
+        6.8,
+        7.1429,
+        0.4
+      ],
+      "to": [
+        9.2,
+        8.8571,
+        0.96
+      ],
+      "faces": {
+        "north": {
+          "texture": "#ornaments",
+          "uv": [
+            12,
+            0,
+            16,
+            4
+          ],
+          "tintindex": 1
+        },
+        "south": {
+          "texture": "#ornaments",
+          "uv": [
+            12,
+            0,
+            16,
+            4
+          ],
+          "tintindex": 1
+        },
+        "east": {
+          "texture": "#ornaments",
+          "uv": [
+            12,
+            0,
+            16,
+            4
+          ],
+          "tintindex": 1
+        },
+        "west": {
+          "texture": "#ornaments",
+          "uv": [
+            12,
+            0,
+            16,
+            4
+          ],
+          "tintindex": 1
+        },
+        "up": {
+          "texture": "#ornaments",
+          "uv": [
+            12,
+            0,
+            16,
+            4
+          ],
+          "tintindex": 1
+        },
+        "down": {
+          "texture": "#ornaments",
+          "uv": [
+            12,
+            0,
+            16,
+            4
+          ],
+          "tintindex": 1
+        }
+      },
+      "board": "front",
+      "rotation": {
+        "origin": [
+          8.0,
+          8.0,
+          0.0
+        ],
+        "axis": "z",
+        "angle": 45
+      }
+    },
+    {
+      "name": "clasp #shut",
+      "from": [
+        13.44,
+        6.7429,
+        0.08
+      ],
+      "to": [
+        15.84,
+        9.2571,
+        0.64
+      ],
+      "faces": {
+        "north": {
+          "texture": "#ornaments",
+          "uv": [
+            0,
+            4,
+            4,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#ornaments",
+          "uv": [
+            0,
+            4,
+            4,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "west": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "up": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        },
+        "down": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ]
+        }
+      },
+      "board": "front"
+    },
+    {
+      "name": "band top #spine",
+      "from": [
+        -0.6,
+        12.8571,
+        -0.45
+      ],
+      "to": [
+        0.6,
+        13.7143,
+        0.32
+      ],
+      "faces": {
+        "north": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            4,
+            8,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            4,
+            8,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            4,
+            8,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            4,
+            8,
+            8
+          ]
+        },
+        "up": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            4,
+            8,
+            8
+          ]
+        },
+        "down": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            4,
+            8,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "name": "band foot #spine",
+      "from": [
+        -0.6,
+        2.2857,
+        -0.45
+      ],
+      "to": [
+        0.6,
+        3.1429,
+        0.32
+      ],
+      "faces": {
+        "north": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            4,
+            8,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            4,
+            8,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            4,
+            8,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            4,
+            8,
+            8
+          ]
+        },
+        "up": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            4,
+            8,
+            8
+          ]
+        },
+        "down": {
+          "texture": "#ornaments",
+          "uv": [
+            4,
+            4,
+            8,
+            8
+          ]
+        }
+      }
+    }
+  ]
+}

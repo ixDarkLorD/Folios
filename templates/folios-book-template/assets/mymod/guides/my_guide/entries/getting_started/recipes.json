@@ -1,0 +1,19 @@
+{
+  "name": "Recipes",
+  "icon": "minecraft:crafting_table",
+  "sort": 1,
+  "pages": [
+    {
+      "type": "recipe",
+      "recipe": "minecraft:torch",
+      "text": "One recipe, with a line under it."
+    },
+    {
+      "type": "recipe",
+      "recipes": [
+        "minecraft:iron_pickaxe",
+        "minecraft:iron_axe"
+      ]
+    }
+  ]
+}

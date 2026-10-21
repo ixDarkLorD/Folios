@@ -1,0 +1,12 @@
+{
+  "name": "Deep Notes",
+  "icon": "minecraft:diamond",
+  "sort": 2,
+  "advancement": "minecraft:story/mine_diamond",
+  "pages": [
+    {
+      "type": "text",
+      "text": "You found diamonds, so this entry opened."
+    }
+  ]
+}

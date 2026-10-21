@@ -1,0 +1,30 @@
+{
+  "name": "First Quest",
+  "icon": "minecraft:iron_pickaxe",
+  "featured": true,
+  "sort": -1,
+  "pages": [
+    {
+      "type": "quest",
+      "title": "Getting Started",
+      "text": "Quests follow what you do: these tick themselves off as you play.",
+      "reward": "A sense of **accomplishment**",
+      "objectives": [
+        {
+          "read": "basics/first_steps"
+        },
+        {
+          "category": "crafting"
+        },
+        {
+          "item": "minecraft:oak_log",
+          "count": 8
+        },
+        {
+          "advancement": "minecraft:story/mine_stone",
+          "label": "Mine some stone"
+        }
+      ]
+    }
+  ]
+}

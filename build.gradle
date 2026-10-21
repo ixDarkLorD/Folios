@@ -1,0 +1,24 @@
+plugins {
+    alias libs.plugins.architectury.loom.noremap apply false
+    alias libs.plugins.architectury.plugin apply false
+    alias libs.plugins.shadow apply false
+    alias libs.plugins.modpublisher apply false
+}
+
+// Every project's Java, jar, resource and publishing setup.
+apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4/main.gradle"
+
+// Versions read <minecraft>+<mod version>, like 26.1.2+1.0 (the shared scripts' own form is 26.1.2-1).
+subprojects {
+    version = "${libs.versions.minecraft.get()}+${mod_version}"
+    // Every jar carries the mod's license (MPL-2.0).
+    tasks.withType(Jar).configureEach {
+        from(rootProject.file("LICENSE"))
+    }
+    // The shared script fixes the Maven version as it applies; this one follows the version above.
+    afterEvaluate {
+        if (project.extensions.findByName("publishing") != null) {
+            publishing.publications.withType(MavenPublication).configureEach { it.version = project.version }
+        }
+    }
+}

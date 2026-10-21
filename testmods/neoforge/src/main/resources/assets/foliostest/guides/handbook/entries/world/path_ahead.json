@@ -1,0 +1,165 @@
+{
+  "name": "The Path Ahead",
+  "icon": "minecraft:filled_map",
+  "sort": 0,
+  "pages": [
+    "Some pages are too wide for one page. A **spread** lies over both pages of the open book: a map of where to go next, a build to walk round, a wide picture.",
+    {
+      "type": "spread",
+      "title": "The Path Ahead",
+      "map": {
+        "nodes": [
+          {
+            "id": "start",
+            "x": 22,
+            "y": 58,
+            "icon": "minecraft:oak_sapling",
+            "entry": "basics/first_steps",
+            "name": "First Steps"
+          },
+          {
+            "id": "quest",
+            "x": 70,
+            "y": 26,
+            "icon": "minecraft:compass",
+            "entry": "basics/first_quest",
+            "name": "A First Quest"
+          },
+          {
+            "id": "tools",
+            "x": 84,
+            "y": 90,
+            "icon": "minecraft:iron_pickaxe",
+            "entry": "crafting/tools",
+            "name": "Tools"
+          },
+          {
+            "id": "torch",
+            "x": 136,
+            "y": 58,
+            "icon": "minecraft:torch",
+            "entry": "crafting/torches",
+            "name": "Torches"
+          },
+          {
+            "id": "life",
+            "x": 184,
+            "y": 26,
+            "icon": "minecraft:sheep_spawn_egg",
+            "entry": "world/creatures",
+            "name": "Creatures"
+          },
+          {
+            "id": "build",
+            "x": 194,
+            "y": 92,
+            "icon": "minecraft:lantern",
+            "entry": "world/builds",
+            "name": "A Small Shrine"
+          },
+          {
+            "id": "end",
+            "x": 228,
+            "y": 58,
+            "icon": "minecraft:ender_eye",
+            "entry": "secrets/the_end",
+            "name": "The End"
+          }
+        ],
+        "paths": [
+          [
+            "start",
+            "quest"
+          ],
+          [
+            "start",
+            "tools"
+          ],
+          [
+            "quest",
+            "torch"
+          ],
+          [
+            "tools",
+            "torch"
+          ],
+          [
+            "torch",
+            "life"
+          ],
+          [
+            "torch",
+            "build"
+          ],
+          [
+            "life",
+            "end"
+          ],
+          [
+            "build",
+            "end"
+          ]
+        ]
+      },
+      "text": "Each place opens its entry."
+    },
+    {
+      "type": "spread",
+      "title": "A Watchtower",
+      "build": {
+        "pattern": [
+          [
+            "  L  ",
+            "     ",
+            "     ",
+            "     ",
+            "     "
+          ],
+          [
+            " SSS ",
+            "S   S",
+            "S   S",
+            "S   S",
+            " SSS "
+          ],
+          [
+            " CCC ",
+            "C   C",
+            "C   C",
+            "C   C",
+            " CDC "
+          ],
+          [
+            " CCC ",
+            "C   C",
+            "C   C",
+            "C   C",
+            " CDC "
+          ],
+          [
+            " BBB ",
+            "BBBBB",
+            "BBGBB",
+            "BBBBB",
+            " BBB "
+          ]
+        ],
+        "mapping": {
+          "C": "minecraft:stone_bricks",
+          "S": "minecraft:stone_brick_slab",
+          "B": "minecraft:polished_andesite",
+          "G": "minecraft:glowstone",
+          "L": "minecraft:lantern[hanging=false]",
+          "D": "minecraft:air"
+        }
+      },
+      "text": "Drag it round; the eye builds it in the world."
+    },
+    {
+      "type": "spread",
+      "title": "Far Off",
+      "image": "foliostest:textures/gui/config_background.png",
+      "height": 128
+    }
+  ]
+}

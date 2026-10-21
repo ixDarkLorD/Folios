@@ -1,0 +1,38 @@
+modLoader = "javafml"
+loaderVersion = "[${min_neoforge_fml_version},)"
+issueTrackerURL = "${mod_issue_url}"
+license = "${mod_license}"
+
+[[mods]]
+modId = "${modid}"
+displayName = "${mod_name}"
+version = "${mc_version}+${mod_version}"
+description = "${mod_description}"
+authors = "${mod_author}"
+displayURL = "${mod_page_url}"
+updateJSONURL = "${mod_neoforge_update_url}"
+
+[[mixins]]
+config = "${modid}.common.mixins.json"
+
+# Folios is built on CoolCatLib, and sets up after it.
+[[dependencies.${modid}]]
+modId = "coolcatlib"
+type = "required"
+versionRange = "[${coolcatlib_min_version},)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${modid}]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${project.supported_min_neoforge_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${modid}]]
+modId = "minecraft"
+type = "required"
+versionRange = "[${project.supported_min_mc_version},${max_mc_version}]"
+ordering = "NONE"
+side = "BOTH"

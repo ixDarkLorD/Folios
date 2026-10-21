@@ -1,0 +1,11 @@
+apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4/fabric.gradle"
+
+// Uploaded as <minecraft>+<mod version> (the shared scripts would prefix it with "<minecraft>-").
+publisher {
+    setProjectVersion("${project.version}")
+}
+
+// CoolCatLib, which Folios is built on: compiled against and in the dev runs, never bundled.
+dependencies {
+    implementation("net.ixdarklord.coolcatlib:coolcatlib-fabric:${coolcatlib_version}") { transitive = false }
+}

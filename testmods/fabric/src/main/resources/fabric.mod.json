@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "foliostest",
+  "version": "1.0.0",
+
+  "name": "Folios Test",
+  "description": "Folios's demo books",
+  "authors": [
+    "${mod_author}"
+  ],
+
+  "environment": "*",
+  "entrypoints": {
+    "coolcatlib:client": ["net.ixdarklord.foliostest.FoliosTestClient"]
+  },
+
+  "depends": {
+    "java": ">=17",
+    "minecraft": ">=${mc_version} <=${max_mc_version}",
+    "folios": "*"
+  }
+}

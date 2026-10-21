@@ -1,0 +1,16 @@
+{
+  "name": "Light",
+  "icon": "minecraft:torch",
+  "sort": 1,
+  "pages": [
+    {
+      "type": "recipe",
+      "recipe": "minecraft:torch",
+      "text": "Torches keep monsters away."
+    },
+    {
+      "type": "recipe",
+      "recipe": "minecraft:lantern"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "Advanced",
+  "description": "Opens once you have smelted iron.",
+  "icon": "minecraft:iron_ingot",
+  "sort": 1,
+  "advancement": "minecraft:story/smelt_iron"
+}
