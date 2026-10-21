@@ -1,4 +1,7 @@
-build/
+# Gradle output only: a source package may be called build too.
+/build/
+/*/build/
+/testmods/*/build/
 *.ipr
 run/
 *.iws
