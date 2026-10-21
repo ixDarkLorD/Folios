@@ -189,7 +189,7 @@ public final class SharedBooks {
         pose.translate(0.0F, HELD_UP - (player.isCrouching() ? CROUCHED : 0), HELD_AHEAD);
         pose.mulPose(Axis.YP.rotationDegrees(180.0F));
         pose.mulPose(Axis.XP.rotationDegrees(-LEAN));
-        pose.scale(HandheldRenderer.SCALE * SIZE, -HandheldRenderer.SCALE * SIZE, HandheldRenderer.SCALE * SIZE);
+        net.ixdarklord.folios.internal.compat.Compat.scale(pose, HandheldRenderer.SCALE * SIZE, -HandheldRenderer.SCALE * SIZE, HandheldRenderer.SCALE * SIZE);
         pose.translate(0.0F, -GuideLayout.PAGE_HEIGHT / 2.0F, 0.0F);
         // Lit as its reader is, by the world round them.
         HandheldRenderer.drawShared(pose, collector, light, reader, open);
