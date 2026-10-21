@@ -3,7 +3,7 @@ package net.ixdarklord.folios.api.client;
 import net.ixdarklord.folios.api.client.page.GuideIcon;
 import net.ixdarklord.folios.api.client.page.GuidePage;
 import net.minecraft.network.chat.Component;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 

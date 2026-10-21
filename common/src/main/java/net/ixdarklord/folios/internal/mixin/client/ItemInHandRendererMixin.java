@@ -7,7 +7,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.client.renderer.ItemInHandRenderer;
-import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.ixdarklord.folios.internal.compat.SubmitNodeCollector;
+import net.minecraft.client.renderer.MultiBufferSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -39,7 +40,7 @@ public abstract class ItemInHandRendererMixin {
 
 
     @Inject(method = "renderHandsWithItems", at = @At("HEAD"), cancellable = true)
-    private void folios$handheldBook(float frameInterp, PoseStack poseStack, SubmitNodeCollector collector, LocalPlayer player, int lightCoords, CallbackInfo ci) {
-        if (HandheldRenderer.draw(frameInterp, poseStack, collector, player, lightCoords)) ci.cancel();
+    private void folios$handheldBook(float frameInterp, PoseStack poseStack, MultiBufferSource.BufferSource buffers, LocalPlayer player, int lightCoords, CallbackInfo ci) {
+        if (HandheldRenderer.draw(frameInterp, poseStack, SubmitNodeCollector.of(buffers), player, lightCoords)) ci.cancel();
     }
 }

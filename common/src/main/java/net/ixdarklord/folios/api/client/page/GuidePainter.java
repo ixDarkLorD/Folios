@@ -3,10 +3,10 @@ package net.ixdarklord.folios.api.client.page;
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What a page draws with. The same calls draw it on a screen and on the pages of a book held in the world, so a page
@@ -45,7 +45,7 @@ public interface GuidePainter {
     }
 
     /** A part of a texture, from its (u0, v0) to its (u1, v1), each 0 to 1, tinted by {@code argb}. */
-    void texture(Identifier texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb);
+    void texture(ResourceLocation texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb);
 
     /** An item's icon, 16 pixels square; hovering shows its tooltip, and it links to the book's entry about it, if any. */
     void item(ItemStack stack, int x, int y);

@@ -15,11 +15,11 @@ import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -87,14 +87,14 @@ public final class GuideObjective {
     /** How far along it is, 0 to 1. */
     public float progress(GuideBook book) {
         return switch (kind) {
-            case ADVANCEMENT -> GuideProgress.isDone(Identifier.parse(target)) ? 1 : 0;
+            case ADVANCEMENT -> GuideProgress.isDone(ResourceLocation.parse(target)) ? 1 : 0;
             case READ -> GuideMemory.of(book.id()).isRead(target) ? 1 : 0;
             case CATEGORY -> read(book, target);
             case BOOK -> read(book, null);
             case FLAG -> GuideProgress.flag(target) ? 1 : 0;
             case ITEM -> Mth.clamp(this.carried() / (float) goal, 0, 1);
             case SOURCE -> {
-                GuideObjectives.Source source = GuideObjectives.get(Identifier.parse(target));
+                GuideObjectives.Source source = GuideObjectives.get(ResourceLocation.parse(target));
                 LocalPlayer player = Minecraft.getInstance().player;
                 yield source == null || player == null ? 0 : Mth.clamp(source.value(player) / goal, 0, 1);
             }
@@ -116,7 +116,7 @@ public final class GuideObjective {
         return switch (kind) {
             case ITEM -> text.copy().append(Component.literal(" " + Math.min(goal, this.carried()) + "/" + goal));
             case SOURCE -> {
-                GuideObjectives.Source source = GuideObjectives.get(Identifier.parse(target));
+                GuideObjectives.Source source = GuideObjectives.get(ResourceLocation.parse(target));
                 LocalPlayer player = Minecraft.getInstance().player;
                 int value = source == null || player == null ? 0 : (int) Math.min(goal, source.value(player));
                 yield text.copy().append(Component.literal(" " + value + "/" + goal));
@@ -127,7 +127,7 @@ public final class GuideObjective {
 
     private Component defaultLabel(GuideBook book) {
         return switch (kind) {
-            case ADVANCEMENT -> advancementTitle(Identifier.parse(target));
+            case ADVANCEMENT -> advancementTitle(ResourceLocation.parse(target));
             case READ -> {
                 GuideEntry entry = book.entry(target);
                 yield Component.translatableWithFallback("folios.objective.read", "Read %s", entry != null ? entry.title() : Component.literal(target));
@@ -148,7 +148,7 @@ public final class GuideObjective {
     }
 
     // An advancement's own title when the client was shown it, otherwise its name.
-    private static Component advancementTitle(Identifier id) {
+    private static Component advancementTitle(ResourceLocation id) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.getConnection() != null) {
             AdvancementNode node = minecraft.getConnection().getAdvancements().getTree().get(id);

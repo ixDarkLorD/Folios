@@ -2,9 +2,9 @@ package net.ixdarklord.folios.internal.client.paint;
 
 import net.ixdarklord.folios.api.client.page.GuidePainter;
 import net.ixdarklord.folios.internal.core.Folios;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.Identifier;
+import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.folios.internal.compat.RenderPipelines;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * One of the books' small pixel-art icons: a white image (its softer pixels part see-through), drawn at its own size,
@@ -12,7 +12,7 @@ import net.minecraft.resources.Identifier;
  * resource pack can redraw any of them (kept the same size). An icon with frames is a flipbook: its frames stacked
  * top to bottom in the one image, each {@code width} by {@code height}.
  */
-public record PixelIcon(Identifier texture, int width, int height, int frames) {
+public record PixelIcon(ResourceLocation texture, int width, int height, int frames) {
     public static PixelIcon of(String name, int width, int height) {
         return of(name, width, height, 1);
     }

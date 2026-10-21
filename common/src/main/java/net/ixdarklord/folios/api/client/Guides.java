@@ -4,8 +4,8 @@ import net.ixdarklord.folios.internal.client.GuideClient;
 import net.ixdarklord.folios.internal.client.GuideLibrary;
 import net.ixdarklord.folios.internal.client.GuideMemory;
 import net.ixdarklord.folios.internal.client.GuideProgress;
-import net.minecraft.resources.Identifier;
-import org.jspecify.annotations.Nullable;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.function.BooleanSupplier;
@@ -37,7 +37,7 @@ import java.util.function.BooleanSupplier;
 public final class Guides {
     private Guides() {}
 
-    public static @Nullable GuideBook book(Identifier id) {
+    public static @Nullable GuideBook book(ResourceLocation id) {
         return GuideLibrary.book(id);
     }
 
@@ -46,7 +46,7 @@ public final class Guides {
     }
 
     /** Opens a book where the player left off (or at its start), in its own style; false when there is no such book. */
-    public static boolean open(Identifier book) {
+    public static boolean open(ResourceLocation book) {
         return GuideClient.open(book, null, null);
     }
 
@@ -55,12 +55,12 @@ public final class Guides {
      *
      * @return false when there is no such book or entry, or the entry is locked
      */
-    public static boolean open(Identifier book, String entry) {
+    public static boolean open(ResourceLocation book, String entry) {
         return GuideClient.open(book, entry, null);
     }
 
     /** Whether an entry of a book has been opened by the player (kept between games). */
-    public static boolean isRead(Identifier book, String entry) {
+    public static boolean isRead(ResourceLocation book, String entry) {
         return GuideMemory.of(book).isRead(entry);
     }
 

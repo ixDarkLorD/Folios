@@ -13,19 +13,17 @@ import net.ixdarklord.folios.internal.client.GuideRecipes;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.util.context.ContextMap;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.display.FurnaceRecipeDisplay;
-import net.minecraft.world.item.crafting.display.RecipeDisplay;
-import net.minecraft.world.item.crafting.display.ShapedCraftingRecipeDisplay;
-import net.minecraft.world.item.crafting.display.ShapelessCraftingRecipeDisplay;
-import net.minecraft.world.item.crafting.display.SlotDisplay;
-import net.minecraft.world.item.crafting.display.SlotDisplayContext;
-import net.minecraft.world.item.crafting.display.SmithingRecipeDisplay;
-import net.minecraft.world.item.crafting.display.StonecutterRecipeDisplay;
-import org.jspecify.annotations.Nullable;
+import net.ixdarklord.folios.internal.compat.RecipeDisplay;
+import net.ixdarklord.folios.internal.compat.RecipeDisplay.FurnaceRecipeDisplay;
+import net.ixdarklord.folios.internal.compat.RecipeDisplay.ShapedCraftingRecipeDisplay;
+import net.ixdarklord.folios.internal.compat.RecipeDisplay.ShapelessCraftingRecipeDisplay;
+import net.ixdarklord.folios.internal.compat.RecipeDisplay.SlotDisplay;
+import net.ixdarklord.folios.internal.compat.RecipeDisplay.SmithingRecipeDisplay;
+import net.ixdarklord.folios.internal.compat.RecipeDisplay.StonecutterRecipeDisplay;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -33,11 +31,11 @@ import java.util.Map;
 import java.util.Optional;
 
 // One or two recipes as the game shows them: a crafting grid, a furnace, a stonecutter or a smithing table, each
-// slot showing in turn every item it takes. Recipes are asked of the server the first time the page is shown.
-public record RecipePage(List<Identifier> recipes, Optional<String> title, String text) implements GuidePage {
+// slot showing in turn every item it takes. Recipes are read from those the client was sent.
+public record RecipePage(List<ResourceLocation> recipes, Optional<String> title, String text) implements GuidePage {
     public static final MapCodec<RecipePage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Codec.mapEither(Identifier.CODEC.listOf(1, 2).fieldOf("recipes"), Identifier.CODEC.fieldOf("recipe"))
-                    .xmap(either -> either.map(list -> list, List::of), Either::<List<Identifier>, Identifier>left).forGetter(RecipePage::recipes),
+            Codec.mapEither(ResourceLocation.CODEC.listOf(1, 2).fieldOf("recipes"), ResourceLocation.CODEC.fieldOf("recipe"))
+                    .xmap(either -> either.map(list -> list, List::of), Either::<List<ResourceLocation>, ResourceLocation>left).forGetter(RecipePage::recipes),
             Codec.STRING.optionalFieldOf("title").forGetter(RecipePage::title),
             Codec.STRING.optionalFieldOf("text", "").forGetter(RecipePage::text)
     ).apply(instance, RecipePage::new));
@@ -61,14 +59,14 @@ public record RecipePage(List<Identifier> recipes, Optional<String> title, Strin
                 }
                 top += GuideLayout.TITLE_HEIGHT;
             }
-            for (Identifier recipe : recipes) {
+            for (ResourceLocation recipe : recipes) {
                 draw(painter, resolved, recipe, top);
                 top += BOX + GAP;
             }
         });
     }
 
-    private static void draw(GuidePainter painter, Map<SlotDisplay, List<ItemStack>> resolved, Identifier id, int y) {
+    private static void draw(GuidePainter painter, Map<SlotDisplay, List<ItemStack>> resolved, ResourceLocation id, int y) {
         GuidePalette palette = painter.palette();
         int left = GuideLayout.CONTENT_LEFT;
         int right = GuideLayout.CONTENT_RIGHT;
@@ -186,19 +184,7 @@ public record RecipePage(List<Identifier> recipes, Optional<String> title, Strin
     }
 
     private static List<ItemStack> stacks(Map<SlotDisplay, List<ItemStack>> resolved, SlotDisplay display) {
-        List<ItemStack> stacks = resolved.get(display);
-        if (stacks == null) {
-            ContextMap context = context();
-            if (context == null) return List.of();
-            stacks = display.resolveForStacks(context);
-            resolved.put(display, stacks);
-        }
-        return stacks;
-    }
-
-    private static @Nullable ContextMap context() {
-        var level = Minecraft.getInstance().level;
-        return level == null ? null : SlotDisplayContext.fromLevel(level);
+        return display.stacks();
     }
 
     @Override

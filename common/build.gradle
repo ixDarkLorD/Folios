@@ -1,4 +1,4 @@
-apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4/common.gradle"
+apply from: "${rootProject.sharedScripts}/common.gradle"
 
 // A plain jar of this module's own classes (Shadow's default bundles the whole runtime classpath).
 shadowJar {
@@ -8,5 +8,5 @@ shadowJar {
 
 dependencies {
     // CoolCatLib: events, networking, registries, Canvas's scene viewports and style. Never bundled.
-    compileOnly "net.ixdarklord.coolcatlib:coolcatlib-common:${coolcatlib_version}"
+    modCompileOnly("net.ixdarklord.coolcatlib:coolcatlib-common:${coolcatlib_version}") { transitive = false }
 }

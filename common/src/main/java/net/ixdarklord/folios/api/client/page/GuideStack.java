@@ -8,14 +8,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +45,7 @@ public final class GuideStack {
     }
 
     /** One item. */
-    public static GuideStack of(Identifier item) {
+    public static GuideStack of(ResourceLocation item) {
         return new GuideStack(new com.google.gson.JsonPrimitive(item.toString()));
     }
 
@@ -92,12 +92,12 @@ public final class GuideStack {
                 }
             }
             if (text.startsWith("#")) {
-                Identifier tag = Identifier.tryParse(text.substring(1));
+                ResourceLocation tag = ResourceLocation.tryParse(text.substring(1));
                 if (tag == null) return;
                 for (Holder<Item> item : BuiltInRegistries.ITEM.getTagOrEmpty(TagKey.create(Registries.ITEM, tag))) out.add(new ItemStack(item, count));
                 return;
             }
-            Identifier id = Identifier.tryParse(text);
+            ResourceLocation id = ResourceLocation.tryParse(text);
             if (id == null) return;
             int amount = count;
             BuiltInRegistries.ITEM.getOptional(id).ifPresent(item -> out.add(new ItemStack(item, amount)));

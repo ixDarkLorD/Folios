@@ -7,14 +7,14 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.ixdarklord.folios.internal.compat.SubmitNodeCollector;
+import net.ixdarklord.folios.internal.compat.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Reader;
 import java.util.ArrayList;
@@ -37,10 +37,10 @@ import java.util.Optional;
 // (y), how far it stands out (its "to" z) and its "west" face's texture are used. Models are read once and kept
 // until resources reload.
 public final class CoverModel {
-    private static final Map<Identifier, Optional<CoverModel>> LOADED = new HashMap<>();
+    private static final Map<ResourceLocation, Optional<CoverModel>> LOADED = new HashMap<>();
 
     // `tint`: -1 for none, 0 the cover's colour, 1 the book's accent.
-    private record Face(Identifier texture, Vector3f[] corners, float[] uvs, int tint, Vector3f normal, int board, @Nullable Turn turn, int state) {}
+    private record Face(ResourceLocation texture, Vector3f[] corners, float[] uvs, int tint, Vector3f normal, int board, @Nullable Turn turn, int state) {}
 
     /** When a box shows: always, only shut, only open. */
     private static final int ALWAYS = 0;
@@ -80,12 +80,12 @@ public final class CoverModel {
      * A band round the spine: from {@code y0} to {@code y1} up it (0 at the foot, 16 at the head), standing {@code out}
      * off it (in x's units), its face from that part of {@code texture} (0 to 1), tinted as a face's "tintindex" says.
      */
-    public record Band(Identifier texture, float y0, float y1, float out, float u0, float v0, float u1, float v1, int tint) {}
+    public record Band(ResourceLocation texture, float y0, float y1, float out, float u0, float v0, float u1, float v1, int tint) {}
 
-    private final Map<Identifier, List<Face>> byTexture;
+    private final Map<ResourceLocation, List<Face>> byTexture;
     private final List<Band> bands;
 
-    private CoverModel(Map<Identifier, List<Face>> byTexture, List<Band> bands) {
+    private CoverModel(Map<ResourceLocation, List<Face>> byTexture, List<Band> bands) {
         this.byTexture = byTexture;
         this.bands = bands;
     }
@@ -100,12 +100,12 @@ public final class CoverModel {
     }
 
     /** The model with that id, read the first time it is asked for; null when there is none or it can't be read. */
-    public static @Nullable CoverModel get(Identifier id) {
+    public static @Nullable CoverModel get(ResourceLocation id) {
         return LOADED.computeIfAbsent(id, CoverModel::read).orElse(null);
     }
 
-    private static Optional<CoverModel> read(Identifier id) {
-        Identifier file = id.withPath(path -> "models/" + path + ".json");
+    private static Optional<CoverModel> read(ResourceLocation id) {
+        ResourceLocation file = id.withPath(path -> "models/" + path + ".json");
         Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(file);
         if (resource.isEmpty()) {
             Folios.LOGGER.warn("There is no guide cover model {}", file);
@@ -124,7 +124,7 @@ public final class CoverModel {
         if (json.has("textures")) {
             for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("textures").entrySet()) textures.put(entry.getKey(), entry.getValue().getAsString());
         }
-        Map<Identifier, List<Face>> faces = new LinkedHashMap<>();
+        Map<ResourceLocation, List<Face>> faces = new LinkedHashMap<>();
         List<Band> bands = new ArrayList<>();
         if (!json.has("elements")) return new CoverModel(faces, bands);
         for (JsonElement element : json.getAsJsonArray("elements")) {
@@ -138,7 +138,7 @@ public final class CoverModel {
             JsonObject sides = box.getAsJsonObject("faces");
             if (name.contains("#spine")) {
                 JsonObject face = sides.has("west") ? sides.getAsJsonObject("west") : sides.has("south") ? sides.getAsJsonObject("south") : null;
-                Identifier texture = face != null ? texture(face.get("texture").getAsString(), textures) : null;
+                ResourceLocation texture = face != null ? texture(face.get("texture").getAsString(), textures) : null;
                 if (texture == null) continue;
                 float[] uv = face.has("uv") ? floats(face, "uv", 4) : new float[]{0, 0, 16, 16};
                 bands.add(new Band(texture, Math.min(from[1], to[1]), Math.max(from[1], to[1]), Math.max(0, to[2]),
@@ -147,7 +147,7 @@ public final class CoverModel {
             }
             for (Map.Entry<String, JsonElement> side : sides.entrySet()) {
                 JsonObject face = side.getValue().getAsJsonObject();
-                Identifier texture = texture(face.get("texture").getAsString(), textures);
+                ResourceLocation texture = texture(face.get("texture").getAsString(), textures);
                 if (texture == null) continue;
                 Face built = face(side.getKey(), from, to, face, texture, turn, board, state);
                 if (built != null) faces.computeIfAbsent(texture, key -> new ArrayList<>()).add(built);
@@ -157,11 +157,11 @@ public final class CoverModel {
     }
 
     // A texture reference followed through "#name"s to an id, then to its file.
-    private static @Nullable Identifier texture(String reference, Map<String, String> textures) {
+    private static @Nullable ResourceLocation texture(String reference, Map<String, String> textures) {
         String name = reference;
         for (int step = 0; step < 8 && name.startsWith("#"); step++) name = textures.get(name.substring(1));
         if (name == null || name.startsWith("#")) return null;
-        Identifier id = Identifier.parse(name);
+        ResourceLocation id = ResourceLocation.parse(name);
         return id.withPath(path -> "textures/" + path + ".png");
     }
 
@@ -181,7 +181,7 @@ public final class CoverModel {
 
     // One face of a box: its corners in the order block models give them, and their uv, from the face's own "uv" or
     // the box's place as block models work it out.
-    private static @Nullable Face face(String side, float[] from, float[] to, JsonObject json, Identifier texture, @Nullable Turn turn, int board, int state) {
+    private static @Nullable Face face(String side, float[] from, float[] to, JsonObject json, ResourceLocation texture, @Nullable Turn turn, int board, int state) {
         float x0 = from[0], y0 = from[1], z0 = from[2], x1 = to[0], y1 = to[1], z1 = to[2];
         float[][] corners;
         float[] uv;
@@ -258,7 +258,7 @@ public final class CoverModel {
         // A model unit in page pixels, each way: what a box's turn is made in.
         float sx = width / 16.0F;
         float sy = (bottom - top) / 16.0F;
-        for (Map.Entry<Identifier, List<Face>> group : byTexture.entrySet()) {
+        for (Map.Entry<ResourceLocation, List<Face>> group : byTexture.entrySet()) {
             List<Face> faces = group.getValue();
             collector.submitCustomGeometry(pose, RenderTypes.entityCutout(group.getKey()), (last, consumer) -> {
                 for (Face face : faces) {

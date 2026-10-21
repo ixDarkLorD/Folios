@@ -5,10 +5,10 @@ import net.ixdarklord.folios.api.client.page.GuidePalette;
 import net.ixdarklord.folios.api.client.page.GuideStack;
 import net.ixdarklord.folios.api.client.page.GuideText;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -41,11 +41,11 @@ import java.util.Map;
  * @param colors    its colour scheme over the style's own: the page's colours and its tooltips' ({@code "colors"})
  * @param coverText where its name and subtitle are lettered on its cover, and how large ({@code "cover_text"})
  */
-public record GuideBook(Identifier id, String name, String subtitle, String landing, Identifier style, int accent, int cover,
-                        @Nullable Identifier coverTexture, GuideIcon icon, Models models, boolean showProgress, float tilt, float distance, PageTurn pageTurn, GuideReveal.Use reveal, Textures textures, Layout layout, boolean clickOutsideCloses, Handling handling, Colors colors, CoverText coverText,
+public record GuideBook(ResourceLocation id, String name, String subtitle, String landing, ResourceLocation style, int accent, int cover,
+                        @Nullable ResourceLocation coverTexture, GuideIcon icon, Models models, boolean showProgress, float tilt, float distance, PageTurn pageTurn, GuideReveal.Use reveal, Textures textures, Layout layout, boolean clickOutsideCloses, Handling handling, Colors colors, CoverText coverText,
                         List<GuideCategory> categories, Map<String, GuideEntry> entries, Map<Item, Location> itemIndex) {
     /** The item model the {@code folios:guide_book} item takes for this book; null for its own. */
-    public @Nullable Identifier itemModel() {
+    public @Nullable ResourceLocation itemModel() {
         return models.item();
     }
 
@@ -70,8 +70,8 @@ public record GuideBook(Identifier id, String name, String subtitle, String land
      * @param cover null for none
      * @param guiModel whether CoolCatLib's book item shows its model in inventory slots rather than its flat icon
      */
-    public record Models(@Nullable Identifier item, @Nullable Identifier open, @Nullable Identifier cover, boolean hands, boolean guiModel) {
-        public static final Identifier DEFAULT_COVER = Identifier.fromNamespaceAndPath("folios", "guide/handheld_cover");
+    public record Models(@Nullable ResourceLocation item, @Nullable ResourceLocation open, @Nullable ResourceLocation cover, boolean hands, boolean guiModel) {
+        public static final ResourceLocation DEFAULT_COVER = ResourceLocation.fromNamespaceAndPath("folios", "guide/handheld_cover");
         public static final Models DEFAULT = new Models(null, null, DEFAULT_COVER, true, false);
     }
 
@@ -89,11 +89,11 @@ public record GuideBook(Identifier id, String name, String subtitle, String land
      * @param tabPlate drawn on a tab under its icon, tinted with the paper's colour, so the icon reads on any ribbon
      * @param backdrop drawn over the whole screen behind a screen book; null for the world, dimmed
      */
-    public record Textures(Identifier page, Identifier frame, Identifier cover, Identifier tab, Identifier tabPlate, @Nullable Identifier backdrop) {
+    public record Textures(ResourceLocation page, ResourceLocation frame, ResourceLocation cover, ResourceLocation tab, ResourceLocation tabPlate, @Nullable ResourceLocation backdrop) {
         public static final Textures DEFAULT = new Textures(rl("page"), rl("page_frame"), rl("cover"), rl("ribbon"), rl("ribbon_plate"), null);
 
-        private static Identifier rl(String name) {
-            return Identifier.fromNamespaceAndPath("folios", "textures/guide/" + name + ".png");
+        private static ResourceLocation rl(String name) {
+            return ResourceLocation.fromNamespaceAndPath("folios", "textures/guide/" + name + ".png");
         }
     }
 
@@ -210,8 +210,8 @@ public record GuideBook(Identifier id, String name, String subtitle, String land
     /** A place in a book: an entry, and a page of it (0 for its first). */
     public record Location(String entry, int page) {}
 
-    public GuideBook(Identifier id, String name, String subtitle, String landing, Identifier style, int accent, int cover,
-                     @Nullable Identifier coverTexture, GuideIcon icon, Models models, boolean showProgress, float tilt, float distance, PageTurn pageTurn, GuideReveal.Use reveal, Textures textures, Layout layout, boolean clickOutsideCloses, Handling handling, Colors colors, CoverText coverText,
+    public GuideBook(ResourceLocation id, String name, String subtitle, String landing, ResourceLocation style, int accent, int cover,
+                     @Nullable ResourceLocation coverTexture, GuideIcon icon, Models models, boolean showProgress, float tilt, float distance, PageTurn pageTurn, GuideReveal.Use reveal, Textures textures, Layout layout, boolean clickOutsideCloses, Handling handling, Colors colors, CoverText coverText,
                      List<GuideCategory> categories, List<GuideEntry> entries) {
         this(id, name, subtitle, landing, style, accent, cover, coverTexture, icon, models, showProgress, tilt, distance, pageTurn, reveal, textures, layout, clickOutsideCloses, handling, colors, coverText,
                 sortCategories(categories), sortEntries(entries), new HashMap<>());

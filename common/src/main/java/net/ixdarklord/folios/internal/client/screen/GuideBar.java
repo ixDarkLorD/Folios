@@ -14,14 +14,14 @@ import net.ixdarklord.folios.internal.client.GuideReader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Util;
-import org.jspecify.annotations.Nullable;
+import net.minecraft.Util;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 

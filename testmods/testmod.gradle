@@ -3,6 +3,9 @@
 def minecraft = libs.versions.minecraft.get()
 def runName = helper.uppercaseFirstChar(project.name)
 
+// Code every test mod shares (the autotest).
+sourceSets.main.java.srcDir rootProject.file("testmods/shared/java")
+
 loom {
     runs {
         configureEach {
@@ -13,8 +16,8 @@ loom {
 
 // MCP Bridge (../MCPBridge-26.1.2) in dev runs only, when it's been published to Maven Local: lets the game be driven from
 // outside while it runs. Not transitive, so its own CoolCatLib doesn't come in beside this build's.
-if (new File("${System.getProperty('user.home')}/.m2/repository/net/ixdarklord/mcp_bridge").exists()) {
+if (new File("${System.getProperty('user.home')}/.m2/repository/net/ixdarklord/mcp_bridge/mcp_bridge-${project.name - 'testmod-'}/${minecraft}-1").exists()) {
     dependencies {
-        localRuntime("net.ixdarklord.mcp_bridge:mcp_bridge-${project.name - 'testmod-'}:${minecraft}-1") { transitive = false }
+        modLocalRuntime("net.ixdarklord.mcp_bridge:mcp_bridge-${project.name - 'testmod-'}:${minecraft}-1") { transitive = false }
     }
 }

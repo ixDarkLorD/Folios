@@ -1,7 +1,7 @@
 package net.ixdarklord.folios.internal;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 
 import java.util.Locale;
@@ -11,21 +11,21 @@ import java.util.function.Function;
 // What common code (the book item) asks of the client: set by the client's constructor. On a dedicated server
 // nothing is set, and a book's name falls back to its translation key.
 public final class GuideHooks {
-    public static BiConsumer<Identifier, InteractionHand> opener = (book, hand) -> {};
-    public static Function<Identifier, Component> names = GuideHooks::defaultName;
+    public static BiConsumer<ResourceLocation, InteractionHand> opener = (book, hand) -> {};
+    public static Function<ResourceLocation, Component> names = GuideHooks::defaultName;
 
     private GuideHooks() {}
 
-    public static void openFromItem(Identifier book, InteractionHand hand) {
+    public static void openFromItem(ResourceLocation book, InteractionHand hand) {
         opener.accept(book, hand);
     }
 
-    public static Component bookName(Identifier book) {
+    public static Component bookName(ResourceLocation book) {
         return names.apply(book);
     }
 
     /** {@code guide.<namespace>.<path>.name}, with the path in title case as the fallback. */
-    public static Component defaultName(Identifier book) {
+    public static Component defaultName(ResourceLocation book) {
         String path = book.getPath();
         String last = path.substring(path.lastIndexOf('/') + 1).replace('_', ' ');
         StringBuilder title = new StringBuilder();

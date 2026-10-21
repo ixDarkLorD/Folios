@@ -22,8 +22,8 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.util.Util;
-import org.jspecify.annotations.Nullable;
+import net.minecraft.Util;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -194,7 +194,7 @@ public class GuideReader implements AbstractPainter.Navigator {
     // The spreads seen this game, by book, part and page; and for each book, the entries read before it was first
     // opened this game (their pages count as seen).
     private static final java.util.Set<String> SEEN = new java.util.HashSet<>();
-    private static final java.util.Map<net.minecraft.resources.Identifier, java.util.Set<String>> READ_BEFORE = new java.util.HashMap<>();
+    private static final java.util.Map<net.minecraft.resources.ResourceLocation, java.util.Set<String>> READ_BEFORE = new java.util.HashMap<>();
 
     private String seenKey(Spot at) {
         return book.id() + "|" + at.chapter + "|" + at.page;

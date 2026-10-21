@@ -10,14 +10,13 @@ import net.ixdarklord.folios.internal.client.GuideReader;
 import net.ixdarklord.folios.internal.client.GuideSession;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.ixdarklord.folios.internal.compat.SubmitNodeCollector;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
 import net.minecraft.world.entity.Entity;
 
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -132,7 +131,7 @@ public final class SharedBooks {
     /** How far open the book someone holds up is drawn now, 0 shut to 1 open; 1 for none. */
     public static float openness(int holder) {
         HandheldBook own = ownBook(holder);
-        if (own != null) return own.open(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+        if (own != null) return own.open(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
         Shared shared = BOOKS.get(holder);
         return shared != null ? shared.open : 1;
     }
@@ -176,24 +175,24 @@ public final class SharedBooks {
     // Drawn with its reader, from where they stand (`pose` is at their feet, the world's way up): in front of them,
     // between their hands at their chest, leaning back towards their eyes, its pages to anyone looking over their
     // shoulder or standing by.
-    public static void submit(AvatarRenderState state, PoseStack pose, SubmitNodeCollector collector) {
-        Shared shared = BOOKS.get(state.id);
-        HandheldBook own = ownBook(state.id);
-        if (shared == null && own == null || state.isInvisible) return;
+    public static void submit(AbstractClientPlayer player, float partialTicks, PoseStack pose, SubmitNodeCollector collector, int light) {
+        Shared shared = BOOKS.get(player.getId());
+        HandheldBook own = ownBook(player.getId());
+        if (shared == null && own == null || player.isInvisible()) return;
         GuideReader reader = own != null ? own : shared.reader;
         // Held up shut, then opened, as the reader does.
-        float open = own != null ? own.open(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false)) : shared.openNow();
+        float open = own != null ? own.open(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) : shared.openNow();
         pose.pushPose();
         // In the reader's frame, z ahead of them; the book faces back at them, leaning back towards their eyes.
-        pose.mulPose(Axis.YP.rotationDegrees(-state.bodyRot));
-        pose.scale(state.scale, state.scale, state.scale);
-        pose.translate(0.0F, HELD_UP - (state.isCrouching ? CROUCHED : 0), HELD_AHEAD);
+        pose.mulPose(Axis.YP.rotationDegrees(-net.minecraft.util.Mth.rotLerp(partialTicks, player.yBodyRotO, player.yBodyRot)));
+        pose.scale(player.getScale(), player.getScale(), player.getScale());
+        pose.translate(0.0F, HELD_UP - (player.isCrouching() ? CROUCHED : 0), HELD_AHEAD);
         pose.mulPose(Axis.YP.rotationDegrees(180.0F));
         pose.mulPose(Axis.XP.rotationDegrees(-LEAN));
         pose.scale(HandheldRenderer.SCALE * SIZE, -HandheldRenderer.SCALE * SIZE, HandheldRenderer.SCALE * SIZE);
         pose.translate(0.0F, -GuideLayout.PAGE_HEIGHT / 2.0F, 0.0F);
         // Lit as its reader is, by the world round them.
-        HandheldRenderer.drawShared(pose, collector, state.lightCoords, reader, open);
+        HandheldRenderer.drawShared(pose, collector, light, reader, open);
         pose.popPose();
     }
 }

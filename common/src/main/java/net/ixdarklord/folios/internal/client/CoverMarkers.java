@@ -9,9 +9,9 @@ import net.ixdarklord.folios.internal.core.Folios;
 import net.ixdarklord.folios.api.client.page.GuideText;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Reader;
 import java.util.HashMap;
@@ -158,7 +158,7 @@ public final class CoverMarkers {
     private static final float ACROSS = 0.9F;
     private static final float UP = 0.56F;
 
-    private static final Map<Identifier, Markers> READ = new HashMap<>();
+    private static final Map<ResourceLocation, Markers> READ = new HashMap<>();
 
     private CoverMarkers() {}
 
@@ -167,23 +167,23 @@ public final class CoverMarkers {
     }
 
     /** The markers of a block or item model (its id as in "parent": {@code folios:item/guide_book_3d}). */
-    public static Markers of(Identifier model) {
+    public static Markers of(ResourceLocation model) {
         return READ.computeIfAbsent(model, CoverMarkers::read);
     }
 
-    private static Markers read(Identifier model) {
-        Identifier at = model;
+    private static Markers read(ResourceLocation model) {
+        ResourceLocation at = model;
         for (int depth = 0; depth < 8 && at != null; depth++) {
             JsonObject json = load(at);
             if (json == null) return Markers.NONE;
             if (json.has("elements")) return markers(json.getAsJsonArray("elements"));
-            at = json.has("parent") ? Identifier.parse(json.get("parent").getAsString()) : null;
+            at = json.has("parent") ? ResourceLocation.parse(json.get("parent").getAsString()) : null;
         }
         return Markers.NONE;
     }
 
-    private static @Nullable JsonObject load(Identifier model) {
-        Identifier file = model.withPath(path -> "models/" + path + ".json");
+    private static @Nullable JsonObject load(ResourceLocation model) {
+        ResourceLocation file = model.withPath(path -> "models/" + path + ".json");
         Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(file);
         if (resource.isEmpty()) return null;
         try (Reader reader = resource.get().openAsReader()) {

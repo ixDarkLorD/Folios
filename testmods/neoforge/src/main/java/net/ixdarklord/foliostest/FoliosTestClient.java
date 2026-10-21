@@ -8,5 +8,6 @@ public final class FoliosTestClient implements ClientModConstructor {
     @Override
     public void onConstructMod() {
         Guides.setFlag("foliostest:secrets", () -> true);
+        FoliosAutotest.init();
     }
 }

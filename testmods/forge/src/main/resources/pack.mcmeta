@@ -1,0 +1,6 @@
+{
+    "pack": {
+        "description": "Testing Mod Resources",
+        "pack_format": ${resource_pack_format}
+    }
+}

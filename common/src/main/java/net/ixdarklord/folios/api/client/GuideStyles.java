@@ -1,9 +1,9 @@
 package net.ixdarklord.folios.api.client;
 
 import net.ixdarklord.folios.internal.core.Folios;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,10 +20,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * A mod can add its own: {@code GuideStyles.register(MyMod.id("scroll"), (book, at, hand) -> ...)}.
  */
 public final class GuideStyles {
-    public static final Identifier SCREEN = Folios.rl("screen");
-    public static final Identifier HANDHELD = Folios.rl("handheld");
+    public static final ResourceLocation SCREEN = Folios.rl("screen");
+    public static final ResourceLocation HANDHELD = Folios.rl("handheld");
 
-    private static final Map<Identifier, Style> STYLES = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, Style> STYLES = new ConcurrentHashMap<>();
 
     private GuideStyles() {}
 
@@ -39,16 +39,16 @@ public final class GuideStyles {
         void open(GuideBook book, GuideBook.@Nullable Location at, @Nullable InteractionHand hand);
     }
 
-    public static void register(Identifier id, Style style) {
+    public static void register(ResourceLocation id, Style style) {
         STYLES.put(id, style);
     }
 
-    public static @Nullable Style get(Identifier id) {
+    public static @Nullable Style get(ResourceLocation id) {
         return STYLES.get(id);
     }
 
     /** A style as written in a book: a bare name is CoolCatLib's. */
-    public static Identifier id(String written) {
-        return written.indexOf(':') >= 0 ? Identifier.parse(written) : Folios.rl(written);
+    public static ResourceLocation id(String written) {
+        return written.indexOf(':') >= 0 ? ResourceLocation.parse(written) : Folios.rl(written);
     }
 }

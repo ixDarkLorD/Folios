@@ -1,0 +1,20 @@
+apply from: "${rootProject.sharedScripts}/forge.gradle"
+apply from: rootProject.file("testmods/testmod.gradle")
+
+dependencies {
+    implementation project(path: ":forge", configuration: "namedElements")
+    modImplementation("net.ixdarklord.coolcatlib:coolcatlib-forge:${coolcatlib_version}") { transitive = false }
+}
+
+// Forge only finds the mods a run names: Folios's Forge module and this one.
+evaluationDependsOn(":forge")
+loom {
+    mods {
+        folios {
+            sourceSet project(":forge").sourceSets.main
+        }
+        foliostest {
+            sourceSet sourceSets.main
+        }
+    }
+}

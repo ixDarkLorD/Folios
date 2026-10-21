@@ -1,7 +1,6 @@
 {
     "pack": {
         "description": "Testing Mod Resources",
-        "min_format": ${resource_pack_format},
-        "max_format": ${data_pack_format}
+        "pack_format": ${resource_pack_format}
     }
 }

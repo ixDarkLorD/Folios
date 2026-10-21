@@ -5,7 +5,7 @@ import net.ixdarklord.folios.api.client.page.GuideLayout;
 import net.ixdarklord.folios.api.client.page.GuidePage;
 import net.ixdarklord.folios.api.client.page.GuidePainter;
 import net.ixdarklord.folios.api.client.page.GuidePalette;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 // The boxes built-in pages set things in: soft-cornered panels with a hairline edge, and item slots.
 public final class Shapes {
@@ -30,7 +30,7 @@ public final class Shapes {
      * The page's frame, drawn under what is on it: the book's frame texture over the whole page, tinted between the
      * page's lines and the book's colour, so it sits as quietly on dark paper as on parchment.
      */
-    public static void pageFrame(GuidePainter painter, Identifier texture, int width, int height) {
+    public static void pageFrame(GuidePainter painter, ResourceLocation texture, int width, int height) {
         painter.texture(texture, 0, 0, width, height, 0, 0, 1, 1, frameTint(painter));
     }
 
@@ -43,7 +43,7 @@ public final class Shapes {
      * The page's frame, or for half of a spread the frame joined with the other half's: its side at the fold left
      * out, its top and bottom running on (a plain middle column of the texture, stretched) to meet the other page's.
      */
-    public static void pageFrame(GuidePainter painter, Identifier texture, int width, int height, GuidePage.@org.jspecify.annotations.Nullable Laid page, boolean right) {
+    public static void pageFrame(GuidePainter painter, ResourceLocation texture, int width, int height, GuidePage.@org.jetbrains.annotations.Nullable Laid page, boolean right) {
         if (!(page instanceof GuidePage.SpreadHalf)) {
             pageFrame(painter, texture, width, height);
             return;

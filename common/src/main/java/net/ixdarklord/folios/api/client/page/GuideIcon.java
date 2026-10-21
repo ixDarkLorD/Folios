@@ -2,10 +2,10 @@ package net.ixdarklord.folios.api.client.page;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.Identifier;
-import org.jspecify.annotations.Nullable;
+import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.folios.internal.compat.RenderPipelines;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A book's, category's or entry's 16-pixel icon: items ({@link GuideStack}, e.g. {@code "minecraft:compass"}), or a
@@ -15,9 +15,9 @@ public final class GuideIcon {
     public static final GuideIcon NONE = new GuideIcon(null, null);
 
     private final @Nullable GuideStack stack;
-    private final @Nullable Identifier texture;
+    private final @Nullable ResourceLocation texture;
 
-    private GuideIcon(@Nullable GuideStack stack, @Nullable Identifier texture) {
+    private GuideIcon(@Nullable GuideStack stack, @Nullable ResourceLocation texture) {
         this.stack = stack;
         this.texture = texture;
     }
@@ -26,7 +26,7 @@ public final class GuideIcon {
         return new GuideIcon(stack, null);
     }
 
-    public static GuideIcon texture(Identifier texture) {
+    public static GuideIcon texture(ResourceLocation texture) {
         return new GuideIcon(null, texture);
     }
 
@@ -35,12 +35,12 @@ public final class GuideIcon {
         if (json == null || json.isJsonNull()) return NONE;
         if (json.isJsonObject()) {
             JsonObject object = json.getAsJsonObject();
-            if (object.has("texture")) return texture(Identifier.parse(object.get("texture").getAsString()));
+            if (object.has("texture")) return texture(ResourceLocation.parse(object.get("texture").getAsString()));
             if (object.has("item")) return of(GuideStack.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, object.get("item")).getOrThrow());
         }
         if (json.isJsonPrimitive()) {
             String text = json.getAsString();
-            if (text.endsWith(".png")) return texture(Identifier.parse(text));
+            if (text.endsWith(".png")) return texture(ResourceLocation.parse(text));
         }
         return of(GuideStack.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, json).getOrThrow());
     }
@@ -53,7 +53,7 @@ public final class GuideIcon {
         return stack;
     }
 
-    public @Nullable Identifier texture() {
+    public @Nullable ResourceLocation texture() {
         return texture;
     }
 

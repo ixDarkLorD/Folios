@@ -19,11 +19,11 @@ import net.ixdarklord.folios.api.client.page.GuidePageTypes;
 import net.ixdarklord.folios.internal.client.page.ErrorPage;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.resources.FileToIdConverter;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.Mth;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Reader;
 import java.util.ArrayList;
@@ -41,21 +41,21 @@ public final class GuideLibrary {
     private static final float DEFAULT_TILT = 6.0F;
     private static final float DEFAULT_DISTANCE = 0.64F;
 
-    private static Map<Identifier, GuideBook> books = Map.of();
-    private static final Map<Identifier, GuideSession> SESSIONS = new HashMap<>();
+    private static Map<ResourceLocation, GuideBook> books = Map.of();
+    private static final Map<ResourceLocation, GuideSession> SESSIONS = new HashMap<>();
 
     private GuideLibrary() {}
 
-    public static @Nullable GuideBook book(Identifier id) {
+    public static @Nullable GuideBook book(ResourceLocation id) {
         return books.get(id);
     }
 
-    public static Map<Identifier, GuideBook> books() {
+    public static Map<ResourceLocation, GuideBook> books() {
         return books;
     }
 
     /** A book's laid-out pages, kept between openings; null when there is no such book. */
-    public static @Nullable GuideSession session(Identifier id) {
+    public static @Nullable GuideSession session(ResourceLocation id) {
         GuideBook book = books.get(id);
         if (book == null) return null;
         GuideSession session = SESSIONS.get(id);
@@ -74,10 +74,10 @@ public final class GuideLibrary {
     public static void reload(ResourceManager manager) {
         net.ixdarklord.folios.internal.client.handheld.CoverModel.clear();
         CoverMarkers.clear();
-        Map<Identifier, JsonObject> bookFiles = new LinkedHashMap<>();
-        Map<Identifier, Files> parts = new HashMap<>();
-        for (Map.Entry<Identifier, Resource> file : FILES.listMatchingResources(manager).entrySet()) {
-            Identifier id = FILES.fileToId(file.getKey());
+        Map<ResourceLocation, JsonObject> bookFiles = new LinkedHashMap<>();
+        Map<ResourceLocation, Files> parts = new HashMap<>();
+        for (Map.Entry<ResourceLocation, Resource> file : FILES.listMatchingResources(manager).entrySet()) {
+            ResourceLocation id = FILES.fileToId(file.getKey());
             String path = id.getPath();
             JsonObject json;
             try (Reader reader = file.getValue().openAsReader()) {
@@ -102,16 +102,16 @@ public final class GuideLibrary {
                         .entries.put(path.substring(entries + 9), json);
             }
         }
-        Map<Identifier, GuideBook> loaded = new LinkedHashMap<>();
-        for (Map.Entry<Identifier, JsonObject> file : bookFiles.entrySet()) {
-            Identifier id = file.getKey();
+        Map<ResourceLocation, GuideBook> loaded = new LinkedHashMap<>();
+        for (Map.Entry<ResourceLocation, JsonObject> file : bookFiles.entrySet()) {
+            ResourceLocation id = file.getKey();
             try {
                 loaded.put(id, readBook(id, file.getValue(), parts.getOrDefault(id, new Files(Map.of(), Map.of()))));
             } catch (Exception e) {
                 Folios.LOGGER.error("Couldn't load the guide {}: {}", id, e.getMessage());
             }
         }
-        for (Identifier orphan : parts.keySet()) {
+        for (ResourceLocation orphan : parts.keySet()) {
             if (!bookFiles.containsKey(orphan)) Folios.LOGGER.warn("Guide files for {} have no book.json beside them", orphan);
         }
         books = Map.copyOf(loaded);
@@ -120,9 +120,9 @@ public final class GuideLibrary {
         if (!loaded.isEmpty()) Folios.LOGGER.info("Loaded {} guide book(s)", loaded.size());
     }
 
-    private static GuideBook readBook(Identifier id, JsonObject json, Files files) {
+    private static GuideBook readBook(ResourceLocation id, JsonObject json, Files files) {
         String name = string(json, "name", "guide." + id.getNamespace() + "." + id.getPath().replace('/', '.') + ".name");
-        Identifier style = json.has("style") ? GuideStyles.id(json.get("style").getAsString()) : GuideStyles.SCREEN;
+        ResourceLocation style = json.has("style") ? GuideStyles.id(json.get("style").getAsString()) : GuideStyles.SCREEN;
         List<GuideCategory> categories = new ArrayList<>();
         for (Map.Entry<String, JsonObject> file : files.categories.entrySet()) {
             try {
@@ -148,7 +148,7 @@ public final class GuideLibrary {
         }
         return new GuideBook(id, name, string(json, "subtitle", ""), string(json, "landing", ""), style,
                 color(json, "accent", DEFAULT_ACCENT), color(json, "cover", DEFAULT_COVER),
-                json.has("cover_texture") ? Identifier.parse(json.get("cover_texture").getAsString()) : null,
+                json.has("cover_texture") ? ResourceLocation.parse(json.get("cover_texture").getAsString()) : null,
                 json.has("icon") ? GuideIcon.read(json.get("icon")) : ownItem(id),
                 models(json),
                 !json.has("show_progress") || json.get("show_progress").getAsBoolean(),
@@ -206,7 +206,7 @@ public final class GuideLibrary {
                 !json.has("walk") || json.get("walk").getAsBoolean());
     }
 
-    private static GuideEntry readEntry(Identifier book, String id, JsonObject json) {
+    private static GuideEntry readEntry(ResourceLocation book, String id, JsonObject json) {
         String category = json.has("category") ? json.get("category").getAsString() : id.contains("/") ? id.substring(0, id.indexOf('/')) : "";
         List<GuideEntry.Page> pages = new ArrayList<>();
         // An entry of nothing but text can say so: "text" in place of "pages".
@@ -225,7 +225,7 @@ public final class GuideLibrary {
     }
 
     // A page that can't be read is shown as what went wrong, where it would have been, for the book's writer to see.
-    private static GuidePage readPage(Identifier book, String entry, int index, JsonElement json) {
+    private static GuidePage readPage(ResourceLocation book, String entry, int index, JsonElement json) {
         try {
             JsonObject object;
             if (json.isJsonPrimitive()) {
@@ -234,7 +234,7 @@ public final class GuideLibrary {
             } else {
                 object = json.getAsJsonObject();
             }
-            Identifier type = GuidePageTypes.id(object.has("type") ? object.get("type").getAsString() : "text");
+            ResourceLocation type = GuidePageTypes.id(object.has("type") ? object.get("type").getAsString() : "text");
             MapCodec<? extends GuidePage> codec = GuidePageTypes.get(type);
             if (codec == null) throw new IllegalArgumentException("no page type " + type);
             return codec.codec().parse(JsonOps.INSTANCE, object).getOrThrow(IllegalArgumentException::new);
@@ -248,13 +248,13 @@ public final class GuideLibrary {
     private static GuideBook.Models models(JsonObject book) {
         JsonObject json = book.has("models") ? book.getAsJsonObject("models") : new JsonObject();
         GuideBook.Models fallback = GuideBook.Models.DEFAULT;
-        Identifier item = json.has("item") ? Identifier.parse(json.get("item").getAsString())
-                : book.has("item_model") ? Identifier.parse(book.get("item_model").getAsString()) : fallback.item();
-        Identifier open = json.has("open") ? Identifier.parse(json.get("open").getAsString()) : fallback.open();
-        Identifier cover = fallback.cover();
+        ResourceLocation item = json.has("item") ? ResourceLocation.parse(json.get("item").getAsString())
+                : book.has("item_model") ? ResourceLocation.parse(book.get("item_model").getAsString()) : fallback.item();
+        ResourceLocation open = json.has("open") ? ResourceLocation.parse(json.get("open").getAsString()) : fallback.open();
+        ResourceLocation cover = fallback.cover();
         if (json.has("cover")) {
             String named = json.get("cover").getAsString();
-            cover = named.equals("none") ? null : Identifier.parse(named);
+            cover = named.equals("none") ? null : ResourceLocation.parse(named);
         }
         boolean guiModel = json.has("gui") ? json.get("gui").getAsString().equals("model") : fallback.guiModel();
         return new GuideBook.Models(item, open, cover, !json.has("hands") || json.get("hands").getAsBoolean(), guiModel);
@@ -275,7 +275,7 @@ public final class GuideLibrary {
             effect = json.getAsString();
         }
         if (effect.equals("none")) return GuideReveal.Use.NONE;
-        Identifier id = effect.contains(":") ? Identifier.parse(effect) : Identifier.fromNamespaceAndPath("folios", effect);
+        ResourceLocation id = effect.contains(":") ? ResourceLocation.parse(effect) : ResourceLocation.fromNamespaceAndPath("folios", effect);
         if (GuideReveals.get(id) == null) {
             Folios.LOGGER.warn("A guide asks for the reveal effect {}, which no mod has registered", id);
             return GuideReveal.Use.NONE;
@@ -284,7 +284,7 @@ public final class GuideLibrary {
     }
 
     // A book's icon when it names none: its own guide book item, as the book's item is drawn.
-    private static GuideIcon ownItem(Identifier book) {
+    private static GuideIcon ownItem(ResourceLocation book) {
         JsonObject stack = new JsonObject();
         stack.addProperty("id", "folios:guide_book");
         JsonObject components = new JsonObject();
@@ -298,7 +298,7 @@ public final class GuideLibrary {
         GuideBook.Textures fallback = GuideBook.Textures.DEFAULT;
         return new GuideBook.Textures(texture(json, "page", fallback.page()), texture(json, "frame", fallback.frame()),
                 texture(json, "cover", fallback.cover()), texture(json, "tab", fallback.tab()), texture(json, "tab_plate", fallback.tabPlate()),
-                json.has("backdrop") ? Identifier.parse(json.get("backdrop").getAsString()) : fallback.backdrop());
+                json.has("backdrop") ? ResourceLocation.parse(json.get("backdrop").getAsString()) : fallback.backdrop());
     }
 
     // Each position the book sets, the default for the rest; kept within reach of the page.
@@ -319,8 +319,8 @@ public final class GuideLibrary {
         return json.has(key) ? Mth.clamp(json.get(key).getAsInt(), min, max) : fallback;
     }
 
-    private static Identifier texture(JsonObject json, String key, Identifier fallback) {
-        return json.has(key) ? Identifier.parse(json.get(key).getAsString()) : fallback;
+    private static ResourceLocation texture(JsonObject json, String key, ResourceLocation fallback) {
+        return json.has(key) ? ResourceLocation.parse(json.get(key).getAsString()) : fallback;
     }
 
     private static String string(JsonObject json, String key, String fallback) {

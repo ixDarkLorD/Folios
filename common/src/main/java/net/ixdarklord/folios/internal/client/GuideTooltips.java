@@ -4,12 +4,12 @@ import net.ixdarklord.folios.api.client.GuideBook;
 import net.ixdarklord.folios.api.client.page.GuidePalette;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.folios.internal.compat.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +19,8 @@ import java.util.List;
 // the book's ("colors" › "tooltip"), by default its cover's for the ground and gilt warmed by its accent for the
 // frame; the sprites are grey, tinted with them, so the tooltip is drawn here rather than as a vanilla style.
 public final class GuideTooltips {
-    private static final Identifier BACKGROUND = Folios.rl("tooltip/guide_background");
-    private static final Identifier FRAME = Folios.rl("tooltip/guide_frame");
+    private static final ResourceLocation BACKGROUND = Folios.rl("tooltip/guide_background");
+    private static final ResourceLocation FRAME = Folios.rl("tooltip/guide_frame");
     private static final int GILT = 0xFFFFE28C;
     private static final int TITLE = 0xFFF2E6CC;
     private static final int DETAIL = 0xFFA89A86;

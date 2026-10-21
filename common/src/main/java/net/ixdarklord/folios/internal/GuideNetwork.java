@@ -6,7 +6,7 @@ import net.ixdarklord.coolcatcore.api.network.Network;
 import net.ixdarklord.folios.internal.client.GuideClientNetwork;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,9 +17,7 @@ import net.minecraft.util.Unit;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.display.RecipeDisplay;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,7 +34,7 @@ public final class GuideNetwork {
     // Advancements completed or revoked since the last tick, per player; sent together at the end of it.
     private static final Map<UUID, Changes> CHANGED = new HashMap<>();
 
-    private record Changes(Set<Identifier> done, Set<Identifier> undone) {}
+    private record Changes(Set<ResourceLocation> done, Set<ResourceLocation> undone) {}
 
     // The hand each player reads a handheld book in.
     private static final Map<UUID, InteractionHand> READERS = new HashMap<>();
@@ -50,15 +48,11 @@ public final class GuideNetwork {
 
     public static void init() {
         Network.registerClientbound(GuidePayloads.Open.TYPE, GuidePayloads.Open.STREAM_CODEC, (payload, context) -> GuideClientNetwork.open(payload));
-        Network.registerClientbound(GuidePayloads.Recipe.TYPE, GuidePayloads.Recipe.STREAM_CODEC, (payload, context) -> GuideClientNetwork.recipe(payload));
         Network.registerClientbound(GuidePayloads.SharedReading.TYPE, GuidePayloads.SharedReading.STREAM_CODEC, (payload, context) -> GuideClientNetwork.sharedReading(payload));
         Network.registerServerbound(GuidePayloads.ReadingAt.TYPE, GuidePayloads.ReadingAt.STREAM_CODEC, (payload, context) -> {
             if (context.getPlayer() instanceof ServerPlayer player) readingAt(player, payload);
         });
         Network.registerClientbound(GuidePayloads.Advancements.TYPE, GuidePayloads.Advancements.STREAM_CODEC, (payload, context) -> GuideClientNetwork.advancements(payload));
-        Network.registerServerbound(GuidePayloads.RecipeRequest.TYPE, GuidePayloads.RecipeRequest.STREAM_CODEC, (payload, context) -> {
-            if (context.getPlayer() instanceof ServerPlayer player) answerRecipes(player, payload.recipes());
-        });
         PlayerEvents.JOIN.register(player -> {
             if (player instanceof ServerPlayer serverPlayer) sendAll(serverPlayer);
         });
@@ -73,7 +67,7 @@ public final class GuideNetwork {
         ServerTickEvents.END.register(GuideNetwork::flush);
     }
 
-    public static void open(ServerPlayer player, Identifier book, @Nullable String entry) {
+    public static void open(ServerPlayer player, ResourceLocation book, @Nullable String entry) {
         if (Network.canPlayerReceive(player, GuidePayloads.Open.TYPE)) Network.sendToPlayer(player, new GuidePayloads.Open(book, Optional.ofNullable(entry)));
     }
 
@@ -107,14 +101,14 @@ public final class GuideNetwork {
     private static void stopShared(ServerPlayer player) {
         if (SPREADS.remove(player.getUUID()) == null) return;
         GuidePayloads.SharedReading closed = new GuidePayloads.SharedReading(player.getId(), new GuidePayloads.ReadingAt(false, GuidePayloads.NO_BOOK, "", 0, false));
-        for (ServerPlayer other : player.level().players()) {
+        for (ServerPlayer other : player.serverLevel().players()) {
             if (other != player && Network.canPlayerReceive(other, GuidePayloads.SharedReading.TYPE)) Network.sendToPlayer(other, closed);
         }
     }
 
     private static void share(ServerPlayer player, GuidePayloads.ReadingAt payload) {
         GuidePayloads.SharedReading shared = new GuidePayloads.SharedReading(player.getId(), payload);
-        for (ServerPlayer other : player.level().players()) {
+        for (ServerPlayer other : player.serverLevel().players()) {
             if (other == player || other.distanceToSqr(player) > READ_ALONG * READ_ALONG) continue;
             if (Network.canPlayerReceive(other, GuidePayloads.SharedReading.TYPE)) Network.sendToPlayer(other, shared);
         }
@@ -128,7 +122,7 @@ public final class GuideNetwork {
 
     // Recipe unlocks have their own advancements, one per recipe: books don't lock entries behind those, and there are
     // too many to send.
-    private static boolean tracked(Identifier advancement) {
+    private static boolean tracked(ResourceLocation advancement) {
         return !advancement.getPath().startsWith("recipes/");
     }
 
@@ -142,7 +136,7 @@ public final class GuideNetwork {
 
     private static void sendAll(ServerPlayer player) {
         if (!Network.canPlayerReceive(player, GuidePayloads.Advancements.TYPE)) return;
-        List<Identifier> done = new ArrayList<>();
+        List<ResourceLocation> done = new ArrayList<>();
         for (AdvancementHolder holder : player.level().getServer().getAdvancements().getAllAdvancements()) {
             if (tracked(holder.id()) && player.getAdvancements().getOrStartProgress(holder).isDone()) done.add(holder.id());
         }
@@ -168,16 +162,4 @@ public final class GuideNetwork {
         CHANGED.clear();
     }
 
-    private static void answerRecipes(ServerPlayer player, List<Identifier> ids) {
-        var recipes = player.level().getServer().getRecipeManager();
-        for (Identifier id : ids) {
-            List<RecipeDisplay> displays = recipes.byKey(ResourceKey.create(Registries.RECIPE, id))
-                    .map(holder -> {
-                        Recipe<?> recipe = holder.value();
-                        return recipe.display();
-                    })
-                    .orElse(List.of());
-            Network.sendToPlayer(player, new GuidePayloads.Recipe(id, displays.size() > 16 ? displays.subList(0, 16) : displays));
-        }
-    }
 }

@@ -9,8 +9,8 @@ import com.google.gson.JsonParser;
 import net.ixdarklord.coolcatcore.api.platform.Platform;
 import net.ixdarklord.folios.api.client.GuideBook;
 import net.ixdarklord.folios.internal.core.Folios;
-import net.minecraft.resources.Identifier;
-import org.jspecify.annotations.Nullable;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -28,10 +28,10 @@ import java.util.Set;
 // off. One file per book in config/folios/<namespace>/<path>.json, written when a book is closed.
 public final class GuideMemory {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Map<Identifier, GuideMemory> BOOKS = new HashMap<>();
+    private static final Map<ResourceLocation, GuideMemory> BOOKS = new HashMap<>();
     public static final int MAX_BOOKMARKS = 8;
 
-    private final Identifier book;
+    private final ResourceLocation book;
     private final Set<String> read = new LinkedHashSet<>();
     private final Set<String> questsDone = new LinkedHashSet<>();
     // What has been celebrated: "category:<id>", "mastery".
@@ -46,11 +46,11 @@ public final class GuideMemory {
     private int lastPage;
     private boolean dirty;
 
-    private GuideMemory(Identifier book) {
+    private GuideMemory(ResourceLocation book) {
         this.book = book;
     }
 
-    public static synchronized GuideMemory of(Identifier book) {
+    public static synchronized GuideMemory of(ResourceLocation book) {
         return BOOKS.computeIfAbsent(book, id -> {
             GuideMemory memory = new GuideMemory(id);
             memory.load();

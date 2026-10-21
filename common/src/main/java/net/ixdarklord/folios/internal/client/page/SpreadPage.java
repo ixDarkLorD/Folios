@@ -15,11 +15,11 @@ import net.ixdarklord.folios.internal.client.build.BuildGuide;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +32,7 @@ import java.util.Optional;
 // and the text under it, in centred lines. It runs unbroken over the fold: on a screen book, whose pages have the
 // spine between them, each page draws on into the spine to meet the other. In the window's own pixels a node at x 0 is at its left edge, at the window's
 // width (the spread's, less the margins) its right.
-public record SpreadPage(Optional<String> title, String text, Optional<Identifier> image, Optional<Build> build, Optional<MapLayout> map, int height)
+public record SpreadPage(Optional<String> title, String text, Optional<ResourceLocation> image, Optional<Build> build, Optional<MapLayout> map, int height)
         implements GuidePage {
     /** A build in the window: a multiblock page's pattern and mapping. */
     public record Build(List<List<String>> pattern, Map<String, String> mapping) {
@@ -55,18 +55,18 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
     }
 
     /** The map: its places, the paths between them (pairs of ids), and a picture under them. */
-    public record MapLayout(List<Node> nodes, List<List<String>> paths, Optional<Identifier> background) {
+    public record MapLayout(List<Node> nodes, List<List<String>> paths, Optional<ResourceLocation> background) {
         static final Codec<MapLayout> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Node.CODEC.listOf().fieldOf("nodes").forGetter(MapLayout::nodes),
                 Codec.STRING.listOf(2, 2).listOf().optionalFieldOf("paths", List.of()).forGetter(MapLayout::paths),
-                Identifier.CODEC.optionalFieldOf("background").forGetter(MapLayout::background)
+                ResourceLocation.CODEC.optionalFieldOf("background").forGetter(MapLayout::background)
         ).apply(instance, MapLayout::new));
     }
 
     public static final MapCodec<SpreadPage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Codec.STRING.optionalFieldOf("title").forGetter(SpreadPage::title),
             Codec.STRING.optionalFieldOf("text", "").forGetter(SpreadPage::text),
-            Identifier.CODEC.optionalFieldOf("image").forGetter(SpreadPage::image),
+            ResourceLocation.CODEC.optionalFieldOf("image").forGetter(SpreadPage::image),
             Build.CODEC.optionalFieldOf("build").forGetter(SpreadPage::build),
             MapLayout.CODEC.optionalFieldOf("map").forGetter(SpreadPage::map),
             Codec.intRange(40, 150).optionalFieldOf("height", 104).forGetter(SpreadPage::height)
@@ -195,7 +195,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
     private Window window(GuideLayout layout, int top) {
         if (build.isPresent()) return this.buildWindow(layout, top, build.get());
         if (map.isPresent()) return this.mapWindow(top, map.get());
-        Identifier picture = image.orElse(null);
+        ResourceLocation picture = image.orElse(null);
         return part -> {
             if (picture != null) part.texture(picture, LEFT + INNER, top + INNER, WIDTH - INNER * 2, this.windowHeight() - INNER * 2);
         };
@@ -365,7 +365,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
             this.fill(x0 + INNER, y0 + INNER, x1 - INNER, y1 - INNER, palette.panel());
         }
 
-        void texture(Identifier texture, int x, int y, int width, int height) {
+        void texture(ResourceLocation texture, int x, int y, int width, int height) {
             int[] range = this.clip(x, x + width);
             if (range == null) return;
             float u0 = (range[0] - x) / (float) width;

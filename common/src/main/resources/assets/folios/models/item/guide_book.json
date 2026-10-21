@@ -1,7 +1,7 @@
 {
-  "parent": "minecraft:item/generated",
+  "parent": "minecraft:builtin/entity",
+  "gui_light": "front",
   "textures": {
-    "layer0": "folios:item/guide_book",
-    "layer1": "folios:item/guide_book_trim"
+    "particle": "folios:item/guide_book/leather"
   }
 }

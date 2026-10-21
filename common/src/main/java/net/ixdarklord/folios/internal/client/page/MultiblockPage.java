@@ -49,7 +49,7 @@ public record MultiblockPage(List<List<String>> pattern, Map<String, String> map
         for (Map.Entry<String, String> entry : mapping.entrySet()) {
             if (entry.getKey().isEmpty()) continue;
             try {
-                states.put(entry.getKey().charAt(0), BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK, entry.getValue(), false).blockState());
+                states.put(entry.getKey().charAt(0), BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(), entry.getValue(), false).blockState());
             } catch (Exception e) {
                 Folios.LOGGER.warn("A multiblock page names a block it can't read, {}: {}", entry.getValue(), e.getMessage());
             }
