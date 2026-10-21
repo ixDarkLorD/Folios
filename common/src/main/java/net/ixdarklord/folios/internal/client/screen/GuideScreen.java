@@ -44,7 +44,8 @@ public final class GuideScreen extends Screen {
     /** How far the cover shows around the pages, and how wide the fold between them is. */
     public static final int BORDER = 7;
     private static final int SPINE = 6;
-    private static final int BOOK_WIDTH = PW * 2 + SPINE + BORDER * 2;
+    /** The open book across, its border included: as wide as its bar, and the handheld book's. */
+    public static final int BOOK_WIDTH = PW * 2 + SPINE + BORDER * 2;
     private static final int BOOK_HEIGHT = PH + BORDER * 2;
     private static final int BAR = GuideBar.HEIGHT;
     private static final int BAR_GAP = 5;

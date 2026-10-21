@@ -22,16 +22,11 @@ import org.jspecify.annotations.Nullable;
 
 // The "folios:guide_book" item model: the model a stack's book asks for in its book.json ("models"/"item", an item
 // model id like "mymod:handbook" for assets/mymod/items/handbook.json), or the fallback for books that don't; and while
-// its holder reads it in their hands, as others see them, the book's open model ("models"/"open") or CoolCatLib's.
+// its holder reads it in their hands, as others see them, the book's open model ("models"/"open"), if it names one.
 // In inventory slots it is the "flat" icon, unless the book asks for its model there ("models"/"gui": "model"): then
 // "gui", the model without what is too small to read at that size (the cover's lettering), or the model itself.
 public final class GuideBookItemModel implements ItemModel {
     public static final Identifier TYPE = Folios.rl("guide_book");
-    /** The open book others see a reader hold, for books that name none of their own. */
-    private static final Identifier OPEN = Folios.rl("guide_book_open");
-    // A screen book is held part open while its screen is up, its halves leaning up from the spine.
-    private static final Identifier HALF_OPEN = Folios.rl("guide_book_half_open");
-
     private final ItemModel fallback;
     // The flat icon shown in inventory slots, for books that don't ask for their model there; null for none.
     private final @Nullable ItemModel flat;
@@ -56,10 +51,7 @@ public final class GuideBookItemModel implements ItemModel {
         boolean thirdPerson = displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || displayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
         // Held up by someone, shut or open, and drawn in their hands by SharedBooks: not as the item too.
         if (thirdPerson && owner instanceof net.minecraft.world.entity.Entity holder && net.ixdarklord.folios.internal.client.handheld.SharedBooks.isShown(holder)) return;
-        if (item.has(GuideRegistry.READING.get()) && thirdPerson) {
-            model = book != null && book.models().open() != null ? book.models().open()
-                    : book != null && !book.style().equals(net.ixdarklord.folios.api.client.GuideStyles.HANDHELD) ? HALF_OPEN : OPEN;
-        }
+        if (item.has(GuideRegistry.READING.get()) && thirdPerson && book != null && book.models().open() != null) model = book.models().open();
         if (model != null && !resolving) {
             resolving = true;
             try {

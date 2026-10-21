@@ -38,7 +38,7 @@ public abstract class ItemInHandRendererMixin {
     }
 
 
-    @Inject(method = "renderHandsWithItems", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "submitHandsWithItems", at = @At("HEAD"), cancellable = true)
     private void folios$handheldBook(float frameInterp, PoseStack poseStack, SubmitNodeCollector collector, LocalPlayer player, int lightCoords, CallbackInfo ci) {
         if (HandheldRenderer.draw(frameInterp, poseStack, collector, player, lightCoords)) ci.cancel();
     }

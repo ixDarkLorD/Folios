@@ -78,7 +78,7 @@ public final class HandheldBook extends GuideReader {
     public static void openScreen(GuideBook book, GuideSession session, GuideBook.@Nullable Location at, @Nullable InteractionHand hand) {
         Minecraft minecraft = Minecraft.getInstance();
         if (hand == null || minecraft.player == null || current != null) {
-            minecraft.setScreen(new net.ixdarklord.folios.internal.client.screen.GuideScreen(book, session, at));
+            minecraft.gui.setScreen(new net.ixdarklord.folios.internal.client.screen.GuideScreen(book, session, at));
             return;
         }
         HandheldBook opened = new HandheldBook(book, session, at, hand, true);
@@ -112,7 +112,7 @@ public final class HandheldBook extends GuideReader {
         // Carried over from a book already open in the hand: it stays marked as being read.
         if (previous != null) opened.marked = previous.marked;
         minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 0.8F, 0.8F));
-        minecraft.setScreen(new HandheldScreen(opened));
+        minecraft.gui.setScreen(new HandheldScreen(opened));
     }
 
     // ---- Time ----
@@ -153,13 +153,13 @@ public final class HandheldBook extends GuideReader {
         if (!screenShown) {
             if (open >= 1) {
                 screenShown = true;
-                minecraft.setScreen(new net.ixdarklord.folios.internal.client.screen.GuideScreen(book, session, this.here()));
-            } else if (minecraft.screen != null) {
+                minecraft.gui.setScreen(new net.ixdarklord.folios.internal.client.screen.GuideScreen(book, session, this.here()));
+            } else if (minecraft.gui.screen() != null) {
                 this.close();
             }
             return;
         }
-        if (!(minecraft.screen instanceof net.ixdarklord.folios.internal.client.screen.GuideScreen screen)) {
+        if (!(minecraft.gui.screen() instanceof net.ixdarklord.folios.internal.client.screen.GuideScreen screen)) {
             this.close();
             return;
         }
@@ -265,7 +265,7 @@ public final class HandheldBook extends GuideReader {
         shared = null;
         Minecraft minecraft = Minecraft.getInstance();
         if (camera != null) minecraft.options.setCameraType(camera);
-        if (minecraft.screen instanceof HandheldScreen) minecraft.setScreen(null);
+        if (minecraft.gui.screen() instanceof HandheldScreen) minecraft.gui.setScreen(null);
     }
 
     /** Forgets the book at once, as when the player leaves the world. */

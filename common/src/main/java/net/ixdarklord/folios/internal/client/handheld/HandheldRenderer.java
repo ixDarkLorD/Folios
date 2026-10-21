@@ -125,9 +125,9 @@ public final class HandheldRenderer {
         float shutShift = (1 - Mth.clamp(open, 0, 1)) * (PW + EDGE) / 2.0F;
         pose.translate(-shutShift, -PH / 2.0F, 0.0F);
 
-        CameraRenderState camera = minecraft.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState;
+        CameraRenderState camera = minecraft.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
         Matrix4f projection = new Matrix4f().setPerspective(camera.hudFov * Mth.DEG_TO_RAD,
-                minecraft.getWindow().getWidth() / (float) Math.max(1, minecraft.getWindow().getHeight()), 0.05F, 100.0F, RenderSystem.getDevice().isZZeroToOne());
+                minecraft.getWindow().getWidth() / (float) Math.max(1, minecraft.getWindow().getHeight()), 0.05F, 100.0F, RenderSystem.getDevice().getDeviceInfo().isZZeroToOne());
         Matrix4f toClip = projection.mul(camera.viewRotationMatrix, new Matrix4f());
 
         boolean readable = book.isOpen();
@@ -223,9 +223,7 @@ public final class HandheldRenderer {
         if (flip != null) leaf(pose, collector, lit, palette, book, flip, angle);
         pose.popPose();
 
-        // Drawn now, while the view of the hands is in place, as vanilla does at the end of its hands.
-        minecraft.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
-        minecraft.renderBuffers().bufferSource().endBatch();
+        // Drawn with the hands: vanilla renders what was submitted for them right after.
         return true;
     }
 
@@ -392,12 +390,14 @@ public final class HandheldRenderer {
         if (book.openSince == 0) book.openSince = now;
         float appear = net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings.transitions() ? easeOut(Math.min(1, (now - book.openSince) / 220.0F)) : 1;
         pose.pushPose();
-        // As far over the pages as the screen book's bar is over its own: its cover's rim, then the gap.
-        pose.translate(-(PW + EDGE), -SCREEN_BORDER - BAR_GAP - GuideBar.HEIGHT, 0);
+        // As far over the pages as the screen book's bar is over its own (its cover's rim, then the gap), and as wide,
+        // centred on the spine.
+        int wide = net.ixdarklord.folios.internal.client.screen.GuideScreen.BOOK_WIDTH;
+        pose.translate(-wide / 2.0F, -SCREEN_BORDER - BAR_GAP - GuideBar.HEIGHT, 0);
         book.barClip.set(toClip).mul(pose.last().pose());
         WorldPainter painter = new WorldPainter(pose, collector, light, bar.palette(), book.session, book, book.seconds(),
                 book.barPointer[0], book.barPointer[1], book.barHits).lightAs(PAGE_LIGHT);
-        bar.draw(painter, Math.round(2 * (PW + EDGE)), appear);
+        bar.draw(painter, wide, appear);
         painter.end();
         mergeTooltip(book, painter);
         pose.popPose();

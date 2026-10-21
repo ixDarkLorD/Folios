@@ -5,15 +5,12 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.model.Model;
-import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.MovingBlockRenderState;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
-import net.minecraft.client.renderer.feature.ItemFeatureRenderer;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -83,7 +80,7 @@ final class PageItemCollector implements SubmitNodeCollector {
             target.submitCustomGeometry(poseStack, type, (pose, buffer) -> this.faces(pose, buffer, faces, tintLayers, lightCoords, overlayCoords));
             // The shimmer of an enchanted item over it, while it isn't fading.
             if (foilType != ItemStackRenderState.FoilType.NONE && !fading) {
-                target.submitCustomGeometry(poseStack, ItemFeatureRenderer.getFoilRenderType(type, true),
+                target.submitCustomGeometry(poseStack, net.minecraft.client.renderer.rendertype.RenderTypes.glint(),
                         (pose, buffer) -> this.faces(pose, buffer, faces, tintLayers, lightCoords, overlayCoords));
             }
         });
@@ -118,8 +115,8 @@ final class PageItemCollector implements SubmitNodeCollector {
 
     @Override
     public void submitNameTag(PoseStack poseStack, @Nullable Vec3 nameTagAttachment, int offset, Component name, boolean seeThrough, int lightCoords,
-                              double distanceToCameraSq, CameraRenderState camera) {
-        target.submitNameTag(poseStack, nameTagAttachment, offset, name, seeThrough, lightCoords, distanceToCameraSq, camera);
+                              CameraRenderState camera) {
+        target.submitNameTag(poseStack, nameTagAttachment, offset, name, seeThrough, lightCoords, camera);
     }
 
     @Override
@@ -146,15 +143,8 @@ final class PageItemCollector implements SubmitNodeCollector {
     }
 
     @Override
-    public void submitModelPart(ModelPart modelPart, PoseStack poseStack, RenderType renderType, int lightCoords, int overlayCoords,
-                                @Nullable TextureAtlasSprite sprite, boolean sheeted, boolean hasFoil, int tintedColor,
-                                ModelFeatureRenderer.@Nullable CrumblingOverlay crumblingOverlay, int outlineColor) {
-        target.submitModelPart(modelPart, poseStack, renderType, lightCoords, overlayCoords, sprite, sheeted, hasFoil, tintedColor, crumblingOverlay, outlineColor);
-    }
-
-    @Override
-    public void submitMovingBlock(PoseStack poseStack, MovingBlockRenderState movingBlockRenderState) {
-        target.submitMovingBlock(poseStack, movingBlockRenderState);
+    public void submitMovingBlock(PoseStack poseStack, MovingBlockRenderState movingBlockRenderState, int outlineColor) {
+        target.submitMovingBlock(poseStack, movingBlockRenderState, outlineColor);
     }
 
     @Override
@@ -164,8 +154,14 @@ final class PageItemCollector implements SubmitNodeCollector {
     }
 
     @Override
-    public void submitBreakingBlockModel(PoseStack poseStack, BlockStateModel model, long seed, int progress) {
-        target.submitBreakingBlockModel(poseStack, model, seed, progress);
+    public void submitBreakingBlockModel(PoseStack poseStack, List<BlockStateModelPart> parts, int progress) {
+        target.submitBreakingBlockModel(poseStack, parts, progress);
+    }
+
+    @Override
+    public void submitShapeOutline(PoseStack poseStack, net.minecraft.world.phys.shapes.VoxelShape shape, RenderType renderType, int color, float width,
+                                   boolean afterTerrain) {
+        target.submitShapeOutline(poseStack, shape, renderType, color, width, afterTerrain);
     }
 
     @Override
@@ -174,7 +170,12 @@ final class PageItemCollector implements SubmitNodeCollector {
     }
 
     @Override
-    public void submitParticleGroup(ParticleGroupRenderer particleGroupRenderer) {
-        target.submitParticleGroup(particleGroupRenderer);
+    public void submitQuadParticleGroup(net.minecraft.client.renderer.state.level.QuadParticleRenderState particles) {
+        target.submitQuadParticleGroup(particles);
+    }
+
+    @Override
+    public void submitGizmoPrimitives(net.minecraft.client.renderer.gizmos.DrawableGizmoPrimitives.Group group, CameraRenderState camera, boolean onTop) {
+        target.submitGizmoPrimitives(group, camera, onTop);
     }
 }
