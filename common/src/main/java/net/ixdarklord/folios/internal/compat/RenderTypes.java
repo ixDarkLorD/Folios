@@ -7,8 +7,10 @@ import net.minecraft.resources.ResourceLocation;
 public final class RenderTypes {
     private RenderTypes() {}
 
+    // 26.1's entity cutout draws both sides of a face (its pipeline has no culling); this version's culls the back, which
+    // hid faces wound the other way, as the book's mirrored leaf edges are.
     public static RenderType entityCutout(ResourceLocation texture) {
-        return RenderType.entityCutout(texture);
+        return RenderType.entityCutoutNoCull(texture);
     }
 
     public static RenderType entityTranslucent(ResourceLocation texture) {
