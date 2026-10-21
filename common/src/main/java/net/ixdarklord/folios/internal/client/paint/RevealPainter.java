@@ -25,7 +25,7 @@ public final class RevealPainter implements GuidePainter {
     /** How large the cells are that fills and pictures are cut into while an effect differs across them. */
     private static final int CELL = 6;
     private static final int PICTURE_CELL = 12;
-    private static final ResourceLocation RUNES = ResourceLocation.withDefaultNamespace("alt");
+    private static final ResourceLocation RUNES = new ResourceLocation("alt");
 
     private final GuidePainter painter;
     private final GuideReveal effect;

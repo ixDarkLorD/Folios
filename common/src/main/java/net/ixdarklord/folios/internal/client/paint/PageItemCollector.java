@@ -48,49 +48,66 @@ final class PageItemCollector implements MultiBufferSource {
         }
 
         @Override
-        public void addVertex(float x, float y, float z, int color, float u, float v, int overlay, int light, float nx, float ny, float nz) {
+        public void vertex(float x, float y, float z, float red, float green, float blue, float alpha, float u, float v, int overlay, int light, float nx, float ny, float nz) {
             this.normal.set(nx, ny, nz);
             if (relight != null) relight.transform(this.normal).normalize();
-            this.inner.addVertex(x, y, z, FastColor.ARGB32.multiply(color, argb), u, v, overlay, light, this.normal.x, this.normal.y, this.normal.z);
+            int tinted = FastColor.ARGB32.multiply(FastColor.ARGB32.color(Math.round(alpha * 255), Math.round(red * 255), Math.round(green * 255), Math.round(blue * 255)), argb);
+            this.inner.vertex(x, y, z, FastColor.ARGB32.red(tinted) / 255.0F, FastColor.ARGB32.green(tinted) / 255.0F, FastColor.ARGB32.blue(tinted) / 255.0F,
+                    FastColor.ARGB32.alpha(tinted) / 255.0F, u, v, overlay, light, this.normal.x, this.normal.y, this.normal.z);
         }
 
         @Override
-        public VertexConsumer addVertex(float x, float y, float z) {
-            this.inner.addVertex(x, y, z);
+        public VertexConsumer vertex(double x, double y, double z) {
+            this.inner.vertex(x, y, z);
             return this;
         }
 
         @Override
-        public VertexConsumer setColor(int red, int green, int blue, int alpha) {
+        public VertexConsumer color(int red, int green, int blue, int alpha) {
             int tinted = FastColor.ARGB32.multiply(FastColor.ARGB32.color(alpha, red, green, blue), argb);
-            this.inner.setColor(FastColor.ARGB32.red(tinted), FastColor.ARGB32.green(tinted), FastColor.ARGB32.blue(tinted), FastColor.ARGB32.alpha(tinted));
+            this.inner.color(FastColor.ARGB32.red(tinted), FastColor.ARGB32.green(tinted), FastColor.ARGB32.blue(tinted), FastColor.ARGB32.alpha(tinted));
             return this;
         }
 
         @Override
-        public VertexConsumer setUv(float u, float v) {
-            this.inner.setUv(u, v);
+        public VertexConsumer uv(float u, float v) {
+            this.inner.uv(u, v);
             return this;
         }
 
         @Override
-        public VertexConsumer setUv1(int u, int v) {
-            this.inner.setUv1(u, v);
+        public VertexConsumer overlayCoords(int u, int v) {
+            this.inner.overlayCoords(u, v);
             return this;
         }
 
         @Override
-        public VertexConsumer setUv2(int u, int v) {
-            this.inner.setUv2(u, v);
+        public VertexConsumer uv2(int u, int v) {
+            this.inner.uv2(u, v);
             return this;
         }
 
         @Override
-        public VertexConsumer setNormal(float x, float y, float z) {
+        public VertexConsumer normal(float x, float y, float z) {
             this.normal.set(x, y, z);
             if (relight != null) relight.transform(this.normal).normalize();
-            this.inner.setNormal(this.normal.x, this.normal.y, this.normal.z);
+            this.inner.normal(this.normal.x, this.normal.y, this.normal.z);
             return this;
+        }
+
+        @Override
+        public void endVertex() {
+            this.inner.endVertex();
+        }
+
+        @Override
+        public void defaultColor(int red, int green, int blue, int alpha) {
+            this.inner.defaultColor(red, green, blue, alpha);
+        }
+
+        @Override
+        public void unsetDefaultColor() {
+            this.inner.unsetDefaultColor();
         }
     }
 }

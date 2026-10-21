@@ -3,55 +3,60 @@ package net.ixdarklord.folios.internal.compat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.renderer.PanoramaRenderer;
 import net.minecraft.network.chat.Component;
 
 // A screen written against Minecraft 26.1's screen calls.
 public abstract class CompatScreen extends Screen {
+    private static final PanoramaRenderer PANORAMA = new PanoramaRenderer(TitleScreen.CUBE_MAP);
+    // Minecraft 26.1 sets the first focus after laying a screen out; 1.20.1 has no such step, so it's done on the next frame.
+    private boolean focusPending = true;
+
     protected CompatScreen(Component title) {
         super(title);
-        // Minecraft 26.1's screens know the game and its font from the start; 1.21.1's only once they're laid out, which
-        // is after they're told they were opened.
-        this.minecraft = Minecraft.getInstance();
-        this.font = this.minecraft.font;
     }
 
-    // --- Drawing: 26.1 draws the background and the rest in separate calls; 1.21.1's render does both ---
-
-    private boolean skipBackground;
+    // --- Drawing: 26.1 draws the background and the rest in separate calls ---
 
     @Override
     public final void render(GuiGraphics graphics, int mouseX, int mouseY, float a) {
-        GuiGraphicsExtractor extractor = GuiGraphicsExtractor.of(graphics);
-        Cursors.begin();
-        try {
-            this.extractBackground(extractor, mouseX, mouseY, a);
-            this.extractRenderState(extractor, mouseX, mouseY, a);
-        } finally {
-            Cursors.end();
+        if (this.focusPending) {
+            this.focusPending = false;
+            this.setInitialFocus();
         }
+        GuiGraphicsExtractor extractor = GuiGraphicsExtractor.of(graphics);
+        this.extractBackground(extractor, mouseX, mouseY, a);
+        this.extractRenderState(extractor, mouseX, mouseY, a);
     }
 
     /** Draws the widgets (not the background). */
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        this.skipBackground = true;
-        try {
-            super.render(graphics.raw(), mouseX, mouseY, a);
-        } finally {
-            this.skipBackground = false;
-        }
+        super.render(graphics.raw(), mouseX, mouseY, a);
     }
 
     @Override
-    public final void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float a) {
-        if (!this.skipBackground) this.extractBackground(GuiGraphicsExtractor.of(graphics), mouseX, mouseY, a);
+    public final void renderBackground(GuiGraphics graphics) {
+        this.extractBackground(GuiGraphicsExtractor.of(graphics), -1, -1, 0);
     }
 
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        super.renderBackground(graphics.raw(), mouseX, mouseY, a);
+        super.renderBackground(graphics.raw());
     }
 
+    /** The title screen's turning panorama. */
     protected void extractPanorama(GuiGraphicsExtractor graphics, float a) {
-        this.renderPanorama(graphics.raw(), a);
+        graphics.nextStratum();
+        PANORAMA.render(Minecraft.getInstance().getDeltaFrameTime(), 1);
+    }
+
+    /** Minecraft 26.1's first focus after layout: nothing by default (26.1 focuses the first widget for keyboard players). */
+    protected void setInitialFocus() {}
+
+    @Override
+    protected void rebuildWidgets() {
+        super.rebuildWidgets();
+        this.focusPending = true;
     }
 
     // --- Layout ---
@@ -99,8 +104,17 @@ public abstract class CompatScreen extends Screen {
     }
 
     @Override
+    public final boolean mouseReleased(double mouseX, double mouseY, int button) {
+        return this.mouseReleased(CompatInput.release(mouseX, mouseY, button));
+    }
+
+    public boolean mouseReleased(MouseButtonEvent event) {
+        return super.mouseReleased(event.x(), event.y(), event.button());
+    }
+
+    @Override
     public final boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        return this.mouseDragged(new MouseButtonEvent(mouseX, mouseY, new MouseButtonInfo(button, CompatInput.modifiers())), dragX, dragY);
+        return this.mouseDragged(CompatInput.release(mouseX, mouseY, button), dragX, dragY);
     }
 
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
@@ -108,11 +122,12 @@ public abstract class CompatScreen extends Screen {
     }
 
     @Override
-    public final boolean mouseReleased(double mouseX, double mouseY, int button) {
-        return this.mouseReleased(CompatInput.release(mouseX, mouseY, button));
+    public final boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        return this.mouseScrolled(mouseX, mouseY, 0, delta);
     }
 
-    public boolean mouseReleased(MouseButtonEvent event) {
-        return super.mouseReleased(event.x(), event.y(), event.button());
+    /** Minecraft 26.1's scroll, with a horizontal amount (1.20.1 has none). */
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        return super.mouseScrolled(mouseX, mouseY, scrollY);
     }
 }

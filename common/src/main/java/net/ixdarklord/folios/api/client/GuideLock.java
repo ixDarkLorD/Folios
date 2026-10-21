@@ -19,7 +19,7 @@ public record GuideLock(@Nullable ResourceLocation advancement, @Nullable String
     public static final GuideLock NONE = new GuideLock(null, null, false);
 
     public static GuideLock read(JsonObject json) {
-        ResourceLocation advancement = json.has("advancement") ? ResourceLocation.parse(json.get("advancement").getAsString()) : null;
+        ResourceLocation advancement = json.has("advancement") ? new ResourceLocation(json.get("advancement").getAsString()) : null;
         String flag = json.has("flag") ? json.get("flag").getAsString() : null;
         boolean secret = json.has("secret") && json.get("secret").getAsBoolean();
         return advancement == null && flag == null && !secret ? NONE : new GuideLock(advancement, flag, secret);

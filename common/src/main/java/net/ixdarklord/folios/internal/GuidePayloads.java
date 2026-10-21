@@ -1,10 +1,10 @@
 package net.ixdarklord.folios.internal;
 
 import net.ixdarklord.folios.internal.core.Folios;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import io.netty.buffer.ByteBuf;
+import net.ixdarklord.coolcatcore.api.network.CustomPacketPayload;
+import net.ixdarklord.coolcatcore.api.network.codec.ByteBufCodecs;
+import net.ixdarklord.coolcatcore.api.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -21,8 +21,8 @@ public final class GuidePayloads {
     /** The server opening a book, at an entry or its start. */
     public record Open(ResourceLocation book, Optional<String> entry) implements CustomPacketPayload {
         public static final Type<Open> TYPE = new Type<>(Folios.rl("guide_open"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, Open> STREAM_CODEC = StreamCodec.composite(
-                ResourceLocation.STREAM_CODEC, Open::book,
+        public static final StreamCodec<ByteBuf, Open> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.RESOURCE_LOCATION, Open::book,
                 ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs::optional), Open::entry,
                 Open::new);
 
@@ -35,7 +35,7 @@ public final class GuidePayloads {
     /** A client saying its player started or stopped reading the handheld book in a hand (-1 for no hand). */
     public record Reading(boolean reading, int hand) implements CustomPacketPayload {
         public static final Type<Reading> TYPE = new Type<>(Folios.rl("guide_reading"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, Reading> STREAM_CODEC = StreamCodec.composite(
+        public static final StreamCodec<ByteBuf, Reading> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.BOOL, Reading::reading,
                 ByteBufCodecs.VAR_INT, Reading::hand,
                 Reading::new);
@@ -52,9 +52,9 @@ public final class GuidePayloads {
      */
     public record ReadingAt(boolean open, ResourceLocation book, String chapter, int page, boolean shut) implements CustomPacketPayload {
         public static final Type<ReadingAt> TYPE = new Type<>(Folios.rl("guide_reading_at"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, ReadingAt> STREAM_CODEC = StreamCodec.composite(
+        public static final StreamCodec<ByteBuf, ReadingAt> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.BOOL, ReadingAt::open,
-                ResourceLocation.STREAM_CODEC, ReadingAt::book,
+                ByteBufCodecs.RESOURCE_LOCATION, ReadingAt::book,
                 ByteBufCodecs.stringUtf8(256), ReadingAt::chapter,
                 ByteBufCodecs.VAR_INT, ReadingAt::page,
                 ByteBufCodecs.BOOL, ReadingAt::shut,
@@ -69,7 +69,7 @@ public final class GuidePayloads {
     /** The server telling a player which spread someone near them has open in their hands, to read along. */
     public record SharedReading(int reader, ReadingAt at) implements CustomPacketPayload {
         public static final Type<SharedReading> TYPE = new Type<>(Folios.rl("guide_shared_reading"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, SharedReading> STREAM_CODEC = StreamCodec.composite(
+        public static final StreamCodec<ByteBuf, SharedReading> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, SharedReading::reader,
                 ReadingAt.STREAM_CODEC, SharedReading::at,
                 SharedReading::new);
@@ -87,10 +87,10 @@ public final class GuidePayloads {
     /** The advancements a player has completed: all of them ({@code reset}), or ones newly completed or revoked. */
     public record Advancements(boolean reset, List<ResourceLocation> done, List<ResourceLocation> undone) implements CustomPacketPayload {
         public static final Type<Advancements> TYPE = new Type<>(Folios.rl("guide_advancements"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, Advancements> STREAM_CODEC = StreamCodec.composite(
+        public static final StreamCodec<ByteBuf, Advancements> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.BOOL, Advancements::reset,
-                ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list()), Advancements::done,
-                ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list()), Advancements::undone,
+                ByteBufCodecs.RESOURCE_LOCATION.apply(ByteBufCodecs.list()), Advancements::done,
+                ByteBufCodecs.RESOURCE_LOCATION.apply(ByteBufCodecs.list()), Advancements::undone,
                 Advancements::new);
 
         @Override

@@ -25,7 +25,7 @@ public record LinksPage(List<Link> links, Optional<String> title, String text) i
     }
 
     public static final MapCodec<LinksPage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Link.CODEC.listOf(1, 12).fieldOf("links").forGetter(LinksPage::links),
+            net.ixdarklord.folios.internal.compat.Compat.listOf(Link.CODEC, 1, 12).fieldOf("links").forGetter(LinksPage::links),
             Codec.STRING.optionalFieldOf("title").forGetter(LinksPage::title),
             Codec.STRING.optionalFieldOf("text", "").forGetter(LinksPage::text)
     ).apply(instance, LinksPage::new));

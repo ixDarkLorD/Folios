@@ -7,7 +7,7 @@ mod's own `assets`), not a data pack.
 
 1. Copy this folder into `.minecraft/resourcepacks/` and turn it on in Options → Resource Packs.
 2. Rename `assets/mymod` to your namespace and `guides/my_guide` to your book's id. The book is then `<namespace>:<id>`.
-3. Get it in game: `/give @s folios:guide_book[folios:guide_book="mymod:my_guide"]`
+3. Get it in game: `/give @s folios:guide_book{folios_book:"mymod:my_guide"}`
 4. Edit the JSON and press **F3 + T** to reload while the game runs.
 
 ## Layout

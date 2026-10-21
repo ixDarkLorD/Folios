@@ -58,8 +58,8 @@ public class GuideBookItem extends Item {
     public void inventoryTick(ItemStack stack, Level level, Entity owner, int slot, boolean selected) {
         if (level.isClientSide()) return;
         // A player's book marked as being read but no longer in their reading hand (moved, or they stopped): the mark
-        // goes. Anyone else's (a mannequin shown reading) keeps it.
-        if (owner instanceof Player && stack.has(GuideRegistry.READING.get()) && !GuideNetwork.isRead(owner, stack)) stack.remove(GuideRegistry.READING.get());
+        // goes. Anyone else's keeps it.
+        if (owner instanceof Player && GuideRegistry.isReading(stack) && !GuideNetwork.isRead(owner, stack)) GuideRegistry.setReading(stack, false);
     }
 
     @Override

@@ -193,7 +193,7 @@ public final class GuideText {
         int room = firstHeight;
         int top = -1;
         // No room for even a line on the first piece: it stays empty, and the text starts on the next.
-        if (!lines.isEmpty() && firstHeight < lines.getFirst().height()) {
+        if (!lines.isEmpty() && firstHeight < lines.get(0).height()) {
             pieces.add(rebase(List.of(), width));
             room = nextHeight;
         }
@@ -223,10 +223,10 @@ public final class GuideText {
 
     private static GuideText rebase(List<Line> lines, int width) {
         if (lines.isEmpty()) return new GuideText(List.of(), 0, width);
-        int top = lines.getFirst().y;
+        int top = lines.get(0).y;
         List<Line> moved = new ArrayList<>(lines.size());
         for (Line line : lines) moved.add(new Line(line.text, line.x, line.y - top, line.kind, line.first, line.marker));
-        Line last = moved.getLast();
+        Line last = moved.get(moved.size() - 1);
         return new GuideText(moved, last.y + last.height() - 1, width);
     }
 
@@ -297,8 +297,8 @@ public final class GuideText {
                 String target = insertion.substring(LINK.length());
                 int start = Math.round(at[0]);
                 int end = Math.round(at[0] + width);
-                if (!runs.isEmpty() && runs.getLast().target.equals(target) && runs.getLast().x1 == start) {
-                    runs.set(runs.size() - 1, new LinkRun(runs.getLast().x0, end, target));
+                if (!runs.isEmpty() && runs.get(runs.size() - 1).target.equals(target) && runs.get(runs.size() - 1).x1 == start) {
+                    runs.set(runs.size() - 1, new LinkRun(runs.get(runs.size() - 1).x0, end, target));
                 } else {
                     runs.add(new LinkRun(start, end, target));
                 }

@@ -148,7 +148,7 @@ public final class GuideLibrary {
         }
         return new GuideBook(id, name, string(json, "subtitle", ""), string(json, "landing", ""), style,
                 color(json, "accent", DEFAULT_ACCENT), color(json, "cover", DEFAULT_COVER),
-                json.has("cover_texture") ? ResourceLocation.parse(json.get("cover_texture").getAsString()) : null,
+                json.has("cover_texture") ? new ResourceLocation(json.get("cover_texture").getAsString()) : null,
                 json.has("icon") ? GuideIcon.read(json.get("icon")) : ownItem(id),
                 models(json),
                 !json.has("show_progress") || json.get("show_progress").getAsBoolean(),
@@ -237,7 +237,7 @@ public final class GuideLibrary {
             ResourceLocation type = GuidePageTypes.id(object.has("type") ? object.get("type").getAsString() : "text");
             MapCodec<? extends GuidePage> codec = GuidePageTypes.get(type);
             if (codec == null) throw new IllegalArgumentException("no page type " + type);
-            return codec.codec().parse(JsonOps.INSTANCE, object).getOrThrow(IllegalArgumentException::new);
+            return codec.codec().parse(JsonOps.INSTANCE, object).getOrThrow(false, error -> {});
         } catch (Exception e) {
             Folios.LOGGER.error("Couldn't read page {} of the entry {} of the guide {}: {}", index + 1, entry, book, e.getMessage());
             return new ErrorPage("Page " + (index + 1) + " couldn't be read: " + e.getMessage());
@@ -248,13 +248,13 @@ public final class GuideLibrary {
     private static GuideBook.Models models(JsonObject book) {
         JsonObject json = book.has("models") ? book.getAsJsonObject("models") : new JsonObject();
         GuideBook.Models fallback = GuideBook.Models.DEFAULT;
-        ResourceLocation item = json.has("item") ? ResourceLocation.parse(json.get("item").getAsString())
-                : book.has("item_model") ? ResourceLocation.parse(book.get("item_model").getAsString()) : fallback.item();
-        ResourceLocation open = json.has("open") ? ResourceLocation.parse(json.get("open").getAsString()) : fallback.open();
+        ResourceLocation item = json.has("item") ? new ResourceLocation(json.get("item").getAsString())
+                : book.has("item_model") ? new ResourceLocation(book.get("item_model").getAsString()) : fallback.item();
+        ResourceLocation open = json.has("open") ? new ResourceLocation(json.get("open").getAsString()) : fallback.open();
         ResourceLocation cover = fallback.cover();
         if (json.has("cover")) {
             String named = json.get("cover").getAsString();
-            cover = named.equals("none") ? null : ResourceLocation.parse(named);
+            cover = named.equals("none") ? null : new ResourceLocation(named);
         }
         boolean guiModel = json.has("gui") ? json.get("gui").getAsString().equals("model") : fallback.guiModel();
         return new GuideBook.Models(item, open, cover, !json.has("hands") || json.get("hands").getAsBoolean(), guiModel);
@@ -275,7 +275,7 @@ public final class GuideLibrary {
             effect = json.getAsString();
         }
         if (effect.equals("none")) return GuideReveal.Use.NONE;
-        ResourceLocation id = effect.contains(":") ? ResourceLocation.parse(effect) : ResourceLocation.fromNamespaceAndPath("folios", effect);
+        ResourceLocation id = effect.contains(":") ? new ResourceLocation(effect) : new ResourceLocation("folios", effect);
         if (GuideReveals.get(id) == null) {
             Folios.LOGGER.warn("A guide asks for the reveal effect {}, which no mod has registered", id);
             return GuideReveal.Use.NONE;
@@ -298,7 +298,7 @@ public final class GuideLibrary {
         GuideBook.Textures fallback = GuideBook.Textures.DEFAULT;
         return new GuideBook.Textures(texture(json, "page", fallback.page()), texture(json, "frame", fallback.frame()),
                 texture(json, "cover", fallback.cover()), texture(json, "tab", fallback.tab()), texture(json, "tab_plate", fallback.tabPlate()),
-                json.has("backdrop") ? ResourceLocation.parse(json.get("backdrop").getAsString()) : fallback.backdrop());
+                json.has("backdrop") ? new ResourceLocation(json.get("backdrop").getAsString()) : fallback.backdrop());
     }
 
     // Each position the book sets, the default for the rest; kept within reach of the page.
@@ -320,7 +320,7 @@ public final class GuideLibrary {
     }
 
     private static ResourceLocation texture(JsonObject json, String key, ResourceLocation fallback) {
-        return json.has(key) ? ResourceLocation.parse(json.get(key).getAsString()) : fallback;
+        return json.has(key) ? new ResourceLocation(json.get(key).getAsString()) : fallback;
     }
 
     private static String string(JsonObject json, String key, String fallback) {

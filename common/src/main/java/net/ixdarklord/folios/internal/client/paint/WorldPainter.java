@@ -196,10 +196,10 @@ public final class WorldPainter extends AbstractPainter {
                 int color = Float.floatToRawIntBits(drawn[base + 12]);
                 for (int corner = 0; corner < 4; corner++) {
                     int at = base + corner * 3;
-                    var vertex = consumer.addVertex(drawn[at], drawn[at + 1], drawn[at + 2]).setColor(color).setUv(0.5F, 0.5F).setOverlay(OverlayTexture.NO_OVERLAY)
-                            .setLight(light);
-                    if (normal != null) vertex.setNormal(normal.x, normal.y, normal.z);
-                    else vertex.setNormal(last, 0, 0, 1);
+                    var vertex = consumer.vertex(drawn[at], drawn[at + 1], drawn[at + 2]).color(color).uv(0.5F, 0.5F).overlayCoords(OverlayTexture.NO_OVERLAY)
+                            .uv2(light);
+                    if (normal != null) vertex.normal(normal.x, normal.y, normal.z).endVertex();
+                    else vertex.normal(last.normal(), 0, 0, 1).endVertex();
                 }
             }
         });
@@ -211,7 +211,7 @@ public final class WorldPainter extends AbstractPainter {
         surface.axes(x, along, out);
         pose.translate(scratch.x, scratch.y, scratch.z);
         // Columns: the page's x along the curve, its y as it is, its z out of the face.
-        pose.mulPose(new Matrix4f(along.x, along.y, along.z, 0, 0, 1, 0, 0, out.x, out.y, out.z, 0, 0, 0, 0, 1));
+        net.ixdarklord.folios.internal.compat.Compat.mulPose(pose, new Matrix4f(along.x, along.y, along.z, 0, 0, 1, 0, 0, out.x, out.y, out.z, 0, 0, 0, 0, 1));
     }
 
     @Override
@@ -324,11 +324,11 @@ public final class WorldPainter extends AbstractPainter {
         }
         collector.submitCustomGeometry(pose, type, (last, consumer) -> {
             for (int at = 0; at < corners.length; at += 6) {
-                var vertex = consumer.addVertex(corners[at], corners[at + 1], corners[at + 2]).setColor(Float.floatToRawIntBits(corners[at + 5]))
-                        .setUv(corners[at + 3], corners[at + 4])
-                        .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light);
-                if (normal != null) vertex.setNormal(normal.x, normal.y, normal.z);
-                else vertex.setNormal(last, 0, 0, 1);
+                var vertex = consumer.vertex(corners[at], corners[at + 1], corners[at + 2]).color(Float.floatToRawIntBits(corners[at + 5]))
+                        .uv(corners[at + 3], corners[at + 4])
+                        .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light);
+                if (normal != null) vertex.normal(normal.x, normal.y, normal.z).endVertex();
+                else vertex.normal(last.normal(), 0, 0, 1).endVertex();
             }
         });
     }

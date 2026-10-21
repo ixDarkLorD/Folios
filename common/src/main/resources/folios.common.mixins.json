@@ -13,6 +13,7 @@
     "client.SharedBookPoseMixin",
     "client.SharedBookRenderMixin",
     "client.ClientAdvancementsAccessor",
+    "client.EditBoxAccessor",
     "client.GameRendererMixin",
     "client.GuiMixin",
     "client.ItemInHandRendererMixin",

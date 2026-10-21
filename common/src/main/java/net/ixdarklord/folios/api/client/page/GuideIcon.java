@@ -35,14 +35,14 @@ public final class GuideIcon {
         if (json == null || json.isJsonNull()) return NONE;
         if (json.isJsonObject()) {
             JsonObject object = json.getAsJsonObject();
-            if (object.has("texture")) return texture(ResourceLocation.parse(object.get("texture").getAsString()));
-            if (object.has("item")) return of(GuideStack.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, object.get("item")).getOrThrow());
+            if (object.has("texture")) return texture(new ResourceLocation(object.get("texture").getAsString()));
+            if (object.has("item")) return of(GuideStack.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, object.get("item")).getOrThrow(false, error -> {}));
         }
         if (json.isJsonPrimitive()) {
             String text = json.getAsString();
-            if (text.endsWith(".png")) return texture(ResourceLocation.parse(text));
+            if (text.endsWith(".png")) return texture(new ResourceLocation(text));
         }
-        return of(GuideStack.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, json).getOrThrow());
+        return of(GuideStack.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, json).getOrThrow(false, error -> {}));
     }
 
     public boolean isEmpty() {

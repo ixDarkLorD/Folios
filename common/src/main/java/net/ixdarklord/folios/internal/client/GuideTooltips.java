@@ -70,7 +70,7 @@ public final class GuideTooltips {
         List<FormattedCharSequence> styled = new ArrayList<>(lines.size());
         int width = 0;
         for (int index = 0; index < lines.size(); index++) {
-            Component line = Component.empty().withColor(index == 0 ? title : detail).append(lines.get(index));
+            Component line = Component.empty().withStyle(net.minecraft.network.chat.Style.EMPTY.withColor(index == 0 ? title : detail)).append(lines.get(index));
             styled.add(line.getVisualOrderText());
             width = Math.max(width, font.width(line));
         }

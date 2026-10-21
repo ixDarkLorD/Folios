@@ -10,7 +10,7 @@ import net.ixdarklord.folios.api.client.page.GuideStack;
 import net.ixdarklord.folios.api.client.page.GuideText;
 import net.ixdarklord.folios.internal.client.GuideMemory;
 import net.ixdarklord.folios.internal.client.GuideProgress;
-import net.minecraft.advancements.AdvancementNode;
+import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -77,7 +77,7 @@ public final class GuideObjective {
         if (json.has("book")) return new GuideObjective(json, Kind.BOOK, "", 1, null, label);
         if (json.has("flag")) return new GuideObjective(json, Kind.FLAG, json.get("flag").getAsString(), 1, null, label);
         if (json.has("item")) {
-            GuideStack items = GuideStack.CODEC.parse(JsonOps.INSTANCE, json.get("item")).getOrThrow();
+            GuideStack items = GuideStack.CODEC.parse(JsonOps.INSTANCE, json.get("item")).getOrThrow(false, error -> {});
             return new GuideObjective(json, Kind.ITEM, "", goal, items, label);
         }
         if (json.has("source")) return new GuideObjective(json, Kind.SOURCE, json.get("source").getAsString(), goal, null, label);
@@ -87,14 +87,14 @@ public final class GuideObjective {
     /** How far along it is, 0 to 1. */
     public float progress(GuideBook book) {
         return switch (kind) {
-            case ADVANCEMENT -> GuideProgress.isDone(ResourceLocation.parse(target)) ? 1 : 0;
+            case ADVANCEMENT -> GuideProgress.isDone(new ResourceLocation(target)) ? 1 : 0;
             case READ -> GuideMemory.of(book.id()).isRead(target) ? 1 : 0;
             case CATEGORY -> read(book, target);
             case BOOK -> read(book, null);
             case FLAG -> GuideProgress.flag(target) ? 1 : 0;
             case ITEM -> Mth.clamp(this.carried() / (float) goal, 0, 1);
             case SOURCE -> {
-                GuideObjectives.Source source = GuideObjectives.get(ResourceLocation.parse(target));
+                GuideObjectives.Source source = GuideObjectives.get(new ResourceLocation(target));
                 LocalPlayer player = Minecraft.getInstance().player;
                 yield source == null || player == null ? 0 : Mth.clamp(source.value(player) / goal, 0, 1);
             }
@@ -116,7 +116,7 @@ public final class GuideObjective {
         return switch (kind) {
             case ITEM -> text.copy().append(Component.literal(" " + Math.min(goal, this.carried()) + "/" + goal));
             case SOURCE -> {
-                GuideObjectives.Source source = GuideObjectives.get(ResourceLocation.parse(target));
+                GuideObjectives.Source source = GuideObjectives.get(new ResourceLocation(target));
                 LocalPlayer player = Minecraft.getInstance().player;
                 int value = source == null || player == null ? 0 : (int) Math.min(goal, source.value(player));
                 yield text.copy().append(Component.literal(" " + value + "/" + goal));
@@ -127,7 +127,7 @@ public final class GuideObjective {
 
     private Component defaultLabel(GuideBook book) {
         return switch (kind) {
-            case ADVANCEMENT -> advancementTitle(ResourceLocation.parse(target));
+            case ADVANCEMENT -> advancementTitle(new ResourceLocation(target));
             case READ -> {
                 GuideEntry entry = book.entry(target);
                 yield Component.translatableWithFallback("folios.objective.read", "Read %s", entry != null ? entry.title() : Component.literal(target));
@@ -151,9 +151,9 @@ public final class GuideObjective {
     private static Component advancementTitle(ResourceLocation id) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.getConnection() != null) {
-            AdvancementNode node = minecraft.getConnection().getAdvancements().getTree().get(id);
-            if (node != null) {
-                DisplayInfo display = node.holder().value().display().orElse(null);
+            Advancement advancement = minecraft.getConnection().getAdvancements().getAdvancements().get(id);
+            if (advancement != null) {
+                DisplayInfo display = advancement.getDisplay();
                 if (display != null) return display.getTitle();
             }
         }

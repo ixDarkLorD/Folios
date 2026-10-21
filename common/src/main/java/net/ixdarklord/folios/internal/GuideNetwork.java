@@ -4,7 +4,7 @@ import net.ixdarklord.coolcatcore.api.event.v2.common.PlayerEvents;
 import net.ixdarklord.coolcatcore.api.event.v2.common.ServerTickEvents;
 import net.ixdarklord.coolcatcore.api.network.Network;
 import net.ixdarklord.folios.internal.client.GuideClientNetwork;
-import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.Advancement;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
@@ -54,7 +54,7 @@ public final class GuideNetwork {
         });
         Network.registerClientbound(GuidePayloads.Advancements.TYPE, GuidePayloads.Advancements.STREAM_CODEC, (payload, context) -> GuideClientNetwork.advancements(payload));
         PlayerEvents.JOIN.register(player -> {
-            if (player instanceof ServerPlayer serverPlayer) sendAll(serverPlayer);
+            sendAll(player);
         });
         Network.registerServerbound(GuidePayloads.Reading.TYPE, GuidePayloads.Reading.STREAM_CODEC, (payload, context) -> {
             if (context.getPlayer() instanceof ServerPlayer player) reading(player, payload);
@@ -62,7 +62,7 @@ public final class GuideNetwork {
         PlayerEvents.LEAVE.register(player -> {
             CHANGED.remove(player.getUUID());
             READERS.remove(player.getUUID());
-            if (player instanceof ServerPlayer serverPlayer) stopShared(serverPlayer);
+            stopShared(player);
         });
         ServerTickEvents.END.register(GuideNetwork::flush);
     }
@@ -76,7 +76,7 @@ public final class GuideNetwork {
     private static void reading(ServerPlayer player, GuidePayloads.Reading payload) {
         for (InteractionHand hand : InteractionHand.values()) {
             ItemStack stack = player.getItemInHand(hand);
-            if (stack.has(GuideRegistry.READING.get())) stack.remove(GuideRegistry.READING.get());
+            if (GuideRegistry.isReading(stack)) GuideRegistry.setReading(stack, false);
         }
         READERS.remove(player.getUUID());
         if (!payload.reading()) stopShared(player);
@@ -84,7 +84,7 @@ public final class GuideNetwork {
         InteractionHand hand = InteractionHand.values()[payload.hand()];
         ItemStack stack = player.getItemInHand(hand);
         if (!(stack.getItem() instanceof GuideBookItem) && GuideBooks.bookOf(stack) == null) return;
-        stack.set(GuideRegistry.READING.get(), Unit.INSTANCE);
+        GuideRegistry.setReading(stack, true);
         READERS.put(player.getUUID(), hand);
     }
 
@@ -127,18 +127,18 @@ public final class GuideNetwork {
     }
 
     /** Called by PlayerAdvancementsMixin when an advancement of a player's becomes done or no longer done. */
-    public static void changed(ServerPlayer player, AdvancementHolder advancement, boolean done) {
-        if (!tracked(advancement.id())) return;
+    public static void changed(ServerPlayer player, Advancement advancement, boolean done) {
+        if (!tracked(advancement.getId())) return;
         Changes changes = CHANGED.computeIfAbsent(player.getUUID(), uuid -> new Changes(new LinkedHashSet<>(), new LinkedHashSet<>()));
-        (done ? changes.undone : changes.done).remove(advancement.id());
-        (done ? changes.done : changes.undone).add(advancement.id());
+        (done ? changes.undone : changes.done).remove(advancement.getId());
+        (done ? changes.done : changes.undone).add(advancement.getId());
     }
 
     private static void sendAll(ServerPlayer player) {
         if (!Network.canPlayerReceive(player, GuidePayloads.Advancements.TYPE)) return;
         List<ResourceLocation> done = new ArrayList<>();
-        for (AdvancementHolder holder : player.level().getServer().getAdvancements().getAllAdvancements()) {
-            if (tracked(holder.id()) && player.getAdvancements().getOrStartProgress(holder).isDone()) done.add(holder.id());
+        for (Advancement advancement : player.getServer().getAdvancements().getAllAdvancements()) {
+            if (tracked(advancement.getId()) && player.getAdvancements().getOrStartProgress(advancement).isDone()) done.add(advancement.getId());
         }
         Network.sendToPlayer(player, new GuidePayloads.Advancements(true, done, List.of()));
     }

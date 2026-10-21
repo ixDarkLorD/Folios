@@ -34,7 +34,7 @@ import java.util.Optional;
 // slot showing in turn every item it takes. Recipes are read from those the client was sent.
 public record RecipePage(List<ResourceLocation> recipes, Optional<String> title, String text) implements GuidePage {
     public static final MapCodec<RecipePage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Codec.mapEither(ResourceLocation.CODEC.listOf(1, 2).fieldOf("recipes"), ResourceLocation.CODEC.fieldOf("recipe"))
+            Codec.mapEither(net.ixdarklord.folios.internal.compat.Compat.listOf(ResourceLocation.CODEC, 1, 2).fieldOf("recipes"), ResourceLocation.CODEC.fieldOf("recipe"))
                     .xmap(either -> either.map(list -> list, List::of), Either::<List<ResourceLocation>, ResourceLocation>left).forGetter(RecipePage::recipes),
             Codec.STRING.optionalFieldOf("title").forGetter(RecipePage::title),
             Codec.STRING.optionalFieldOf("text", "").forGetter(RecipePage::text)
@@ -52,9 +52,9 @@ public record RecipePage(List<ResourceLocation> recipes, Optional<String> title,
         return layout.flow(title.orElse(null), room + (named ? GuideLayout.TITLE_HEIGHT : 0), text, (painter, y) -> {
             int top = y;
             if (named) {
-                List<RecipeDisplay> first = GuideRecipes.get(recipes.getFirst());
+                List<RecipeDisplay> first = GuideRecipes.get(recipes.get(0));
                 if (first != null && !first.isEmpty()) {
-                    ItemStack made = stacks(resolved, first.getFirst().result()).stream().findFirst().orElse(ItemStack.EMPTY);
+                    ItemStack made = stacks(resolved, first.get(0).result()).stream().findFirst().orElse(ItemStack.EMPTY);
                     if (!made.isEmpty()) GuideLayout.title(painter, made.getHoverName(), y);
                 }
                 top += GuideLayout.TITLE_HEIGHT;
@@ -90,44 +90,39 @@ public record RecipePage(List<ResourceLocation> recipes, Optional<String> title,
         int gridY = y + 4;
         int resultX = right - 30;
         int resultY = y + BOX / 2 - 13;
-        switch (display) {
-            case ShapedCraftingRecipeDisplay shaped -> {
-                grid(painter, resolved, gridX, gridY, 3, 3);
-                for (int row = 0; row < shaped.height(); row++) {
-                    for (int column = 0; column < shaped.width(); column++) {
-                        slot(painter, resolved, shaped.ingredients().get(row * shaped.width() + column), gridX + column * 18, gridY + row * 18, false);
-                    }
+        if (display instanceof ShapedCraftingRecipeDisplay shaped) {
+            grid(painter, resolved, gridX, gridY, 3, 3);
+            for (int row = 0; row < shaped.height(); row++) {
+                for (int column = 0; column < shaped.width(); column++) {
+                    slot(painter, resolved, shaped.ingredients().get(row * shaped.width() + column), gridX + column * 18, gridY + row * 18, false);
                 }
             }
-            case ShapelessCraftingRecipeDisplay shapeless -> {
-                grid(painter, resolved, gridX, gridY, 3, 3);
-                for (int index = 0; index < Math.min(9, shapeless.ingredients().size()); index++) {
-                    slot(painter, resolved, shapeless.ingredients().get(index), gridX + index % 3 * 18, gridY + index / 3 * 18, false);
-                }
-                painter.text(Component.literal("~"), resultX - 30, y + 6, palette.muted());
+        } else if (display instanceof ShapelessCraftingRecipeDisplay shapeless) {
+            grid(painter, resolved, gridX, gridY, 3, 3);
+            for (int index = 0; index < Math.min(9, shapeless.ingredients().size()); index++) {
+                slot(painter, resolved, shapeless.ingredients().get(index), gridX + index % 3 * 18, gridY + index / 3 * 18, false);
             }
-            case FurnaceRecipeDisplay furnace -> {
-                int x = gridX + 18;
-                Shapes.slot(painter, x, gridY);
-                slot(painter, resolved, furnace.ingredient(), x, gridY, false);
-                flame(painter, x + 5, gridY + 22);
-                Shapes.slot(painter, x, gridY + 36);
-                slot(painter, resolved, furnace.fuel(), x, gridY + 36, false);
-                Component time = Component.literal(String.format(java.util.Locale.ROOT, "%.1fs", furnace.duration() / 20.0F)).withStyle(ChatFormatting.ITALIC);
-                painter.text(time, x + 22, gridY + 41, palette.muted());
+            painter.text(Component.literal("~"), resultX - 30, y + 6, palette.muted());
+        } else if (display instanceof FurnaceRecipeDisplay furnace) {
+            int x = gridX + 18;
+            Shapes.slot(painter, x, gridY);
+            slot(painter, resolved, furnace.ingredient(), x, gridY, false);
+            flame(painter, x + 5, gridY + 22);
+            Shapes.slot(painter, x, gridY + 36);
+            slot(painter, resolved, furnace.fuel(), x, gridY + 36, false);
+            Component time = Component.literal(String.format(java.util.Locale.ROOT, "%.1fs", furnace.duration() / 20.0F)).withStyle(ChatFormatting.ITALIC);
+            painter.text(time, x + 22, gridY + 41, palette.muted());
+        } else if (display instanceof StonecutterRecipeDisplay cutting) {
+            Shapes.slot(painter, gridX + 18, gridY + 18);
+            slot(painter, resolved, cutting.input(), gridX + 18, gridY + 18, false);
+        } else if (display instanceof SmithingRecipeDisplay smithing) {
+            SlotDisplay[] parts = {smithing.template(), smithing.base(), smithing.addition()};
+            for (int index = 0; index < 3; index++) {
+                Shapes.slot(painter, gridX + index * 19, gridY + 18);
+                slot(painter, resolved, parts[index], gridX + index * 19, gridY + 18, false);
             }
-            case StonecutterRecipeDisplay cutting -> {
-                Shapes.slot(painter, gridX + 18, gridY + 18);
-                slot(painter, resolved, cutting.input(), gridX + 18, gridY + 18, false);
-            }
-            case SmithingRecipeDisplay smithing -> {
-                SlotDisplay[] parts = {smithing.template(), smithing.base(), smithing.addition()};
-                for (int index = 0; index < 3; index++) {
-                    Shapes.slot(painter, gridX + index * 19, gridY + 18);
-                    slot(painter, resolved, parts[index], gridX + index * 19, gridY + 18, false);
-                }
-            }
-            default -> painter.text(Component.literal("?"), gridX + 24, gridY + 22, palette.muted());
+        } else {
+            painter.text(Component.literal("?"), gridX + 24, gridY + 22, palette.muted());
         }
         // The result in a box near the top and, under it, a smaller box of the same make for the block it is made at,
         // joined to it by a short stem.

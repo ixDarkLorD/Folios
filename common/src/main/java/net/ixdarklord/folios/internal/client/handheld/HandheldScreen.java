@@ -74,7 +74,8 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
     }
 
     /** Minecraft's own right-button icon, from its tutorial toasts. */
-    private static final net.minecraft.resources.ResourceLocation RIGHT_CLICK = net.minecraft.resources.ResourceLocation.withDefaultNamespace("toast/right_click");
+    // The tutorial toasts' right click icon: 20 pixels square in the toasts texture.
+    private static final net.minecraft.resources.ResourceLocation TOASTS = new net.minecraft.resources.ResourceLocation("textures/gui/toasts.png");
 
     /** How long (ms) the hint stays once the book lies open, then how long it takes to fade. */
     private static final long HINT_MILLIS = 6000;
@@ -113,7 +114,7 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
         int y = hintY;
         graphics.nextStratum();
         net.ixdarklord.folios.internal.client.GuideTooltips.frame(graphics, x, y, wide, tall, book.book, fade);
-        graphics.blitSprite(net.ixdarklord.folios.internal.compat.RenderPipelines.GUI_TEXTURED, RIGHT_CLICK, x - 2, y - 2, 20, 20, alpha);
+        graphics.blit(net.ixdarklord.folios.internal.compat.RenderPipelines.GUI_TEXTURED, TOASTS, x - 2, y - 2, 236, 20, 20, 20, 256, 256, Math.round(net.minecraft.util.Mth.clamp(alpha, 0.0F, 1.0F) * 255) << 24 | 0xFFFFFF);
         int ink = net.ixdarklord.folios.internal.client.GuideTooltips.titleColor(book.book);
         graphics.text(this.font, hint, x + 20, y + 4, (fade << 24) | (ink & 0xFFFFFF), true);
     }

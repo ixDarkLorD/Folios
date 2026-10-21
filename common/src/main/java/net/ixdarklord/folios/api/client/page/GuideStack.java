@@ -21,12 +21,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Items as a page names them, worked out only when they're first drawn (item components need the world's registries,
- * which a book loaded with resources doesn't have yet). In JSON it is one of:
+ * Items as a page names them, worked out only when they're first drawn (item tags need the world's registries, which a
+ * book loaded with resources doesn't have yet). In JSON it is one of:
  * <ul>
  *     <li>{@code "minecraft:diamond"}, or {@code "minecraft:diamond*4"} for a count;</li>
  *     <li>{@code "#minecraft:logs"}: every item of a tag, shown in turn;</li>
- *     <li>an item stack object, {@code {"id": "minecraft:potion", "count": 1, "components": {...}}};</li>
+ *     <li>an item stack object, {@code {"id": "minecraft:potion", "count": 1, "nbt": "{Potion:\"minecraft:healing\"}"}}
+ *     ({@code "nbt"} as SNBT text or a JSON object);</li>
  *     <li>a list of any of these, shown in turn.</li>
  * </ul>
  */
@@ -68,7 +69,7 @@ public final class GuideStack {
     }
 
     public ItemStack first() {
-        return stacks().getFirst();
+        return stacks().get(0);
     }
 
     /** Forgets what it resolved to, for after registries or tags change. */
@@ -102,9 +103,21 @@ public final class GuideStack {
             int amount = count;
             BuiltInRegistries.ITEM.getOptional(id).ifPresent(item -> out.add(new ItemStack(item, amount)));
         } else if (json.isJsonObject()) {
-            var level = Minecraft.getInstance().level;
-            if (level == null) return;
-            ItemStack.CODEC.parse(RegistryOps.create(JsonOps.INSTANCE, level.registryAccess()), json).result().ifPresent(out::add);
+            com.google.gson.JsonObject object = json.getAsJsonObject();
+            ResourceLocation id = ResourceLocation.tryParse(net.minecraft.util.GsonHelper.getAsString(object, "id", ""));
+            Item item = id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
+            if (item == null) return;
+            ItemStack stack = new ItemStack(item, net.minecraft.util.GsonHelper.getAsInt(object, "count", 1));
+            JsonElement nbt = object.get("nbt");
+            if (nbt != null) {
+                try {
+                    stack.setTag(nbt.isJsonPrimitive() ? net.minecraft.nbt.TagParser.parseTag(nbt.getAsString())
+                            : (net.minecraft.nbt.CompoundTag) JsonOps.INSTANCE.convertTo(net.minecraft.nbt.NbtOps.INSTANCE, nbt));
+                } catch (com.mojang.brigadier.exceptions.CommandSyntaxException | ClassCastException e) {
+                    return;
+                }
+            }
+            out.add(stack);
         }
     }
 }
