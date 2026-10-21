@@ -17,7 +17,7 @@ import java.util.Optional;
 // through several; a caption under them.
 public record ImagePage(List<ResourceLocation> images, Optional<String> title, String text, boolean border, int height) implements GuidePage {
     public static final MapCodec<ImagePage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Codec.withAlternative(ResourceLocation.CODEC.listOf(1, 32), ResourceLocation.CODEC.xmap(List::of, List::getFirst)).fieldOf("images").forGetter(ImagePage::images),
+            Codec.either(net.ixdarklord.folios.internal.compat.Compat.listOf(ResourceLocation.CODEC, 1, 32), ResourceLocation.CODEC).xmap(either -> either.map(list -> list, List::of), com.mojang.datafixers.util.Either::left).fieldOf("images").forGetter(ImagePage::images),
             Codec.STRING.optionalFieldOf("title").forGetter(ImagePage::title),
             Codec.STRING.optionalFieldOf("text", "").forGetter(ImagePage::text),
             Codec.BOOL.optionalFieldOf("border", true).forGetter(ImagePage::border),

@@ -236,7 +236,7 @@ public abstract class AbstractPainter implements GuidePainter {
         GuideEntry entry = session.book().entry(about.entry());
         if (entry == null || !entry.isOpen()) return;
         if (tooltip != null) tooltip.add(Component.translatableWithFallback("folios.item_link", "Press to read: %s", entry.title())
-                .withStyle(ChatFormatting.ITALIC).withColor(palette.link()));
+                .withStyle(ChatFormatting.ITALIC).withStyle(style -> style.withColor(palette.link())));
         mark(x, y, 16, 16, () -> navigator.open(about));
     }
 

@@ -60,9 +60,9 @@ public final class GuideBookItemModel {
                 JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
                 JsonObject named = json.has("models") ? json.getAsJsonObject("models") : new JsonObject();
                 for (String key : new String[]{"item", "open"}) {
-                    if (named.has(key)) models.add(itemModel(ResourceLocation.parse(named.get(key).getAsString())));
+                    if (named.has(key)) models.add(itemModel(new ResourceLocation(named.get(key).getAsString())));
                 }
-                if (json.has("item_model")) models.add(itemModel(ResourceLocation.parse(json.get("item_model").getAsString())));
+                if (json.has("item_model")) models.add(itemModel(new ResourceLocation(json.get("item_model").getAsString())));
             } catch (Exception e) {
                 Folios.LOGGER.debug("Couldn't read the models of {}", file, e);
             }
@@ -81,7 +81,7 @@ public final class GuideBookItemModel {
         boolean thirdPerson = context == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
         ResourceLocation model = book != null && book.itemModel() != null ? itemModel(book.itemModel()) : null;
         // Held up open by someone reading it, seen from outside them: the book's open model.
-        if (stack.has(GuideRegistry.READING.get()) && thirdPerson) {
+        if (GuideRegistry.isReading(stack) && thirdPerson) {
             model = book != null && book.models().open() != null ? itemModel(book.models().open())
                     : book != null && !book.style().equals(GuideStyles.HANDHELD) ? HALF_OPEN : OPEN;
         }
@@ -114,7 +114,7 @@ public final class GuideBookItemModel {
     private static void quads(PoseStack pose, VertexConsumer consumer, List<BakedQuad> quads, int cover, int accent, int light, int overlay) {
         for (BakedQuad quad : quads) {
             int color = !quad.isTinted() ? -1 : quad.getTintIndex() == 0 ? cover : quad.getTintIndex() == 1 ? accent : -1;
-            consumer.putBulkData(pose.last(), quad, (color >> 16 & 0xFF) / 255.0F, (color >> 8 & 0xFF) / 255.0F, (color & 0xFF) / 255.0F, 1.0F, light, overlay);
+            consumer.putBulkData(pose.last(), quad, (color >> 16 & 0xFF) / 255.0F, (color >> 8 & 0xFF) / 255.0F, (color & 0xFF) / 255.0F, light, overlay);
         }
     }
 

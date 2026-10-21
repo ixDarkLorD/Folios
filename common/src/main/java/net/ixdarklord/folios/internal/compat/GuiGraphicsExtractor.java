@@ -11,19 +11,15 @@ import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositione
 import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
-import org.lwjgl.opengl.GL11;
 import org.joml.Vector3f;
 
 import java.util.List;
 
-// Minecraft 26.1's GUI drawing calls, on 1.21.1's GuiGraphics, so the screens read the same on every version. 1.21.1
+// Minecraft 26.1's GUI drawing calls, on 1.20.1's GuiGraphics, so the screens read the same on every version. 1.20.1
 // draws as it's called, so a "stratum" is just what's drawn after the last flush.
 public final class GuiGraphicsExtractor {
     private static @Nullable GuiGraphicsExtractor last;
@@ -74,7 +70,7 @@ public final class GuiGraphicsExtractor {
         this.raw.fill(RenderType.guiTextHighlight(), x0, y0, x1, y1, 0xFF0000FF);
     }
 
-    // --- Text: 1.21.1 draws a nearly transparent color opaque, so those are skipped ---
+    // --- Text: 1.20.1 draws a nearly transparent color opaque, so those are skipped ---
 
     public void text(Font font, @Nullable String text, int x, int y, int color, boolean shadow) {
         if (text != null && visible(color)) this.raw.drawString(font, text, x, y, color, shadow);
@@ -104,111 +100,7 @@ public final class GuiGraphicsExtractor {
         return (color & 0xFC000000) != 0;
     }
 
-    /** A collector that draws the lines handed to it, with the hover of what's under the mouse. */
-    public ActiveTextCollector textRenderer() {
-        return this.textRenderer(HoveredTextEffects.TOOLTIP_ONLY);
-    }
-
-    public ActiveTextCollector textRenderer(HoveredTextEffects effects) {
-        return new RenderingTextCollector(effects);
-    }
-
-    /** What text shows of the part under the mouse (1.21.1 has no mouse cursor shapes, so only its tooltip). */
-    public enum HoveredTextEffects {
-        NONE(false),
-        TOOLTIP_ONLY(true),
-        TOOLTIP_AND_CURSOR(true);
-
-        public final boolean allowTooltip;
-
-        HoveredTextEffects(boolean allowTooltip) {
-            this.allowTooltip = allowTooltip;
-        }
-    }
-
-    private final class RenderingTextCollector implements ActiveTextCollector {
-        private static final Parameters INITIAL = new Parameters(1);
-        private final HoveredTextEffects effects;
-
-        RenderingTextCollector(HoveredTextEffects effects) {
-            this.effects = effects;
-        }
-
-        @Override
-        public Parameters defaultParameters() {
-            return INITIAL;
-        }
-
-        @Override
-        public void accept(TextAlignment alignment, int anchorX, int y, Parameters parameters, FormattedCharSequence text) {
-            Minecraft minecraft = Minecraft.getInstance();
-            Font font = minecraft.font;
-            int left = alignment.calculateLeft(anchorX, font, text);
-            GuiGraphicsExtractor.this.text(font, text, left, y, Math.round(0xFF * Math.clamp(parameters.opacity(), 0, 1)) << 24 | 0xFFFFFF, true);
-            if (!this.effects.allowTooltip || minecraft.screen == null) return;
-            // The mouse, through the current transform: the text may be drawn moved.
-            double mouseX = minecraft.mouseHandler.xpos() * minecraft.getWindow().getGuiScaledWidth() / minecraft.getWindow().getScreenWidth();
-            double mouseY = minecraft.mouseHandler.ypos() * minecraft.getWindow().getGuiScaledHeight() / minecraft.getWindow().getScreenHeight();
-            Vector3f local = new Matrix4f(GuiGraphicsExtractor.this.raw.pose().last().pose()).invert().transformPosition(new Vector3f((float) mouseX, (float) mouseY, 0));
-            Style style = ActiveTextCollector.styleAt(font, text, left, y, (int) local.x, (int) local.y);
-            if (style != null && style.getHoverEvent() != null) {
-                List<FormattedCharSequence> lines = hoverLines(font, style);
-                if (lines != null) GuiGraphicsExtractor.this.setTooltipForNextFrame(font, lines, (int) mouseX, (int) mouseY);
-            }
-        }
-    }
-
-    // A hover event's text, as the game's own tooltip of it has it (an entity's, or plain text); an item's is its own tooltip.
-    private static @Nullable List<FormattedCharSequence> hoverLines(Font font, Style style) {
-        HoverEvent hover = style.getHoverEvent();
-        if (hover == null) return null;
-        Minecraft minecraft = Minecraft.getInstance();
-        HoverEvent.ItemStackInfo item = hover.getValue(HoverEvent.Action.SHOW_ITEM);
-        if (item != null) return Screen.getTooltipFromItem(minecraft, item.getItemStack()).stream().map(Component::getVisualOrderText).toList();
-        HoverEvent.EntityTooltipInfo entity = hover.getValue(HoverEvent.Action.SHOW_ENTITY);
-        if (entity != null) {
-            return minecraft.options.advancedItemTooltips ? entity.getTooltipLines().stream().map(Component::getVisualOrderText).toList() : null;
-        }
-        Component text = hover.getValue(HoverEvent.Action.SHOW_TEXT);
-        return text == null ? null : font.split(text, Math.max(minecraft.getWindow().getGuiScaledWidth() / 2, 200));
-    }
-
-    // --- Items ---
-
-    /** An item as an icon, without what a stack in a slot shows over it. */
-    public void fakeItem(ItemStack stack, int x, int y) {
-        this.raw.renderFakeItem(stack, x, y);
-        // 1.21.1 draws an item in depth, well in front of the screen: the depth is cleared, so what's drawn after goes
-        // over it, as it does on 26.1.
-        this.raw.flush();
-        RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
-    }
-
-    /** The count and durability bar of a stack in a slot, over its icon. */
-    public void itemDecorations(Font font, ItemStack stack, int x, int y) {
-        this.raw.renderItemDecorations(font, stack, x, y);
-    }
-
-    /** A GL texture (a render target's) over a box, with a colour: 26.1's blit of a texture view. */
-    public void texture(int textureId, int x0, int y0, int x1, int y1, float u0, float u1, float v0, float v1, int color) {
-        if ((color >>> 24) == 0) return;
-        this.raw.flush();
-        RenderSystem.setShaderTexture(0, textureId);
-        RenderSystem.setShader(net.minecraft.client.renderer.GameRenderer::getPositionTexColorShader);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        Matrix4f matrix = this.raw.pose().last().pose();
-        com.mojang.blaze3d.vertex.BufferBuilder builder = com.mojang.blaze3d.vertex.Tesselator.getInstance()
-                .begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS, com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_TEX_COLOR);
-        builder.addVertex(matrix, x0, y0, 0).setUv(u0, v0).setColor(color);
-        builder.addVertex(matrix, x0, y1, 0).setUv(u0, v1).setColor(color);
-        builder.addVertex(matrix, x1, y1, 0).setUv(u1, v1).setColor(color);
-        builder.addVertex(matrix, x1, y0, 0).setUv(u1, v0).setColor(color);
-        com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(builder.buildOrThrow());
-        RenderSystem.disableBlend();
-    }
-
-    // --- Textures (the pipeline is 26.1's; 1.21.1 blends them all alike) ---
+    // --- Textures (the pipeline is 26.1's; 1.20.1 blends them all alike) ---
 
     public void blit(Object pipeline, ResourceLocation texture, int x, int y, float u, float v, int width, int height,
                      int regionWidth, int regionHeight, int textureWidth, int textureHeight, int color) {
@@ -235,16 +127,94 @@ public final class GuiGraphicsExtractor {
     public void blitSprite(Object pipeline, ResourceLocation sprite, int x, int y, int width, int height, int color) {
         if ((color >>> 24) == 0) return;
         this.tint(color);
-        this.raw.blitSprite(sprite, x, y, width, height);
+        // 1.20.1 has no GUI sprite atlas: a sprite is its own texture under textures/gui/sprites/, stretched, or in
+        // nine pieces when its metadata says so.
+        ResourceLocation texture = new ResourceLocation(sprite.getNamespace(), "textures/gui/sprites/" + sprite.getPath() + ".png");
+        int[] size = net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle.textureSize(texture);
+        int border = nineSliceBorder(texture);
+        if (border <= 0) {
+            this.raw.blit(texture, x, y, width, height, 0, 0, size[0], size[1], size[0], size[1]);
+        } else {
+            int b = Math.min(border, Math.min(width, height) / 2);
+            int[] xs = {x, x + b, x + width - b, x + width};
+            int[] ys = {y, y + b, y + height - b, y + height};
+            int[] us = {0, border, size[0] - border, size[0]};
+            int[] vs = {0, border, size[1] - border, size[1]};
+            for (int row = 0; row < 3; row++) {
+                for (int column = 0; column < 3; column++) {
+                    int w = xs[column + 1] - xs[column];
+                    int h = ys[row + 1] - ys[row];
+                    if (w <= 0 || h <= 0) continue;
+                    this.raw.blit(texture, xs[column], ys[row], w, h, us[column], vs[row], us[column + 1] - us[column], vs[row + 1] - vs[row], size[0], size[1]);
+                }
+            }
+        }
         this.untint();
     }
 
-    public void blitSprite(Object pipeline, ResourceLocation sprite, int x, int y, int width, int height, float alpha) {
-        this.blitSprite(pipeline, sprite, x, y, width, height, Math.round(Math.clamp(alpha, 0.0F, 1.0F) * 255) << 24 | 0xFFFFFF);
+    private static final java.util.Map<ResourceLocation, Integer> NINE_SLICE = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final net.minecraft.server.packs.metadata.MetadataSectionSerializer<Integer> GUI_SCALING = new net.minecraft.server.packs.metadata.MetadataSectionSerializer<>() {
+        @Override
+        public String getMetadataSectionName() {
+            return "gui";
+        }
+
+        @Override
+        public Integer fromJson(com.google.gson.JsonObject json) {
+            com.google.gson.JsonObject scaling = net.minecraft.util.GsonHelper.getAsJsonObject(json, "scaling", new com.google.gson.JsonObject());
+            if (!"nine_slice".equals(net.minecraft.util.GsonHelper.getAsString(scaling, "type", ""))) return 0;
+            com.google.gson.JsonElement border = scaling.get("border");
+            return border == null ? 0 : border.isJsonObject() ? net.minecraft.util.GsonHelper.getAsInt(border.getAsJsonObject(), "left", 0) : border.getAsInt();
+        }
+    };
+
+    // The border of a sprite's nine-slice scaling (as 1.20.2+ reads it from its .mcmeta), or 0 to stretch it whole.
+    private static int nineSliceBorder(ResourceLocation texture) {
+        return NINE_SLICE.computeIfAbsent(texture, id -> {
+            try {
+                return Minecraft.getInstance().getResourceManager().getResource(id).flatMap(resource -> {
+                    try {
+                        return resource.metadata().getSection(GUI_SCALING);
+                    } catch (java.io.IOException e) {
+                        return java.util.Optional.empty();
+                    }
+                }).orElse(0);
+            } catch (RuntimeException e) {
+                return 0;
+            }
+        });
     }
 
     public void blitSprite(Object pipeline, ResourceLocation sprite, int x, int y, int width, int height) {
         this.blitSprite(pipeline, sprite, x, y, width, height, 0xFFFFFFFF);
+    }
+
+    public void blitSprite(Object pipeline, ResourceLocation sprite, int x, int y, int width, int height, float alpha) {
+        this.blitSprite(pipeline, sprite, x, y, width, height, Math.round(net.minecraft.util.Mth.clamp(alpha, 0.0F, 1.0F) * 255) << 24 | 0xFFFFFF);
+    }
+
+    /** The count and durability bar of a stack in a slot, over its icon. */
+    public void itemDecorations(Font font, net.minecraft.world.item.ItemStack stack, int x, int y) {
+        this.raw.renderItemDecorations(font, stack, x, y);
+    }
+
+    /** A GL texture (a render target's) over a box, with a colour: 26.1's blit of a texture view. */
+    public void texture(int textureId, int x0, int y0, int x1, int y1, float u0, float u1, float v0, float v1, int color) {
+        if ((color >>> 24) == 0) return;
+        this.raw.flush();
+        com.mojang.blaze3d.systems.RenderSystem.setShaderTexture(0, textureId);
+        com.mojang.blaze3d.systems.RenderSystem.setShader(net.minecraft.client.renderer.GameRenderer::getPositionTexColorShader);
+        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
+        org.joml.Matrix4f matrix = this.raw.pose().last().pose();
+        com.mojang.blaze3d.vertex.BufferBuilder builder = com.mojang.blaze3d.vertex.Tesselator.getInstance().getBuilder();
+        builder.begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS, com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_TEX_COLOR);
+        builder.vertex(matrix, x0, y0, 0).uv(u0, v0).color(color).endVertex();
+        builder.vertex(matrix, x0, y1, 0).uv(u0, v1).color(color).endVertex();
+        builder.vertex(matrix, x1, y1, 0).uv(u1, v1).color(color).endVertex();
+        builder.vertex(matrix, x1, y0, 0).uv(u1, v0).color(color).endVertex();
+        com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(builder.end());
+        com.mojang.blaze3d.systems.RenderSystem.disableBlend();
     }
 
     private void tint(int color) {
@@ -258,9 +228,20 @@ public final class GuiGraphicsExtractor {
         RenderSystem.disableBlend();
     }
 
+    // --- Items ---
+
+    /** An item as an icon: without its count, and unmoved by the player holding one. */
+    public void fakeItem(net.minecraft.world.item.ItemStack stack, int x, int y) {
+        this.raw.renderFakeItem(stack, x, y);
+    }
+
+    public void item(net.minecraft.world.item.ItemStack stack, int x, int y) {
+        this.raw.renderItem(stack, x, y);
+    }
+
     // --- Clipping and layers ---
 
-    /** Clips to a box given in the current transform (1.21.1's scissor ignores the transform, 26.1's doesn't). */
+    /** Clips to a box given in the current transform (1.20.1's scissor ignores the transform, 26.1's doesn't). */
     public void enableScissor(int x0, int y0, int x1, int y1) {
         Matrix4f matrix = this.raw.pose().last().pose();
         Vector3f a = matrix.transformPosition(new Vector3f(x0, y0, 0));
@@ -272,20 +253,17 @@ public final class GuiGraphicsExtractor {
         this.raw.disableScissor();
     }
 
-    /** What's drawn next goes over what came before. */
+    /** What's drawn next goes over what came before: text and items stand off the screen on 1.20.1, so their depth is forgotten too. */
     public void nextStratum() {
         this.raw.flush();
+        RenderSystem.clear(org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
     }
 
-    /** Blurs what's drawn so far (the panorama or the world), as vanilla's menu background does. */
+    /** 1.20.1 has no menu blur. */
     public void blurBeforeThisStratum() {
-        this.raw.flush();
-        Minecraft minecraft = Minecraft.getInstance();
-        minecraft.gameRenderer.processBlurEffect(0);
-        minecraft.getMainRenderTarget().bindWrite(false);
+        net.ixdarklord.coolcatcore.internal.config.client.gui.style.ConfigStyle.blur(this.raw);
     }
 
-    /** Asks for a mouse cursor shape for this frame (1.21.1 has none of its own: Cursors sets it on the window). */
     public void requestCursor(CursorTypes cursor) {
         Cursors.request(cursor);
     }
@@ -307,7 +285,7 @@ public final class GuiGraphicsExtractor {
                 positioner.positionTooltip(screenWidth, screenHeight, x, y, width, height), true);
     }
 
-    /** 26.1's 2D transform stack, on 1.21.1's PoseStack. */
+    /** 26.1's 2D transform stack, on 1.20.1's PoseStack. */
     public static final class Pose {
         private final PoseStack stack;
 

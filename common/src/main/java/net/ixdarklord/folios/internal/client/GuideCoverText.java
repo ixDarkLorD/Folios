@@ -63,8 +63,8 @@ public record GuideCoverText(float x, float titleY, float subtitleY, float z, fl
     private static void quad(com.mojang.blaze3d.vertex.VertexConsumer consumer, PoseStack.Pose last, float ax, float ay, float bx, float by, float cx, float cy,
                              float dx, float dy, int color, int light) {
         for (float[] p : new float[][]{{ax, ay}, {bx, by}, {cx, cy}, {dx, dy}}) {
-            consumer.addVertex(last, p[0], p[1], 0).setColor(color).setUv(0.5F, 0.5F).setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-                    .setLight(light).setNormal(last, 0, 0, 1);
+            consumer.vertex(last.pose(), p[0], p[1], 0).color(color).uv(0.5F, 0.5F).overlayCoords(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
+                    .uv2(light).normal(last.normal(), 0, 0, 1).endVertex();
         }
     }
 

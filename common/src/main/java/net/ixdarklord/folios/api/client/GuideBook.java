@@ -71,7 +71,7 @@ public record GuideBook(ResourceLocation id, String name, String subtitle, Strin
      * @param guiModel whether CoolCatLib's book item shows its model in inventory slots rather than its flat icon
      */
     public record Models(@Nullable ResourceLocation item, @Nullable ResourceLocation open, @Nullable ResourceLocation cover, boolean hands, boolean guiModel) {
-        public static final ResourceLocation DEFAULT_COVER = ResourceLocation.fromNamespaceAndPath("folios", "guide/handheld_cover");
+        public static final ResourceLocation DEFAULT_COVER = new ResourceLocation("folios", "guide/handheld_cover");
         public static final Models DEFAULT = new Models(null, null, DEFAULT_COVER, true, false);
     }
 
@@ -93,7 +93,7 @@ public record GuideBook(ResourceLocation id, String name, String subtitle, Strin
         public static final Textures DEFAULT = new Textures(rl("page"), rl("page_frame"), rl("cover"), rl("ribbon"), rl("ribbon_plate"), null);
 
         private static ResourceLocation rl(String name) {
-            return ResourceLocation.fromNamespaceAndPath("folios", "textures/guide/" + name + ".png");
+            return new ResourceLocation("folios", "textures/guide/" + name + ".png");
         }
     }
 

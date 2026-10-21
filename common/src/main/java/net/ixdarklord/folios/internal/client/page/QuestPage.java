@@ -22,7 +22,7 @@ import java.util.Optional;
 // player plays, the book open or not.
 public record QuestPage(List<GuideObjective> objectives, Optional<String> title, String text, Optional<String> reward) implements GuidePage {
     public static final MapCodec<QuestPage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            GuideObjective.CODEC.listOf(1, 8).fieldOf("objectives").forGetter(QuestPage::objectives),
+            net.ixdarklord.folios.internal.compat.Compat.listOf(GuideObjective.CODEC, 1, 8).fieldOf("objectives").forGetter(QuestPage::objectives),
             Codec.STRING.optionalFieldOf("title").forGetter(QuestPage::title),
             Codec.STRING.optionalFieldOf("text", "").forGetter(QuestPage::text),
             Codec.STRING.optionalFieldOf("reward").forGetter(QuestPage::reward)

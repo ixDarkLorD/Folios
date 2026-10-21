@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  * player.addItem(GuideBooks.createStack(MyItems.HANDBOOK.get(), MyMod.id("handbook")));
  * GuideBooks.open(player, MyMod.id("handbook"), "basics/first_steps");
  * }</pre>
- * In commands: {@code /give @s folios:guide_book[folios:guide_book="mymod:handbook"]}.
+ * In commands: {@code /give @s folios:guide_book{folios_book:"mymod:handbook"}}.
  */
 public final class GuideBooks {
     private GuideBooks() {}
@@ -32,22 +32,23 @@ public final class GuideBooks {
 
     /** As {@link #createStack(ResourceLocation)}, the book given as {@code "namespace:path"}. */
     public static ItemStack createStack(String book) {
-        return createStack(ResourceLocation.parse(book));
+        return createStack(new ResourceLocation(book));
     }
 
     /**
-     * A mod's own item carrying a book in its {@code folios:guide_book} component: a {@link GuideBookItem} of its own
-     * opens that book and takes its name. (On any other item it only names the book, for {@link #bookOf}.)
+     * A mod's own item carrying a book in its NBT ({@code folios_book}): a {@link GuideBookItem} of its own opens that
+     * book and takes its name. (On any other item it only names the book, for {@link #bookOf}.)
      */
     public static ItemStack createStack(ItemLike item, ResourceLocation book) {
         ItemStack stack = new ItemStack(item);
-        stack.set(GuideRegistry.GUIDE_BOOK.get(), book);
+        stack.getOrCreateTag().putString(GuideRegistry.GUIDE_BOOK, book.toString());
         return stack;
     }
 
-    /** The book a stack names with the {@code folios:guide_book} component, on any item; null when none. */
+    /** The book a stack names in its NBT ({@code folios_book}), on any item; null when none. */
     public static @Nullable ResourceLocation bookOf(ItemStack stack) {
-        return stack.isEmpty() ? null : stack.get(GuideRegistry.GUIDE_BOOK.get());
+        if (stack.isEmpty() || stack.getTag() == null || !stack.getTag().contains(GuideRegistry.GUIDE_BOOK, net.minecraft.nbt.Tag.TAG_STRING)) return null;
+        return ResourceLocation.tryParse(stack.getTag().getString(GuideRegistry.GUIDE_BOOK));
     }
 
     /** Opens a book on a player's screen at its first page. */

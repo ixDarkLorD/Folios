@@ -5,7 +5,7 @@ import net.ixdarklord.folios.internal.mixin.client.ClientAdvancementsAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientAdvancements;
 import net.minecraft.advancements.AdvancementProgress;
-import net.minecraft.advancements.AdvancementNode;
+import net.minecraft.advancements.Advancement;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashSet;
@@ -57,9 +57,9 @@ public final class GuideProgress {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.getConnection() == null) return false;
         ClientAdvancements advancements = minecraft.getConnection().getAdvancements();
-        AdvancementNode node = advancements.getTree().get(advancement);
-        if (node == null) return false;
-        AdvancementProgress progress = ((ClientAdvancementsAccessor) advancements).folios$progress().get(node.holder());
+        Advancement shown = advancements.getAdvancements().get(advancement);
+        if (shown == null) return false;
+        AdvancementProgress progress = ((ClientAdvancementsAccessor) advancements).folios$progress().get(shown);
         return progress != null && progress.isDone();
     }
 

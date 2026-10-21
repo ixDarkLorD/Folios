@@ -17,6 +17,6 @@ public abstract class AvatarRendererMixin {
     @Inject(method = "getArmPose", at = @At("HEAD"), cancellable = true)
     private static void folios$reading(AbstractClientPlayer player, InteractionHand hand, CallbackInfoReturnable<HumanoidModel.ArmPose> cir) {
         ItemStack stack = player.getItemInHand(hand);
-        if (!stack.isEmpty() && stack.has(GuideRegistry.READING.get())) cir.setReturnValue(HumanoidModel.ArmPose.CROSSBOW_HOLD);
+        if (!stack.isEmpty() && GuideRegistry.isReading(stack)) cir.setReturnValue(HumanoidModel.ArmPose.CROSSBOW_HOLD);
     }
 }

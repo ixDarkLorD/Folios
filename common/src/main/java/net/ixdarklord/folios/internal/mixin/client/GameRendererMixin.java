@@ -7,7 +7,6 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
-import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -28,12 +27,12 @@ public abstract class GameRendererMixin {
     }
 
     @Inject(method = "renderItemInHand", at = @At("HEAD"))
-    private void folios$handsStart(Camera camera, float partialTick, Matrix4f projectionMatrix, CallbackInfo ci) {
+    private void folios$handsStart(PoseStack poseStack, Camera camera, float partialTick, CallbackInfo ci) {
         folios$drawingHands = true;
     }
 
     @Inject(method = "renderItemInHand", at = @At("RETURN"))
-    private void folios$handsEnd(Camera camera, float partialTick, Matrix4f projectionMatrix, CallbackInfo ci) {
+    private void folios$handsEnd(PoseStack poseStack, Camera camera, float partialTick, CallbackInfo ci) {
         folios$drawingHands = false;
     }
 

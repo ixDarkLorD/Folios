@@ -176,7 +176,7 @@ public final class GuideReveals {
     private static final class Runes implements GuideReveal {
         private static final int GLOW = 0x7FD8FF;
         private static final String SYMBOLS = "abcdefghijklmnopqrstuvwxyz";
-        private static final ResourceLocation FONT = ResourceLocation.withDefaultNamespace("alt");
+        private static final ResourceLocation FONT = new ResourceLocation("alt");
 
         @Override
         public Look look(float progress, float x, float y) {

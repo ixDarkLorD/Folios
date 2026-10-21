@@ -177,7 +177,7 @@ public final class CoverMarkers {
             JsonObject json = load(at);
             if (json == null) return Markers.NONE;
             if (json.has("elements")) return markers(json.getAsJsonArray("elements"));
-            at = json.has("parent") ? ResourceLocation.parse(json.get("parent").getAsString()) : null;
+            at = json.has("parent") ? new ResourceLocation(json.get("parent").getAsString()) : null;
         }
         return Markers.NONE;
     }

@@ -2,7 +2,7 @@ package net.ixdarklord.folios.internal.compat;
 
 import org.lwjgl.glfw.GLFW;
 
-// Minecraft 26.1's mouse cursor shapes. 1.21.1 has none of its own, so they're asked of the window system directly
+// Minecraft 26.1's mouse cursor shapes. 1.20.1 has none of its own, so they're asked of the window system directly
 // (Cursors): each is one of its standard shapes.
 public enum CursorTypes {
     ARROW(GLFW.GLFW_ARROW_CURSOR),

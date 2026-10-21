@@ -3,8 +3,7 @@ apply from: "${rootProject.sharedScripts}/forge.gradle"
 // Uploaded as <minecraft>+<mod version> (the shared scripts would prefix it with "<minecraft>-").
 publisher {
     setProjectVersion("${project.version}")
-    // Forge 52 runs on Minecraft 1.21.1 only.
-    gameVersions.set(["1.21.1"])
+    gameVersions.set(["1.20.1"])
 }
 
 // CoolCatLib, which Folios is built on: compiled against and in the dev runs, never bundled.

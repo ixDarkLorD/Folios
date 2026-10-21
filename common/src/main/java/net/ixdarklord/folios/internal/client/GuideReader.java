@@ -248,7 +248,7 @@ public class GuideReader implements AbstractPainter.Navigator {
         int titleBottom = mastery ? 110 : 96;
         List<GuideText> landing = book.landing().isEmpty() ? List.of()
                 : layout.text(book.landing()).split(GuideLayout.CONTENT_BOTTOM - titleBottom, GuideLayout.CONTENT_BOTTOM - GuideLayout.CONTENT_TOP);
-        GuideText first = landing.isEmpty() ? null : landing.getFirst();
+        GuideText first = landing.isEmpty() ? null : landing.get(0);
         pages.add(painter -> {
             GuidePalette palette = painter.palette();
             int middle = GuideLayout.PAGE_WIDTH / 2;
@@ -356,14 +356,14 @@ public class GuideReader implements AbstractPainter.Navigator {
             for (GuideObjective objective : quest.objectives()) if (objective.isDone(book)) ticked++;
             boolean questDone = ticked == quest.objectives().size();
             Component name = quest.isOpen() ? quest.title() : Component.literal("???");
-            lines.add(Component.literal(questDone ? " \u2714 " : " \u2022 ").withColor(questDone ? 0xFF6FCF73 : 0xFFA89A86)
-                    .append(name.copy().withColor(questDone ? 0xFFA89A86 : 0xFFE0D4BC))
-                    .append(Component.literal(questDone ? "" : "  " + ticked + "/" + quest.objectives().size()).withColor(0xFF8E8270)));
+            lines.add(Component.literal(questDone ? " \u2714 " : " \u2022 ").withStyle(style -> style.withColor(questDone ? 0xFF6FCF73 : 0xFFA89A86))
+                    .append(name.copy().withStyle(style -> style.withColor(questDone ? 0xFFA89A86 : 0xFFE0D4BC)))
+                    .append(Component.literal(questDone ? "" : "  " + ticked + "/" + quest.objectives().size()).withStyle(style -> style.withColor(0xFF8E8270))));
         }
         if (quests.isEmpty() || finished < quests.size()) {
             lines.add(Component.translatableWithFallback("folios.mastery.hint", "Finish every quest to master the book").withStyle(ChatFormatting.ITALIC));
         } else {
-            lines.add(Component.translatableWithFallback("folios.mastery.done", "Mastered").withStyle(ChatFormatting.ITALIC).withColor(0xFFE0B23A));
+            lines.add(Component.translatableWithFallback("folios.mastery.done", "Mastered").withStyle(ChatFormatting.ITALIC).withStyle(style -> style.withColor(0xFFE0B23A)));
         }
         return lines;
     }
@@ -739,7 +739,7 @@ public class GuideReader implements AbstractPainter.Navigator {
         if (target == null) return;
         Minecraft minecraft = Minecraft.getInstance();
         if (target.url() != null) {
-            ConfirmLinkScreen.confirmLinkNow(minecraft.screen, target.url());
+            ConfirmLinkScreen.confirmLinkNow(target.url(), minecraft.screen, true);
         } else if (target.category() != null) {
             this.category(target.category());
         } else if (target.entry() != null) {

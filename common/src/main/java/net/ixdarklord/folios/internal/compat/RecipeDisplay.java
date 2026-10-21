@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
-// Minecraft 26.1's recipe displays, made on 1.21.1 from the recipes the client already has: what a recipe page shows
+// Minecraft 26.1's recipe displays, made on 1.20.1 from the recipes the client already has: what a recipe page shows
 // of each kind of recipe, every slot as the stacks it takes in turn.
 public sealed interface RecipeDisplay {
     SlotDisplay result();
@@ -32,22 +32,27 @@ public sealed interface RecipeDisplay {
     /** A recipe's display, or null for a kind of recipe pages don't show. */
     static @Nullable RecipeDisplay of(Recipe<?> recipe, RegistryAccess registries) {
         SlotDisplay result = SlotDisplay.of(recipe.getResultItem(registries));
-        return switch (recipe) {
-            case ShapedRecipe shaped -> new ShapedCraftingRecipeDisplay(shaped.getWidth(), shaped.getHeight(),
+        if (recipe instanceof ShapedRecipe shaped) {
+            return new ShapedCraftingRecipeDisplay(shaped.getWidth(), shaped.getHeight(),
                     shaped.getIngredients().stream().map(SlotDisplay::of).toList(), result, SlotDisplay.of(Blocks.CRAFTING_TABLE.asItem()));
-            case ShapelessRecipe shapeless -> new ShapelessCraftingRecipeDisplay(shapeless.getIngredients().stream().map(SlotDisplay::of).toList(), result,
+        }
+        if (recipe instanceof ShapelessRecipe shapeless) {
+            return new ShapelessCraftingRecipeDisplay(shapeless.getIngredients().stream().map(SlotDisplay::of).toList(), result,
                     SlotDisplay.of(Blocks.CRAFTING_TABLE.asItem()));
-            case AbstractCookingRecipe cooking -> new FurnaceRecipeDisplay(SlotDisplay.of(cooking.getIngredients().getFirst()), SlotDisplay.fuel(), result,
+        }
+        if (recipe instanceof AbstractCookingRecipe cooking) {
+            return new FurnaceRecipeDisplay(SlotDisplay.of(cooking.getIngredients().get(0)), SlotDisplay.fuel(), result,
                     SlotDisplay.of(station(cooking.getType())), cooking.getCookingTime());
-            case StonecutterRecipe cutting -> new StonecutterRecipeDisplay(SlotDisplay.of(cutting.getIngredients().getFirst()), result,
-                    SlotDisplay.of(Blocks.STONECUTTER.asItem()));
-            case SmithingRecipe smithing -> {
-                SlotDisplay base = SlotDisplay.matching(smithing::isBaseIngredient);
-                yield new SmithingRecipeDisplay(SlotDisplay.matching(smithing::isTemplateIngredient), base, SlotDisplay.matching(smithing::isAdditionIngredient),
-                        smithing instanceof SmithingTransformRecipe ? result : base, SlotDisplay.of(Blocks.SMITHING_TABLE.asItem()));
-            }
-            default -> null;
-        };
+        }
+        if (recipe instanceof StonecutterRecipe cutting) {
+            return new StonecutterRecipeDisplay(SlotDisplay.of(cutting.getIngredients().get(0)), result, SlotDisplay.of(Blocks.STONECUTTER.asItem()));
+        }
+        if (recipe instanceof SmithingRecipe smithing) {
+            SlotDisplay base = SlotDisplay.matching(smithing::isBaseIngredient);
+            return new SmithingRecipeDisplay(SlotDisplay.matching(smithing::isTemplateIngredient), base, SlotDisplay.matching(smithing::isAdditionIngredient),
+                    smithing instanceof SmithingTransformRecipe ? result : base, SlotDisplay.of(Blocks.SMITHING_TABLE.asItem()));
+        }
+        return null;
     }
 
     private static Item station(RecipeType<?> type) {

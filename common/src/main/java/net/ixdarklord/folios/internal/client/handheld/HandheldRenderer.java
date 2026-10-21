@@ -107,7 +107,7 @@ public final class HandheldRenderer {
         // The hands come up from below to take it, and go down again as it is put back.
         if (book.book.models().hands() && !player.isInvisible() && raise > 0) {
             pose.pushPose();
-            pose.mulPose(reading);
+            net.ixdarklord.folios.internal.compat.Compat.mulPose(pose, reading);
             pose.translate(0, -(1 - easeOut(raise)) * 0.8F, 0);
             hands(pose, collector, light, player, open);
             pose.popPose();
@@ -115,7 +115,7 @@ public final class HandheldRenderer {
         // Lifted out of the hand that holds it, from just where the item lies there, along a small arc to where it is
         // read; put away, it goes back the same way and lies in the hand as it was, so the item takes its place unseen.
         float along = easeInOut(raise);
-        pose.mulPose(blend(inHand(book, player), reading, along, Mth.sin(along * Mth.PI) * 0.06F));
+        net.ixdarklord.folios.internal.compat.Compat.mulPose(pose, blend(inHand(book, player), reading, along, Mth.sin(along * Mth.PI) * 0.06F));
         // Shut, it is the book item itself, the very model held in the hand, so nothing about it changes as it is
         // raised, held up or put back; its own pages are drawn once its cover starts to open.
         boolean asItem = open <= 0.001F && item(pose, collector, light, player, book);
@@ -551,7 +551,7 @@ public final class HandheldRenderer {
     }
 
     /** The book item's leather (models/item/guide_book_3d.json), for the boards. */
-    private static final ResourceLocation LEATHER = ResourceLocation.fromNamespaceAndPath("folios", "textures/item/guide_book/leather.png");
+    private static final ResourceLocation LEATHER = new ResourceLocation("folios", "textures/item/guide_book/leather.png");
 
     private static final List<AbstractPainter.Hit> NO_HITS = new ArrayList<>();
 
@@ -757,7 +757,7 @@ public final class HandheldRenderer {
         ResourceLocation leather = own ? book.book.textures().cover() : LEATHER;
         // The outside lit as if it faced the viewer whichever way it is swung, so it keeps the item's brightness as the
         // cover opens instead of darkening as it turns from the light.
-        Vector3f facing = pose.last().transformNormal(0, 0, -1, new Vector3f());
+        Vector3f facing = net.ixdarklord.folios.internal.compat.Compat.transformNormal(pose.last(), 0, 0, -1, new Vector3f());
         if (left && relight != null) relight.transform(facing).normalize();
         collector.submitCustomGeometry(pose, RenderTypes.entityCutout(leather), (last, consumer) -> {
             // Its own: half of it on each board. The leather: x0 is the outer edge on the left board, the spine on the right.
@@ -772,8 +772,8 @@ public final class HandheldRenderer {
             for (float[] corner : new float[][]{{x0, -EDGE, u0, top}, {x1, -EDGE, u1, top}, {x1, PH + EDGE, u1, foot}, {x0, PH + EDGE, u0, foot}}) {
                 // Clearly outside the board's box (a hair out fights it at the hand's scale, darkening the cover).
                 Vector3f at = matrix.transformPosition(corner[0], corner[1], -leaves - board - 0.25F, new Vector3f());
-                consumer.addVertex(at.x, at.y, at.z).setColor(cover).setUv(corner[2], corner[3]).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light)
-                        .setNormal(facing.x, facing.y, facing.z);
+                consumer.vertex(at.x, at.y, at.z).color(cover).uv(corner[2], corner[3]).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
+                        .normal(facing.x, facing.y, facing.z).endVertex();
             }
         });
         // What sits on the board's outside: corner caps, a clasp, bands over the spine.
@@ -873,12 +873,12 @@ public final class HandheldRenderer {
                     // Its head and foot edges, from the spine out to its face.
                     for (float y : new float[]{top, foot}) {
                         float[] in0 = at[step], in1 = at[step + 1];
-                        Vector3f normal = last.transformNormal(0, y == top ? -1 : 1, 0, new Vector3f());
+                        Vector3f normal = net.ixdarklord.folios.internal.compat.Compat.transformNormal(last, 0, y == top ? -1 : 1, 0, new Vector3f());
                         float[][] edge = y == top ? new float[][]{in0, a, b, in1} : new float[][]{in1, b, a, in0};
                         for (float[] corner : edge) {
                             Vector3f position = matrix.transformPosition(corner[0], y, corner[1], new Vector3f());
-                            consumer.addVertex(position.x, position.y, position.z).setColor(GuidePalette.mix(color, 0xFF000000, 0.2F))
-                                    .setUv(ua, band.v0()).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(normal.x, normal.y, normal.z);
+                            consumer.vertex(position.x, position.y, position.z).color(GuidePalette.mix(color, 0xFF000000, 0.2F))
+                                    .uv(ua, band.v0()).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light).normal(normal.x, normal.y, normal.z).endVertex();
                         }
                     }
                 }
@@ -889,9 +889,9 @@ public final class HandheldRenderer {
     private static void spineVertex(VertexConsumer consumer, Matrix4f matrix, PoseStack.Pose normals, float[] at, float y, float u, float v, int color,
                                     int light, float side) {
         Vector3f position = matrix.transformPosition(at[0], y, at[1], new Vector3f());
-        Vector3f normal = normals.transformNormal(at[2] * side, 0, at[3] * side, new Vector3f());
-        consumer.addVertex(position.x, position.y, position.z).setColor(color).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light)
-                .setNormal(normal.x, normal.y, normal.z);
+        Vector3f normal = net.ixdarklord.folios.internal.compat.Compat.transformNormal(normals, at[2] * side, 0, at[3] * side, new Vector3f());
+        consumer.vertex(position.x, position.y, position.z).color(color).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
+                .normal(normal.x, normal.y, normal.z).endVertex();
     }
 
     /** How strong the fold's shadow is under a spread, of its usual strength. */
@@ -928,7 +928,7 @@ public final class HandheldRenderer {
         float restTo = left ? x1 - fold : x1;
         collector.submitCustomGeometry(pose, RenderTypes.entityCutout(texture), (lying, consumer) -> {
             // Lit as facing the viewer, as what is on it is.
-            PoseStack.Pose last = lying.copy();
+            PoseStack.Pose last = net.ixdarklord.folios.internal.compat.Compat.copy(lying);
             last.normal().identity();
             quad(consumer, matrix, last, restFrom, y0, restTo, y1, z, paper, light, (restFrom - x0) / span, 0, (restTo - x0) / span, 1);
             int inner = left ? paper : shade;
@@ -958,7 +958,7 @@ public final class HandheldRenderer {
         GuidePalette ink = new GuidePalette(cover, gilt, GuidePalette.mix(gilt, cover, 0.4F), gilt, gilt, gilt, cover, gilt);
         // Lifted onto the face of the cover model's plates, which stand out from the board.
         pose.translate(0, 0, PLATE_FACE);
-        Vector3f facing = pose.last().transformNormal(0, 0, 1, new Vector3f());
+        Vector3f facing = net.ixdarklord.folios.internal.compat.Compat.transformNormal(pose.last(), 0, 0, 1, new Vector3f());
         if (relight != null) relight.transform(facing).normalize();
         WorldPainter painter = new WorldPainter(pose, collector, light, ink, book.session, book, book.seconds(), Float.NaN, Float.NaN, new ArrayList<>())
                 .lightAs(facing);
@@ -1045,7 +1045,7 @@ public final class HandheldRenderer {
     }
 
     /** The book item's model, whose marked lettering the cover follows (CoverMarkers). */
-    private static final ResourceLocation ITEM_MODEL = ResourceLocation.fromNamespaceAndPath("folios", "item/guide_book_3d");
+    private static final ResourceLocation ITEM_MODEL = new ResourceLocation("folios", "item/guide_book_3d");
 
     /** How far the lettering on the cover stands out from the board: just over its plates' face, in page pixels. */
     private static final float PLATE_FACE = 1.4F;
@@ -1114,7 +1114,7 @@ public final class HandheldRenderer {
     }
 
     /** The item's page edges: its sheets edge on, worn. */
-    private static final ResourceLocation PAGES = ResourceLocation.fromNamespaceAndPath("folios", "textures/item/guide_book/pages.png");
+    private static final ResourceLocation PAGES = new ResourceLocation("folios", "textures/item/guide_book/pages.png");
 
     // A face flat in x or in y, between two corners, its texture laid on (u along it, v across, in z). One face only:
     // these aren't culled, so it shows from both sides, and a second in the same place fought it.
@@ -1173,7 +1173,7 @@ public final class HandheldRenderer {
 
     private static void vertex(VertexConsumer consumer, Matrix4f matrix, PoseStack.Pose normals, float x, float y, float z, float u, float v, int color, int light, float nz) {
         Vector3f at = matrix.transformPosition(x, y, z, new Vector3f());
-        consumer.addVertex(at.x, at.y, at.z).setColor(color).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(normals, 0, 0, nz);
+        consumer.vertex(at.x, at.y, at.z).color(color).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light).normal(normals.normal(), 0, 0, nz).endVertex();
     }
 
     // ---- The pointer ----

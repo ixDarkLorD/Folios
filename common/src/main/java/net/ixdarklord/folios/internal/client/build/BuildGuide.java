@@ -158,7 +158,7 @@ public final class BuildGuide {
         if (guide.anchor == null) return;
         if (guide.placed >= guide.parts.size()) {
             current = null;
-            SystemToast.add(minecraft.getToasts(), new SystemToast.SystemToastId(),
+            SystemToast.add(minecraft.getToasts(), SystemToast.SystemToastIds.PERIODIC_NOTIFICATION,
                     Component.translatableWithFallback("folios.build.done", "Build complete: %s", guide.name), null);
             minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.PLAYER_LEVELUP, 1.4F, 0.5F));
             return;
@@ -263,7 +263,8 @@ public final class BuildGuide {
         GhostBlocks.draw(now, (clear << 24) | 0xE0F0FF, GhostBlocks.Show.IN_WORLD, true);
         if (boxes.isEmpty()) return;
         PoseStack pose = new PoseStack();
-        pose.mulPose(new Matrix4f().rotation(camera.rotation().conjugate(new org.joml.Quaternionf())));
+        pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(camera.getXRot()));
+        pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(camera.getYRot() + 180.0F));
         SubmitNodeCollector collector = SubmitNodeCollector.of(minecraft.renderBuffers().bufferSource());
         Matrix4f matrix = new Matrix4f(pose.last().pose());
         collector.submitCustomGeometry(pose, RenderTypes.entityTranslucent(WorldPainter.WHITE), (last, consumer) -> {
@@ -285,8 +286,8 @@ public final class BuildGuide {
     private static void face(VertexConsumer consumer, Matrix4f matrix, PoseStack.Pose normals, int color, float... corners) {
         for (int at = 0; at < 12; at += 3) {
             org.joml.Vector3f point = matrix.transformPosition(corners[at], corners[at + 1], corners[at + 2], new org.joml.Vector3f());
-            consumer.addVertex(point.x, point.y, point.z).setColor(color).setUv(0.5F, 0.5F).setOverlay(OverlayTexture.NO_OVERLAY)
-                    .setLight(LightCoordsUtil.FULL_BRIGHT).setNormal(normals, 0, 1, 0);
+            consumer.vertex(point.x, point.y, point.z).color(color).uv(0.5F, 0.5F).overlayCoords(OverlayTexture.NO_OVERLAY)
+                    .uv2(LightCoordsUtil.FULL_BRIGHT).normal(normals.normal(), 0, 1, 0).endVertex();
         }
     }
 

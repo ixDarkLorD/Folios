@@ -173,7 +173,7 @@ public final class GuideMemory {
     public synchronized boolean toggleBookmark(GuideBook.Location location) {
         dirty = true;
         if (bookmarks.removeIf(mark -> mark.entry().equals(location.entry()))) return false;
-        if (bookmarks.size() >= MAX_BOOKMARKS) bookmarks.removeFirst();
+        if (bookmarks.size() >= MAX_BOOKMARKS) bookmarks.remove(0);
         bookmarks.add(location);
         return true;
     }

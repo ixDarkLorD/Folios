@@ -33,8 +33,8 @@ import java.util.function.Consumer;
 // -Dfolios.autotest=true (through JAVA_TOOL_OPTIONS). It makes a flat creative world, holds and opens the books, and
 // leaves a screenshot of each step in run/screenshots (folios-autotest-*.png), then quits.
 public final class FoliosAutotest {
-    private static final ResourceLocation JOURNAL = ResourceLocation.fromNamespaceAndPath("foliostest", "field_journal");
-    private static final ResourceLocation HANDBOOK = ResourceLocation.fromNamespaceAndPath("foliostest", "handbook");
+    private static final ResourceLocation JOURNAL = new ResourceLocation("foliostest", "field_journal");
+    private static final ResourceLocation HANDBOOK = new ResourceLocation("foliostest", "handbook");
 
     private record Step(int ticks, Consumer<Minecraft> action) {}
 
@@ -43,7 +43,7 @@ public final class FoliosAutotest {
                 command(minecraft, "time set noon");
                 command(minecraft, "gamerule doDaylightCycle false");
                 command(minecraft, "weather clear");
-                command(minecraft, "item replace entity @s weapon.mainhand with folios:guide_book[folios:guide_book=\"foliostest:field_journal\"]");
+                command(minecraft, "item replace entity @s weapon.mainhand with folios:guide_book{folios_book:\"foliostest:field_journal\"}");
             }),
             new Step(40, minecraft -> shot(minecraft, "01_held")),
             new Step(1, minecraft -> minecraft.gameMode.useItem(minecraft.player, InteractionHand.MAIN_HAND)),
@@ -75,7 +75,7 @@ public final class FoliosAutotest {
             new Step(1, minecraft -> {
                 BuildGuide.stop();
                 minecraft.player.setXRot(0.0F);
-                command(minecraft, "item replace entity @s weapon.mainhand with folios:guide_book[folios:guide_book=\"foliostest:handbook\"]");
+                command(minecraft, "item replace entity @s weapon.mainhand with folios:guide_book{folios_book:\"foliostest:handbook\"}");
             }),
             new Step(20, minecraft -> GuideClient.open(HANDBOOK, null, null)),
             new Step(70, minecraft -> shot(minecraft, "08_screen_book")),
@@ -128,8 +128,7 @@ public final class FoliosAutotest {
         LevelSettings settings = new LevelSettings("Folios Autotest " + System.currentTimeMillis(), GameType.CREATIVE, false, Difficulty.PEACEFUL, true,
                 rules, WorldDataConfiguration.DEFAULT);
         minecraft.createWorldOpenFlows().createFreshLevel(settings.levelName(), settings, new WorldOptions(0L, false, false),
-                registries -> registries.registryOrThrow(Registries.WORLD_PRESET).getHolderOrThrow(WorldPresets.FLAT).value().createWorldDimensions(),
-                minecraft.screen);
+                registries -> registries.registryOrThrow(Registries.WORLD_PRESET).getHolderOrThrow(WorldPresets.FLAT).value().createWorldDimensions());
     }
 
     private static void command(Minecraft minecraft, String command) {

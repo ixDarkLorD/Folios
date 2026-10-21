@@ -161,7 +161,7 @@ public final class CoverModel {
         String name = reference;
         for (int step = 0; step < 8 && name.startsWith("#"); step++) name = textures.get(name.substring(1));
         if (name == null || name.startsWith("#")) return null;
-        ResourceLocation id = ResourceLocation.parse(name);
+        ResourceLocation id = new ResourceLocation(name);
         return id.withPath(path -> "textures/" + path + ".png");
     }
 
@@ -282,6 +282,6 @@ public final class CoverModel {
     }
 
     private static void emit(VertexConsumer consumer, Vector3f at, float u, float v, int color, int light, Vector3f normal) {
-        consumer.addVertex(at.x, at.y, at.z).setColor(color).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(normal.x, normal.y, normal.z);
+        consumer.vertex(at.x, at.y, at.z).color(color).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light).normal(normal.x, normal.y, normal.z).endVertex();
     }
 }

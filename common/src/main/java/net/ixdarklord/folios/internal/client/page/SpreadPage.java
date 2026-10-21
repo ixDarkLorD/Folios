@@ -13,6 +13,7 @@ import net.ixdarklord.folios.api.client.page.GuidePalette;
 import net.ixdarklord.folios.api.client.page.GuideText;
 import net.ixdarklord.folios.internal.client.build.BuildGuide;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.Mth;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -58,7 +59,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
     public record MapLayout(List<Node> nodes, List<List<String>> paths, Optional<ResourceLocation> background) {
         static final Codec<MapLayout> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Node.CODEC.listOf().fieldOf("nodes").forGetter(MapLayout::nodes),
-                Codec.STRING.listOf(2, 2).listOf().optionalFieldOf("paths", List.of()).forGetter(MapLayout::paths),
+                net.ixdarklord.folios.internal.compat.Compat.listOf(Codec.STRING, 2, 2).listOf().optionalFieldOf("paths", List.of()).forGetter(MapLayout::paths),
                 ResourceLocation.CODEC.optionalFieldOf("background").forGetter(MapLayout::background)
         ).apply(instance, MapLayout::new));
     }
@@ -232,8 +233,8 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
         for (Node node : map.nodes()) {
             byId.put(node.id(), node);
             icons.put(node.id(), GuideIcon.read(node.icon()));
-            int x = Math.clamp(LEFT + node.x(), LEFT + INNER + NODE / 2 + 1, LEFT + WIDTH - INNER - NODE / 2 - 3);
-            int y = Math.clamp(top + node.y(), top + INNER + NODE / 2 + 1, top + this.windowHeight() - INNER - NODE / 2 - 3);
+            int x = Mth.clamp(LEFT + node.x(), LEFT + INNER + NODE / 2 + 1, LEFT + WIDTH - INNER - NODE / 2 - 3);
+            int y = Mth.clamp(top + node.y(), top + INNER + NODE / 2 + 1, top + this.windowHeight() - INNER - NODE / 2 - 3);
             if (x - NODE / 2 - 1 < PW && x + NODE / 2 + 2 > PW) x = x < PW ? PW - NODE / 2 - 3 : PW + NODE / 2 + 2;
             at.put(node.id(), new int[]{x, y});
         }

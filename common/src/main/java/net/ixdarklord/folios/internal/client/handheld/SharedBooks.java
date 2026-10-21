@@ -131,7 +131,7 @@ public final class SharedBooks {
     /** How far open the book someone holds up is drawn now, 0 shut to 1 open; 1 for none. */
     public static float openness(int holder) {
         HandheldBook own = ownBook(holder);
-        if (own != null) return own.open(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
+        if (own != null) return own.open(Minecraft.getInstance().getFrameTime());
         Shared shared = BOOKS.get(holder);
         return shared != null ? shared.open : 1;
     }
@@ -181,7 +181,7 @@ public final class SharedBooks {
         if (shared == null && own == null || player.isInvisible()) return;
         GuideReader reader = own != null ? own : shared.reader;
         // Held up shut, then opened, as the reader does.
-        float open = own != null ? own.open(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) : shared.openNow();
+        float open = own != null ? own.open(Minecraft.getInstance().getFrameTime()) : shared.openNow();
         pose.pushPose();
         // In the reader's frame, z ahead of them; the book faces back at them, leaning back towards their eyes.
         pose.mulPose(Axis.YP.rotationDegrees(-net.minecraft.util.Mth.rotLerp(partialTicks, player.yBodyRotO, player.yBodyRot)));

@@ -23,7 +23,7 @@ public final class GuideRecipes {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) return null;
         displays = level.getRecipeManager().byKey(recipe)
-                .map(holder -> RecipeDisplay.of(holder.value(), level.registryAccess()))
+                .map(found -> RecipeDisplay.of(found, level.registryAccess()))
                 .map(List::of)
                 .orElse(List.of());
         KNOWN.put(recipe, displays);

@@ -49,6 +49,6 @@ public final class GuideStyles {
 
     /** A style as written in a book: a bare name is CoolCatLib's. */
     public static ResourceLocation id(String written) {
-        return written.indexOf(':') >= 0 ? ResourceLocation.parse(written) : Folios.rl(written);
+        return written.indexOf(':') >= 0 ? new ResourceLocation(written) : Folios.rl(written);
     }
 }

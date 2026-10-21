@@ -68,9 +68,9 @@ public final class GuideLayout {
         int textTop = partTop + reserved + (reserved > 0 ? 6 : 0);
         List<GuideText> pieces = text == null || text.isEmpty() ? List.of() : this.text(text).split(Math.max(0, CONTENT_BOTTOM - textTop), CONTENT_BOTTOM - CONTENT_TOP);
         // Text with no room left on the first page starts on the next.
-        boolean moved = !pieces.isEmpty() && pieces.getFirst().isEmpty();
+        boolean moved = !pieces.isEmpty() && pieces.get(0).isEmpty();
         List<GuidePage.Laid> pages = new ArrayList<>();
-        GuideText first = pieces.isEmpty() || moved ? null : pieces.getFirst();
+        GuideText first = pieces.isEmpty() || moved ? null : pieces.get(0);
         pages.add(painter -> {
             if (heading != null) title(painter, heading, CONTENT_TOP);
             if (part != null) part.draw(painter, partTop);
