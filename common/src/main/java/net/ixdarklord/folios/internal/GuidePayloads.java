@@ -6,12 +6,14 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 import java.util.Optional;
 
 // The guide's packets. Books are client resources, so the server only opens them and answers what the client
-// can't know: the recipes a page shows (clients aren't sent recipes) and the advancements that unlock entries.
+// can't know: the structures a page shows (data packs' own) and the advancements that unlock entries.
 public final class GuidePayloads {
     /** The book named in a {@link ReadingAt} saying none is open. */
     public static final ResourceLocation NO_BOOK = Folios.rl("none");
@@ -98,9 +100,43 @@ public final class GuidePayloads {
         }
     }
 
-    /** A client asking how recipes look. */
+    /** A client asking for structures' blocks. */
+    public record StructureRequest(List<ResourceLocation> structures) implements CustomPacketPayload {
+        public static final Type<StructureRequest> TYPE = new Type<>(Folios.rl("guide_structure_request"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, StructureRequest> STREAM_CODEC = StreamCodec.composite(
+                ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list(64)), StructureRequest::structures,
+                StructureRequest::new);
 
-    /** How one recipe looks, as the recipe book shows it; empty for a recipe the server doesn't have. */
+        @Override
+        public Type<StructureRequest> type() {
+            return TYPE;
+        }
+    }
+
+    /** No more blocks than this of a structure are sent; a larger one is said to be too large. */
+    public static final int MOST_STRUCTURE_BLOCKS = 32768;
+
+    /**
+     * A structure's blocks: its {@code palette} of states, and each block as four numbers in {@code blocks}, its x, y and
+     * z and its state's place in the palette. {@code status} is {@link #FOUND}, {@link #MISSING} or {@link #TOO_LARGE}.
+     */
+    public record Structure(ResourceLocation id, int status, List<BlockState> palette, List<Integer> blocks) implements CustomPacketPayload {
+        public static final int FOUND = 0;
+        public static final int MISSING = 1;
+        public static final int TOO_LARGE = 2;
+        public static final Type<Structure> TYPE = new Type<>(Folios.rl("guide_structure"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Structure> STREAM_CODEC = StreamCodec.composite(
+                ResourceLocation.STREAM_CODEC, Structure::id,
+                ByteBufCodecs.VAR_INT, Structure::status,
+                ByteBufCodecs.idMapper(Block.BLOCK_STATE_REGISTRY).apply(ByteBufCodecs.list(MOST_STRUCTURE_BLOCKS)), Structure::palette,
+                ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list(MOST_STRUCTURE_BLOCKS * 4)), Structure::blocks,
+                Structure::new);
+
+        @Override
+        public Type<Structure> type() {
+            return TYPE;
+        }
+    }
 
     /** The advancements a player has completed: all of them ({@code reset}), or ones newly completed or revoked. */
     public record Advancements(boolean reset, List<ResourceLocation> done, List<ResourceLocation> undone) implements CustomPacketPayload {
