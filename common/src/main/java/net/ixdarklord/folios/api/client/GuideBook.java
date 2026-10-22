@@ -80,7 +80,7 @@ public record GuideBook(ResourceLocation id, String name, String subtitle, Strin
      * The texture layers a book is drawn with, in both styles: {@code "textures"} in book.json, each a texture path.
      * They are grey or white and tinted by the book's colours (paper by the paper's colour in light or dark mode, the
      * cover by {@code "cover"}, the frame by the page's lines, tabs by their state), so one set suits any book.
-     * Folios's own are at {@code folios:textures/guide/}: a resource pack replacing them changes every book
+     * Folios's own are at {@code folios:textures/book/}: a resource pack replacing them changes every book
      * that doesn't name its own.
      *
      * @param page     the paper of each page, stretched to it (136 by 180)
@@ -94,7 +94,7 @@ public record GuideBook(ResourceLocation id, String name, String subtitle, Strin
         public static final Textures DEFAULT = new Textures(rl("page"), rl("page_frame"), rl("cover"), rl("ribbon"), rl("ribbon_plate"), null);
 
         private static ResourceLocation rl(String name) {
-            return new ResourceLocation("folios", "textures/guide/" + name + ".png");
+            return new ResourceLocation("folios", "textures/book/" + name + ".png");
         }
     }
 

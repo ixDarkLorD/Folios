@@ -1,12 +1,12 @@
 {
-  "name": "Deep Notes",
+  "name": "guide.foliostest.handbook.entry.world.locked_note.name",
   "icon": "minecraft:diamond",
   "sort": 2,
   "advancement": "minecraft:story/mine_diamond",
   "pages": [
     {
       "type": "text",
-      "text": "You found diamonds, so this entry opened."
+      "text": "guide.foliostest.handbook.entry.world.locked_note.page1.text"
     }
   ]
 }

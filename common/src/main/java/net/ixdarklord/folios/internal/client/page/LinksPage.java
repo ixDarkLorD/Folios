@@ -66,6 +66,6 @@ public record LinksPage(List<Link> links, Optional<String> title, String text) i
 
     @Override
     public String searchText() {
-        return title.orElse("") + " " + text;
+        return GuideText.resolve(title.orElse("")) + " " + GuideText.resolve(text);
     }
 }

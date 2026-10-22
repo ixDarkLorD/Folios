@@ -1,6 +1,6 @@
 {
-  "name": "The World",
-  "description": "Creatures and builds, turning in windows of their own.",
+  "name": "guide.foliostest.field_journal.category.world.name",
+  "description": "guide.foliostest.field_journal.category.world.description",
   "icon": "minecraft:grass_block",
   "sort": 2,
   "color": "#4E9A5B"
