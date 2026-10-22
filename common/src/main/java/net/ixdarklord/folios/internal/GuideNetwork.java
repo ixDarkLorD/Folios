@@ -5,6 +5,8 @@ import net.ixdarklord.coolcatcore.api.event.v2.common.ServerTickEvents;
 import net.ixdarklord.coolcatcore.api.network.Network;
 import net.ixdarklord.folios.internal.client.GuideClientNetwork;
 import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.commands.arguments.blocks.BlockStateParser;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
@@ -17,6 +19,10 @@ import net.minecraft.util.Unit;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.ixdarklord.folios.internal.mixin.StructureTemplateAccessor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -28,7 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-// The server's side of guide books: opening them, answering recipe questions, marking the book a player reads in their
+// The server's side of guide books: opening them, answering recipe and structure questions, marking the book a player reads in their
 // hands for everyone around to see, and keeping each player's client told which advancements they have (entries can be locked behind them, and a client only hears of the visible ones).
 public final class GuideNetwork {
     // Advancements completed or revoked since the last tick, per player; sent together at the end of it.
@@ -51,6 +57,10 @@ public final class GuideNetwork {
         Network.registerClientbound(GuidePayloads.SharedReading.TYPE, GuidePayloads.SharedReading.STREAM_CODEC, (payload, context) -> GuideClientNetwork.sharedReading(payload));
         Network.registerServerbound(GuidePayloads.ReadingAt.TYPE, GuidePayloads.ReadingAt.STREAM_CODEC, (payload, context) -> {
             if (context.getPlayer() instanceof ServerPlayer player) readingAt(player, payload);
+        });
+        Network.registerClientbound(GuidePayloads.Structure.TYPE, GuidePayloads.Structure.STREAM_CODEC, (payload, context) -> GuideClientNetwork.structure(payload));
+        Network.registerServerbound(GuidePayloads.StructureRequest.TYPE, GuidePayloads.StructureRequest.STREAM_CODEC, (payload, context) -> {
+            if (context.getPlayer() instanceof ServerPlayer player) answerStructures(player, payload.structures());
         });
         Network.registerClientbound(GuidePayloads.Advancements.TYPE, GuidePayloads.Advancements.STREAM_CODEC, (payload, context) -> GuideClientNetwork.advancements(payload));
         PlayerEvents.JOIN.register(player -> {
@@ -191,4 +201,54 @@ public final class GuideNetwork {
         CHANGED.clear();
     }
 
+    private static void answerStructures(ServerPlayer player, List<ResourceLocation> ids) {
+        var structures = player.server.getStructureManager();
+        for (ResourceLocation id : ids) {
+            Optional<StructureTemplate> template;
+            try {
+                template = structures.get(id);
+            } catch (Exception e) {
+                template = Optional.empty();
+            }
+            Network.sendToPlayer(player, template.map(found -> structure(id, found))
+                    .orElseGet(() -> new GuidePayloads.Structure(id, GuidePayloads.Structure.MISSING, List.of(), List.of())));
+        }
+    }
+
+    // A structure's blocks as a page shows them: its first palette (a structure with several, as a shipwreck has, keeps
+    // its others as variants), less air and the blocks only structures have; a jigsaw as the block it leaves behind.
+    private static GuidePayloads.Structure structure(ResourceLocation id, StructureTemplate template) {
+        List<StructureTemplate.Palette> palettes = ((StructureTemplateAccessor) template).folios$palettes();
+        List<BlockState> palette = new ArrayList<>();
+        Map<BlockState, Integer> indices = new HashMap<>();
+        List<Integer> blocks = new ArrayList<>();
+        if (!palettes.isEmpty()) {
+            for (StructureTemplate.StructureBlockInfo block : palettes.get(0).blocks()) {
+                BlockState state = block.state();
+                if (state.is(Blocks.JIGSAW)) state = jigsawLeaves(block);
+                if (state.isAir() || state.is(Blocks.STRUCTURE_VOID) || state.is(Blocks.STRUCTURE_BLOCK)) continue;
+                if (blocks.size() >= GuidePayloads.MOST_STRUCTURE_BLOCKS * 4) {
+                    return new GuidePayloads.Structure(id, GuidePayloads.Structure.TOO_LARGE, List.of(), List.of());
+                }
+                Integer index = indices.computeIfAbsent(state, added -> {
+                    palette.add(added);
+                    return palette.size() - 1;
+                });
+                blocks.add(block.pos().getX());
+                blocks.add(block.pos().getY());
+                blocks.add(block.pos().getZ());
+                blocks.add(index);
+            }
+        }
+        return new GuidePayloads.Structure(id, GuidePayloads.Structure.FOUND, palette, blocks);
+    }
+
+    private static BlockState jigsawLeaves(StructureTemplate.StructureBlockInfo jigsaw) {
+        String finalState = jigsaw.nbt() != null && jigsaw.nbt().contains("final_state") ? jigsaw.nbt().getString("final_state") : "minecraft:air";
+        try {
+            return BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(), finalState, false).blockState();
+        } catch (Exception e) {
+            return Blocks.AIR.defaultBlockState();
+        }
+    }
 }
