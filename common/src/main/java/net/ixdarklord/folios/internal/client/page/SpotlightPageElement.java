@@ -15,13 +15,13 @@ import java.util.List;
 import java.util.Optional;
 
 // An item shown large on a card, named under it (unless the page has a title), then text. The book links the item here.
-public record SpotlightPage(GuideStack item, Optional<String> title, String text, boolean link) implements GuidePage {
-    public static final MapCodec<SpotlightPage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            GuideStack.CODEC.fieldOf("item").forGetter(SpotlightPage::item),
-            Codec.STRING.optionalFieldOf("title").forGetter(SpotlightPage::title),
-            Codec.STRING.optionalFieldOf("text", "").forGetter(SpotlightPage::text),
-            Codec.BOOL.optionalFieldOf("link", true).forGetter(SpotlightPage::link)
-    ).apply(instance, SpotlightPage::new));
+public record SpotlightPageElement(GuideStack item, Optional<String> title, String text, boolean link) implements GuidePage {
+    public static final MapCodec<SpotlightPageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            GuideStack.CODEC.fieldOf("item").forGetter(SpotlightPageElement::item),
+            Codec.STRING.optionalFieldOf("title").forGetter(SpotlightPageElement::title),
+            Codec.STRING.optionalFieldOf("text", "").forGetter(SpotlightPageElement::text),
+            Codec.BOOL.optionalFieldOf("link", true).forGetter(SpotlightPageElement::link)
+    ).apply(instance, SpotlightPageElement::new));
 
     private static final int CARD = 46;
 

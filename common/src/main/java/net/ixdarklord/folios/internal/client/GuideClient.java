@@ -12,13 +12,13 @@ import net.ixdarklord.folios.api.client.page.GuidePageTypes;
 import net.ixdarklord.folios.internal.GuideHooks;
 import net.ixdarklord.folios.internal.client.handheld.HandheldBook;
 import net.ixdarklord.folios.internal.client.page.EmptyPage;
-import net.ixdarklord.folios.internal.client.page.EntityPage;
-import net.ixdarklord.folios.internal.client.page.ImagePage;
-import net.ixdarklord.folios.internal.client.page.LinksPage;
-import net.ixdarklord.folios.internal.client.page.MultiblockPage;
-import net.ixdarklord.folios.internal.client.page.QuestPage;
-import net.ixdarklord.folios.internal.client.page.RecipePage;
-import net.ixdarklord.folios.internal.client.page.SpotlightPage;
+import net.ixdarklord.folios.internal.client.page.EntityPageElement;
+import net.ixdarklord.folios.internal.client.page.ImagePageElement;
+import net.ixdarklord.folios.internal.client.page.LinksPageElement;
+import net.ixdarklord.folios.internal.client.page.MultiblockPageElement;
+import net.ixdarklord.folios.internal.client.page.QuestPageElement;
+import net.ixdarklord.folios.internal.client.page.RecipePageElement;
+import net.ixdarklord.folios.internal.client.page.SpotlightPageElement;
 import net.ixdarklord.folios.internal.client.page.TextPage;
 import net.ixdarklord.folios.internal.client.screen.GuideScreen;
 import net.ixdarklord.folios.internal.core.Folios;
@@ -40,13 +40,15 @@ public final class GuideClient {
     public static void init() {
         net.ixdarklord.folios.internal.config.FoliosClientConfig.CONFIG.id();
         GuidePageTypes.register(Folios.rl("text"), TextPage.CODEC);
-        GuidePageTypes.register(Folios.rl("spotlight"), SpotlightPage.CODEC);
-        GuidePageTypes.register(Folios.rl("image"), ImagePage.CODEC);
-        GuidePageTypes.register(Folios.rl("recipe"), RecipePage.CODEC);
-        GuidePageTypes.register(Folios.rl("entity"), EntityPage.CODEC);
-        GuidePageTypes.register(Folios.rl("multiblock"), MultiblockPage.CODEC);
-        GuidePageTypes.register(Folios.rl("links"), LinksPage.CODEC);
-        GuidePageTypes.register(Folios.rl("quest"), QuestPage.CODEC);
+        GuidePageTypes.register(Folios.rl("spotlight"), SpotlightPageElement.CODEC);
+        GuidePageTypes.register(Folios.rl("image"), ImagePageElement.CODEC);
+        GuidePageTypes.register(Folios.rl("recipe"), RecipePageElement.CODEC);
+        GuidePageTypes.register(Folios.rl("entity"), EntityPageElement.CODEC);
+        GuidePageTypes.register(Folios.rl("multiblock"), MultiblockPageElement.CODEC);
+        GuidePageTypes.register(Folios.rl("structure"), net.ixdarklord.folios.internal.client.page.StructurePageElement.CODEC);
+        GuidePageTypes.register(Folios.rl("build"), net.ixdarklord.folios.internal.client.page.BuildPageElement.CODEC);
+        GuidePageTypes.register(Folios.rl("links"), LinksPageElement.CODEC);
+        GuidePageTypes.register(Folios.rl("quest"), QuestPageElement.CODEC);
         GuidePageTypes.register(Folios.rl("empty"), EmptyPage.CODEC);
         GuidePageTypes.register(Folios.rl("spread"), net.ixdarklord.folios.internal.client.page.SpreadPage.CODEC);
         GuideStyles.register(GuideStyles.SCREEN, (book, at, hand) -> {
@@ -70,6 +72,10 @@ public final class GuideClient {
             GuideBook book = GuideLibrary.book(id);
             return book != null ? book.title() : GuideHooks.defaultName(id);
         };
+        GuideHooks.authors = id -> {
+            String author = GuideLibrary.author(id);
+            return author != null ? net.ixdarklord.folios.api.client.page.GuideText.inline(author) : GuideHooks.defaultAuthor(id);
+        };
         ClientTickEvents.END.register(minecraft -> {
             if (pending != null) {
                 Runnable run = pending;
@@ -77,9 +83,9 @@ public final class GuideClient {
                 run.run();
             }
             GuideRecipes.tick();
+            GuideStructures.tick();
             net.ixdarklord.folios.internal.client.build.BuildGuide.tick(minecraft);
             if (minecraft.player != null && minecraft.player.tickCount % 20 == 0) {
-                QuestToasts.check();
                 Celebrations.check();
             }
             HandheldBook.tick();
@@ -93,6 +99,7 @@ public final class GuideClient {
         ClientPlayerEvents.LEAVE.register(player -> {
             GuideMemory.forget();
             GuideRecipes.clear();
+            GuideStructures.clear();
             GuideProgress.reset();
             HandheldBook.drop();
             net.ixdarklord.folios.internal.client.handheld.SharedBooks.clear();

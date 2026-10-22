@@ -30,6 +30,108 @@
         "L": "minecraft:lantern[hanging=false]"
       },
       "text": "guide.foliostest.field_journal.entry.world.builds.page1.text"
+    },
+    {
+      "type": "multiblock",
+      "title": "guide.foliostest.field_journal.entry.world.builds.page2.title",
+      "pattern": [
+        [
+          "PPP",
+          "PPP",
+          "PPP",
+          "PPP"
+        ],
+        [
+          "LPL",
+          "P P",
+          "P P",
+          "LUL"
+        ],
+        [
+          "LPL",
+          "PHP",
+          "PFP",
+          "LDL"
+        ],
+        [
+          "CCC",
+          "CCC",
+          "CCC",
+          "CCC"
+        ]
+      ],
+      "mapping": {
+        "P": "#minecraft:planks",
+        "L": "#minecraft:logs[axis=y]",
+        "C": "minecraft:cobblestone",
+        "D": "minecraft:oak_door[half=lower,facing=north]",
+        "U": "minecraft:oak_door[half=upper,facing=north]",
+        "F": "minecraft:red_bed[part=foot,facing=north]",
+        "H": "minecraft:red_bed[part=head,facing=north]"
+      },
+      "text": "guide.foliostest.field_journal.entry.world.builds.page2.text",
+      "anchor": "hut"
+    },
+    {
+      "type": "structure",
+      "title": "guide.foliostest.field_journal.entry.world.builds.page3.title",
+      "selector": "numbers",
+      "structures": [
+        {
+          "id": "minecraft:igloo/top",
+          "name": "guide.foliostest.field_journal.entry.world.builds.igloo"
+        },
+        {
+          "id": "minecraft:village/plains/houses/plains_small_house_1",
+          "name": "guide.foliostest.field_journal.entry.world.builds.plains_house"
+        },
+        "minecraft:shipwreck/rightsideup_full"
+      ],
+      "text": "guide.foliostest.field_journal.entry.world.builds.page3.text",
+      "anchor": "structures"
+    },
+    {
+      "type": "build",
+      "title": "guide.foliostest.field_journal.entry.world.builds.page4.title",
+      "builds": [
+        "watchtower",
+        "well"
+      ],
+      "text": "guide.foliostest.field_journal.entry.world.builds.page4.text",
+      "anchor": "builds"
+    },
+    {
+      "title": "guide.foliostest.field_journal.entry.world.builds.page5.title",
+      "elements": [
+        "guide.foliostest.field_journal.entry.world.builds.page5.intro",
+        {
+          "type": "recipe",
+          "recipe": "minecraft:lantern"
+        },
+        {
+          "type": "spotlight",
+          "item": "minecraft:lantern"
+        },
+        "guide.foliostest.field_journal.entry.world.builds.page5.middle",
+        {
+          "type": "build",
+          "build": "well",
+          "height": 60,
+          "text": "guide.foliostest.field_journal.entry.world.builds.page5.after"
+        },
+        {
+          "type": "structure",
+          "title": "guide.foliostest.field_journal.entry.world.builds.igloo",
+          "structure": "minecraft:igloo/top",
+          "height": 60
+        },
+        {
+          "type": "entity",
+          "entity": "minecraft:iron_golem",
+          "height": 60
+        }
+      ],
+      "anchor": "elements"
     }
   ]
 }

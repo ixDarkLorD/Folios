@@ -29,7 +29,7 @@ public final class HandheldScreen extends Screen {
     HandheldScreen(HandheldBook book) {
         super(book.book.title());
         this.book = book;
-        this.bar = new GuideBar(book, false, book::shut, field -> {
+        this.bar = new GuideBar(book, true, book::shut, field -> {
             this.setFocused(field);
             field.setFocused(true);
         });
