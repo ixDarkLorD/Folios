@@ -76,17 +76,6 @@
     <a class="fh-scroll" href="#fh-read" aria-label="Scroll down"><span></span></a>
   </section>
 
-  <!-- Ribbon of page types -->
-  <section class="fh-ribbon" aria-label="Page types">
-    <div class="fh-ribbon__track">
-      {% for round in [1, 2] %}
-        {% for kind in ['Text', 'Spotlights', 'Crafting', 'Smelting', 'Smithing', 'Images', 'Entities', 'Builds', 'Maps', 'Quests', 'Links', 'Spreads', 'Your own pages'] %}
-          <span>{{ kind }}</span>
-        {% endfor %}
-      {% endfor %}
-    </div>
-  </section>
-
   <!-- Two ways to read -->
   <section class="fh-section" id="fh-read">
     <header class="fh-head" data-reveal>
@@ -198,41 +187,32 @@
     </div>
   </section>
 
-  <!-- Versions -->
+  <!-- At a glance: versions and license -->
   <section class="fh-section">
     <header class="fh-head" data-reveal>
-      <p class="fh-eyebrow">Versions</p>
-      <h2>From 1.20.1 to the latest</h2>
+      <p class="fh-eyebrow">At a glance</p>
+      <h2>Where it runs, and what you can do with it</h2>
     </header>
-    <div class="fh-versions">
-      <div class="fh-version" data-reveal style="--i: 0"><b>26.1 – 26.3</b><span>Fabric · NeoForge</span></div>
-      <div class="fh-version" data-reveal style="--i: 1"><b>1.21 – 1.21.1</b><span>Fabric · NeoForge · Forge</span></div>
-      <div class="fh-version" data-reveal style="--i: 2"><b>1.20.1</b><span>Fabric · Forge</span></div>
-    </div>
-    <p class="fh-note" data-reveal>Folios needs <a href="https://modrinth.com/mod/coolcatlib">CoolCatLib</a>, and Fabric API on Fabric.</p>
-  </section>
-
-  <!-- License -->
-  <section class="fh-section">
-    <header class="fh-head" data-reveal>
-      <p class="fh-eyebrow">License</p>
-      <h2>Build on it, with credit</h2>
-    </header>
-    <div class="fh-license">
-      <div class="fh-license__col fh-license__col--yes" data-reveal style="--i: 0">
-        <h3>Welcome</h3>
-        <p>Modpacks, addons, resource packs, books, translations, videos. The book template is public domain.</p>
+    <div class="fh-glance">
+      <div class="fh-panel" data-reveal style="--i: 0">
+        <h3>Versions</h3>
+        <ul class="fh-rows">
+          <li><b>26.1 – 26.3</b><span>Fabric · NeoForge</span></li>
+          <li><b>1.21 – 1.21.1</b><span>Fabric · NeoForge · Forge</span></li>
+          <li><b>1.20.1</b><span>Fabric · Forge</span></li>
+        </ul>
+        <p class="fh-panel__note">Needs <a href="https://modrinth.com/mod/coolcatlib">CoolCatLib</a>, and Fabric API on Fabric.</p>
       </div>
-      <div class="fh-license__col fh-license__col--credit" data-reveal style="--i: 1">
-        <h3>With credit</h3>
-        <p>Reusing its code, forks and ports: name Folios and ixDarkLorD with a link, on your page, README and metadata.</p>
-      </div>
-      <div class="fh-license__col fh-license__col--no" data-reveal style="--i: 2">
-        <h3>Not allowed</h3>
-        <p>Re-uploading Folios unchanged, or a fork that calls itself Folios.</p>
+      <div class="fh-panel" data-reveal style="--i: 1">
+        <h3>License</h3>
+        <ul class="fh-rows fh-rows--license">
+          <li class="yes"><b>Welcome</b><span>Modpacks, addons, resource packs, books, translations and videos. The book template is public domain.</span></li>
+          <li class="credit"><b>With credit</b><span>Reusing its code, forks and ports: name Folios and ixDarkLorD with a link.</span></li>
+          <li class="no"><b>Not allowed</b><span>Re-uploading Folios unchanged, or a fork that calls itself Folios.</span></li>
+        </ul>
+        <p class="fh-panel__note"><a href="{{ 'license/' | url }}">Read the Folios License</a></p>
       </div>
     </div>
-    <p class="fh-note" data-reveal><a href="{{ 'license/' | url }}">Read the Folios License</a></p>
   </section>
 
   <!-- Closing call -->

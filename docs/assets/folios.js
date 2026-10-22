@@ -104,17 +104,19 @@
     });
   }
 
-  // Cards and the book lean towards the pointer.
+  // Cards and the book lean towards the pointer. The book follows it over the whole hero, measured against the hero
+  // (not the book itself, or a pointer far to one side would swing it right round) and only a few degrees each way.
   function tilt() {
     document.querySelectorAll("[data-tilt]").forEach((element) => {
       const book = element.classList.contains("fh-book");
-      const base = book ? getComputedStyle(element).transform : "";
+      const target = book ? element.closest(".fh-hero") : element;
+      const clamp = (value) => Math.max(-0.5, Math.min(0.5, value));
       const move = (event) => {
-        const box = element.getBoundingClientRect();
-        const x = (event.clientX - box.left) / box.width - 0.5;
-        const y = (event.clientY - box.top) / box.height - 0.5;
+        const box = target.getBoundingClientRect();
+        const x = clamp((event.clientX - box.left) / box.width - 0.5);
+        const y = clamp((event.clientY - box.top) / box.height - 0.5);
         if (book) {
-          element.style.transform = `translateX(var(--shift)) rotateX(${18 - y * 14}deg) rotateY(${-24 + x * 22}deg) rotateZ(2deg)`;
+          element.style.transform = `translateX(var(--shift)) rotateX(${(18 - y * 6).toFixed(2)}deg) rotateY(${(-24 + x * 10).toFixed(2)}deg) rotateZ(2deg)`;
         } else {
           element.style.setProperty("--rx", `${(-y * 6).toFixed(2)}deg`);
           element.style.setProperty("--ry", `${(x * 8).toFixed(2)}deg`);
@@ -127,14 +129,12 @@
           element.style.setProperty("--ry", "0deg");
         }
       };
-      const target = book ? element.closest(".fh-hero") : element;
       target.addEventListener("pointermove", move);
       target.addEventListener("pointerleave", leave);
       teardown.push(() => {
         target.removeEventListener("pointermove", move);
         target.removeEventListener("pointerleave", leave);
       });
-      void base;
     });
   }
 
@@ -151,13 +151,13 @@
     });
   }
 
-  // Buttons drift a little towards the pointer.
+  // Buttons lean a touch towards the pointer.
   function magnetic() {
     document.querySelectorAll("[data-magnetic]").forEach((element) => {
       const move = (event) => {
         const box = element.getBoundingClientRect();
-        element.style.setProperty("--mx", `${((event.clientX - box.left - box.width / 2) * 0.18).toFixed(1)}px`);
-        element.style.setProperty("--my", `${((event.clientY - box.top - box.height / 2) * 0.3).toFixed(1)}px`);
+        element.style.setProperty("--mx", `${((event.clientX - box.left - box.width / 2) * 0.06).toFixed(1)}px`);
+        element.style.setProperty("--my", `${((event.clientY - box.top - box.height / 2) * 0.1).toFixed(1)}px`);
       };
       const leave = () => {
         element.style.setProperty("--mx", "0px");
