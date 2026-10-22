@@ -1,12 +1,12 @@
 {
-  "name": "The Path Ahead",
+  "name": "guide.foliostest.handbook.entry.world.path_ahead.name",
   "icon": "minecraft:filled_map",
   "sort": 0,
   "pages": [
-    "Some pages are too wide for one page. A **spread** lies over both pages of the open book: a map of where to go next, a build to walk round, a wide picture.",
+    "guide.foliostest.handbook.entry.world.path_ahead.page1.text",
     {
       "type": "spread",
-      "title": "The Path Ahead",
+      "title": "guide.foliostest.handbook.entry.world.path_ahead.page2.title",
       "map": {
         "nodes": [
           {
@@ -15,7 +15,7 @@
             "y": 58,
             "icon": "minecraft:oak_sapling",
             "entry": "basics/first_steps",
-            "name": "First Steps"
+            "name": "guide.foliostest.handbook.entry.world.path_ahead.page2.place.start"
           },
           {
             "id": "quest",
@@ -23,7 +23,7 @@
             "y": 26,
             "icon": "minecraft:compass",
             "entry": "basics/first_quest",
-            "name": "A First Quest"
+            "name": "guide.foliostest.handbook.entry.world.path_ahead.page2.place.quest"
           },
           {
             "id": "tools",
@@ -31,7 +31,7 @@
             "y": 90,
             "icon": "minecraft:iron_pickaxe",
             "entry": "crafting/tools",
-            "name": "Tools"
+            "name": "guide.foliostest.handbook.entry.world.path_ahead.page2.place.tools"
           },
           {
             "id": "torch",
@@ -39,7 +39,7 @@
             "y": 58,
             "icon": "minecraft:torch",
             "entry": "crafting/torches",
-            "name": "Torches"
+            "name": "guide.foliostest.handbook.entry.world.path_ahead.page2.place.torch"
           },
           {
             "id": "life",
@@ -47,7 +47,7 @@
             "y": 26,
             "icon": "minecraft:sheep_spawn_egg",
             "entry": "world/creatures",
-            "name": "Creatures"
+            "name": "guide.foliostest.handbook.entry.world.path_ahead.page2.place.life"
           },
           {
             "id": "build",
@@ -55,7 +55,7 @@
             "y": 92,
             "icon": "minecraft:lantern",
             "entry": "world/builds",
-            "name": "A Small Shrine"
+            "name": "guide.foliostest.handbook.entry.world.path_ahead.page2.place.build"
           },
           {
             "id": "end",
@@ -63,7 +63,7 @@
             "y": 58,
             "icon": "minecraft:ender_eye",
             "entry": "secrets/the_end",
-            "name": "The End"
+            "name": "guide.foliostest.handbook.entry.world.path_ahead.page2.place.end"
           }
         ],
         "paths": [
@@ -101,11 +101,11 @@
           ]
         ]
       },
-      "text": "Each place opens its entry."
+      "text": "guide.foliostest.handbook.entry.world.path_ahead.page2.text"
     },
     {
       "type": "spread",
-      "title": "A Watchtower",
+      "title": "guide.foliostest.handbook.entry.world.path_ahead.page3.title",
       "build": {
         "pattern": [
           [
@@ -153,11 +153,11 @@
           "D": "minecraft:air"
         }
       },
-      "text": "Drag it round; the eye builds it in the world."
+      "text": "guide.foliostest.handbook.entry.world.path_ahead.page3.text"
     },
     {
       "type": "spread",
-      "title": "Far Off",
+      "title": "guide.foliostest.handbook.entry.world.path_ahead.page4.title",
       "image": "foliostest:textures/gui/config_background.png",
       "height": 128
     }

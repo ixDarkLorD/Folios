@@ -1,13 +1,13 @@
 {
-  "name": "Tools",
+  "name": "guide.foliostest.handbook.entry.crafting.tools.name",
   "icon": "minecraft:iron_pickaxe",
   "sort": 0,
   "pages": [
     {
       "type": "spotlight",
       "item": "#minecraft:pickaxes",
-      "title": "Pickaxes",
-      "text": "Item tags are shown in turn: every pickaxe there is."
+      "title": "guide.foliostest.handbook.entry.crafting.tools.page1.title",
+      "text": "guide.foliostest.handbook.entry.crafting.tools.page1.text"
     },
     {
       "type": "recipe",
@@ -16,23 +16,23 @@
         "minecraft:iron_pickaxe",
         "minecraft:wooden_pickaxe"
       ],
-      "text": "Two recipes fit on a page."
+      "text": "guide.foliostest.handbook.entry.crafting.tools.page2.text"
     },
     {
       "type": "recipe",
       "recipe": "minecraft:iron_ingot_from_smelting_raw_iron",
-      "text": "Smelting shows its fuel and how long it takes."
+      "text": "guide.foliostest.handbook.entry.crafting.tools.page3.text"
     },
     {
       "type": "recipe",
       "recipe": "minecraft:stone_bricks_from_stone_stonecutting",
-      "title": "Stonecutting"
+      "title": "guide.foliostest.handbook.entry.crafting.tools.page4.title"
     },
     {
       "type": "recipe",
       "recipe": "minecraft:netherite_pickaxe_smithing",
-      "title": "Smithing",
-      "text": "Even smithing upgrades."
+      "title": "guide.foliostest.handbook.entry.crafting.tools.page5.title",
+      "text": "guide.foliostest.handbook.entry.crafting.tools.page5.text"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
-  "name": "Advanced",
-  "description": "Opens once you have smelted iron.",
+  "name": "guide.mymod.my_guide.category.advanced.name",
+  "description": "guide.mymod.my_guide.category.advanced.description",
   "icon": "minecraft:iron_ingot",
   "sort": 1,
   "advancement": "minecraft:story/smelt_iron"

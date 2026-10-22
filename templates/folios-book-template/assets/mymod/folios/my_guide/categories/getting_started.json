@@ -1,6 +1,6 @@
 {
-  "name": "Getting Started",
-  "description": "The basics of my mod.",
+  "name": "guide.mymod.my_guide.category.getting_started.name",
+  "description": "guide.mymod.my_guide.category.getting_started.description",
   "icon": "minecraft:oak_sapling",
   "sort": 0
 }
