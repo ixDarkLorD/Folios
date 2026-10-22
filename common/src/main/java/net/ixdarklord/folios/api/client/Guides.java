@@ -16,7 +16,7 @@ import java.util.function.BooleanSupplier;
  * A book is a folder of JSON in a resource pack, so resource packs can add, translate and replace them, and
  * {@code F3 + T} reloads them while you write:
  * <pre>
- * assets/mymod/guides/handbook/
+ * assets/mymod/folios/handbook/
  *     book.json                       name, subtitle, landing (the first page's text), style, accent, cover, icon, tilt, distance, page_turn,
  *                                     textures (page, frame, cover, tab, tab_plate, backdrop), layout
  *     categories/basics.json          name, description, icon, sort, color (its tab)
