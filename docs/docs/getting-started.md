@@ -9,13 +9,13 @@ The quickest start is the template resource pack, `folios-book-template`, which 
 keys.
 
 1. Copy the template folder into `.minecraft/resourcepacks/` and turn it on in **Options → Resource Packs**.
-2. Rename `assets/mymod` to your namespace and `guides/my_guide` to your book's id.
+2. Rename `assets/mymod` to your namespace and `folios/my_guide` to your book's id.
 
 The rest of this page builds the same kind of book by hand, so you can see what each file does.
 
 ## 1. The book
 
-Create `assets/mymod/guides/my_guide/book.json`:
+Create `assets/mymod/folios/my_guide/book.json`:
 
 ```json title="book.json"
 {
@@ -38,7 +38,7 @@ See [book.json](book.md) for every key.
 
 ## 2. A category
 
-Create `assets/mymod/guides/my_guide/categories/getting_started.json`:
+Create `assets/mymod/folios/my_guide/categories/getting_started.json`:
 
 ```json title="categories/getting_started.json"
 {
@@ -53,7 +53,7 @@ The file name, `getting_started`, is the category's id.
 
 ## 3. An entry
 
-Create `assets/mymod/guides/my_guide/entries/getting_started/first_steps.json`:
+Create `assets/mymod/folios/my_guide/entries/getting_started/first_steps.json`:
 
 ```json title="entries/getting_started/first_steps.json"
 {
@@ -81,7 +81,7 @@ The entry is in the `getting_started` folder, so it belongs to that category. It
 Your folder now looks like this:
 
 ```text
-assets/mymod/guides/my_guide/
+assets/mymod/folios/my_guide/
   book.json
   categories/getting_started.json
   entries/getting_started/first_steps.json

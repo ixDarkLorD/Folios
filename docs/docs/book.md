@@ -1,6 +1,6 @@
 # book.json
 
-`assets/<namespace>/guides/<book>/book.json` describes the book itself. Every key has a default, but you will want at least a `name`.
+`assets/<namespace>/folios/<book>/book.json` describes the book itself. Every key has a default, but you will want at least a `name`.
 
 Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be translation keys.
 

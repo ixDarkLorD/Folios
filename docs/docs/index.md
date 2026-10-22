@@ -12,13 +12,13 @@ Resource packs can add, translate and replace them like any other asset.
 A book is a folder of JSON files:
 
 ```text
-assets/<namespace>/guides/<book>/
+assets/<namespace>/folios/<book>/
   book.json                       the book itself: name, style, colours, front page
   categories/<category>.json      one file per category (a tab in the book)
   entries/<category>/<entry>.json one file per entry, in its category's folder
 ```
 
-- The book's id is `<namespace>:<book>`. For `assets/mymod/guides/my_guide/` that is `mymod:my_guide`.
+- The book's id is `<namespace>:<book>`. For `assets/mymod/folios/my_guide/` that is `mymod:my_guide`.
 - A **category** is a group of entries, shown as a ribbon tab. Its id is its file name: `categories/basics.json` is
   `basics`.
 - An **entry** is a titled run of pages. Its id is its path under `entries/`: `entries/basics/first_steps.json` is

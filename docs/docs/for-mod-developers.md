@@ -1,6 +1,6 @@
 # For mod developers
 
-A mod doesn't need any code to ship a book: put the book's JSON in your mod's `assets/<modid>/guides/` and it loads
+A mod doesn't need any code to ship a book: put the book's JSON in your mod's `assets/<modid>/folios/` and it loads
 like one from a resource pack. The Java API is for giving and opening books, unlocking content from code, and adding
 your own page types, reveal effects, objectives and styles.
 
