@@ -96,6 +96,6 @@ public record MultiblockPage(List<List<String>> pattern, Map<String, String> map
 
     @Override
     public String searchText() {
-        return title.orElse("") + " " + text;
+        return GuideText.resolve(title.orElse("")) + " " + GuideText.resolve(text);
     }
 }

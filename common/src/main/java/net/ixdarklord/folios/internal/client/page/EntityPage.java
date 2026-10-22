@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.client.page;
 
+import net.ixdarklord.folios.api.client.page.GuideText;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -68,6 +69,6 @@ public record EntityPage(Identifier entity, Optional<String> title, String text,
 
     @Override
     public String searchText() {
-        return title.orElse("") + " " + text;
+        return GuideText.resolve(title.orElse("")) + " " + GuideText.resolve(text);
     }
 }

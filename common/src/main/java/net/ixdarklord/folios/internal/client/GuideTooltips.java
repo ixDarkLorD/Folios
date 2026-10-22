@@ -63,6 +63,17 @@ public final class GuideTooltips {
 
     /** Shows tooltip lines in the book's colours, over everything drawn so far: the first as a name, the rest quieter. */
     public static void show(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY, GuideBook book) {
+        show(graphics, font, lines, mouseX, mouseY, book, -1);
+    }
+
+    /** The room a soft rule between two lines takes, more than the lines' own gap. */
+    private static final int RULE_GAP = 5;
+
+    /**
+     * As {@link #show(GuiGraphicsExtractor, Font, List, int, int, GuideBook)}, with a soft rule above the line at
+     * {@code ruleBefore} (none for -1): what is said set apart from what to do.
+     */
+    public static void show(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY, GuideBook book, int ruleBefore) {
         if (lines.isEmpty()) return;
         var colors = book.colors().tooltip();
         int title = colors.getOrDefault("title", TITLE);
@@ -74,7 +85,8 @@ public final class GuideTooltips {
             styled.add(line.getVisualOrderText());
             width = Math.max(width, font.width(line));
         }
-        int height = styled.size() * 10 - 2 + (styled.size() > 1 ? 2 : 0);
+        boolean ruled = ruleBefore > 0 && ruleBefore < styled.size();
+        int height = styled.size() * 10 - 2 + (styled.size() > 1 ? 2 : 0) + (ruled ? RULE_GAP : 0);
         // Placed as vanilla places its own: up and right of the pointer, flipped left at the screen's edge.
         int x = mouseX + 12;
         int y = mouseY - 12;
@@ -85,8 +97,26 @@ public final class GuideTooltips {
         frame(graphics, x, y, width, height, book);
         int lineY = y;
         for (int index = 0; index < styled.size(); index++) {
+            if (ruled && index == ruleBefore) {
+                softRule(graphics, x, lineY + 1, width, detail);
+                lineY += RULE_GAP;
+            }
             graphics.text(font, styled.get(index), x, lineY, 0xFFFFFFFF, true);
             lineY += 10 + (index == 0 ? 2 : 0);
         }
+    }
+
+    // A soft rule across a tooltip, a pixel high: its colour fading in from either end over a quarter of its length,
+    // with a small stud at its middle, as the rule between a cover's name and subtitle has.
+    private static void softRule(GuiGraphicsExtractor graphics, int x, int y, int width, int color) {
+        int fade = Math.max(1, width / 4);
+        for (int at = 0; at < width; at++) {
+            float strength = Math.min(1, Math.min(at + 0.5F, width - at - 0.5F) / fade);
+            graphics.fill(x + at, y, x + at + 1, y + 1, GuidePalette.alpha(color, Math.round((color >>> 24) * 0.55F * strength)));
+        }
+        int middle = x + width / 2;
+        graphics.fill(middle - 1, y, middle + 1, y + 1, color);
+        graphics.fill(middle - 1, y - 1, middle + 1, y, GuidePalette.alpha(color, (color >>> 24) / 2));
+        graphics.fill(middle - 1, y + 1, middle + 1, y + 2, GuidePalette.alpha(color, (color >>> 24) / 2));
     }
 }

@@ -1,18 +1,18 @@
 {
-  "name": "Creatures",
+  "name": "guide.foliostest.handbook.entry.world.creatures.name",
   "icon": "minecraft:sheep_spawn_egg",
   "sort": 0,
   "pages": [
     {
       "type": "entity",
       "entity": "minecraft:sheep",
-      "text": "Sheep, turning slowly. Drawn to a texture of its own, so it works on a screen and on a book in your hands alike."
+      "text": "guide.foliostest.handbook.entry.world.creatures.page1.text"
     },
     {
       "type": "entity",
       "entity": "minecraft:allay",
-      "title": "Allay",
-      "text": "A helpful spirit."
+      "title": "guide.foliostest.handbook.entry.world.creatures.page2.title",
+      "text": "guide.foliostest.handbook.entry.world.creatures.page2.text"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
-  "name": "Crafting",
-  "description": "Recipes drawn as the game shows them, asked of the server when needed.",
+  "name": "guide.foliostest.handbook.category.crafting.name",
+  "description": "guide.foliostest.handbook.category.crafting.description",
   "icon": "minecraft:crafting_table",
   "sort": 1,
   "color": "#C8783C"
