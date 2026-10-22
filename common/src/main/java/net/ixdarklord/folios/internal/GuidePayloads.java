@@ -81,6 +81,24 @@ public final class GuidePayloads {
         }
     }
 
+    /**
+     * A client sending what its player has done with a book, to be kept: with the player ({@code hand} -1), or on the
+     * book in that hand, for a book that keeps its own.
+     */
+    public record Progress(Identifier book, int hand, GuideRecord record) implements CustomPacketPayload {
+        public static final Type<Progress> TYPE = new Type<>(Folios.rl("guide_progress"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Progress> STREAM_CODEC = StreamCodec.composite(
+                Identifier.STREAM_CODEC, Progress::book,
+                ByteBufCodecs.VAR_INT, Progress::hand,
+                GuideRecord.STREAM_CODEC, Progress::record,
+                Progress::new);
+
+        @Override
+        public Type<Progress> type() {
+            return TYPE;
+        }
+    }
+
     /** A client asking how recipes look. */
     public record RecipeRequest(List<Identifier> recipes) implements CustomPacketPayload {
         public static final Type<RecipeRequest> TYPE = new Type<>(Folios.rl("guide_recipe_request"));

@@ -66,7 +66,7 @@ public final class HandheldBook extends GuideReader {
     private boolean sharedShut;
 
     private HandheldBook(GuideBook book, GuideSession session, GuideBook.@Nullable Location at, @Nullable InteractionHand hand, boolean sketch) {
-        super(book, session, at);
+        super(book, session, at, hand);
         this.hand = hand;
         this.sketch = sketch;
     }
@@ -78,7 +78,7 @@ public final class HandheldBook extends GuideReader {
     public static void openScreen(GuideBook book, GuideSession session, GuideBook.@Nullable Location at, @Nullable InteractionHand hand) {
         Minecraft minecraft = Minecraft.getInstance();
         if (hand == null || minecraft.player == null || current != null) {
-            minecraft.gui.setScreen(new net.ixdarklord.folios.internal.client.screen.GuideScreen(book, session, at));
+            minecraft.gui.setScreen(new net.ixdarklord.folios.internal.client.screen.GuideScreen(book, session, at, hand));
             return;
         }
         HandheldBook opened = new HandheldBook(book, session, at, hand, true);
@@ -153,7 +153,7 @@ public final class HandheldBook extends GuideReader {
         if (!screenShown) {
             if (open >= 1) {
                 screenShown = true;
-                minecraft.gui.setScreen(new net.ixdarklord.folios.internal.client.screen.GuideScreen(book, session, this.here()));
+                minecraft.gui.setScreen(new net.ixdarklord.folios.internal.client.screen.GuideScreen(book, session, this.here(), this.hand));
             } else if (minecraft.gui.screen() != null) {
                 this.close();
             }

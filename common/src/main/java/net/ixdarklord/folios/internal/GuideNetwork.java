@@ -65,6 +65,9 @@ public final class GuideNetwork {
         Network.registerServerbound(GuidePayloads.Reading.TYPE, GuidePayloads.Reading.STREAM_CODEC, (payload, context) -> {
             if (context.getPlayer() instanceof ServerPlayer player) reading(player, payload);
         });
+        Network.registerServerbound(GuidePayloads.Progress.TYPE, GuidePayloads.Progress.STREAM_CODEC, (payload, context) -> {
+            if (context.getPlayer() instanceof ServerPlayer player) progress(player, payload);
+        });
         PlayerEvents.LEAVE.register(player -> {
             CHANGED.remove(player.getUUID());
             READERS.remove(player.getUUID());
@@ -92,6 +95,32 @@ public final class GuideNetwork {
         if (!(stack.getItem() instanceof GuideBookItem) && GuideBooks.bookOf(stack) == null) return;
         stack.set(GuideRegistry.READING.get(), Unit.INSTANCE);
         READERS.put(player.getUUID(), hand);
+    }
+
+    /** How many books' records a player keeps; more than any modpack has, fewer than a client could send to fill a save. */
+    private static final int MAX_BOOKS = 256;
+
+    // What a player has done with a book, sent by their client: kept with them, or, for a book that keeps its own, on
+    // the book in the hand they read it in (only a guide book of that same book).
+    private static void progress(ServerPlayer player, GuidePayloads.Progress payload) {
+        GuideRecord record = payload.record().capped();
+        if (payload.hand() < 0) {
+            GuideRegistry.PLAYER_PROGRESS.update(player, all -> {
+                if (!all.containsKey(payload.book()) && all.size() >= MAX_BOOKS) return all;
+                Map<Identifier, GuideRecord> next = new HashMap<>(all);
+                next.put(payload.book(), record);
+                return Map.copyOf(next);
+            });
+            return;
+        }
+        if (payload.hand() >= InteractionHand.values().length) return;
+        ItemStack stack = player.getItemInHand(InteractionHand.values()[payload.hand()]);
+        if (payload.book().equals(bookOf(stack))) GuideRegistry.BOOK_PROGRESS.set(stack, record.forStack());
+    }
+
+    /** The book a stack opens: a guide book item's, or any stack's that names one. */
+    public static @Nullable Identifier bookOf(ItemStack stack) {
+        return stack.getItem() instanceof GuideBookItem item ? item.book(stack) : GuideBooks.bookOf(stack);
     }
 
     // A reader's open spread: kept, and told to those near them now (the rest hear of it as they come near).
