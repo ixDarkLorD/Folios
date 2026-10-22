@@ -84,7 +84,13 @@ public final class GuideClient {
             HandheldBook.tick();
             net.ixdarklord.folios.internal.client.handheld.SharedBooks.tick();
         });
+        // What the player has done with books comes from the server: a sync (on joining, and after each change) is taken
+        // up by the memories without unsent changes of their own.
+        net.ixdarklord.folios.internal.core.GuideRegistry.PLAYER_PROGRESS.onChange((holder, old, now) -> {
+            if (holder.isClientSide() && holder.owner() == Minecraft.getInstance().player) GuideMemory.synced(now);
+        });
         ClientPlayerEvents.LEAVE.register(player -> {
+            GuideMemory.forget();
             GuideRecipes.clear();
             GuideProgress.reset();
             HandheldBook.drop();
