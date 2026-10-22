@@ -11,7 +11,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * Guide books from either side: the item that carries one, and opening one for a player from the server.
  * <p>
- * A book lives in resource packs, at {@code assets/<namespace>/guides/<path>/book.json} (id
+ * A book lives in resource packs, at {@code assets/<namespace>/folios/<path>/book.json} (id
  * {@code <namespace>:<path>}), with its categories and entries beside it; the client reads them and draws them (see
  * {@code net.ixdarklord.folios.api.client.Guides}). The server only knows books by id.
  * <pre>{@code
