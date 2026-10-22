@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A guide book, as read from {@code assets/<namespace>/guides/<path>/book.json} and the categories and entries beside
+ * A guide book, as read from {@code assets/<namespace>/folios/<path>/book.json} and the categories and entries beside
  * it. Books are read again whenever resources reload; don't keep one past that.
  *
  * @param name      raw, as written: a translation key or text ({@link #title()} reads it)
