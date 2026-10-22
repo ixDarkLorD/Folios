@@ -9,7 +9,8 @@ import net.minecraft.resources.ResourceLocation;
  * <pre>{@code
  * "reveal": "mymod:shimmer"                                  // an effect, for its default length
  * "reveal": {"effect": "folios:rise", "seconds": 0.6}    // and how long it takes
- * "reveal": {"effect": "folios:ink", "once": true}       // only the first time each spread is seen
+ * "reveal": {"effect": "folios:ink", "once": true}       // only the first time each spread is seen this game
+ * "reveal": {"effect": "folios:ink", "unread": true}     // only on spreads the reader hasn't been shown before
  * "reveal": "none"                                           // shown at once
  * }</pre>
  * An effect is asked once for each thing drawn each frame while it plays, so it should be cheap: arithmetic, no
@@ -72,14 +73,20 @@ public interface GuideReveal {
     }
 
     /**
-     * A reveal: an effect, how long it takes in seconds, and whether it plays only the first time each spread is seen
-     * (pages of entries read in an earlier game count as seen).
+     * A reveal: an effect, how long it takes in seconds, whether it plays only the first time each spread is seen this
+     * game ({@code once}; pages of entries read in an earlier game count as seen), and whether it plays only on spreads
+     * the reader has never been shown in full ({@code unread}; kept with the player, or with the copy of a book that
+     * keeps its own, so it doesn't play again after a restart or on another computer).
      */
-    record Use(ResourceLocation effect, float seconds, boolean once) {
-        public static final Use NONE = new Use(GuideReveals.NONE, 0, false);
+    record Use(ResourceLocation effect, float seconds, boolean once, boolean unread) {
+        public static final Use NONE = new Use(GuideReveals.NONE, 0, false, false);
 
         public Use(ResourceLocation effect, float seconds) {
-            this(effect, seconds, false);
+            this(effect, seconds, false, false);
+        }
+
+        public Use(ResourceLocation effect, float seconds, boolean once) {
+            this(effect, seconds, once, false);
         }
     }
 
