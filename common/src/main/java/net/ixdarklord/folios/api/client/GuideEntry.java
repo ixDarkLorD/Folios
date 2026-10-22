@@ -26,8 +26,14 @@ public record GuideEntry(String id, String category, String name, GuideIcon icon
      * A page of the entry, with what applies to it whatever its kind.
      *
      * @param anchor a name links can reach it by; null for none
+     * @param icon   shown before its title: its own ({@code "icon"}; {@link GuideIcon#NONE} for {@code "none"}), or null
+     *               for the entry's on its first page and none on the others
      */
-    public record Page(GuidePage page, @Nullable String anchor, GuideLock lock) {}
+    public record Page(GuidePage page, @Nullable String anchor, GuideLock lock, @Nullable GuideIcon icon) {
+        public Page(GuidePage page, @Nullable String anchor, GuideLock lock) {
+            this(page, anchor, lock, null);
+        }
+    }
 
     public Component title() {
         return net.ixdarklord.folios.api.client.page.GuideText.inline(name);

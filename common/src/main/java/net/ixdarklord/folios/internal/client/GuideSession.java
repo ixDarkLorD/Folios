@@ -89,12 +89,15 @@ public final class GuideSession {
             if (!page.lock().isOpen()) continue;
             if (page.anchor() != null) anchors.put(page.anchor(), pages.size());
             try {
+                // The entry's icon heads its first page; a later page shows one only if it names its own.
+                layout.titleIcon(page.icon() != null ? page.icon() : index == 0 ? entry.icon() : net.ixdarklord.folios.api.client.page.GuideIcon.NONE);
                 pages.addAll(page.page().lay(layout));
             } catch (RuntimeException e) {
                 Folios.LOGGER.error("Couldn't lay out page {} of the entry {} of the guide {}", index + 1, id, book.id(), e);
                 pages.addAll(new ErrorPage("This page couldn't be shown: " + e).lay(layout));
             }
         }
+        layout.titleIcon(net.ixdarklord.folios.api.client.page.GuideIcon.NONE);
         if (pages.isEmpty()) pages.add(painter -> {});
         return new EntryPages(List.copyOf(pages), Map.copyOf(anchors), starts);
     }

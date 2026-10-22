@@ -20,16 +20,16 @@ import java.util.List;
 import java.util.Optional;
 
 // A creature in a little window of its own, turning slowly (drag the window to turn it on a screen), named under it.
-public record EntityPage(ResourceLocation entity, Optional<String> title, String text, float zoom, float spin, float yaw, int height) implements GuidePage {
-    public static final MapCodec<EntityPage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            ResourceLocation.CODEC.fieldOf("entity").forGetter(EntityPage::entity),
-            Codec.STRING.optionalFieldOf("title").forGetter(EntityPage::title),
-            Codec.STRING.optionalFieldOf("text", "").forGetter(EntityPage::text),
-            Codec.floatRange(0.25F, 4.0F).optionalFieldOf("zoom", 1.0F).forGetter(EntityPage::zoom),
-            Codec.FLOAT.optionalFieldOf("spin", 24.0F).forGetter(EntityPage::spin),
-            Codec.FLOAT.optionalFieldOf("yaw", 30.0F).forGetter(EntityPage::yaw),
-            Codec.intRange(40, 130).optionalFieldOf("height", 74).forGetter(EntityPage::height)
-    ).apply(instance, EntityPage::new));
+public record EntityPageElement(ResourceLocation entity, Optional<String> title, String text, float zoom, float spin, float yaw, int height) implements GuidePage {
+    public static final MapCodec<EntityPageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            ResourceLocation.CODEC.fieldOf("entity").forGetter(EntityPageElement::entity),
+            Codec.STRING.optionalFieldOf("title").forGetter(EntityPageElement::title),
+            Codec.STRING.optionalFieldOf("text", "").forGetter(EntityPageElement::text),
+            Codec.floatRange(0.25F, 4.0F).optionalFieldOf("zoom", 1.0F).forGetter(EntityPageElement::zoom),
+            Codec.FLOAT.optionalFieldOf("spin", 24.0F).forGetter(EntityPageElement::spin),
+            Codec.FLOAT.optionalFieldOf("yaw", 30.0F).forGetter(EntityPageElement::yaw),
+            Codec.intRange(40, 130).optionalFieldOf("height", 74).forGetter(EntityPageElement::height)
+    ).apply(instance, EntityPageElement::new));
 
     @Override
     public List<Laid> lay(GuideLayout layout) {

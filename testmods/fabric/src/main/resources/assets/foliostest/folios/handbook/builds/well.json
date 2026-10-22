@@ -1,0 +1,36 @@
+{
+  "name": "guide.foliostest.handbook.entry.world.builds.well",
+  "pattern": [
+    [
+      "SSS",
+      "S S",
+      "SSS"
+    ],
+    [
+      "F F",
+      "   ",
+      "F F"
+    ],
+    [
+      "CCC",
+      "CWC",
+      "CCC"
+    ]
+  ],
+  "mapping": {
+    "S": "minecraft:cobblestone_slab[type=bottom]",
+    "F": "#minecraft:wooden_fences",
+    "C": "minecraft:mossy_cobblestone",
+    "W": "minecraft:water_cauldron[level=3]"
+  },
+  "blocks": [
+    {
+      "block": "minecraft:cobblestone_slab[type=double]",
+      "pos": [
+        1,
+        2,
+        1
+      ]
+    }
+  ]
+}
