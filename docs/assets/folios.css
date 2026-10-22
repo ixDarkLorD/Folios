@@ -1,0 +1,21 @@
+/* Folios: warm paper and leather, with an orange accent. */
+:root,
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #5a3a24;
+  --md-primary-fg-color--light: #7a5236;
+  --md-primary-fg-color--dark: #3f2818;
+  --md-accent-fg-color: #e88c4a;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #3f2818;
+  --md-primary-fg-color--light: #5a3a24;
+  --md-primary-fg-color--dark: #2a1a10;
+  --md-accent-fg-color: #e88c4a;
+}
+
+.md-typeset .md-button--primary {
+  background-color: #e88c4a;
+  border-color: #e88c4a;
+  color: #1f140c;
+}

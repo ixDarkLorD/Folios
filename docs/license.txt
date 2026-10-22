@@ -1,0 +1,124 @@
+Folios License
+Version 1.0, October 2026
+
+Copyright (c) 2026 ixDarkLorD.
+
+Folios is free to use, and you may reuse its code, change it and publish forks of it, as long as you credit its
+author (section 4). What this license does not allow, it reserves to the author. If something you want to do is not
+covered here, ask: https://github.com/ixDarkLorD
+
+
+1. Definitions
+
+  "Folios" means the Folios mod: its source code, compiled files (jars), assets (textures, models, sounds, fonts,
+  translations, shaders) and documentation, in every version, on every loader and platform.
+
+  "The Template" means the example resource pack in the folder templates/folios-book-template of the Folios source,
+  and any copy of it published by the author. It is not covered by this license (see section 6).
+
+  "Addon" means a separate mod, plugin, datapack or program that works with Folios, uses its public API
+  (net.ixdarklord.folios.api) or its file formats, and does not contain Folios's code or assets.
+
+  "Content" means guide books, resource packs, data packs, translations and other files that Folios reads, made by
+  you.
+
+  "Derived work" means anything that contains Folios's code or assets, in whole or in part, changed or not: a fork,
+  a modified version, a port to another game version or loader, or another project that reuses parts of Folios.
+
+  "Official source" means the Folios project pages on CurseForge and Modrinth, its website
+  (https://ixdarklord.github.io/Folios/), and any other place the author names.
+
+
+2. What you may do without asking
+
+  a. Use. Download Folios from an official source and use it, in single player, on servers and anywhere else you
+     play Minecraft.
+
+  b. Modpacks. Include Folios in modpacks, public or private, free or monetized through a platform's own reward
+     program (such as CurseForge's or Modrinth's). Where the platform can fetch Folios from an official source (a
+     Modrinth .mrpack, a CurseForge manifest), use that rather than a copy of the jar. Where it cannot, you may
+     include the unmodified jar, as long as the pack credits Folios and links to an official source.
+
+  c. Addons. Make, publish and sell Addons, under any license you choose. You may compile against the Folios jar
+     and depend on it, and tell your users to install it from an official source.
+
+  d. Content. Make, publish and sell Content: books, resource packs, data packs and translations for Folios. A
+     resource pack may contain changed versions of Folios's own textures, models, sounds and translations, for the
+     purpose of restyling or translating Folios.
+
+  e. Media. Show Folios in videos, streams, screenshots, articles and reviews, monetized or not.
+
+  f. Code and assets. Copy, study, change and reuse Folios's code and assets, in whole or in part, in your own
+     projects, open or closed source, free or paid, under any license you choose, as long as you give credit as
+     section 4 asks.
+
+  g. Forks. Publish modified versions and forks of Folios, including ports to other game versions and loaders, as
+     long as you give credit as section 4 asks and the fork has a name and a mod id of its own (section 3c).
+
+  h. Contributing. Changes you send the author may be used by the author in Folios, under this license, without
+     further permission.
+
+
+3. What you may not do without the author's written permission
+
+  a. Re-upload Folios unchanged, mirror it, or bundle it with anything other than a modpack (section 2b). Point
+     people to an official source instead.
+
+  b. Sell Folios itself unchanged, or put it behind a paywall, a download gate or an ad-link service.
+
+  c. Publish a Derived work under the name "Folios", with Folios's mod id ("folios") or logo, or in any way that
+     presents it as Folios itself or as made or endorsed by the author.
+
+  d. Present Folios, or a part of it, as your own work, or remove or change its copyright and license notices.
+
+
+4. Credit
+
+  Every Derived work must credit Folios and its author. This is a condition of sections 2f and 2g: without the
+  credit, those permissions do not apply.
+
+  a. Where people see it. Name Folios and its author, ixDarkLorD, with a link to an official source, on the
+     Derived work's project page (its description on CurseForge, Modrinth or wherever it is published) and in its
+     README. For example: "Based on Folios by ixDarkLorD (https://ixdarklord.github.io/Folios/)".
+
+  b. In the mod. If the Derived work is a mod, name Folios and ixDarkLorD in its metadata's credits (the
+     "contributors" or "authors" of fabric.mod.json, the "credits" of mods.toml or neoforge.mods.toml).
+
+  c. In the source. Keep this license's copyright line with the code you took, and include a copy of this license,
+     or a link to it, in the Derived work's source.
+
+  d. Say what changed. A fork or modified version must say that it is changed from Folios.
+
+  Addons, Content, modpacks and media do not need this credit (beyond what section 2b asks of modpacks), though it
+  is always welcome.
+
+
+5. Conditions
+
+  a. These permissions last as long as you keep to this license. If you break it, they end for you, and are
+     restored only if the author agrees.
+
+  b. You must also follow the Minecraft End User License Agreement and Usage Guidelines.
+
+  c. Folios depends on CoolCatLib, a separate mod with its own license. This license covers Folios only.
+
+
+6. The Template
+
+  The Template is dedicated to the public domain under Creative Commons CC0 1.0 Universal
+  (https://creativecommons.org/publicdomain/zero/1.0/). You may copy, change and publish it, in whole or in part,
+  for any purpose, without asking and without credit.
+
+
+7. No warranty
+
+  FOLIOS IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+  WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR
+  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+  FROM, OUT OF OR IN CONNECTION WITH FOLIOS OR THE USE OF OR OTHER DEALINGS IN FOLIOS.
+
+
+8. Changes to this license
+
+  The author may publish new versions of this license. Each version of Folios is covered by the license it was
+  released with; you may also follow any later version.
