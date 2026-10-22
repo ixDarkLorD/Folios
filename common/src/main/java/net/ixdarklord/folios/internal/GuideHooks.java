@@ -13,6 +13,7 @@ import java.util.function.Function;
 public final class GuideHooks {
     public static BiConsumer<Identifier, InteractionHand> opener = (book, hand) -> {};
     public static Function<Identifier, Component> names = GuideHooks::defaultName;
+    public static Function<Identifier, Component> authors = GuideHooks::defaultAuthor;
 
     private GuideHooks() {}
 
@@ -22,6 +23,18 @@ public final class GuideHooks {
 
     public static Component bookName(Identifier book) {
         return names.apply(book);
+    }
+
+    /** Who a book is from, for its item's tooltip. */
+    public static Component bookAuthor(Identifier book) {
+        return authors.apply(book);
+    }
+
+    /** The display name of the mod whose namespace the book is in; the namespace in title case if no mod has it. */
+    public static Component defaultAuthor(Identifier book) {
+        String namespace = book.getNamespace();
+        return Component.literal(net.ixdarklord.coolcatcore.api.platform.Platform.getModName(namespace)
+                .orElseGet(() -> namespace.substring(0, 1).toUpperCase(Locale.ROOT) + namespace.substring(1).replace('_', ' ')));
     }
 
     /** {@code guide.<namespace>.<path>.name}, with the path in title case as the fallback. */
