@@ -1,0 +1,214 @@
+{% extends "main.html" %}
+
+{#- The landing page: its own sections in place of the article, the site's header, tabs and footer kept. -#}
+{% block content %}
+<div class="fh">
+
+  <!-- Hero -->
+  <section class="fh-hero">
+    <div class="fh-aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+    <canvas class="fh-sparkles" aria-hidden="true"></canvas>
+    <div class="fh-hero__inner">
+      <div class="fh-hero__text">
+        <p class="fh-eyebrow" data-reveal>Guide books for Minecraft mods</p>
+        <h1 class="fh-title" data-reveal>
+          Write the manual<br>your mod <em class="fh-shimmer">deserves</em>.
+        </h1>
+        <p class="fh-lead" data-reveal>
+          Folios turns JSON in a resource pack into a book players actually want to open: on the screen, or held open in
+          their hands in the world, with recipes, builds, quests and more.
+        </p>
+        <div class="fh-actions" data-reveal>
+          <a class="fh-btn fh-btn--primary" data-magnetic href="{{ 'docs/getting-started/' | url }}">Write your first book</a>
+          <a class="fh-btn" data-magnetic href="https://modrinth.com/mod/folios">Modrinth</a>
+          <a class="fh-btn" data-magnetic href="https://www.curseforge.com/minecraft/mc-mods/folios">CurseForge</a>
+        </div>
+        <ul class="fh-chips" data-reveal>
+          <li>Fabric</li><li>NeoForge</li><li>Forge</li><li>1.20.1 – 26.3</li>
+        </ul>
+      </div>
+
+      <div class="fh-stage" aria-hidden="true" data-reveal>
+        <div class="fh-book" data-tilt>
+          <div class="fh-book__back"></div>
+          <div class="fh-book__block"></div>
+          <div class="fh-book__page fh-book__page--right">
+            <span class="fh-line fh-line--title"></span><span class="fh-line"></span><span class="fh-line"></span>
+            <span class="fh-line fh-line--short"></span>
+            <span class="fh-slot-row"><i></i><i></i><i></i><b></b><i class="fh-out"></i></span>
+            <span class="fh-line"></span><span class="fh-line fh-line--short"></span>
+          </div>
+          <div class="fh-book__leaf fh-book__leaf--1"><div class="fh-leaf__face"></div><div class="fh-leaf__back"></div></div>
+          <div class="fh-book__leaf fh-book__leaf--2"><div class="fh-leaf__face"></div><div class="fh-leaf__back"></div></div>
+          <div class="fh-book__leaf fh-book__leaf--3"><div class="fh-leaf__face"></div><div class="fh-leaf__back"></div></div>
+          <div class="fh-book__cover">
+            <div class="fh-cover__front">
+              <span class="fh-cover__corner fh-cover__corner--tl"></span><span class="fh-cover__corner fh-cover__corner--br"></span>
+              <span class="fh-cover__plate">Folios</span>
+              <span class="fh-cover__gem"></span>
+            </div>
+            <div class="fh-cover__inside"></div>
+          </div>
+        </div>
+        <div class="fh-book__shadow"></div>
+      </div>
+    </div>
+    <a class="fh-scroll" href="#fh-read" aria-label="Scroll down"><span></span></a>
+  </section>
+
+  <!-- Ribbon of page types -->
+  <section class="fh-ribbon" aria-label="Page types">
+    <div class="fh-ribbon__track">
+      {% for round in [1, 2] %}
+        {% for kind in ['Text', 'Spotlights', 'Crafting', 'Smelting', 'Smithing', 'Images', 'Entities', 'Builds', 'Maps', 'Quests', 'Links', 'Spreads', 'Your own pages'] %}
+          <span>{{ kind }}</span>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Two ways to read -->
+  <section class="fh-section" id="fh-read">
+    <header class="fh-head" data-reveal>
+      <p class="fh-eyebrow">Two ways to read</p>
+      <h2>On the screen, or in your hands</h2>
+      <p>Every page works in both. A book picks its style, and players get the same content either way.</p>
+    </header>
+    <div class="fh-duo">
+      <article class="fh-card fh-card--big" data-reveal data-tilt data-glow>
+        <div class="fh-mock fh-mock--screen">
+          <div class="fh-mock__bar"><i></i><i></i><i></i><span></span></div>
+          <div class="fh-mock__spread">
+            <div class="fh-mock__page"><b></b><span></span><span></span><span class="s"></span><span></span></div>
+            <div class="fh-mock__page"><span></span><span class="s"></span><em></em><span></span></div>
+            <div class="fh-mock__tabs"><i></i><i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <h3>Screen books</h3>
+        <p>A flat book in the middle of the screen with the world dimmed around it: ribbon tabs, bookmarks, search, and
+          light or dark paper.</p>
+      </article>
+      <article class="fh-card fh-card--big" data-reveal data-tilt data-glow>
+        <div class="fh-mock fh-mock--hands">
+          <div class="fh-hands__book"><div></div><div></div></div>
+          <div class="fh-hands__hand fh-hands__hand--l"></div>
+          <div class="fh-hands__hand fh-hands__hand--r"></div>
+        </div>
+        <h3>Handheld books</h3>
+        <p>Raised from the hotbar and opened in your hands, its leaves turning in the world. Players nearby see you
+          reading, and can read along.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="fh-section">
+    <header class="fh-head" data-reveal>
+      <p class="fh-eyebrow">Everything a guide needs</p>
+      <h2>Built for players, written by you</h2>
+    </header>
+    <div class="fh-grid">
+      {% set features = [
+        ['🧩', 'Every kind of page', 'Text with a small Markdown, spotlights, images, crafting, smelting, stonecutting and smithing recipes, maps, links and spreads across the fold.'],
+        ['🏗️', 'Builds you can follow', 'Turning 3D scenes of entities and builds, and a button that stands the build in the world as ghost blocks, layer by layer.'],
+        ['🏆', 'Quests and progress', 'Objectives followed live, toasts when a quest is done, and celebrations when a category or the whole book is mastered.'],
+        ['✨', 'Pages that reveal', 'Ink, burn, runes and more: each spread can reveal itself with an effect, once or every time it is turned to.'],
+        ['🎨', 'Yours to restyle', 'Books are files in a resource pack. Packs can add, translate and restyle them, and F3 + T reloads them while you write.'],
+        ['🔌', 'Made for mods', 'Open books from code, give players book items, and add your own page types, reveal effects and objectives.'],
+      ] %}
+      {% for icon, title, text in features %}
+        <article class="fh-card" data-reveal style="--i: {{ loop.index0 }}" data-glow>
+          <span class="fh-card__icon">{{ icon }}</span>
+          <h3>{{ title }}</h3>
+          <p>{{ text }}</p>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- From JSON to a book -->
+  <section class="fh-section fh-flow">
+    <header class="fh-head" data-reveal>
+      <p class="fh-eyebrow">How it works</p>
+      <h2>From a JSON file to a page</h2>
+      <p>No code needed. Put a book in a resource pack, press <kbd>F3</kbd> + <kbd>T</kbd>, and read it.</p>
+    </header>
+    <div class="fh-flow__row">
+      <div class="fh-code" data-reveal data-type>
+        <div class="fh-code__bar"><i></i><i></i><i></i><span>entries/basics/first_steps.json</span></div>
+<pre><code data-text='{
+  "name": "First steps",
+  "icon": "minecraft:oak_sapling",
+  "pages": [
+    "Every journey starts with **a tree**.",
+    { "type": "recipe",
+      "recipe": "minecraft:crafting_table" }
+  ]
+}'></code><span class="fh-caret"></span></pre>
+      </div>
+      <div class="fh-arrow" data-reveal aria-hidden="true"><span></span></div>
+      <div class="fh-paper" data-reveal>
+        <p class="fh-paper__title">First steps</p>
+        <p class="fh-paper__text">Every journey starts with <strong>a tree</strong>.</p>
+        <div class="fh-recipe">
+          <div class="fh-recipe__grid"><i class="p"></i><i class="p"></i><i></i><i class="p"></i><i class="p"></i><i></i><i></i><i></i><i></i></div>
+          <span class="fh-recipe__arrow"></span>
+          <i class="fh-recipe__out"></i>
+        </div>
+      </div>
+    </div>
+    <div class="fh-center" data-reveal>
+      <a class="fh-btn" data-magnetic href="{{ 'downloads/' | url }}">Get the book template</a>
+      <a class="fh-btn fh-btn--ghost" data-magnetic href="{{ 'docs/' | url }}">Read the docs</a>
+    </div>
+  </section>
+
+  <!-- Versions -->
+  <section class="fh-section">
+    <header class="fh-head" data-reveal>
+      <p class="fh-eyebrow">Versions</p>
+      <h2>From 1.20.1 to the latest</h2>
+    </header>
+    <div class="fh-versions">
+      <div class="fh-version" data-reveal style="--i: 0"><b>26.1 – 26.3</b><span>Fabric · NeoForge</span></div>
+      <div class="fh-version" data-reveal style="--i: 1"><b>1.21 – 1.21.1</b><span>Fabric · NeoForge · Forge</span></div>
+      <div class="fh-version" data-reveal style="--i: 2"><b>1.20.1</b><span>Fabric · Forge</span></div>
+    </div>
+    <p class="fh-note" data-reveal>Folios needs <a href="https://modrinth.com/mod/coolcatlib">CoolCatLib</a>, and Fabric API on Fabric.</p>
+  </section>
+
+  <!-- License -->
+  <section class="fh-section">
+    <header class="fh-head" data-reveal>
+      <p class="fh-eyebrow">License</p>
+      <h2>Build on it, with credit</h2>
+    </header>
+    <div class="fh-license">
+      <div class="fh-license__col fh-license__col--yes" data-reveal style="--i: 0">
+        <h3>Welcome</h3>
+        <p>Modpacks, addons, resource packs, books, translations, videos. The book template is public domain.</p>
+      </div>
+      <div class="fh-license__col fh-license__col--credit" data-reveal style="--i: 1">
+        <h3>With credit</h3>
+        <p>Reusing its code, forks and ports: name Folios and ixDarkLorD with a link, on your page, README and metadata.</p>
+      </div>
+      <div class="fh-license__col fh-license__col--no" data-reveal style="--i: 2">
+        <h3>Not allowed</h3>
+        <p>Re-uploading Folios unchanged, or a fork that calls itself Folios.</p>
+      </div>
+    </div>
+    <p class="fh-note" data-reveal><a href="{{ 'license/' | url }}">Read the Folios License</a></p>
+  </section>
+
+  <!-- Closing call -->
+  <section class="fh-cta" data-reveal>
+    <h2>Open your first book</h2>
+    <p>Start from the template, and have a book in your pack in minutes.</p>
+    <div class="fh-actions fh-actions--center">
+      <a class="fh-btn fh-btn--primary" data-magnetic href="{{ 'docs/getting-started/' | url }}">Get started</a>
+      <a class="fh-btn" data-magnetic href="https://github.com/ixDarkLorD/Folios/issues">Report an issue</a>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

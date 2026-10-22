@@ -5,8 +5,9 @@ site_description = "Guide books for Minecraft mods, written as JSON in a resourc
 site_author = "ixDarkLorD"
 repo_url = "https://github.com/ixDarkLorD/Folios"
 repo_name = "ixDarkLorD/Folios"
-copyright = "Copyright &copy; 2026 ixDarkLorD &middot; Folios is All Rights Reserved under the <a href=\"/Folios/license/\">Folios License</a>"
+copyright = "Copyright &copy; 2026 ixDarkLorD &middot; Use it, build on it and fork it, with credit: <a href=\"/Folios/license/\">Folios License</a>"
 extra_css = ["assets/folios.css"]
+extra_javascript = ["assets/folios.js"]
 # site_description = "Your project description"
 # site_author = "Your name"
 
@@ -39,7 +40,7 @@ nav = [
 
 [project.theme]
 # variant = "classic"
-# custom_dir = "overrides"
+custom_dir = "overrides"
 # favicon = "images/favicon.png"
 language = "en"
 features = [
@@ -58,7 +59,7 @@ features = [
   "navigation.indexes",
   "navigation.instant",
   "navigation.instant.prefetch",
-  # "navigation.instant.progress",
+  "navigation.instant.progress",
   "navigation.path",
   # "navigation.prune",
   "navigation.sections",
@@ -73,12 +74,12 @@ features = [
 
 # logo = "assets/logo.png"
 
-# [project.theme.icon]
-# logo = "lucide/smile"
+[project.theme.icon]
+logo = "lucide/book-open-text"
 
-# [project.theme.font]
-# text = "Inter"
-# code = "Jetbrains Mono"
+[project.theme.font]
+text = "Inter"
+code = "JetBrains Mono"
 
 [[project.theme.palette]]
 media = "(prefers-color-scheme)"
