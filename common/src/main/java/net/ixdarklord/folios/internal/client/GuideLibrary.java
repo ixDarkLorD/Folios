@@ -162,7 +162,9 @@ public final class GuideLibrary {
                 json.has("close_on_click_outside") ? json.get("close_on_click_outside").getAsBoolean() : style.equals(GuideStyles.HANDHELD),
                 handling(json.has("handheld") ? json.getAsJsonObject("handheld") : new JsonObject()),
                 colors(json.has("colors") ? json.getAsJsonObject("colors") : new JsonObject()),
-                coverText(json.has("cover_text") ? json.getAsJsonObject("cover_text") : new JsonObject(), string(json, "summary", "")), categories, entries);
+                coverText(json.has("cover_text") ? json.getAsJsonObject("cover_text") : new JsonObject(), string(json, "summary", "")),
+                json.has("progress") ? GuideBook.Progress.valueOf(json.get("progress").getAsString().toUpperCase(java.util.Locale.ROOT)) : GuideBook.Progress.PLAYER,
+                categories, entries);
     }
 
     private static final java.util.Set<String> PAGE_COLORS = java.util.Set.of("paper", "text", "muted", "heading", "accent", "link", "panel", "line");
@@ -260,17 +262,19 @@ public final class GuideLibrary {
         return new GuideBook.Models(item, open, cover, !json.has("hands") || json.get("hands").getAsBoolean(), guiModel);
     }
 
-    // A reveal: "none", an effect's id (for its default length), or {"effect": id, "seconds": n, "once": true}. An effect no mod has
+    // A reveal: "none", an effect's id (for its default length), or {"effect": id, "seconds": n, "once": true, "unread": true}. An effect no mod has
     // registered is warned of and shows the content at once.
     private static GuideReveal.Use reveal(JsonElement json) {
         String effect;
         float seconds = GuideReveals.DEFAULT_SECONDS;
         boolean once = false;
+        boolean unread = false;
         if (json.isJsonObject()) {
             JsonObject object = json.getAsJsonObject();
             effect = string(object, "effect", GuideReveals.DEFAULT.effect().toString());
             if (object.has("seconds")) seconds = Mth.clamp(object.get("seconds").getAsFloat(), 0.0F, 5.0F);
             once = object.has("once") && object.get("once").getAsBoolean();
+            unread = object.has("unread") && object.get("unread").getAsBoolean();
         } else {
             effect = json.getAsString();
         }
@@ -280,7 +284,7 @@ public final class GuideLibrary {
             Folios.LOGGER.warn("A guide asks for the reveal effect {}, which no mod has registered", id);
             return GuideReveal.Use.NONE;
         }
-        return new GuideReveal.Use(id, seconds, once);
+        return new GuideReveal.Use(id, seconds, once, unread);
     }
 
     // A book's icon when it names none: its own guide book item, as the book's item is drawn.
