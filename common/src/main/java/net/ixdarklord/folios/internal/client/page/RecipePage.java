@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.client.page;
 
+import net.ixdarklord.folios.api.client.page.GuideText;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -203,6 +204,6 @@ public record RecipePage(List<Identifier> recipes, Optional<String> title, Strin
 
     @Override
     public String searchText() {
-        return title.orElse("") + " " + text;
+        return GuideText.resolve(title.orElse("")) + " " + GuideText.resolve(text);
     }
 }
