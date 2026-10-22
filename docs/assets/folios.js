@@ -1,4 +1,4 @@
-// Folios site: page transitions, scroll reveals, tilting cards, magnetic buttons, sparkles and typed code. Every page
+// Folios site, on the landing page only (the docs pages stay still): scroll reveals, tilting cards, magnetic buttons, sparkles and typed code. Every page
 // load (including Zensical's instant navigation) runs `setup`; whatever it starts is stopped before the next one.
 (function () {
   const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -13,9 +13,8 @@
     cleanup();
     const landing = document.querySelector(".fh");
     document.body.classList.toggle("fh-page", !!landing);
-    enter();
+    if (!landing) return;
     reveal();
-    if (!landing) progress();
     if (calm.matches) {
       document.querySelectorAll("[data-type]").forEach((block) => type(block, true));
       return;
@@ -27,16 +26,6 @@
     sparkles();
     bookToggle();
     document.querySelectorAll("[data-type]").forEach((block) => type(block, false));
-  }
-
-  // The article rises in, its parts one after another.
-  function enter() {
-    const inner = document.querySelector(".md-content__inner");
-    if (!inner || calm.matches) return;
-    [...inner.children].forEach((child, index) => child.style.setProperty("--n", index));
-    document.body.classList.remove("f-enter");
-    void document.body.offsetWidth;
-    document.body.classList.add("f-enter");
   }
 
   // Elements marked data-reveal fade and rise in as they come into view.
@@ -84,25 +73,6 @@
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
       clearTimeout(safety);
-    });
-  }
-
-  // A bar along the top showing how far down the page you are.
-  function progress() {
-    const bar = document.createElement("div");
-    bar.className = "f-progress";
-    document.body.appendChild(bar);
-    const update = () => {
-      const room = document.documentElement.scrollHeight - window.innerHeight;
-      bar.style.setProperty("--p", room > 0 ? Math.min(1, window.scrollY / room) : 0);
-    };
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    teardown.push(() => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-      bar.remove();
     });
   }
 

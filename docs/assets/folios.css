@@ -1,5 +1,5 @@
-/* Folios, in its logo's colours: a night-blue sky, parchment, a teal quill, gold stars and a plum cover, and a lot of
-   motion (none for reduced motion). */
+/* Folios, in its logo's colours: a night-blue sky, parchment, a teal quill, gold stars and a plum cover. The landing
+   page moves a lot (none for reduced motion); the docs pages stay still. */
 
 /* ---------- Tokens ---------- */
 :root {
@@ -54,111 +54,89 @@
 }
 
 /* ---------- The theme around every page ---------- */
-/* The top bars: one sheet of dark glass over the page, a gilt hairline under it, the tabs as pills. */
-.md-header, .md-tabs {
-  background: linear-gradient(180deg, color-mix(in srgb, #171c2b 86%, transparent), color-mix(in srgb, #171c2b 74%, transparent));
-  backdrop-filter: saturate(170%) blur(16px);
-  -webkit-backdrop-filter: saturate(170%) blur(16px);
-  color: #f6eedb;
-}
-.md-header { box-shadow: none; transition: box-shadow 0.4s var(--f-ease); }
-.md-header--shadow { box-shadow: 0 12px 32px -18px rgba(0, 0, 0, 0.8); }
-.md-header__inner { padding-block: 0.35rem; }
-.md-header::after, .md-tabs::after {
-  content: ""; position: absolute; inset: auto 0 0 0; height: 1px; pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(242, 193, 78, 0.5) 30%, rgba(79, 209, 197, 0.6) 50%, rgba(242, 193, 78, 0.5) 70%, transparent);
-  background-size: 200% 100%; animation: f-hairline 8s linear infinite;
-}
-.md-tabs { position: relative; }
-body:has(.md-tabs:not([hidden])) .md-header::after { opacity: 0.3; }
-@keyframes f-hairline { to { background-position: -200% 0; } }
+/* Quiet on purpose: the docs are for reading, so the bars are solid, nothing moves on hover but colour, and the colour
+   is kept for what is open. The landing page brings its own motion. */
+.md-header, .md-tabs { background: #171c2b; color: #f6eedb; }
+.md-header { box-shadow: none; }
+.md-header--shadow { box-shadow: 0 8px 24px -16px rgba(0, 0, 0, 0.8); }
+.md-header__inner { padding-block: 0.3rem; }
+/* One gilt hairline under the bars, still. */
+.md-tabs, body:not(:has(.md-tabs)) .md-header { border-bottom: 1px solid rgba(242, 193, 78, 0.18); }
 
-.md-header__button.md-logo {
-  display: grid; place-items: center; width: 2.1rem; height: 2.1rem; padding: 0; margin: 0.2rem 0.4rem 0.2rem 0.2rem; border-radius: 4px;
-  box-shadow: 0 6px 18px -8px var(--f-teal);
-  transition: transform 0.5s var(--f-spring), box-shadow 0.4s;
-}
+.md-header__button.md-logo { display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; margin: 0.2rem 0.4rem 0.2rem 0.2rem; }
 /* The mod logo is pixel art with its own frame: shown whole, its pixels kept sharp. */
 .md-header__button.md-logo img { width: 100%; height: 100%; image-rendering: pixelated; border-radius: 4px; }
-.md-header__button.md-logo:hover { transform: rotate(-8deg) scale(1.08); box-shadow: 0 8px 26px -6px var(--f-teal); }
 .md-header__title { font-family: var(--f-serif); font-weight: 800; font-size: 1.05rem; letter-spacing: 0.01em; margin-left: 0.3rem; }
-.md-header__topic:first-child .md-ellipsis {
-  background: linear-gradient(90deg, #f7d77e, var(--f-gold) 45%, var(--f-teal)); -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-.md-header__button.md-icon { border-radius: 10px; transition: background 0.25s, transform 0.3s var(--f-spring); }
-.md-header__button.md-icon:hover { background: rgba(230, 235, 242, 0.08); opacity: 1; transform: scale(1.06); }
-.md-header__source { opacity: 0.85; transition: opacity 0.25s; }
-.md-header__source:hover { opacity: 1; }
+.md-header__topic:first-child .md-ellipsis { color: var(--f-gold); }
+.md-header__button.md-icon { border-radius: 8px; transition: background 0.2s; }
+.md-header__button.md-icon:hover { background: rgba(230, 235, 242, 0.08); opacity: 1; }
 
-.md-search__form {
-  border-radius: 999px; background: rgba(230, 235, 242, 0.06); box-shadow: inset 0 0 0 1px rgba(242, 193, 78, 0.18);
-  transition: background 0.3s, box-shadow 0.3s;
-}
-.md-search__form:hover { background: rgba(230, 235, 242, 0.1); box-shadow: inset 0 0 0 1px rgba(242, 193, 78, 0.35); }
-[data-md-toggle="search"]:checked ~ .md-header .md-search__form { border-radius: 14px 14px 0 0; }
+/* The search button sits on the night-blue bar in both schemes, so it keeps light text in both. */
+.md-search__button { border-radius: 8px; color: rgba(246, 238, 219, 0.8) !important; background: rgba(230, 235, 242, 0.06) !important; box-shadow: inset 0 0 0 1px rgba(230, 235, 242, 0.12); transition: background 0.2s; }
+.md-search__button:hover { background: rgba(230, 235, 242, 0.1) !important; }
+.md-search__button::before { background-color: currentColor !important; }
+.md-search__button::after { color: rgba(246, 238, 219, 0.7) !important; background: rgba(230, 235, 242, 0.1) !important; }
 
-.md-tabs__list { display: flex; gap: 0.3rem; padding-block: 0.3rem 0.6rem; }
-.md-tabs__item { height: auto; padding: 0; position: relative; border-bottom: 0 !important; }      /* (the theme's line under the open tab) */
-/* The open tab: a gilt pill, and a small glowing dot under it. */
-.md-tabs__item--active::after {
-  content: ""; position: absolute; left: 50%; bottom: -0.32rem; width: 4px; height: 4px; border-radius: 50%; translate: -50% 0;
-  background: var(--f-gold); box-shadow: 0 0 6px 1px rgba(79, 209, 197, 0.8);
-}
+/* The tabs: plain words, the open one in gold with a line under it. */
+.md-tabs__list { display: flex; gap: 1.6rem; }
+.md-tabs__item { height: auto; padding: 0; border-bottom: 0 !important; }
 .md-tabs__link {
-  display: block; margin: 0; padding: 0.4rem 0.95rem; border-radius: 999px; font-weight: 600; font-size: 0.68rem; letter-spacing: 0.02em;
-  color: rgba(246, 238, 219, 0.72); opacity: 1;
-  transition: color 0.25s, background 0.3s, box-shadow 0.3s, transform 0.3s var(--f-spring);
+  display: block; margin: 0; padding: 0.55rem 0 0.65rem; font-weight: 600; font-size: 0.7rem;
+  color: rgba(246, 238, 219, 0.66); opacity: 1; box-shadow: inset 0 -2px 0 transparent; transition: color 0.2s, box-shadow 0.2s;
 }
-.md-tabs__link:hover { color: #fff; background: rgba(230, 235, 242, 0.08); transform: translateY(-1px); }
-.md-tabs__item--active .md-tabs__link {
-  color: #17121f; background: linear-gradient(135deg, var(--f-gold), var(--f-teal-bright));
-  box-shadow: 0 0 16px -4px rgba(79, 209, 197, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-}
-.md-tabs__item--active .md-tabs__link:hover { color: #17121f; background: linear-gradient(135deg, #f7d77e, var(--f-teal-bright)); }
+.md-tabs__link:hover { color: #f6eedb; }
+.md-tabs__item--active .md-tabs__link { color: var(--f-gold); box-shadow: inset 0 -2px 0 var(--f-gold); }
 
+/* The page keeps at least a screen's height, so the menu beside it always fits above the footer. */
+.md-main__inner { min-height: calc(100vh - 7rem); }
+
+/* ----- The menu ----- */
+.md-sidebar--primary .md-nav__link { margin-top: 0.15rem; }
+@media screen and (min-width: 76.25em) {
+  .md-sidebar--primary .md-nav__link { padding: 0.3rem 0.6rem; border-radius: 6px; transition: background 0.15s, color 0.15s; }
+  .md-sidebar--primary a.md-nav__link:hover { background: var(--f-surface-2); color: var(--f-text); }
+  .md-sidebar--primary .md-nav__link--active,
+  .md-sidebar--primary .md-nav__link--active:hover { color: var(--f-teal); background: color-mix(in srgb, var(--f-teal) 12%, transparent); font-weight: 600; }
+  /* Each section's name: a small label over its pages, not a link-sized heading. */
+  .md-sidebar--primary .md-nav__item--section { margin-top: 1.1rem; }
+  .md-sidebar--primary .md-nav__item--section > .md-nav__link {
+    padding-inline: 0.6rem; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--f-muted);
+  }
+  .md-sidebar--primary .md-nav__item--section > .md-nav > .md-nav__list { margin-left: 0; }
+  /* A group inside a section hangs from a thin line. */
+  .md-sidebar--primary .md-nav[data-md-level="3"] > .md-nav__list { margin-left: 0.6rem; padding-left: 0.4rem; border-left: 1px solid var(--f-line); }
+}
+
+/* ----- The article ----- */
 .md-typeset h1, .md-typeset h2, .md-typeset h3 { font-family: var(--f-serif); letter-spacing: -0.01em; }
-.md-typeset h1 { font-weight: 800; }
-.md-typeset h2 { font-weight: 700; }
-.md-typeset a { transition: color 0.2s; }
-.md-typeset a:not(.md-button):not(.fh-btn) {
-  background-image: linear-gradient(currentColor, currentColor);
-  background-size: 0 1px;
-  background-position: 0 100%;
-  background-repeat: no-repeat;
-  transition: background-size 0.35s var(--f-ease), color 0.2s;
-}
-.md-typeset a:not(.md-button):not(.fh-btn):hover { background-size: 100% 1px; }
+.md-typeset h1 { font-weight: 800; color: var(--f-text); margin-bottom: 1rem; }
+.md-typeset h2 { font-weight: 700; padding-top: 1.2rem; border-top: 1px solid var(--f-line); }
+.md-typeset h1 + h2, .md-typeset h1 + p + h2 { border-top: 0; padding-top: 0; }
+.md-typeset a { text-underline-offset: 0.2em; }
+.md-typeset a:not(.md-button):not(.fh-btn):hover { text-decoration: underline; }
 
-.md-typeset .md-button {
-  border-radius: 999px;
-  transition: transform 0.3s var(--f-spring), box-shadow 0.3s, background 0.3s;
-}
-.md-typeset .md-button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -12px var(--f-teal); }
-.md-typeset .md-button--primary { background: linear-gradient(135deg, var(--f-gold), var(--f-teal-bright)); border: 0; color: #17121f; }
+.md-typeset .md-button { border-radius: 8px; transition: background 0.2s, color 0.2s; }
+.md-typeset .md-button--primary { background: var(--f-teal-bright); border-color: var(--f-teal-bright); color: #17121f; }
+.md-typeset .md-button--primary:hover { background: var(--f-gold); border-color: var(--f-gold); color: #17121f; }
 
-.md-typeset .admonition, .md-typeset details, .md-typeset pre > code, .md-typeset table:not([class]) {
-  border-radius: 12px;
-}
-.md-typeset table:not([class]) { overflow: hidden; box-shadow: 0 0 0 1px var(--f-line); }
-.md-typeset table:not([class]) tbody tr { transition: background 0.2s; }
-.md-typeset table:not([class]) tbody tr:hover { background: var(--f-surface-2); }
+.md-typeset .admonition, .md-typeset details, .md-typeset pre > code { border-radius: 8px; }
+.md-typeset pre > code { box-shadow: inset 0 0 0 1px var(--f-line); }
+.md-typeset :not(pre) > code { border-radius: 4px; }
+.md-typeset table:not([class]) { border-radius: 8px; overflow: hidden; border: 1px solid var(--f-line); box-shadow: none; font-size: 0.72rem; }
+.md-typeset table:not([class]) th { background: var(--f-surface-2); font-weight: 700; }
+.md-typeset table:not([class]) td, .md-typeset table:not([class]) th { border-top-color: var(--f-line); }
 
-.md-nav__link { transition: color 0.2s, transform 0.25s var(--f-ease); }
-.md-nav__link:hover { transform: translateX(3px); }
-
-/* Page changes (instant navigation): the article rises in. */
-.f-enter .md-content__inner > * {
-  animation: f-rise 0.6s var(--f-ease) both;
-  animation-delay: calc(min(var(--n, 0), 12) * 35ms);
-}
-@keyframes f-rise { from { opacity: 0; transform: translateY(14px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
-
-/* Reading progress, along the top of docs pages. */
-.f-progress {
-  position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 10;
-  background: linear-gradient(90deg, var(--f-gold), var(--f-teal), var(--f-teal-deep));
-  transform-origin: 0 50%; transform: scaleX(var(--p, 0)); pointer-events: none;
-}
+/* ----- The footer ----- */
+/* Over anything that might reach into it (the menu is a sticky layer of its own), and solid all the way down. */
+.md-footer { position: relative; z-index: 3; background: var(--f-bg); border-top: 1px solid var(--f-line); }
+.md-footer__inner { gap: 1rem; padding-block: 1rem; }
+.md-footer__link { flex: 1 1 0; padding: 0.6rem 0.8rem; border: 1px solid var(--f-line); border-radius: 8px; transition: border-color 0.2s, background 0.2s; }
+.md-footer__link:hover { border-color: color-mix(in srgb, var(--f-teal) 60%, transparent); background: var(--f-surface); opacity: 1; }
+.md-footer__link--next { justify-content: flex-end; text-align: right; }
+.md-footer__direction { color: var(--f-muted); }
+.md-footer-meta.md-footer-meta { background: #0d1018; }
+.md-footer-meta .md-copyright, .md-footer-meta .md-copyright a { color: #9aa8bd; }
+.md-footer-meta .md-copyright a:hover { color: #f6eedb; }
 
 /* ---------- Landing page ---------- */
 .fh-page .md-main__inner { margin-top: 0; max-width: none; }
@@ -209,10 +187,10 @@ body:has(.md-tabs:not([hidden])) .md-header::after { opacity: 0.3; }
 }
 @keyframes f-beams { from { transform: rotate(-3deg); opacity: 0.8; } to { transform: rotate(4deg); opacity: 1; } }
 [data-md-color-scheme="default"] .fh-hero::after { opacity: 0.6; }
-body::before {
+body.fh-page::before {
   content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0.06; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .85 0 0 0 0 .9 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-[data-md-color-scheme="default"] body::before { opacity: 0.1; mix-blend-mode: multiply; filter: invert(1); }
+[data-md-color-scheme="default"] body.fh-page::before { opacity: 0.1; mix-blend-mode: multiply; filter: invert(1); }
 .fh-sparkles { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
 
 .fh-hero__inner { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 3rem; align-items: center; max-width: 72rem; margin: 0 auto; width: 100%; }
@@ -579,9 +557,6 @@ body::before {
 /* ---------- Light pages ---------- */
 /* On paper the panels are white sheets lifted off the page by a soft shadow, the top bars are near-solid night blue,
    and the shimmering word and gilt lines take deeper inks so they read on cream. */
-[data-md-color-scheme="default"] .md-header, [data-md-color-scheme="default"] .md-tabs {
-  background: linear-gradient(180deg, color-mix(in srgb, #171c2b 97%, transparent), color-mix(in srgb, #171c2b 93%, transparent));
-}
 [data-md-color-scheme="default"] .fh-card, [data-md-color-scheme="default"] .fh-panel, [data-md-color-scheme="default"] .fh-cta,
 [data-md-color-scheme="default"] .fh-btn:not(.fh-btn--primary), [data-md-color-scheme="default"] .fh-eyebrow,
 [data-md-color-scheme="default"] .md-typeset ul.fh-chips li {
