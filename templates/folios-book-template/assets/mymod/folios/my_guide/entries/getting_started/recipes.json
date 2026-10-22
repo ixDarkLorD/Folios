@@ -1,12 +1,12 @@
 {
-  "name": "Recipes",
+  "name": "guide.mymod.my_guide.entry.getting_started.recipes.name",
   "icon": "minecraft:crafting_table",
   "sort": 1,
   "pages": [
     {
       "type": "recipe",
       "recipe": "minecraft:torch",
-      "text": "One recipe, with a line under it."
+      "text": "guide.mymod.my_guide.entry.getting_started.recipes.page1.text"
     },
     {
       "type": "recipe",

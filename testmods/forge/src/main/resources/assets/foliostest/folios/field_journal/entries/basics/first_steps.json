@@ -1,17 +1,17 @@
 {
-  "name": "First Steps",
+  "name": "guide.foliostest.field_journal.entry.basics.first_steps.name",
   "icon": "minecraft:wooden_pickaxe",
   "featured": true,
   "sort": 0,
   "pages": [
     {
       "type": "text",
-      "title": "First Steps",
-      "text": "A page of text can be as long as it likes: when it does not fit, it **runs on** over the next pages by itself.\n\n## Lists\n- Punch a tree\n- Make a *crafting table*\n  - nested points work too\n- Find some ~~diamonds~~ coal\n\n1. Numbered\n2. Lists\n3. Count themselves\n\n---\nPress {key:key.inventory} to open your inventory."
+      "title": "guide.foliostest.field_journal.entry.basics.first_steps.page1.title",
+      "text": "guide.foliostest.field_journal.entry.basics.first_steps.page1.text"
     },
     {
       "type": "text",
-      "text": "# A longer read\nThis text is long on purpose, so you can see how a page continues onto the next one without anyone having to split it by hand. Books where each page is cut to size by its writer are a chore; here the layout does it for you, in any language and at any font.\n\nLinks go anywhere in the book: to [a recipe page](crafting/tools#pickaxe), to a [whole category](category:world), or out to [the docs](https://ixdarklord.github.io/CoolCatLib/).\n\n> Notes like this one are set apart with a bar in the book's colour.\n\nColours are written like {#E06A3A}this{/}, and `code` looks like this. The rest of this paragraph is here to fill the page so that it spills over: the quick brown fox jumps over the lazy dog, again and again, until the page is full and the words keep going on the next page."
+      "text": "guide.foliostest.field_journal.entry.basics.first_steps.page2.text"
     },
     {
       "type": "links",
@@ -20,7 +20,7 @@
         "crafting/tools",
         {
           "entry": "world/creatures",
-          "label": "Meet the locals"
+          "label": "guide.foliostest.field_journal.entry.basics.first_steps.page3.link3"
         }
       ]
     }

@@ -193,6 +193,40 @@ public final class CoverMarkers {
             return null;
         }
     }
+    /**
+     * The plate of a cover a point is on, in the item's units (3 to 13 across, 1 to 15 up): {@link Kind#TITLE} for the
+     * name's, {@link Kind#SUMMARY} for the lower one (whatever it holds), or null off both or where nothing is marked.
+     */
+    public static @Nullable Kind plateAt(Markers marked, float x, float y) {
+        if (on(marked.title(), x, y)) return Kind.TITLE;
+        return on(marked.summary() != null ? marked.summary() : marked.subtitle(), x, y) ? Kind.SUMMARY : null;
+    }
+
+    // Whether a point is on a marked plate's box.
+    private static boolean on(@Nullable Marked mark, float x, float y) {
+        if (mark == null) return false;
+        GuideBook.CoverText.Line line = mark.line();
+        return Math.abs(x - line.x()) <= line.width() / ACROSS / 2 && Math.abs(y - line.y()) <= line.size() / UP / 2;
+    }
+
+    /**
+     * What a plate of a book's cover says, as {@link #layout} letters it: on the name's plate the name, with the
+     * subtitle under it when the lower plate holds the summary; on the lower plate the summary, or the subtitle.
+     */
+    public static java.util.List<Component> plateText(GuideBook book, Kind plate) {
+        boolean summary = !book.coverText().summaryText().isEmpty();
+        boolean subtitle = !book.subtitle().isEmpty();
+        java.util.List<Component> out = new java.util.ArrayList<>();
+        if (plate == Kind.TITLE) {
+            out.add(book.title());
+            if (summary && subtitle) out.add(GuideText.inline(book.subtitle()));
+        } else if (summary) {
+            out.add(GuideText.inline(book.coverText().summaryText()));
+        } else if (subtitle) {
+            out.add(GuideText.inline(book.subtitle()));
+        }
+        return out;
+    }
 
     private static Markers markers(JsonArray elements) {
         Marked title = null;

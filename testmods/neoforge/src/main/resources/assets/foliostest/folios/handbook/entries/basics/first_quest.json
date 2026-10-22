@@ -1,14 +1,14 @@
 {
-  "name": "First Quest",
+  "name": "guide.foliostest.handbook.entry.basics.first_quest.name",
   "icon": "minecraft:iron_pickaxe",
   "featured": true,
   "sort": -1,
   "pages": [
     {
       "type": "quest",
-      "title": "Getting Started",
-      "text": "Quests follow what you do: these tick themselves off as you play.",
-      "reward": "A sense of **accomplishment**",
+      "title": "guide.foliostest.handbook.entry.basics.first_quest.page1.title",
+      "text": "guide.foliostest.handbook.entry.basics.first_quest.page1.text",
+      "reward": "guide.foliostest.handbook.entry.basics.first_quest.page1.reward",
       "objectives": [
         {
           "read": "basics/first_steps"
@@ -22,7 +22,7 @@
         },
         {
           "advancement": "minecraft:story/mine_stone",
-          "label": "Mine some stone"
+          "label": "guide.foliostest.handbook.entry.basics.first_quest.page1.objective4"
         }
       ]
     }

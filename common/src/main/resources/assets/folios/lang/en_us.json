@@ -33,7 +33,7 @@
   "folios.objective.book": "Read the whole book",
   "folios.objective.item": "Collect %s",
   "folios.shut": "Close the book",
-  "folios.open": "Open the book",
+  "folios.open": "Click to open",
   "folios.hint.look": "Hold right click to look around",
   "folios.reset_view": "Reset view",
   "folios.build": "Build",

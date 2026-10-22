@@ -66,12 +66,26 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
         // From outside, the mouse turns the view: nothing on the book is pointed at.
         if (outside()) return;
         List<Component> tooltip = book.tooltip;
+        int rule = -1;
         if (book.isShut() && book.placed && onCover(book.rightPointer)) {
-            tooltip = List.of(Component.translatableWithFallback("folios.open", "Open the book"));
+            // Over one of the cover's plates, what it says comes first (a long summary wrapped), then how to open it.
+            List<Component> lines = new java.util.ArrayList<>();
+            for (Component said : HandheldRenderer.plateText(book, book.rightPointer)) {
+                for (net.minecraft.network.chat.FormattedText row : this.font.getSplitter().splitLines(said, PLATE_WIDTH, net.minecraft.network.chat.Style.EMPTY)) {
+                    lines.add(Component.literal(row.getString()));
+                }
+            }
+            // A soft rule sets what the plate says apart from how to open the book.
+            if (!lines.isEmpty()) rule = lines.size();
+            lines.add(Component.translatableWithFallback("folios.open", "Click to open"));
+            tooltip = lines;
         }
-        if (tooltip != null && !tooltip.isEmpty()) net.ixdarklord.folios.internal.client.GuideTooltips.show(graphics, this.font, tooltip, mouseX, mouseY, book.book);
+        if (tooltip != null && !tooltip.isEmpty()) net.ixdarklord.folios.internal.client.GuideTooltips.show(graphics, this.font, tooltip, mouseX, mouseY, book.book, rule);
         this.lookHint(graphics);
     }
+
+    /** How wide (GUI pixels) a cover plate's words run in the tooltip before they wrap. */
+    private static final int PLATE_WIDTH = 180;
 
     /** Minecraft's own right-button icon, from its tutorial toasts. */
     private static final net.minecraft.resources.ResourceLocation RIGHT_CLICK = net.minecraft.resources.ResourceLocation.withDefaultNamespace("toast/right_click");

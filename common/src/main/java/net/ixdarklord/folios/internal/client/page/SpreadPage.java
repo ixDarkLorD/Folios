@@ -282,8 +282,9 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
 
     @Override
     public String searchText() {
-        StringBuilder words = new StringBuilder(title.orElse("")).append(' ').append(text);
-        map.ifPresent(layout -> layout.nodes().forEach(node -> node.name().ifPresent(name -> words.append(' ').append(name))));
+        // Each piece in its words: any of them can be a translation key.
+        StringBuilder words = new StringBuilder(GuideText.resolve(title.orElse(""))).append(' ').append(GuideText.resolve(text));
+        map.ifPresent(layout -> layout.nodes().forEach(node -> node.name().ifPresent(name -> words.append(' ').append(GuideText.resolve(name)))));
         return words.toString();
     }
 
