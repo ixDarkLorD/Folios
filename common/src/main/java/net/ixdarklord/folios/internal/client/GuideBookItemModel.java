@@ -50,7 +50,7 @@ public final class GuideBookItemModel {
     // The models books name, read from their book.json files as the resources load.
     private static Collection<ResourceLocation> models(ResourceManager resources) {
         Set<ResourceLocation> models = new LinkedHashSet<>(List.of(MODEL, FLAT));
-        resources.listResources("guides", id -> id.getPath().endsWith("/book.json")).forEach((file, resource) -> {
+        resources.listResources("folios", id -> id.getPath().endsWith("/book.json")).forEach((file, resource) -> {
             try (Reader reader = resource.openAsReader()) {
                 JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
                 JsonObject named = json.has("models") ? json.getAsJsonObject("models") : new JsonObject();
