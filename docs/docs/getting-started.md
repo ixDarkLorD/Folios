@@ -114,7 +114,8 @@ book shows an error in its place and the game log says what is wrong.
 
 ## Next steps
 
-- Add more [page types](pages.md): recipes, images, entities, builds, links, quests and spreads.
+- Add more [elements](pages.md#element-types) to your pages: recipes, images, entities, builds, structures, links and
+  quests, and [spreads](spread-and-empty.md).
 - Learn the [text formatting](text-formatting.md).
 - Lock entries behind advancements, or make them secret: [Categories and entries](categories-and-entries.md#locks).
 - Change how the book looks: [Styles and look](styles-and-look.md).

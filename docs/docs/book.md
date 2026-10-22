@@ -52,7 +52,7 @@ Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be tra
 | `icon` | [icon](categories-and-entries.md#icons) | the book's own item | The icon shown in the bar and on the front page. |
 | `show_progress` | boolean | `true` | Whether the lists of categories show how much of each has been read, as bars. |
 | `author` | text | the mod its namespace belongs to | Who the book is from: the guide book item's tooltip says "From ..." under its name. Without it, the name of the mod whose namespace the book is in. |
-| `celebrations` | boolean or object | none | How finishing part of the book is celebrated. Off unless the book says so. See [Celebrations](#celebrations). |
+| `celebrations` | boolean or object | none | How finishing part of the book is celebrated. Off unless the book says so. See [Celebrations](celebrations.md). |
 
 ### Style and handling
 
@@ -80,8 +80,8 @@ Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be tra
 | --- | --- | --- | --- |
 | `accent` | colour | `#8B6CFF` | The book's colour, for marks, links, rules and highlights. |
 | `cover` | colour | `#3A2E58` | The colour of the cover and of the book item's leather. |
-| `colors` | object | the style's own | The page colour scheme: page colours and dark mode. See [Colours](styles-and-look.md#colours). |
-| `panel` | object | taken from the book | The panel colour scheme, for what the book shows off its pages: its tooltips, its toasts and the build guide's panel. See [Panel colours](styles-and-look.md#panel-colours). |
+| `colors` | object | the style's own | The page colour scheme: page colours and dark mode. See [Colours](colours.md). |
+| `panel` | object | taken from the book | The panel colour scheme, for what the book shows off its pages: its tooltips, its toasts and the build guide's panel. See [Panel colours](colours.md#panel-colours). |
 
 ### Look
 
@@ -93,44 +93,6 @@ Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be tra
 | `item_model` | identifier | none | Older way to set the item model; `models.item` takes its place. |
 | `cover_text` | object | the model's own | Where the name, subtitle and summary are lettered on the cover. See [Cover lettering](styles-and-look.md#cover-lettering). |
 | `cover_texture` | texture path | none | Handheld books: a texture drawn on the outside of the front cover, over its colour. |
-
-## Celebrations
-
-`celebrations` decides how finishing part of the book is celebrated. A book that says nothing celebrates nothing.
-`true` turns everything on:
-
-```json
-"celebrations": true
-```
-
-An object turns everything on but what it turns off. Its keys are the **parts** of a celebration, for every event, and
-the **events**, each `false`, `true`, or an object of its own parts:
-
-```json
-"celebrations": {
-  "sound": false,
-  "entry": false,
-  "mastery": { "particles": false }
-}
-```
-
-| Part | What it is |
-| --- | --- |
-| `toast` | A toast in the book's own look, naming what was finished. |
-| `sound` | A chime; the challenge fanfare for mastery. |
-| `particles` | Sparkles rising round the player; a burst of totem sparks for mastery. |
-| `fireworks` | Fireworks in the book's colours over the player. For mastery only. |
-
-| Event | When |
-| --- | --- |
-| `objective` | An objective of a quest is done. |
-| `entry` | An entry is read. |
-| `category` | Every open entry of a category is read. |
-| `quest` | Every objective of a quest is done. |
-| `mastery` | Every objective of every quest in the book is done. |
-
-A part or event left out of the object is on. Each is celebrated once, ever: what has been finished is remembered even
-while celebrations are off, so turning them on later plays nothing old. See [Quests](quests.md#celebrations).
 
 ## Reveal
 

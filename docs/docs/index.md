@@ -50,12 +50,32 @@ Books work the same on every version. The few differences are noted on the pages
 ## Where to go next
 
 - [Your first book](getting-started.md): make a book, a category and an entry, and open it in game.
+
+**The book**
+
 - [book.json](book.md): every key of the book file.
-- [Categories and entries](categories-and-entries.md): their keys, ordering, icons and locks.
-- [Pages](pages.md): every built-in page type and its fields.
-- [Text formatting](text-formatting.md): the Markdown used in page text.
-- [Styles and look](styles-and-look.md): screen and handheld books, colours, textures, layout, models and reveal
+- [Colours](colours.md): the page colour scheme, light and dark, and the panel colours for tooltips, toasts and the
+  build guide.
+- [Styles and look](styles-and-look.md): screen and handheld books, textures, layout, models, cover lettering and reveal
   effects.
-- [Quests](quests.md): quest pages, objectives, locks, mastery and celebrations.
+- [Celebrations](celebrations.md): the toasts, sounds, sparkles and fireworks for finishing part of a book.
+
+**What's in it**
+
+- [Categories and entries](categories-and-entries.md): their keys, ordering, icons and locks.
+- [Pages](pages.md): how a page holds elements, and the keys every page takes.
+- Elements: [text](elements/text.md), [spotlight](elements/spotlight.md), [image](elements/image.md),
+  [recipe](elements/recipe.md), [entity](elements/entity.md), [multiblock](elements/multiblock.md),
+  [structure](elements/structure.md), [build](elements/build.md) and its [build files](elements/build-files.md),
+  [links](elements/links.md) and [quest](elements/quest.md).
+- [Spread and empty](spread-and-empty.md): the pages of their own.
+- [Text formatting](text-formatting.md): the Markdown used in page text.
+
+**Progress**
+
+- [Quests and progress](quests.md): objectives, locks and the book's mastery.
+
+**For mods**
+
 - [For mod developers](for-mod-developers.md): the Java API for opening books, book items, flags and adding your own
-  page types, reveal effects, objectives and styles.
+  element types, reveal effects, objectives and styles.

@@ -38,7 +38,7 @@ once it is done. Objectives that count up (items, values, categories, the book) 
 
 An entry with a quest page is a **quest entry**: its row in the category list shows how far along it is, on a bar
 notched between its objectives. When an objective or the whole quest is done, the book can
-[celebrate](#celebrations) it.
+[celebrate](celebrations.md) it.
 
 ## Objectives
 
@@ -118,20 +118,6 @@ a rainbow runs across it diagonally for a moment, and a sheen sweeps over it.
 
 ## Celebrations
 
-Finishing part of a book can be celebrated, once, ever, per book. Nothing is celebrated unless the book turns it on
-with [`celebrations`](book.md#celebrations) in book.json, and it can turn each event and each part on or off:
-
-- **An objective** of a quest done: a toast naming the objective, a chime and a few sparkles.
-- **An entry** read: a toast naming the entry, a chime and a few sparkles.
-- **A category** read through (every open entry in it read): a toast with the category's icon, a chime and a ring of
-  sparkles.
-- **A quest** done (every objective of it): a toast with the quest's icon, a chime and a ring of sparkles.
-- **Mastery** (every objective of every quest in the book done): a toast with the trophy, the challenge fanfare, totem
-  sparks and fireworks in the book's colours.
-
-The toasts are in the book's own look: its [panel colours](styles-and-look.md#panel-colours), the icon in a slot, a
-small heading ("Quest complete", "Book mastered") over the name, and a line along the foot running down while it
-shows.
-
-What has been celebrated and what has been read are kept with the player's progress in the book. What is finished
-while celebrations are off is remembered too, so turning them on later plays nothing old.
+Finishing an objective, a quest or the whole book (and reading an entry or a category through) can be celebrated with a
+toast in the book's look, a sound, sparkles and, for mastery, fireworks. It is off unless the book turns it on: see
+[Celebrations](celebrations.md).

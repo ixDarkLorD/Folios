@@ -157,7 +157,7 @@ height, its text) with `GuideLayout.capture` and sets it among the page's other 
 
 | Method | What it does |
 | --- | --- |
-| `spread()` | Return `true` to lay the page over both pages of the open book, like a [spread](pages.md#spread). |
+| `spread()` | Return `true` to lay the page over both pages of the open book, like a [spread](spread-and-empty.md#spread). |
 | `searchText()` | Words the book's search should find the page by. |
 | `items()` | Items the page is about: pressing one anywhere in the book opens this page. |
 | `objectives()` | Quest objectives, making its entry a quest. |
