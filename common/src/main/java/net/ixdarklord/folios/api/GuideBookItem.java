@@ -6,6 +6,7 @@ import net.ixdarklord.folios.internal.core.GuideRegistry;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
@@ -13,8 +14,12 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import org.jspecify.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 /**
  * An item that opens a guide book when used. Folios registers one, {@code folios:guide_book}, that opens the
@@ -23,7 +28,8 @@ import org.jspecify.annotations.Nullable;
  * <pre>{@code
  * ITEMS.register("handbook", () -> new GuideBookItem(properties, MyMod.id("handbook")));
  * }</pre>
- * Its name is the book's own, unless the stack has a custom name or {@code item_name}.
+ * Its name is the book's own, unless the stack has a custom name or {@code item_name}; under it, who the book is from:
+ * its {@code "author"} in book.json, or the mod its namespace belongs to.
  */
 public class GuideBookItem extends Item {
     private final @Nullable Identifier book;
@@ -58,6 +64,13 @@ public class GuideBookItem extends Item {
         // A player's book marked as being read but no longer in their reading hand (moved, or they stopped): the mark
         // goes. Anyone else's (a mannequin shown reading) keeps it.
         if (owner instanceof Player && stack.has(GuideRegistry.READING.get()) && !GuideNetwork.isRead(owner, stack)) stack.remove(GuideRegistry.READING.get());
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
+        Identifier id = this.book(stack);
+        if (id == null) return;
+        builder.accept(Component.translatableWithFallback("folios.guide_book.from", "From %s", GuideHooks.bookAuthor(id)).withStyle(ChatFormatting.GRAY));
     }
 
     @Override

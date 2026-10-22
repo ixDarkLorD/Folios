@@ -68,9 +68,15 @@ public final class HandheldRenderer {
 
     private HandheldRenderer() {}
 
+    /** The paper and ink of a handheld book's pages: parchment, or in dark mode paper gone dark, the ink pale on it. */
     public static GuidePalette palette(GuideBook book) {
-        int ink = 0xFF2E241B;
         int accent = 0xFF000000 | book.accent();
+        if (net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle.mode() == net.ixdarklord.coolcatcore.api.config.ConfigTheme.Mode.DARK) {
+            int bright = GuidePalette.mix(accent, 0xFFF1E7D0, 0.3F);
+            return book.colors().over(new GuidePalette(0xFF2B2620, 0xFFE2D8C4, 0xFF9C8F7C, 0xFFF6EEDC, bright,
+                    GuidePalette.mix(bright, 0xFFFFFFFF, 0.25F), 0xFF353028, 0xFF4B4337), true);
+        }
+        int ink = 0xFF2E241B;
         int deep = GuidePalette.mix(accent, ink, 0.35F);
         return book.colors().over(new GuidePalette(0xFFF1E7D0, 0xFF3B3026, 0xFF8B7B66, ink, deep, GuidePalette.mix(deep, 0xFF1A3A8A, 0.25F), 0xFFE6D8BA, 0xFFC4B08C), false);
     }

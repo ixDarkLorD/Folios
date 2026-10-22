@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 // Related entries, each a row with its icon that opens it. Entries the reader hasn't unlocked are left out.
-public record LinksPage(List<Link> links, Optional<String> title, String text) implements GuidePage {
+public record LinksPageElement(List<Link> links, Optional<String> title, String text) implements GuidePage {
     /** An entry to link to (its id, with an optional {@code #anchor}), and the words shown for it; empty for its name. */
     public record Link(String entry, String label) {
         static final Codec<Link> CODEC = Codec.either(Codec.STRING, RecordCodecBuilder.<Link>create(instance -> instance.group(
@@ -24,11 +24,11 @@ public record LinksPage(List<Link> links, Optional<String> title, String text) i
         ).apply(instance, Link::new))).xmap(either -> either.map(id -> new Link(id, ""), link -> link), Either::right);
     }
 
-    public static final MapCodec<LinksPage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Link.CODEC.listOf(1, 12).fieldOf("links").forGetter(LinksPage::links),
-            Codec.STRING.optionalFieldOf("title").forGetter(LinksPage::title),
-            Codec.STRING.optionalFieldOf("text", "").forGetter(LinksPage::text)
-    ).apply(instance, LinksPage::new));
+    public static final MapCodec<LinksPageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Link.CODEC.listOf(1, 12).fieldOf("links").forGetter(LinksPageElement::links),
+            Codec.STRING.optionalFieldOf("title").forGetter(LinksPageElement::title),
+            Codec.STRING.optionalFieldOf("text", "").forGetter(LinksPageElement::text)
+    ).apply(instance, LinksPageElement::new));
 
     private static final int ROW = 20;
 
