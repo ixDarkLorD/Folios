@@ -133,19 +133,27 @@ public record GuideBook(Identifier id, String name, String subtitle, String land
      * "colors": {
      *   "paper": "#F1E7D0", "text": "#3B3026", "muted": "#8B7B66", "heading": "#2E241B",
      *   "link": "#5A3A8A", "panel": "#E6D8BA", "line": "#C4B08C",        // the page, in light mode (and a handheld book)
-     *   "dark": {"paper": "#1F222C", "text": "#D5D8E2"},                // the same for a screen book's dark mode
-     *   "tooltip": {"background": "#281E18", "frame": "#FFE28C", "title": "#F2E6CC", "detail": "#A89A86"}
-     * }
+     *   "dark": {"paper": "#1F222C", "text": "#D5D8E2"}                 // the same for dark mode
+     * },
+     * "panel": {"background": "#281E18", "frame": "#FFE28C", "title": "#F2E6CC", "detail": "#A89A86"}
      * }</pre>
-     * Any colour left out keeps the style's own; the marks and rules are {@code "accent"}. A tooltip left as it is
-     * takes on the book: its background from the cover, its frame gilt warmed by the accent.
+     * Any colour left out keeps the style's own; the marks and rules are {@code "accent"}. The panel scheme, at the top
+     * of book.json, colours what the book shows off its pages: its tooltips, its toasts and the build guide's panel.
+     * Left as it is, it takes on the book: its background from the cover, its frame gilt warmed by the accent. (Before,
+     * it was {@code "colors"} › {@code "tooltip"}, which is still read.)
      *
-     * @param light   page colours by name, over the light (and handheld) palette
-     * @param dark    page colours by name, over a screen book's dark palette
-     * @param tooltip tooltip colours by name: background, frame, title, detail
+     * @param light page colours by name, over the light palette (screen or handheld)
+     * @param dark  page colours by name, over the dark palette (screen or handheld)
+     * @param panel panel colours by name: background, frame, title, detail
      */
-    public record Colors(Map<String, Integer> light, Map<String, Integer> dark, Map<String, Integer> tooltip) {
+    public record Colors(Map<String, Integer> light, Map<String, Integer> dark, Map<String, Integer> panel) {
         public static final Colors DEFAULT = new Colors(Map.of(), Map.of(), Map.of());
+
+        /** @deprecated the panel scheme: {@link #panel()}. */
+        @Deprecated
+        public Map<String, Integer> tooltip() {
+            return panel;
+        }
 
         /** A palette with this scheme's colours for it laid over it. */
         public GuidePalette over(GuidePalette palette, boolean darkMode) {
