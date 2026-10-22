@@ -1,11 +1,11 @@
 {
-  "name": "A Small Shrine",
+  "name": "guide.foliostest.field_journal.entry.world.builds.name",
   "icon": "minecraft:lantern",
   "sort": 1,
   "pages": [
     {
       "type": "multiblock",
-      "title": "Shrine",
+      "title": "guide.foliostest.field_journal.entry.world.builds.page1.title",
       "pattern": [
         [
           "   ",
@@ -29,7 +29,7 @@
         "G": "minecraft:glowstone",
         "L": "minecraft:lantern[hanging=false]"
       },
-      "text": "What a build takes is listed under it."
+      "text": "guide.foliostest.field_journal.entry.world.builds.page1.text"
     }
   ]
 }

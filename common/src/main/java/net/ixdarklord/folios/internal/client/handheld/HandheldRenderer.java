@@ -1096,6 +1096,19 @@ public final class HandheldRenderer {
     }
 
     // A lettering on the board, laid out as GuideCoverText lays it on the item (CoverMarkers.rows), carried onto the board.
+    /**
+     * What the cover's plate under a point says (the point in page pixels on the board, as the pointer is while the
+     * book is held shut), placed as {@link #coverLines} letters it; nothing off its plates.
+     */
+    static List<net.minecraft.network.chat.Component> plateText(HandheldBook book, float[] at) {
+        if (Float.isNaN(at[0])) return List.of();
+        float across = (PW + EDGE) / 10.0F;
+        float up = (PH + 2 * EDGE) / 14.0F;
+        net.ixdarklord.folios.internal.client.CoverMarkers.Kind plate = net.ixdarklord.folios.internal.client.CoverMarkers.plateAt(
+                net.ixdarklord.folios.internal.client.CoverMarkers.of(ITEM_MODEL), 3 + at[0] / across, 15 - (at[1] + EDGE) / up);
+        return plate == null ? List.of() : net.ixdarklord.folios.internal.client.CoverMarkers.plateText(book.book, plate);
+    }
+
     private static void coverLines(WorldPainter painter, net.ixdarklord.folios.internal.client.CoverMarkers.Lettering lettering, int color) {
         GuideBook.CoverText.Line line = lettering.line();
         // An item unit across and up the board, in page pixels.

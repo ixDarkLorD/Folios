@@ -33,7 +33,7 @@ import java.util.List;
 // surface, shapes and pictures are cut into strips that follow its curve, and writing and items are set one glyph
 // at a time along it.
 public final class WorldPainter extends AbstractPainter {
-    public static final ResourceLocation WHITE = Folios.rl("textures/guide/white.png");
+    public static final ResourceLocation WHITE = Folios.rl("textures/book/white.png");
     private static final float DEPTH = 0.004F;
     /** How high an item stands off the page, and how deep it is drawn: flattened so it never pokes through a leaf over it. */
     private static final float ITEM_LIFT = 0.45F;
