@@ -7,6 +7,7 @@ mod's own `assets`), not a data pack.
 
 1. Copy this folder into `.minecraft/resourcepacks/` and turn it on in Options → Resource Packs.
 2. Rename `assets/mymod` to your namespace and `folios/my_guide` to your book's id. The book is then `<namespace>:<id>`.
+   Rename the keys in `lang/en_us.json` (and where the book's files use them) to match.
 3. Get it in game: `/give @s folios:guide_book[folios:guide_book="mymod:my_guide"]`
 4. Edit the JSON and press **F3 + T** to reload while the game runs.
 
@@ -17,7 +18,15 @@ assets/mymod/folios/my_guide/
   book.json                       the book itself
   categories/<id>.json            one per tab
   entries/<category>/<id>.json    one per entry, in its category's folder
+assets/mymod/lang/en_us.json      the book's words
 ```
+
+## Words
+
+The book's texts are translation keys, and its words are in `lang/en_us.json`, so it can be translated like any other
+resource: add `lang/<language>.json` with the same keys. The keys follow the book: `guide.<namespace>.<book>.name`,
+`.category.<id>.name`, `.entry.<id>.page<n>.text` and so on. A text can also be written straight into the JSON; a text
+that isn't a key is shown as it is.
 
 ## book.json
 
@@ -28,7 +37,8 @@ assets/mymod/folios/my_guide/
 | `accent`, `cover` | The book's colour for marks and links, and its cover colour. |
 | `icon` | An item id or a texture, for the bar and front page. |
 | `landing` | The front page's text (Markdown). |
-| `reveal` | How a page's content appears: `folios:rise`, `fade`, `ink`, `sweep`, `scatter`, `burn`, `runes`; `seconds`; `once` plays it only on unread pages. |
+| `reveal` | How a page's content appears: `folios:rise`, `fade`, `ink`, `sweep`, `scatter`, `burn`, `runes`; `seconds`; `once` plays it only the first time each spread is seen this game, `unread` only on spreads the reader has never been shown. |
+| `progress` | Where what is read is kept: `"player"` (with each player, the default) or `"book"` (on each copy of the book). |
 | `handheld` | `look_around` (hold right mouse button to look about) and `walk` while reading. |
 | `cover_text` | Where the name (`title`) and `subtitle` sit on the cover: `x`, `y` (cover is 3–13 across, 1–15 up), `size`, `width`. |
 | `models` | `item`, `open` and `cover` model ids, `hands`, and `gui`: `"flat"` or `"model"` in slots. |
