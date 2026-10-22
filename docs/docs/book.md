@@ -11,6 +11,7 @@ Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be tra
   "name": "My Guide",
   "subtitle": "Everything about my mod",
   "summary": "Notes on the land, gathered on the road.",
+  "author": "The Pack Team",
   "style": "handheld",
   "accent": "#C0602A",
   "cover": "#5A3A22",
@@ -30,9 +31,10 @@ Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be tra
   "models": { "hands": true, "gui": "flat" },
   "colors": {
     "paper": "#F1E7D0",
-    "text": "#3B3026",
-    "tooltip": { "frame": "#E8C66A", "title": "#F2E6CC" }
+    "text": "#3B3026"
   },
+  "panel": { "frame": "#E8C66A", "title": "#F2E6CC" },
+  "celebrations": { "entry": false },
   "layout": { "tabs": { "x": 0, "y": 6, "spacing": 2 } }
 }
 ```
@@ -49,6 +51,8 @@ Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be tra
 | `landing` | text | none | The text of the book's front page, in [Folios Markdown](text-formatting.md). |
 | `icon` | [icon](categories-and-entries.md#icons) | the book's own item | The icon shown in the bar and on the front page. |
 | `show_progress` | boolean | `true` | Whether the lists of categories show how much of each has been read, as bars. |
+| `author` | text | the mod its namespace belongs to | Who the book is from: the guide book item's tooltip says "From ..." under its name. Without it, the name of the mod whose namespace the book is in. |
+| `celebrations` | boolean or object | none | How finishing part of the book is celebrated. Off unless the book says so. See [Celebrations](#celebrations). |
 
 ### Style and handling
 
@@ -76,7 +80,8 @@ Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be tra
 | --- | --- | --- | --- |
 | `accent` | colour | `#8B6CFF` | The book's colour, for marks, links, rules and highlights. |
 | `cover` | colour | `#3A2E58` | The colour of the cover and of the book item's leather. |
-| `colors` | object | the style's own | The whole colour scheme: page colours, dark mode and tooltips. See [Colours](styles-and-look.md#colours). |
+| `colors` | object | the style's own | The page colour scheme: page colours and dark mode. See [Colours](styles-and-look.md#colours). |
+| `panel` | object | taken from the book | The panel colour scheme, for what the book shows off its pages: its tooltips, its toasts and the build guide's panel. See [Panel colours](styles-and-look.md#panel-colours). |
 
 ### Look
 
@@ -88,6 +93,44 @@ Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be tra
 | `item_model` | identifier | none | Older way to set the item model; `models.item` takes its place. |
 | `cover_text` | object | the model's own | Where the name, subtitle and summary are lettered on the cover. See [Cover lettering](styles-and-look.md#cover-lettering). |
 | `cover_texture` | texture path | none | Handheld books: a texture drawn on the outside of the front cover, over its colour. |
+
+## Celebrations
+
+`celebrations` decides how finishing part of the book is celebrated. A book that says nothing celebrates nothing.
+`true` turns everything on:
+
+```json
+"celebrations": true
+```
+
+An object turns everything on but what it turns off. Its keys are the **parts** of a celebration, for every event, and
+the **events**, each `false`, `true`, or an object of its own parts:
+
+```json
+"celebrations": {
+  "sound": false,
+  "entry": false,
+  "mastery": { "particles": false }
+}
+```
+
+| Part | What it is |
+| --- | --- |
+| `toast` | A toast in the book's own look, naming what was finished. |
+| `sound` | A chime; the challenge fanfare for mastery. |
+| `particles` | Sparkles rising round the player; a burst of totem sparks for mastery. |
+| `fireworks` | Fireworks in the book's colours over the player. For mastery only. |
+
+| Event | When |
+| --- | --- |
+| `objective` | An objective of a quest is done. |
+| `entry` | An entry is read. |
+| `category` | Every open entry of a category is read. |
+| `quest` | Every objective of a quest is done. |
+| `mastery` | Every objective of every quest in the book is done. |
+
+A part or event left out of the object is on. Each is celebrated once, ever: what has been finished is remembered even
+while celebrations are off, so turning them on later plays nothing old. See [Quests](quests.md#celebrations).
 
 ## Reveal
 

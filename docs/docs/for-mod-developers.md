@@ -147,7 +147,13 @@ GuidePageTypes.register(MyMod.id("counter"), CounterPage.CODEC);
 ```
 
 Pages draw through a `GuidePainter`, so the same page works on a screen book and a handheld book, and takes part in
-reveal effects. `GuidePage` also has optional methods:
+reveal effects.
+
+A type that lays itself out through `GuideLayout.flow`, as above, can also be one of a page's
+[`elements`](pages.md#elements): Folios captures what it asks `flow` for (its title, its own part and that part's
+height, its text) with `GuideLayout.capture` and sets it among the page's other elements. A spread can't be an element.
+
+`GuidePage` also has optional methods:
 
 | Method | What it does |
 | --- | --- |

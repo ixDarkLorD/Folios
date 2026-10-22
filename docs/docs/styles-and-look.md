@@ -29,6 +29,8 @@ Set with `"style"` in [book.json](book.md).
       ++esc++ puts it away. Clicking off the book also puts it away, unless `close_on_click_outside` is `false`.
     - Holding the right mouse button looks around, and the movement keys walk, jump, sneak and sprint (turn either
       off with `handheld`). The arrow keys still turn the leaves.
+    - The bar's light/dark switch turns its pages dark: dark paper and pale ink, which a book's `colors` › `dark`
+      sets as it does a screen book's.
     - The perspective key works: from outside, you see yourself holding the book.
     - Put away while open, it opens again where it was left.
 
@@ -76,10 +78,7 @@ Colours are `"#RRGGBB"`, or `"#AARRGGBB"` with alpha.
 | `link` | Links. |
 | `panel` | Panels and slots on the page. |
 | `line` | Frames and dividing lines. |
-| `dark` | An object with the same keys, for a screen book's dark mode. |
-| `tooltip` | An object for the book's tooltips: `background`, `frame`, `title` and `detail`. |
-
-By default, tooltips take on the book: a background from the cover colour and a gilt frame warmed by the accent.
+| `dark` | An object with the same keys, for dark mode (screen or handheld). |
 
 ```json title="book.json"
 {
@@ -91,11 +90,31 @@ By default, tooltips take on the book: a background from the cover colour and a 
     "link": "#5A3A8A",
     "panel": "#E6D8BA",
     "line": "#C4B08C",
-    "dark": { "paper": "#1F222C", "text": "#D5D8E2" },
-    "tooltip": { "background": "#281E18", "frame": "#FFE28C", "title": "#F2E6CC", "detail": "#A89A86" }
+    "dark": { "paper": "#1F222C", "text": "#D5D8E2" }
   }
 }
 ```
+
+### Panel colours
+
+`panel`, at the top of book.json, colours what the book shows off its pages: its tooltips, its
+[celebration](book.md#celebrations) toasts and the build guide's panel on the HUD. Each colour left out takes on the
+book: a background from the cover colour, a gilt frame warmed by the accent.
+
+| Key | What it colours |
+| --- | --- |
+| `background` | The ground. |
+| `frame` | The frame, and in toasts and the build guide's panel the slot outlines, rules and bars. |
+| `title` | Names and headings. |
+| `detail` | Quieter lines. |
+
+```json title="book.json"
+{
+  "panel": { "background": "#281E18", "frame": "#FFE28C", "title": "#F2E6CC", "detail": "#A89A86" }
+}
+```
+
+Before 2.0 this was `colors` › `tooltip`, which is still read when a book has no `panel`.
 
 A category can give its own tab a colour with `"color"` in its file. See
 [Categories](categories-and-entries.md#categories).

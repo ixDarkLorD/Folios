@@ -1,7 +1,23 @@
 # Pages
 
-An entry's `pages` is a list of page objects. Each names its kind with `"type"`; without one it is a `text` page. A
-plain string in the list is also a text page:
+An entry's `pages` is a list of pages. A page is a `title` and its `elements`: what it shows, one under another. Each
+element names its kind with `"type"`; without one it is `text`, and a plain string is a text element too:
+
+```json
+"pages": [
+  {
+    "title": "Torches",
+    "elements": [
+      "Light the way:",
+      { "type": "recipe", "recipe": "minecraft:torch" },
+      { "type": "build", "build": "tower", "height": 60 }
+    ]
+  }
+]
+```
+
+A page can also be written as a single element, as pages were before 2.0. It is then a page of that one element, so
+existing books read as they did:
 
 ```json
 "pages": [
@@ -10,10 +26,36 @@ plain string in the list is also a text page:
 ]
 ```
 
-A type without a namespace is Folios's own: `"text"` is `folios:text`. Mods can [add page types](for-mod-developers.md#page-types).
+A type without a namespace is Folios's own: `"text"` is `folios:text`. Mods can [add element types](for-mod-developers.md#page-types).
 
-Pages are laid out for the page size and the reader's language. Text that doesn't fit runs on over the next pages, so
-one page object can become several pages in the book.
+Pages are laid out for the page size and the reader's language. Text that doesn't fit runs on over the next pages, and
+an element that doesn't fit in what is left of a page starts the next one, so one page object can become several pages
+in the book.
+
+## Elements
+
+Every type below can stand in a page's `elements`, in any order and as many as you like. Each takes its own `title`
+and `text`, shown with it. A page's own `text` comes before its elements.
+
+| Key | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `title` | text | none | The page's heading, at its top. |
+| `text` | text | `""` | Text before the elements. |
+| `elements` | list of up to 64 | `[]` | The elements, one under another. A plain string is a text element. |
+
+```json title="Text, a recipe, a build and a structure on one page"
+{
+  "title": "All Together",
+  "elements": [
+    "Text, a recipe, a build and a structure, one under another.",
+    { "type": "recipe", "recipe": "minecraft:lantern" },
+    { "type": "build", "build": "well", "height": 60, "text": "Whatever doesn't fit goes on over the next page." },
+    { "type": "structure", "title": "Igloo", "structure": "minecraft:igloo/top", "height": 60 }
+  ]
+}
+```
+
+`spread` and `empty` are pages of their own and can't be elements, and an element can't hold elements of its own.
 
 ## Keys every page takes
 
@@ -21,9 +63,14 @@ one page object can become several pages in the book.
 | --- | --- | --- | --- |
 | `type` | string | `"text"` | The kind of page. |
 | `anchor` | string | none | A name links can reach this page by: `entry:<entry id>#<anchor>`. See [Links](text-formatting.md#links). |
+| `icon` | [icon](categories-and-entries.md#icons) or `"none"` | see below | An icon before the page's title. |
 | `advancement`, `flag`, `secret` | | | Leave the page out until it opens. See [Locks](categories-and-entries.md#locks). |
 
 Most pages also take `title` and `text`. Texts can be translation keys and use [text formatting](text-formatting.md).
+
+An entry's first page shows the entry's icon before its title, set over a mark of the book's colour at the start of the
+line under it; the title starts where the rest of the line does. Later pages show an icon only when they name one with
+`icon`, and `"icon": "none"` leaves it off the first page. A title without an icon has a plain line under it.
 
 Items are written as described under [Icons](categories-and-entries.md#icons): an id, `id*count`, a `#tag`, a list,
 or an item stack object.
@@ -143,15 +190,17 @@ mouse wheel to zoom, and press the clasp to put it back.
 
 ## multiblock
 
-A build, turning in a window, with the blocks it takes listed under it, most needed first. Drag and zoom it like an
-entity. Its eye clasp shows the build in the world, to be built: see [Building in the world](#building-in-the-world).
+A build, turning in a window. Drag and zoom it like an entity. Its eye clasp shows the build in the world, to be
+built: see [Building in the world](#building-in-the-world). The list clasp in its bottom-left corner lays the
+**requirement list** over the window: every block the build takes, most needed first, in rows from the left, scrolled
+with the mouse wheel when there are more than fit. Its close clasp takes it away again.
 
 | Key | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `pattern` | list of layers | required | The build's layers **from the top down**. Each layer is a list of rows, each row a string with one character per block. |
-| `mapping` | object | required | Which block each character stands for, as a block state (`"minecraft:lantern[hanging=false]"`). A space, or any character not mapped, is air. |
+| `mapping` | object | required | Which block each character stands for, as a block state (`"minecraft:lantern[hanging=false]"`) or a block tag (`"#minecraft:logs[axis=y]"`). A space, or any character not mapped, is air. |
 | `title` | text | none | A heading, also the build's name in the world. |
-| `text` | text | `""` | Text under the list. |
+| `text` | text | `""` | Text under the window. |
 | `height` | integer | `78` | The window's height in page pixels. 40 to 130. |
 
 ```json
@@ -173,6 +222,36 @@ entity. Its eye clasp shows the build in the world, to be built: see [Building i
 }
 ```
 
+A mapping can name a **block tag**, with properties set on each block of it that has them: `"#minecraft:planks"`,
+`"#minecraft:logs[axis=y]"`. Any block of the tag will do. The window and the requirement list show its blocks in
+turn, a second each, and the build guide in the world takes any of them.
+
+Blocks are counted by the items they take: the top half of a door or a tall flower and the head of a bed come with the
+other half and aren't counted again, and a double slab counts as two slabs.
+
+```json title="Tags, a door and a bed"
+{
+  "type": "multiblock",
+  "title": "A Hut",
+  "pattern": [
+    ["PPP", "PPP", "PPP", "PPP"],
+    ["LPL", "P P", "P P", "LUL"],
+    ["LPL", "PHP", "PFP", "LDL"],
+    ["CCC", "CCC", "CCC", "CCC"]
+  ],
+  "mapping": {
+    "P": "#minecraft:planks",
+    "L": "#minecraft:logs[axis=y]",
+    "C": "minecraft:cobblestone",
+    "D": "minecraft:oak_door[half=lower,facing=north]",
+    "U": "minecraft:oak_door[half=upper,facing=north]",
+    "F": "minecraft:red_bed[part=foot,facing=north]",
+    "H": "minecraft:red_bed[part=head,facing=north]"
+  },
+  "text": "Any planks and any logs will do; the door and the bed count once each."
+}
+```
+
 ### Building in the world
 
 Pressing a build's eye clasp puts the book away and shows the build in the world as see-through ghost blocks, where
@@ -183,6 +262,96 @@ says so), when you walk away, or when you sneak and right-click.
 Which corner of the screen the panel sits in, and how far from it, are client settings in Folios's config:
 `buildPanel.corner` (`TOP_LEFT`, `TOP_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_RIGHT`), `buildPanel.x` and `buildPanel.y`
 (both 8 by default).
+
+## structure
+
+Structures from data packs, turning in a window: the files structure blocks save and villages are built from,
+`data/<namespace>/structure/<path>.nbt` (on 1.20.1, `data/<namespace>/structures/<path>.nbt`). Clients don't have data
+packs, so the element asks the server for a structure's blocks the first time it is shown; until then it says it is
+loading. Air, structure voids and structure blocks are left out, and a jigsaw shows the block it leaves behind.
+Structures of more than 32,768 blocks are too large to show.
+
+Structures are for looking at: they have no requirement list and no eye clasp.
+
+| Key | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `structure` | id or object | | One structure. |
+| `structures` | list | | Several, picked between under the window. Use `structure`, `structures` or both. |
+| `selector` | string | `"arrows"` | How several are picked: `"arrows"`, clasps back and on with the name and "2/3" between them, or `"numbers"`, a numbered clasp each (arrows when there are too many to fit). |
+| `title` | text | none | A heading. |
+| `text` | text | `""` | Text under the window. |
+| `height` | integer | `78` | The window's height in page pixels. 40 to 130. |
+
+Each structure is its id, or `{"id": ..., "name": ...}` to show it by a name.
+
+```json
+{
+  "type": "structure",
+  "title": "Structures",
+  "selector": "numbers",
+  "structures": [
+    { "id": "minecraft:igloo/top", "name": "Igloo" },
+    { "id": "minecraft:village/plains/houses/plains_small_house_1", "name": "Plains House" },
+    "minecraft:shipwreck/rightsideup_full"
+  ]
+}
+```
+
+!!! note
+    Structures come from the server, so it needs Folios too. On a server without it, a structure says it can't be
+    found.
+
+## build
+
+Builds designed in the book's own files, turning in a window: `assets/<namespace>/folios/<book>/builds/<name>.json`.
+They take the same keys as a [structure](#structure), with `build` and `builds` in place of `structure` and
+`structures`. A bare name is a file of this book's (`"tower"`); `namespace:path` names any book's file under `folios/`
+(`"mymod:my_guide/builds/tower"`). Like structures, builds have no requirement list and no eye clasp.
+
+```json
+{
+  "type": "build",
+  "title": "Builds",
+  "builds": ["watchtower", { "id": "well", "name": "The Old Well" }]
+}
+```
+
+### Build files
+
+A build file gives the build a `name` and its blocks: from a `pattern` and `mapping` as a [multiblock](#multiblock)'s,
+from `blocks`, or both, the pattern first and then each entry of `blocks` in order, over what came before. Wherever its
+blocks are placed, the build is moved so its lowest corner is at 0.
+
+| Key | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `name` | text | none | The name it is shown by, unless the page names it. |
+| `pattern`, `mapping` | | none | As on a multiblock. Mappings take tags too. |
+| `blocks` | list | `[]` | Blocks placed one entry at a time. |
+
+Each entry of `blocks` takes:
+
+| Key | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `block` | block state or `#tag` | required | The block. `minecraft:air` clears what it covers. |
+| `pos` | `[x, y, z]` | | One block. |
+| `from`, `to` | `[x, y, z]` | | A box of blocks, corner to corner. Up to 65,536 blocks. |
+| `hollow` | boolean | `false` | Only the box's outside. |
+
+```json title="builds/watchtower.json"
+{
+  "name": "Watchtower",
+  "blocks": [
+    { "block": "minecraft:cobblestone", "from": [0, 0, 0], "to": [4, 0, 4] },
+    { "block": "#minecraft:logs[axis=y]", "from": [0, 1, 0], "to": [0, 5, 0] },
+    { "block": "#minecraft:logs[axis=y]", "from": [4, 1, 0], "to": [4, 5, 0] },
+    { "block": "#minecraft:logs[axis=y]", "from": [0, 1, 4], "to": [0, 5, 4] },
+    { "block": "#minecraft:logs[axis=y]", "from": [4, 1, 4], "to": [4, 5, 4] },
+    { "block": "#minecraft:planks", "from": [0, 6, 0], "to": [4, 6, 4] },
+    { "block": "minecraft:air", "pos": [2, 6, 2] },
+    { "block": "minecraft:lantern", "pos": [0, 7, 0] }
+  ]
+}
+```
 
 ## links
 

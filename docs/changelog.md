@@ -1,5 +1,29 @@
 # Changelog
 
+## v2.0 Release | Oct 22, 2026
+Pages hold elements, structures and builds join multiblocks, and a book chooses how it celebrates and what colours its panels take.
+
+### ✨ New Features
+- Multiblock mappings (and builds, and build spreads) can name a tag in place of a block, `"#minecraft:logs"`, with properties set on each block that has them (`"#minecraft:logs[axis=y]"`): any block of it will do, the window and the blocks-needed list show its blocks in turn, and the build guide in the world takes any of them.
+- `structure` pages: structures from data packs (`data/<namespace>/structure/<path>.nbt`; `structures/` on 1.20.1), asked of the server the first time they're shown. `"structure"` names one, `"structures"` several (ids, or `{"id": ..., "name": ...}`).
+- `build` pages: builds designed in the book's own `builds/<name>.json` files, from a `pattern` and `mapping` as a multiblock's and/or `blocks`: single blocks (`"pos"`) and boxes (`"from"`/`"to"`, `"hollow"`), in order, air clearing. `"build"` names one, `"builds"` several.
+- A guide book's tooltip says who it is from, under its name: the mod its namespace belongs to, or the book's own `"author"` in book.json (raw text or a translation key).
+- A structure or build page with several to show picks between them under its window: clasps stepping back and on with the name between them (`"selector": "arrows"`, the default), or a numbered clasp each (`"numbers"`). They are for showing, not building: no blocks-needed list, nor an eye clasp to build them in the world.
+- A multiblock's blocks needed no longer take room under its window: a clasp in the window's bottom-left corner lays a requirement list over the window: "Requirement list:" over the blocks in rows from the left, scrolled with the mouse wheel when there are more than fit, with a clasp to close it.
+- Pages hold elements: a page is a `title` and its `"elements"` (text, recipes, multiblocks, structures, builds, entities, pictures, spotlights, links, quests), in any order, one under another. Each is written as its type is (`{"type": "recipe", "recipe": ...}`; a plain string is text), with its own title and text if it has them; one that doesn't fit starts the next page, and text runs on. A page written the old way, as one type, is a page of that one element, so existing books read as before. A mod's own element type works in a page's elements when it lays itself out through `GuideLayout.flow`.
+- A handheld book's bar has the light/dark button too, and its pages go dark in dark mode (a book's `"colors"` › `"dark"` applies to them as to a screen book's).
+- Bars with more to them: a category's completion bar is notched between its entries (a quest's between its objectives) with a rounded rim, a sunken groove and a light that sweeps across it once full; the front page shows "Mastery" with its trophy and "Progression:" with a percentage under it, over a gilt bar in the build guide's look; the build guide's bar has a rounded rim, a shadow, a shaded fill and marks at each tenth; and the requirement list's scroll bar has arrows lit while there is more that way and a raised thumb with grip lines.
+- An entry's first page has the entry's icon before its title, over a mark of the book's colour heading the line under it; any page can name its own with `"icon"` (or `"none"` on the first page for none). A title without an icon has a plain line under it.
+- The page's content stops 2 pixels short of the turn buttons, so nothing sits against them.
+- Celebrations are a book's choice, and off unless it says so: `"celebrations"` in book.json, `true` for all of them, or an object turning parts (`"toast"`, `"sound"`, `"particles"`, `"fireworks"`) and events (`"objective"`, `"entry"`, `"category"`, `"quest"`, `"mastery"`, each `false`, `true` or an object of its own parts) off. Each objective of a quest done and each entry read can now be celebrated too, beside a category read through, a quest done and the book mastered; fireworks are for mastery alone.
+- Toasts in the book's own look for what is celebrated: its panel ground and frame, the quest's, entry's or category's icon in a slot, a small heading over the name, and a line along its foot running down while it shows; mastery's shows the trophy.
+- The panel colour scheme: `"panel"` in book.json (`background`, `frame`, `title`, `detail`) colours what a book shows off its pages: its tooltips, its toasts and the build guide's panel. `"colors"` › `"tooltip"`, as it was, is still read.
+- The mastery heading on the front page: the trophy and "Mastery" over "Progression:" and a percentage, over a gilt bar split into quarters. Once the book is mastered the trophy glints with a rainbow running across it diagonally, a sheen sweeping over it now and then.
+
+### 🐛 Fixes
+- A long trail on a book's bar ("Why Can't I Sleep? › Sleep Quality") no longer gets cut short: it shrinks on its line a little, then goes onto two smaller lines, the book or category over the rest, and is cut only if it still doesn't fit.
+- Blocks needed are counted by the items they take: a door's top half and a bed's head no longer count as another door or bed (nor a tall flower's top), and a double slab counts as two slabs. The same in the build guide's panel.
+
 ## v1.0 Release | Oct 21, 2026
 Folios's guide books were first made inside CoolCatLib; this is them as a mod of their own, built on CoolCatLib.
 
