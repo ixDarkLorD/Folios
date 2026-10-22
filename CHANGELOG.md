@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.0 Release | Oct 21, 2026
+## v1.0 Release | Oct 22, 2026
 Folios's guide books were first made inside CoolCatLib; this is them as a mod of their own, built on CoolCatLib.
 
 On Minecraft 1.20.1, for Fabric and Forge, everything is as on later versions, with these differences:
