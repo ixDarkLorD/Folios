@@ -1,38 +1,41 @@
 package net.ixdarklord.folios.internal.client;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import net.ixdarklord.coolcatcore.api.platform.Platform;
+import net.ixdarklord.coolcatcore.api.network.Network;
 import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.internal.core.Folios;
+import net.ixdarklord.folios.internal.GuideNetwork;
+import net.ixdarklord.folios.internal.GuidePayloads;
+import net.ixdarklord.folios.internal.GuideRecord;
+import net.ixdarklord.folios.internal.core.GuideRegistry;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
 import org.jspecify.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
-// What the player has done with each book, kept between games: the entries read, bookmarks, and where they left
-// off. One file per book in config/folios/<namespace>/<path>.json, written when a book is closed.
+// What the player has done with a book (a GuideRecord): the entries read, the spreads shown, quests done and what has
+// been celebrated, bookmarks, and where they left off. The server keeps it, with the player, or on the copy of a book
+// that keeps its own; this is the client's working copy of it, sent back when it changes (save, as a book is closed).
+// The player's copies follow what the server syncs while they hold no unsent changes; a copy's is read from its stack
+// each time the book is opened.
 public final class GuideMemory {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Map<Identifier, GuideMemory> BOOKS = new HashMap<>();
-    public static final int MAX_BOOKMARKS = 8;
+    private static final Map<Identifier, GuideMemory> PLAYER = new HashMap<>();
+    public static final int MAX_BOOKMARKS = GuideRecord.MAX_BOOKMARKS;
 
     private final Identifier book;
+    // The hand the copy it is kept on is in, or null for the player's own.
+    private final @Nullable InteractionHand hand;
+    // For a copy's: the player's, which hears of what is read too (for quests and celebrations).
+    private final @Nullable GuideMemory player;
     private final Set<String> read = new LinkedHashSet<>();
+    private final Set<String> seen = new LinkedHashSet<>();
     private final Set<String> questsDone = new LinkedHashSet<>();
     // What has been celebrated: "category:<id>", "mastery".
     private final Set<String> celebrated = new LinkedHashSet<>();
@@ -44,103 +47,115 @@ public final class GuideMemory {
     // key and page, or null.
     private @Nullable String lastChapter;
     private int lastPage;
+    // What was last read from the server or sent to it; and whether there are changes since.
+    private GuideRecord loaded = GuideRecord.EMPTY;
     private boolean dirty;
 
-    private GuideMemory(Identifier book) {
+    private GuideMemory(Identifier book, @Nullable InteractionHand hand, @Nullable GuideMemory player) {
         this.book = book;
+        this.hand = hand;
+        this.player = player;
     }
 
+    /** The player's own memory of a book. */
     public static synchronized GuideMemory of(Identifier book) {
-        return BOOKS.computeIfAbsent(book, id -> {
-            GuideMemory memory = new GuideMemory(id);
-            memory.load();
+        return PLAYER.computeIfAbsent(book, id -> {
+            GuideMemory memory = new GuideMemory(id, null, null);
+            memory.load(playerRecords().getOrDefault(id, GuideRecord.EMPTY));
             return memory;
         });
     }
 
-    private Path file() {
-        return Platform.getConfigFolder().resolve("folios").resolve(book.getNamespace()).resolve(book.getPath() + ".json");
+    /**
+     * The memory a reader of a book uses: for a book that keeps its own ({@code "progress": "book"}) opened from a copy
+     * in a hand, that copy's; otherwise the player's.
+     */
+    public static GuideMemory forReading(GuideBook book, @Nullable InteractionHand hand) {
+        GuideMemory own = of(book.id());
+        Player player = Minecraft.getInstance().player;
+        if (book.progress() != GuideBook.Progress.BOOK || hand == null || player == null) return own;
+        var stack = player.getItemInHand(hand);
+        if (!book.id().equals(GuideNetwork.bookOf(stack))) return own;
+        GuideMemory copy = new GuideMemory(book.id(), hand, own);
+        copy.load(GuideRegistry.BOOK_PROGRESS.get(stack));
+        return copy;
     }
 
-    private void load() {
-        Path file = file();
-        if (!Files.isRegularFile(file)) return;
-        try (Reader reader = Files.newBufferedReader(file)) {
-            JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
-            if (json.has("read")) json.getAsJsonArray("read").forEach(element -> read.add(element.getAsString()));
-            if (json.has("bookmarks")) json.getAsJsonArray("bookmarks").forEach(element -> {
-                GuideBook.Location location = location(element);
-                if (location != null) bookmarks.add(location);
-            });
-            if (json.has("last")) last = location(json.get("last"));
-            leftOpen = json.has("left_open") && json.get("left_open").getAsBoolean();
-            if (json.has("last_spread") && json.get("last_spread").isJsonObject()) {
-                JsonObject spread = json.getAsJsonObject("last_spread");
-                lastChapter = spread.has("chapter") ? spread.get("chapter").getAsString() : null;
-                lastPage = spread.has("page") ? spread.get("page").getAsInt() : 0;
-            }
-            if (json.has("quests_done")) json.getAsJsonArray("quests_done").forEach(element -> questsDone.add(element.getAsString()));
-            if (json.has("celebrated")) json.getAsJsonArray("celebrated").forEach(element -> celebrated.add(element.getAsString()));
-        } catch (IOException | RuntimeException e) {
-            Folios.LOGGER.warn("Couldn't read what was read of the guide {} from {}: {}", book, file, e.getMessage());
+    /** The server has synced the player's records: each memory without unsent changes takes its book's. */
+    public static synchronized void synced(Map<Identifier, GuideRecord> records) {
+        for (GuideMemory memory : PLAYER.values()) {
+            GuideRecord record = records.getOrDefault(memory.book, GuideRecord.EMPTY);
+            if (!memory.dirty && !record.equals(memory.loaded)) memory.load(record);
         }
     }
 
-    private static GuideBook.@Nullable Location location(JsonElement element) {
-        if (!element.isJsonObject()) return null;
-        JsonObject object = element.getAsJsonObject();
-        if (!object.has("entry")) return null;
-        return new GuideBook.Location(object.get("entry").getAsString(), object.has("page") ? object.get("page").getAsInt() : 0);
+    /** Forgets every memory, as the player leaves a world or server: the next one has its own. */
+    public static synchronized void forget() {
+        PLAYER.clear();
     }
 
-    private static JsonObject json(GuideBook.Location location) {
-        JsonObject object = new JsonObject();
-        object.addProperty("entry", location.entry());
-        object.addProperty("page", location.page());
-        return object;
+    private static Map<Identifier, GuideRecord> playerRecords() {
+        Player player = Minecraft.getInstance().player;
+        return player != null ? GuideRegistry.PLAYER_PROGRESS.get(player) : Map.of();
     }
 
-    public synchronized void save() {
-        if (!dirty) return;
-        dirty = false;
-        JsonObject json = new JsonObject();
-        JsonArray readArray = new JsonArray();
-        read.forEach(readArray::add);
-        json.add("read", readArray);
-        JsonArray marks = new JsonArray();
-        bookmarks.forEach(location -> marks.add(json(location)));
-        json.add("bookmarks", marks);
-        if (last != null) json.add("last", json(last));
-        if (leftOpen) json.addProperty("left_open", true);
-        if (lastChapter != null) {
-            JsonObject spread = new JsonObject();
-            spread.addProperty("chapter", lastChapter);
-            spread.addProperty("page", lastPage);
-            json.add("last_spread", spread);
+    private synchronized void load(GuideRecord record) {
+        read.clear();
+        read.addAll(record.read());
+        seen.clear();
+        seen.addAll(record.seen());
+        questsDone.clear();
+        questsDone.addAll(record.questsDone());
+        celebrated.clear();
+        celebrated.addAll(record.celebrated());
+        bookmarks.clear();
+        record.bookmarks().forEach(place -> bookmarks.add(new GuideBook.Location(place.entry(), place.page())));
+        last = record.last().map(place -> new GuideBook.Location(place.entry(), place.page())).orElse(null);
+        leftOpen = record.leftOpen();
+        lastChapter = record.lastChapter().orElse(null);
+        lastPage = record.lastPage();
+        loaded = record;
+    }
+
+    private synchronized GuideRecord record() {
+        return new GuideRecord(List.copyOf(read), List.copyOf(seen), List.copyOf(questsDone), List.copyOf(celebrated),
+                bookmarks.stream().map(location -> new GuideRecord.Place(location.entry(), location.page())).toList(),
+                Optional.ofNullable(last).map(location -> new GuideRecord.Place(location.entry(), location.page())),
+                leftOpen, Optional.ofNullable(lastChapter), lastPage);
+    }
+
+    /** Sends what changed to the server to keep (and, for a copy's, the player's too). */
+    public void save() {
+        if (player != null) player.save();
+        GuideRecord record;
+        synchronized (this) {
+            if (!dirty) return;
+            dirty = false;
+            record = this.record();
+            loaded = record;
         }
-        JsonArray quests = new JsonArray();
-        questsDone.forEach(quests::add);
-        json.add("quests_done", quests);
-        JsonArray done = new JsonArray();
-        celebrated.forEach(done::add);
-        json.add("celebrated", done);
-        Path file = file();
-        try {
-            Files.createDirectories(file.getParent());
-            try (Writer writer = Files.newBufferedWriter(file)) {
-                GSON.toJson(json, writer);
-            }
-        } catch (IOException e) {
-            Folios.LOGGER.warn("Couldn't save what was read of the guide {} to {}", book, file, e);
-        }
+        if (Minecraft.getInstance().getConnection() == null) return;
+        Network.sendToServer(new GuidePayloads.Progress(book, hand != null ? hand.ordinal() : -1, hand != null ? record.forStack() : record));
     }
 
     public synchronized boolean isRead(String entry) {
         return read.contains(entry);
     }
 
-    public synchronized void markRead(String entry) {
-        if (read.add(entry)) dirty = true;
+    public void markRead(String entry) {
+        if (player != null) player.markRead(entry);
+        synchronized (this) {
+            if (read.add(entry)) dirty = true;
+        }
+    }
+
+    /** Whether a spread ({@code "<chapter>|<page>"}) has been shown in full. */
+    public synchronized boolean isSeen(String spread) {
+        return seen.contains(spread);
+    }
+
+    public synchronized void markSeen(String spread) {
+        if (seen.add(spread)) dirty = true;
     }
 
     /** Notes a quest as done; returns whether it wasn't already. */
@@ -215,9 +230,10 @@ public final class GuideMemory {
         dirty = true;
     }
 
-    /** Forgets everything read, for the "start over" button. */
+    /** Forgets everything read and shown, for the "start over" button. */
     public synchronized void clear() {
         read.clear();
+        seen.clear();
         bookmarks.clear();
         last = null;
         dirty = true;
