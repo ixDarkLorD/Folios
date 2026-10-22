@@ -40,10 +40,11 @@ import java.util.Map;
  * @param handling  what a reader can do while holding a handheld book open ({@code "handheld"})
  * @param colors    its colour scheme over the style's own: the page's colours and its tooltips' ({@code "colors"})
  * @param coverText where its name and subtitle are lettered on its cover, and how large ({@code "cover_text"})
+ * @param progress  where what is read in it is kept: with each player, or on each copy of the book ({@code "progress"})
  */
 public record GuideBook(Identifier id, String name, String subtitle, String landing, Identifier style, int accent, int cover,
                         @Nullable Identifier coverTexture, GuideIcon icon, Models models, boolean showProgress, float tilt, float distance, PageTurn pageTurn, GuideReveal.Use reveal, Textures textures, Layout layout, boolean clickOutsideCloses, Handling handling, Colors colors, CoverText coverText,
-                        List<GuideCategory> categories, Map<String, GuideEntry> entries, Map<Item, Location> itemIndex) {
+                        Progress progress, List<GuideCategory> categories, Map<String, GuideEntry> entries, Map<Item, Location> itemIndex) {
     /** The item model the {@code folios:guide_book} item takes for this book; null for its own. */
     public @Nullable Identifier itemModel() {
         return models.item();
@@ -199,6 +200,21 @@ public record GuideBook(Identifier id, String name, String subtitle, String land
         }
     }
 
+    /**
+     * Where what is read in a book is kept ({@code "progress"} in book.json): the entries read, the pages shown, the
+     * bookmarks and where the reader left off.
+     */
+    public enum Progress {
+        /** With each player, on the server: theirs in any copy of the book, from any computer. */
+        PLAYER,
+        /**
+         * On each copy of the book, like a notebook's: whoever reads that copy finds its bookmarks and read pages, and
+         * a new copy starts fresh. Read pages still count for the player too (quests, celebrations). A book opened
+         * without a copy in hand (by a command or from code) uses the player's.
+         */
+        BOOK
+    }
+
     /** How a handheld book's leaves turn ({@code "page_turn"} in book.json). */
     public enum PageTurn {
         /** A stiff leaf swinging over the spine. */
@@ -212,9 +228,9 @@ public record GuideBook(Identifier id, String name, String subtitle, String land
 
     public GuideBook(Identifier id, String name, String subtitle, String landing, Identifier style, int accent, int cover,
                      @Nullable Identifier coverTexture, GuideIcon icon, Models models, boolean showProgress, float tilt, float distance, PageTurn pageTurn, GuideReveal.Use reveal, Textures textures, Layout layout, boolean clickOutsideCloses, Handling handling, Colors colors, CoverText coverText,
-                     List<GuideCategory> categories, List<GuideEntry> entries) {
+                     Progress progress, List<GuideCategory> categories, List<GuideEntry> entries) {
         this(id, name, subtitle, landing, style, accent, cover, coverTexture, icon, models, showProgress, tilt, distance, pageTurn, reveal, textures, layout, clickOutsideCloses, handling, colors, coverText,
-                sortCategories(categories), sortEntries(entries), new HashMap<>());
+                progress, sortCategories(categories), sortEntries(entries), new HashMap<>());
     }
 
     private static List<GuideCategory> sortCategories(List<GuideCategory> categories) {

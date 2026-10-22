@@ -79,9 +79,17 @@ public class GuideReader implements AbstractPainter.Navigator {
     public @Nullable Flip flip;
 
     public GuideReader(GuideBook book, GuideSession session, GuideBook.@Nullable Location at) {
+        this(book, session, at, null);
+    }
+
+    /**
+     * A reader of a book opened from a copy in {@code hand} (null for none: a command, a link, from code): a book that
+     * keeps its own progress reads and keeps that copy's.
+     */
+    public GuideReader(GuideBook book, GuideSession session, GuideBook.@Nullable Location at, net.minecraft.world.@Nullable InteractionHand hand) {
         this.book = book;
         this.session = session;
-        this.memory = GuideMemory.of(book.id());
+        this.memory = GuideMemory.forReading(book, hand);
         READ_BEFORE.computeIfAbsent(book.id(), id -> {
             java.util.Set<String> read = new java.util.HashSet<>();
             for (GuideEntry entry : book.entries().values()) if (memory.isRead(entry.id())) read.add(entry.id());
@@ -178,16 +186,23 @@ public class GuideReader implements AbstractPainter.Navigator {
     // halves reveal together; plain pages one after the other, the left then the right, each over the effect's length.
     private float revealProgress(Spot at, GuidePage.@Nullable Laid page, boolean right) {
         GuideReveal.Use use = this.revealOf(at);
-        if (use.seconds() <= 0 || !net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings.transitions()) return 1;
-        if (use.once() && this.seen(at)) return 1;
+        if (use.seconds() <= 0 || !net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings.transitions()
+                || use.once() && this.seen(at) || use.unread() && memory.isSeen(this.spreadKey(at))) {
+            // Nothing to reveal: the spread open now shows in full at once.
+            if (at.equals(spot) && flip == null && !this.revealHeld()) this.shown(at);
+            return 1;
+        }
         if (flip != null) return at.equals(flip.to()) ? 0 : 1;
         // Not yet shown (a handheld book's cover still opening): its reveal is still to come.
         if (this.revealHeld() && at.equals(spot)) return 0;
         if (!at.equals(spot)) return 1;
         float elapsed = (Util.getMillis() - revealAt) / (use.seconds() * 1000.0F);
         boolean together = page instanceof GuidePage.SpreadHalf;
-        // Shown in full, the whole spread: it has been seen, for reveals that play once.
-        if (elapsed >= (together ? 1 : 2)) SEEN.add(this.seenKey(at));
+        // Shown in full, the whole spread: it has been seen, for reveals that play once (this game) or on unread pages.
+        if (elapsed >= (together ? 1 : 2)) {
+            SEEN.add(this.seenKey(at));
+            this.shown(at);
+        }
         return Math.max(0, Math.min(1, together || !right ? elapsed : elapsed - 1));
     }
 
@@ -195,6 +210,17 @@ public class GuideReader implements AbstractPainter.Navigator {
     // opened this game (their pages count as seen).
     private static final java.util.Set<String> SEEN = new java.util.HashSet<>();
     private static final java.util.Map<net.minecraft.resources.Identifier, java.util.Set<String>> READ_BEFORE = new java.util.HashMap<>();
+
+    // A spread as the reader's memory knows it (for reveals that play only on unread pages): "<chapter>|<page>".
+    private String spreadKey(Spot at) {
+        return at.chapter + "|" + at.page;
+    }
+
+    // A spread shown in full: kept as read, unless it is made from what was typed (a search), which can't come again.
+    private void shown(Spot at) {
+        if (at.chapter.equals("home") || at.chapter.equals("index") || at.chapter.equals("bookmarks")
+                || at.chapter.startsWith("category:") || at.chapter.startsWith("entry:")) memory.markSeen(this.spreadKey(at));
+    }
 
     private String seenKey(Spot at) {
         return book.id() + "|" + at.chapter + "|" + at.page;
