@@ -1,12 +1,12 @@
 {
-  "name": "Light",
+  "name": "guide.foliostest.field_journal.entry.crafting.torches.name",
   "icon": "minecraft:torch",
   "sort": 1,
   "pages": [
     {
       "type": "recipe",
       "recipe": "minecraft:torch",
-      "text": "Torches keep monsters away."
+      "text": "guide.foliostest.field_journal.entry.crafting.torches.page1.text"
     },
     {
       "type": "recipe",

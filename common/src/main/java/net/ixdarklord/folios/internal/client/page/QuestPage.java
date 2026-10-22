@@ -120,6 +120,6 @@ public record QuestPage(List<GuideObjective> objectives, Optional<String> title,
 
     @Override
     public String searchText() {
-        return title.orElse("") + " " + text;
+        return GuideText.resolve(title.orElse("")) + " " + GuideText.resolve(text);
     }
 }
