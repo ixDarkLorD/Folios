@@ -1,6 +1,6 @@
 {
-  "name": "Basics",
-  "description": "Where everyone starts. Text, links and the small Markdown books are written in.",
+  "name": "guide.foliostest.field_journal.category.basics.name",
+  "description": "guide.foliostest.field_journal.category.basics.description",
   "icon": "minecraft:oak_sapling",
   "sort": 0
 }
