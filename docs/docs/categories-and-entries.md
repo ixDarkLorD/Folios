@@ -151,6 +151,14 @@ has been shown are used instead.
 
 ## Reading progress
 
-Folios keeps, per book: which entries have been read, bookmarks, and where the player left off. Unread entries are
-marked with a blinking sparkle, and categories show how much of them has been read (see `show_progress` in
-[book.json](book.md)).
+Folios keeps, for each book: which entries have been read, which spreads have been shown, bookmarks, and where the
+reader left off. Unread entries are marked with a blinking sparkle, and categories show how much of them has been
+read (see `show_progress` in [book.json](book.md)).
+
+It is kept on the server, so it follows the player to any computer, and each world or server has its own:
+
+- **With each player** (the default, `"progress": "player"`): theirs in any copy of the book, kept when they die.
+- **On each copy of the book** (`"progress": "book"` in [book.json](book.md)): like a notebook, a copy carries its own
+  bookmarks, read pages and place, so whoever reads it finds them, and a new copy starts fresh. Entries read in it
+  still count for the player's quests and celebrations. Opened without a copy in hand (by a command or from code),
+  the book uses the player's.

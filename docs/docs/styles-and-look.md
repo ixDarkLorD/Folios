@@ -286,10 +286,15 @@ name means `folios:<name>`.
 "reveal": { "effect": "folios:burn", "seconds": 1.2, "once": true }
 ```
 
+```json
+"reveal": { "effect": "folios:runes", "seconds": 1.2, "unread": true }
+```
+
 | Key | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `effect` | identifier | `folios:rise` | The effect. |
 | `seconds` | number | `0.45` | How long it takes, 0 to 5. |
-| `once` | boolean | `false` | Play only the first time each spread is seen. Pages of entries read in an earlier game count as seen. |
+| `once` | boolean | `false` | Play only the first time each spread is seen this game. Pages of entries read in an earlier game count as seen. |
+| `unread` | boolean | `false` | Play only on spreads the reader hasn't been shown in full before. Remembered with their [reading progress](categories-and-entries.md#reading-progress), so it doesn't play again after a restart. |
 
 Mods can add effects with [`GuideReveals.register`](for-mod-developers.md#reveal-effects).

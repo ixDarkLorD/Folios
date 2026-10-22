@@ -61,6 +61,7 @@ Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be tra
 | `close_on_click_outside` | boolean | `true` for handheld, `false` for screen | Whether clicking off the book closes it. |
 | `handheld` | object | see below | Handheld books: what the reader can do while holding the book open. |
 | `reveal` | string or object | `folios:rise`, 0.45 s | How a page's content appears once its leaf is down. See [Reveal effects](styles-and-look.md#reveal-effects). |
+| `progress` | string | `"player"` | Where what is read in the book is kept. `"player"`: with each player, saved on the server, so it is theirs in any copy of the book and from any computer. `"book"`: on each copy of the book, like a notebook, so whoever reads that copy finds its bookmarks and read pages, and a new copy starts fresh. See [Reading progress](categories-and-entries.md#reading-progress). |
 
 `handheld` has two keys:
 
@@ -101,6 +102,10 @@ Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be tra
 ```
 
 ```json
+"reveal": { "effect": "folios:runes", "seconds": 1.2, "unread": true }
+```
+
+```json
 "reveal": "none"
 ```
 
@@ -108,7 +113,8 @@ Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be tra
 | --- | --- | --- | --- |
 | `effect` | identifier | `folios:rise` | The effect. A bare name means `folios:<name>`. |
 | `seconds` | number | `0.45` | How long it takes. Clamped to 0 to 5. |
-| `once` | boolean | `false` | Play it only the first time each spread is seen. Pages of entries read in an earlier game count as seen. |
+| `once` | boolean | `false` | Play it only the first time each spread is seen this game. Pages of entries read in an earlier game count as seen. |
+| `unread` | boolean | `false` | Play it only on spreads the reader hasn't been shown in full before. Kept with their reading progress, so it doesn't play again after a restart, on another computer or in another copy of a book that keeps its own. |
 
 An entry can set its own `reveal` the same way. An effect no mod has registered is logged as a warning and the content
 shows at once. See [Reveal effects](styles-and-look.md#reveal-effects) for the list.
