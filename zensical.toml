@@ -41,7 +41,7 @@ nav = [
 [project.theme]
 # variant = "classic"
 custom_dir = "overrides"
-# favicon = "images/favicon.png"
+favicon = "assets/favicon.png"
 language = "en"
 features = [
   "announce.dismiss",
@@ -72,10 +72,7 @@ features = [
   # "toc.integrate",
 ]
 
-# logo = "assets/logo.png"
-
-[project.theme.icon]
-logo = "lucide/book-open-text"
+logo = "assets/logo.png"
 
 [project.theme.font]
 text = "Inter"
@@ -89,16 +86,16 @@ toggle.name = "Switch to light mode"
 [[project.theme.palette]]
 media = "(prefers-color-scheme: light)"
 scheme = "default"
-primary = "brown"
-accent = "orange"
+primary = "indigo"
+accent = "teal"
 toggle.icon = "lucide/sun"
 toggle.name = "Switch to dark mode"
 
 [[project.theme.palette]]
 media = "(prefers-color-scheme: dark)"
 scheme = "slate"
-primary = "brown"
-accent = "orange"
+primary = "indigo"
+accent = "teal"
 toggle.icon = "lucide/moon"
 toggle.name = "Switch to system preference"
 

@@ -282,7 +282,7 @@
         if (mote.y < -10) Object.assign(mote, spawn(false));
         const near = Math.max(0, 1 - Math.hypot(mote.x - pointer.x, mote.y - pointer.y) / 160);
         const alpha = (0.35 + 0.35 * Math.sin(mote.life * 6)) + near * 0.6;
-        pen.fillStyle = `rgba(242, 196, 109, ${Math.min(1, alpha)})`;
+        pen.fillStyle = `rgba(242, 193, 78, ${Math.min(1, alpha)})`;
         if (mote.star) {
           const s = mote.r * 3;
           pen.beginPath();
