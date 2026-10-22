@@ -24,6 +24,7 @@
     glow();
     magnetic();
     sparkles();
+    bookToggle();
     document.querySelectorAll("[data-type]").forEach((block) => type(block, false));
   }
 
@@ -116,7 +117,7 @@
         const x = clamp((event.clientX - box.left) / box.width - 0.5);
         const y = clamp((event.clientY - box.top) / box.height - 0.5);
         if (book) {
-          element.style.transform = `translateX(var(--shift)) rotateX(${(18 - y * 6).toFixed(2)}deg) rotateY(${(-24 + x * 10).toFixed(2)}deg) rotateZ(2deg)`;
+          element.style.transform = `rotateX(${(18 - y * 6).toFixed(2)}deg) rotateY(${(-24 + x * 10).toFixed(2)}deg) rotateZ(2deg)`;
         } else {
           element.style.setProperty("--rx", `${(-y * 6).toFixed(2)}deg`);
           element.style.setProperty("--ry", `${(x * 8).toFixed(2)}deg`);
@@ -169,6 +170,42 @@
         element.removeEventListener("pointermove", move);
         element.removeEventListener("pointerleave", leave);
       });
+    });
+  }
+
+  // The hero book plays its loop by itself until it is clicked; from then on each click opens it (leafing through to its
+  // spread, and resting there) or closes it, picking up from wherever it is. Every part of it runs on the same 12s loop,
+  // so all of them are moved to the same moment and stopped there together.
+  function bookToggle() {
+    const book = document.querySelector(".fh-book");
+    if (!book) return;
+    const LOOP = 12000, OPENED = 0.14, SPREAD = 0.56, CLOSING = 0.81;
+    const parts = () => [book.closest(".fh-book__mover"), ...book.querySelectorAll(".fh-book__cover, .fh-book__leaf, .fh-book__bar")]
+      .flatMap((part) => (part ? part.getAnimations() : []))
+      .filter((motion) => /^f-(cover|leaf-\d|bar|shift)$/.test(motion.animationName));
+    let frame = 0;
+    const at = () => ((parts()[0]?.currentTime ?? 0) % LOOP) / LOOP;
+    // Plays every part from `from` to `to` (fractions of the loop) and holds them there.
+    const run = (from, to) => {
+      cancelAnimationFrame(frame);
+      const motions = parts();
+      motions.forEach((motion) => { motion.currentTime = from * LOOP; motion.play(); });
+      const step = () => {
+        if ((motions[0].currentTime ?? 0) >= to * LOOP) motions.forEach((motion) => { motion.pause(); motion.currentTime = (to % 1) * LOOP; });
+        else frame = requestAnimationFrame(step);
+      };
+      frame = requestAnimationFrame(step);
+    };
+    const click = () => {
+      const now = at();
+      const open = now >= OPENED && now < CLOSING;
+      if (open) run(Math.max(now, CLOSING), 1);       // close: the bar goes, the leaves turn back, the cover shuts
+      else run(now >= CLOSING ? 0 : now, SPREAD);     // open: from shut (or from part way open) to the spread
+    };
+    book.addEventListener("click", click);
+    teardown.push(() => {
+      cancelAnimationFrame(frame);
+      book.removeEventListener("click", click);
     });
   }
 
