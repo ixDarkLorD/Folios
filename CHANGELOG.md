@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.0 Release | Oct 21, 2026
+## v1.0 Release | Oct 22, 2026
 Folios's guide books were first made inside CoolCatLib; this is them as a mod of their own, built on CoolCatLib.
 
 ### ✨ New Features

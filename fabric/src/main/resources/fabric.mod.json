@@ -14,6 +14,8 @@
     "sources": "${mod_source_url}"
   },
 
+  "icon": "mod_logo.png",
+
   "license": "${mod_license}",
 
   "environment": "${mod_environment}",
