@@ -33,7 +33,8 @@ import java.util.List;
 import java.util.Map;
 
 // Reads every book from resources (assets/<namespace>/folios/<book>/...) when they reload, and keeps what was laid
-// out from them until the next reload or a change of language.
+// out from them until the next reload or a change of language. A book's builds (<book>/builds/<name>.json) are kept as
+// they are written, for its build pages to read.
 public final class GuideLibrary {
     private static final FileToIdConverter FILES = FileToIdConverter.json("folios");
     private static final int DEFAULT_ACCENT = 0x8B6CFF;
@@ -42,6 +43,9 @@ public final class GuideLibrary {
     private static final float DEFAULT_DISTANCE = 0.64F;
 
     private static Map<ResourceLocation, GuideBook> books = Map.of();
+    private static Map<ResourceLocation, JsonObject> builds = Map.of();
+    private static Map<ResourceLocation, String> authors = Map.of();
+    private static Map<ResourceLocation, CelebrationSettings> celebrations = Map.of();
     private static final Map<ResourceLocation, GuideSession> SESSIONS = new HashMap<>();
 
     private GuideLibrary() {}
@@ -52,6 +56,21 @@ public final class GuideLibrary {
 
     public static Map<ResourceLocation, GuideBook> books() {
         return books;
+    }
+
+    /** Who a book says it is from ({@code "author"} in book.json, raw); null when it doesn't say. */
+    public static @Nullable String author(ResourceLocation book) {
+        return authors.get(book);
+    }
+
+    /** How a book celebrates the player finishing part of it ({@code "celebrations"} in book.json); off unless it says. */
+    public static CelebrationSettings celebrations(ResourceLocation book) {
+        return celebrations.getOrDefault(book, CelebrationSettings.OFF);
+    }
+
+    /** A build file as written, by its path under folios/ without ".json" ({@code mymod:my_guide/builds/tower}); null for none. */
+    public static @Nullable JsonObject build(ResourceLocation id) {
+        return builds.get(id);
     }
 
     /** A book's laid-out pages, kept between openings; null when there is no such book. */
@@ -76,6 +95,7 @@ public final class GuideLibrary {
         CoverMarkers.clear();
         Map<ResourceLocation, JsonObject> bookFiles = new LinkedHashMap<>();
         Map<ResourceLocation, Files> parts = new HashMap<>();
+        Map<ResourceLocation, JsonObject> buildFiles = new HashMap<>();
         for (Map.Entry<ResourceLocation, Resource> file : FILES.listMatchingResources(manager).entrySet()) {
             ResourceLocation id = FILES.fileToId(file.getKey());
             String path = id.getPath();
@@ -94,6 +114,11 @@ public final class GuideLibrary {
             }
             int categories = path.indexOf("/categories/");
             int entries = path.indexOf("/entries/");
+            int buildsAt = path.indexOf("/builds/");
+            if (buildsAt > 0 && (categories < 0 || buildsAt < categories) && (entries < 0 || buildsAt < entries)) {
+                buildFiles.put(id, json);
+                continue;
+            }
             if (categories > 0 && (entries < 0 || categories < entries)) {
                 parts.computeIfAbsent(id.withPath(path.substring(0, categories)), book -> new Files(new LinkedHashMap<>(), new LinkedHashMap<>()))
                         .categories.put(path.substring(categories + 12), json);
@@ -115,6 +140,17 @@ public final class GuideLibrary {
             if (!bookFiles.containsKey(orphan)) Folios.LOGGER.warn("Guide files for {} have no book.json beside them", orphan);
         }
         books = Map.copyOf(loaded);
+        builds = Map.copyOf(buildFiles);
+        Map<ResourceLocation, String> named = new HashMap<>();
+        bookFiles.forEach((id, json) -> {
+            if (loaded.containsKey(id) && json.has("author")) named.put(id, json.get("author").getAsString());
+        });
+        authors = Map.copyOf(named);
+        Map<ResourceLocation, CelebrationSettings> celebrating = new HashMap<>();
+        bookFiles.forEach((id, json) -> {
+            if (loaded.containsKey(id)) celebrating.put(id, CelebrationSettings.read(json.get("celebrations")));
+        });
+        celebrations = Map.copyOf(celebrating);
         SESSIONS.values().forEach(GuideSession::close);
         SESSIONS.clear();
         if (!loaded.isEmpty()) Folios.LOGGER.info("Loaded {} guide book(s)", loaded.size());
@@ -161,7 +197,7 @@ public final class GuideLibrary {
                 // A handheld book is put away by a click off it unless it says otherwise; a screen book stays.
                 json.has("close_on_click_outside") ? json.get("close_on_click_outside").getAsBoolean() : style.equals(GuideStyles.HANDHELD),
                 handling(json.has("handheld") ? json.getAsJsonObject("handheld") : new JsonObject()),
-                colors(json.has("colors") ? json.getAsJsonObject("colors") : new JsonObject()),
+                colors(json.has("colors") ? json.getAsJsonObject("colors") : new JsonObject(), json.get("panel")),
                 coverText(json.has("cover_text") ? json.getAsJsonObject("cover_text") : new JsonObject(), string(json, "summary", "")),
                 json.has("progress") ? GuideBook.Progress.valueOf(json.get("progress").getAsString().toUpperCase(java.util.Locale.ROOT)) : GuideBook.Progress.PLAYER,
                 categories, entries);
@@ -169,9 +205,13 @@ public final class GuideLibrary {
 
     private static final java.util.Set<String> PAGE_COLORS = java.util.Set.of("paper", "text", "muted", "heading", "accent", "link", "panel", "line");
 
-    private static GuideBook.Colors colors(JsonObject json) {
-        return new GuideBook.Colors(named(json, PAGE_COLORS), json.has("dark") ? named(json.getAsJsonObject("dark"), PAGE_COLORS) : Map.of(),
-                json.has("tooltip") ? named(json.getAsJsonObject("tooltip"), java.util.Set.of("background", "frame", "title", "detail")) : Map.of());
+    private static final java.util.Set<String> PANEL_COLORS = java.util.Set.of("background", "frame", "title", "detail");
+
+    // The page colours, and the panel scheme: "panel" in book.json, else "colors" › "tooltip" as it was before.
+    private static GuideBook.Colors colors(JsonObject json, @Nullable JsonElement panel) {
+        Map<String, Integer> panelColors = panel != null && panel.isJsonObject() ? named(panel.getAsJsonObject(), PANEL_COLORS)
+                : json.has("tooltip") ? named(json.getAsJsonObject("tooltip"), PANEL_COLORS) : Map.of();
+        return new GuideBook.Colors(named(json, PAGE_COLORS), json.has("dark") ? named(json.getAsJsonObject("dark"), PAGE_COLORS) : Map.of(), panelColors);
     }
 
     // The colours of a block of a book's scheme, opaque unless given with their alpha.
@@ -219,11 +259,23 @@ public final class GuideLibrary {
                 JsonObject object = page.isJsonObject() ? page.getAsJsonObject() : null;
                 pages.add(new GuideEntry.Page(readPage(book, id, index++, page),
                         object != null && object.has("anchor") ? object.get("anchor").getAsString() : null,
-                        object != null ? GuideLock.read(object) : GuideLock.NONE));
+                        object != null ? GuideLock.read(object) : GuideLock.NONE, object != null ? pageIcon(object.get("icon")) : null));
             }
         }
         return new GuideEntry(id, category, string(json, "name", id), GuideIcon.read(json.get("icon")), integer(json, "sort", 0),
                 json.has("featured") && json.get("featured").getAsBoolean(), GuideLock.read(json), pages, json.has("reveal") ? reveal(json.get("reveal")) : null);
+    }
+
+    // The icon a page shows before its title: null to take its entry's, none for "none".
+    private static @Nullable GuideIcon pageIcon(@Nullable JsonElement json) {
+        if (json == null || json.isJsonNull()) return null;
+        if (json.isJsonPrimitive() && json.getAsString().equals("none")) return GuideIcon.NONE;
+        try {
+            return GuideIcon.read(json);
+        } catch (Exception e) {
+            Folios.LOGGER.warn("A page names an icon it can't read, {}: {}", json, e.getMessage());
+            return null;
+        }
     }
 
     // A page that can't be read is shown as what went wrong, where it would have been, for the book's writer to see.

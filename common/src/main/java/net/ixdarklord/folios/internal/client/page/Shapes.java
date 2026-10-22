@@ -314,7 +314,9 @@ public final class Shapes {
         // A ring turning back on itself, its arrowhead at the top right.
         RESET(PixelIcon.of("button_reset", 7, 7)),
         // An open eye: its lids, the iris softly round a dark pupil.
-        EYE(PixelIcon.of("button_eye", 7, 5));
+        EYE(PixelIcon.of("button_eye", 7, 5)),
+        // Three lines, each with a dot before it: a list.
+        BLOCKS(PixelIcon.of("button_blocks", 7, 5));
 
         private final PixelIcon image;
 
@@ -335,25 +337,44 @@ public final class Shapes {
         int rim = GuidePalette.mix(palette.line(), palette.accent(), hovered ? 0.6F : 0.2F);
         int face = GuidePalette.mix(GuidePalette.mix(palette.panel(), palette.paper(), 0.4F), palette.accent(), hovered ? 0.14F : 0.0F);
         if (hovered) {
-            octagon(painter, x + 1, y + 1, GuidePalette.mix(palette.paper(), 0xFF000000, 0.22F), 0);
+            octagon(painter, x + 1, y + 1, BUTTON, GuidePalette.mix(palette.paper(), 0xFF000000, 0.22F), 0);
             y -= 1;
         }
-        octagon(painter, x, y, rim, face);
+        octagon(painter, x, y, BUTTON, rim, face);
         int ink = hovered ? palette.accent() : GuidePalette.mix(palette.muted(), palette.text(), 0.35F);
         // Centred in the clasp by the pixels it actually draws (odd sizes sit exactly in the middle).
         icon.image.draw(painter, x + (BUTTON - icon.image.width()) / 2, y + (BUTTON - icon.image.height()) / 2, ink);
     }
 
-    // An eight-sided shape filling a BUTTON square: its corners cut by two pixels. With a face, the rim is a pixel
-    // round it; without one (0), it is all of the rim's colour.
-    private static void octagon(GuidePainter painter, int x, int y, int rim, int face) {
+    /**
+     * A clasp {@code width} wide with a number on it in place of an icon, for picking one of several things a page
+     * shows. The one picked is pressed into the page, its face of the book's colour; another lifts under the pointer.
+     */
+    public static void numberButton(GuidePainter painter, int x, int y, int width, String number, boolean hovered, boolean picked) {
+        GuidePalette palette = painter.palette();
+        int rim = GuidePalette.mix(palette.line(), palette.accent(), picked || hovered ? 0.6F : 0.2F);
+        int face = picked ? GuidePalette.mix(palette.panel(), palette.accent(), 0.4F)
+                : GuidePalette.mix(GuidePalette.mix(palette.panel(), palette.paper(), 0.4F), palette.accent(), hovered ? 0.14F : 0.0F);
+        if (hovered && !picked) {
+            octagon(painter, x + 1, y + 1, width, GuidePalette.mix(palette.paper(), 0xFF000000, 0.22F), 0);
+            y -= 1;
+        }
+        octagon(painter, x, y, width, rim, face);
+        int ink = picked ? palette.heading() : hovered ? palette.accent() : GuidePalette.mix(palette.muted(), palette.text(), 0.35F);
+        net.minecraft.network.chat.Component text = net.minecraft.network.chat.Component.literal(number);
+        painter.text(text, x + (width - painter.font().width(text)) / 2 + 1, y + 2, ink);
+    }
+
+    // An eight-sided shape `width` wide and BUTTON tall: its corners cut by two pixels. With a face, the rim is a
+    // pixel round it; without one (0), it is all of the rim's colour.
+    private static void octagon(GuidePainter painter, int x, int y, int width, int rim, int face) {
         int size = BUTTON;
-        painter.fill(x + 2, y, x + size - 2, y + size, rim);
-        painter.fill(x, y + 2, x + size, y + size - 2, rim);
-        painter.fill(x + 1, y + 1, x + size - 1, y + size - 1, rim);
+        painter.fill(x + 2, y, x + width - 2, y + size, rim);
+        painter.fill(x, y + 2, x + width, y + size - 2, rim);
+        painter.fill(x + 1, y + 1, x + width - 1, y + size - 1, rim);
         if (face == 0) return;
-        painter.fill(x + 2, y + 1, x + size - 2, y + size - 1, face);
-        painter.fill(x + 1, y + 2, x + size - 1, y + size - 2, face);
+        painter.fill(x + 2, y + 1, x + width - 2, y + size - 1, face);
+        painter.fill(x + 1, y + 2, x + width - 1, y + size - 2, face);
     }
 
     /** A small arrow pointing right, 9 by 7 pixels from (x, y). */

@@ -11,6 +11,9 @@ public final class GuideClientNetwork {
         Minecraft.getInstance().execute(() -> GuideClient.open(payload.book(), payload.entry().orElse(null), null));
     }
 
+    public static void structure(GuidePayloads.Structure payload) {
+        Minecraft.getInstance().execute(() -> GuideStructures.receive(payload));
+    }
 
     public static void sharedReading(GuidePayloads.SharedReading payload) {
         Minecraft.getInstance().execute(() -> net.ixdarklord.folios.internal.client.handheld.SharedBooks.receive(payload));

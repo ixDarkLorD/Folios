@@ -11,6 +11,7 @@ import net.ixdarklord.folios.api.client.page.GuidePage;
 import net.ixdarklord.folios.api.client.page.GuidePainter;
 import net.ixdarklord.folios.api.client.page.GuidePalette;
 import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.internal.client.build.BlockChoice;
 import net.ixdarklord.folios.internal.client.build.BuildGuide;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
@@ -19,7 +20,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -100,12 +100,8 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
         Component heading = title.isPresent() && !title.get().isEmpty() ? GuideText.inline(title.get()) : null;
         int top = GuideLayout.CONTENT_TOP + (heading != null ? GuideLayout.TITLE_HEIGHT : 0);
         // A build's blocks, a row under its window, the text under them.
-        Requirements needs = build.map(made -> {
-            Map<BlockPos, BlockState> blocks = MultiblockPage.blocks(made.pattern(), made.mapping());
-            Map<BlockState, Integer> counts = new java.util.LinkedHashMap<>();
-            for (BlockState state : blocks.values()) counts.merge(state, 1, Integer::sum);
-            return new Requirements(counts);
-        }).filter(made -> !made.isEmpty()).orElse(null);
+        Requirements needs = build.map(made -> new Requirements(MultiblockPageElement.blocks(made.pattern(), made.mapping()).values()))
+                .filter(made -> !made.isEmpty()).orElse(null);
         int listTop = top + this.windowHeight() + 5;
         int textTop = needs != null ? listTop + Requirements.HEADING + Requirements.SLOT + 5 : top + this.windowHeight() + 6;
         // The text under the window, in centred lines across the spread, as many as there is room for.
@@ -203,9 +199,11 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
     }
 
     private Window buildWindow(GuideLayout layout, int top, Build build) {
-        Map<BlockPos, BlockState> blocks = MultiblockPage.blocks(build.pattern(), build.mapping());
+        Map<BlockPos, BlockChoice> blocks = MultiblockPageElement.blocks(build.pattern(), build.mapping());
         SceneViewport view = layout.viewport(WIDTH * GuideLayout.SCENE_DETAIL, this.windowHeight() * GuideLayout.SCENE_DETAIL);
-        view.blocks(blocks).refreshRate(30);
+        view.refreshRate(30);
+        BuildScene scene = new BuildScene(view);
+        scene.show(blocks);
         view.ground(0, 1, 0x30808080, 0x55A0A0A0, false);
         SceneControl control = new SceneControl(view, 35, 26, 14);
         Component name = title.isPresent() ? GuideText.inline(title.get()) : Component.translatableWithFallback("folios.build", "Build");
@@ -217,6 +215,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
         return part -> {
             int[] range = part.clip(LEFT + INNER, LEFT + WIDTH - INNER);
             if (range == null) return;
+            scene.update(part.painter.time());
             float u0 = (range[0] - LEFT - INNER) / (float) (WIDTH - INNER * 2);
             float u1 = (range[1] - LEFT - INNER) / (float) (WIDTH - INNER * 2);
             control.drawPart(part.painter, range[0] - part.offset(), top + INNER, range[1] - range[0], this.windowHeight() - INNER * 2, u0, u1,
@@ -328,7 +327,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
         // The row of blocks a build needs, split either side of the fold so no slot is cut, a clasp at each end to
         // page through them when there are more than fit.
         void requirements(Requirements needs, int y) {
-            List<net.minecraft.world.item.ItemStack> shown = needs.shown(NEEDS_SHOWN);
+            List<Requirements.Need> shown = needs.shown(NEEDS_SHOWN);
             int onLeft = (shown.size() + 1) / 2;
             for (int index = 0; index < shown.size(); index++) {
                 boolean left = index < onLeft;

@@ -33,30 +33,37 @@ import java.util.Optional;
 
 // One or two recipes as the game shows them: a crafting grid, a furnace, a stonecutter or a smithing table, each
 // slot showing in turn every item it takes. Recipes are read from those the client was sent.
-public record RecipePage(List<ResourceLocation> recipes, Optional<String> title, String text) implements GuidePage {
-    public static final MapCodec<RecipePage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+public record RecipePageElement(List<ResourceLocation> recipes, Optional<String> title, String text) implements GuidePage {
+    public static final MapCodec<RecipePageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Codec.mapEither(net.ixdarklord.folios.internal.compat.Compat.listOf(ResourceLocation.CODEC, 1, 2).fieldOf("recipes"), ResourceLocation.CODEC.fieldOf("recipe"))
-                    .xmap(either -> either.map(list -> list, List::of), Either::<List<ResourceLocation>, ResourceLocation>left).forGetter(RecipePage::recipes),
-            Codec.STRING.optionalFieldOf("title").forGetter(RecipePage::title),
-            Codec.STRING.optionalFieldOf("text", "").forGetter(RecipePage::text)
-    ).apply(instance, RecipePage::new));
+                    .xmap(either -> either.map(list -> list, List::of), Either::<List<ResourceLocation>, ResourceLocation>left).forGetter(RecipePageElement::recipes),
+            Codec.STRING.optionalFieldOf("title").forGetter(RecipePageElement::title),
+            Codec.STRING.optionalFieldOf("text", "").forGetter(RecipePageElement::text)
+    ).apply(instance, RecipePageElement::new));
 
     private static final int BOX = 62;
     private static final int GAP = 4;
 
     @Override
     public List<Laid> lay(GuideLayout layout) {
+        Body body = this.body(layout);
+        return layout.flow(title.orElse(null), body.height(), text, body.part());
+    }
+
+    /** What it shows between its title and its text. */
+    Body body(GuideLayout layout) {
         Map<SlotDisplay, List<ItemStack>> resolved = new IdentityHashMap<>();
         int room = recipes.size() * BOX + (recipes.size() - 1) * GAP;
         // Without a title of its own, a page of one recipe is named for what it makes, once that is known.
         boolean named = title.isEmpty() && recipes.size() == 1;
-        return layout.flow(title.orElse(null), room + (named ? GuideLayout.TITLE_HEIGHT : 0), text, (painter, y) -> {
+        net.ixdarklord.folios.api.client.page.GuideIcon icon = layout.titleIcon();
+        return new Body(room + (named ? GuideLayout.TITLE_HEIGHT : 0), (painter, y) -> {
             int top = y;
             if (named) {
                 List<RecipeDisplay> first = GuideRecipes.get(recipes.get(0));
                 if (first != null && !first.isEmpty()) {
                     ItemStack made = stacks(resolved, first.get(0).result()).stream().findFirst().orElse(ItemStack.EMPTY);
-                    if (!made.isEmpty()) GuideLayout.title(painter, made.getHoverName(), y);
+                    if (!made.isEmpty()) GuideLayout.title(painter, made.getHoverName(), y, icon);
                 }
                 top += GuideLayout.TITLE_HEIGHT;
             }

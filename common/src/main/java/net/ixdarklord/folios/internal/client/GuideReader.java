@@ -12,7 +12,7 @@ import net.ixdarklord.folios.api.client.page.GuidePage;
 import net.ixdarklord.folios.api.client.page.GuidePainter;
 import net.ixdarklord.folios.api.client.page.GuidePalette;
 import net.ixdarklord.folios.api.client.page.GuideText;
-import net.ixdarklord.folios.internal.client.page.QuestPage;
+import net.ixdarklord.folios.internal.client.page.QuestPageElement;
 import net.ixdarklord.folios.internal.client.page.Shapes;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.minecraft.ChatFormatting;
@@ -271,7 +271,7 @@ public class GuideReader implements AbstractPainter.Navigator {
             for (GuideEntry entry : book.entries(category.id())) all.addAll(entry.objectives());
         }
         boolean mastery = !all.isEmpty();
-        int titleBottom = mastery ? 110 : 96;
+        int titleBottom = mastery ? 134 : 96;
         List<GuideText> landing = book.landing().isEmpty() ? List.of()
                 : layout.text(book.landing()).split(GuideLayout.CONTENT_BOTTOM - titleBottom, GuideLayout.CONTENT_BOTTOM - GuideLayout.CONTENT_TOP);
         GuideText first = landing.isEmpty() ? null : landing.get(0);
@@ -295,7 +295,7 @@ public class GuideReader implements AbstractPainter.Navigator {
                         .stream().findFirst().orElse(FormattedCharSequence.EMPTY);
                 painter.text(subtitle, middle - painter.font().width(subtitle) / 2, y + 1, palette.muted());
             }
-            if (mastery) this.mastery(painter, middle, titleBottom - 20, all);
+            if (mastery) this.mastery(painter, middle, titleBottom - 45, all);
             flourish(painter, middle, titleBottom - 6);
             if (first != null && !first.isEmpty()) first.draw(painter, GuideLayout.CONTENT_LEFT, titleBottom);
         });
@@ -334,27 +334,40 @@ public class GuideReader implements AbstractPainter.Navigator {
         painter.fill(x0, y0 + 3, x1, y1 - 3, color);
     }
 
-    // The mastery bar: a trophy, the bar of all the book's objectives, and how many are done (a tick once all are),
-    // centred together under the book's name.
+    // The mastery bar: a trophy and "Mastery" over it, under them "Progression:" with how far along it is in percent (a
+    // tick once all is done), then the bar of all the book's objectives, centred under the book's name.
     private void mastery(GuidePainter painter, int middle, int y, List<GuideObjective> all) {
         GuidePalette palette = painter.palette();
         int done = 0;
         for (GuideObjective objective : all) if (objective.isDone(book)) done++;
         boolean complete = done == all.size();
-        int color = complete ? 0xFF4CAF50 : palette.accent();
-        Component count = complete ? Component.literal("\u2714") : Component.literal(done + "/" + all.size());
-        int countWidth = painter.font().width(count);
-        int bar = 56;
-        int whole = 9 + 5 + bar + 5 + countWidth;
-        int left = middle - whole / 2;
+        float progress = GuideObjective.progress(book, all);
+        Component title = Component.translatableWithFallback("folios.mastery.title", "Mastery").withStyle(ChatFormatting.BOLD);
+        int titleWidth = 9 + 3 + painter.font().width(title);
+        int left = middle - titleWidth / 2;
         int cup = complete ? 0xFFE0B23A : GuidePalette.mix(palette.muted(), palette.accent(), 0.5F);
-        net.ixdarklord.folios.internal.client.screen.GuideBar.pixels(painter, TROPHY, left, y - 2, 9, cup);
-        // A highlight down the cup's left, for its roundness.
-        int shine = GuidePalette.mix(cup, 0xFFFFFFFF, 0.45F);
-        painter.fill(left + 2, y - 1, left + 3, y + 2, shine);
-        QuestPage.bar(painter, left + 14, y, bar, 5, GuideObjective.progress(book, all), color);
-        painter.text(count, left + 14 + bar + 5, y - 1, complete ? 0xFF3E8E41 : palette.muted());
-        if (painter.hovered(left - 1, y - 3, whole + 2, 11)) {
+        // Mastered, the trophy cycles through a rainbow; until then it is quiet, a highlight down its cup's left.
+        if (complete) {
+            TROPHY.rainbow(painter, left, y - 1, painter.time(), 0xFFE0B23A);
+        } else {
+            net.ixdarklord.folios.internal.client.screen.GuideBar.pixels(painter, TROPHY, left, y - 1, 9, cup);
+            painter.fill(left + 2, y, left + 3, y + 3, GuidePalette.mix(cup, 0xFFFFFFFF, 0.45F));
+        }
+        if (complete) {
+            int frame = TROPHY_SHEEN.sweepFrame(painter.time(), 2.4F, 0.5F);
+            if (frame >= 0) TROPHY_SHEEN.draw(painter, left, y - 1, frame, 0xFFFFFFFF);
+        }
+        painter.text(title, left + 12, y, palette.heading());
+        Component label = Component.translatableWithFallback("folios.mastery.progression", "Progression:");
+        Component percent = Component.literal(complete ? "100% \u2714" : Math.round(100 * progress) + "%");
+        int labelWidth = painter.font().width(label);
+        int line = labelWidth + 4 + painter.font().width(percent);
+        int lineLeft = middle - line / 2;
+        painter.text(label, lineLeft, y + 11, palette.muted());
+        painter.text(percent, lineLeft + labelWidth + 4, y + 11, complete ? 0xFF3E8E41 : palette.heading());
+        int bar = 96;
+        QuestPageElement.gilded(painter, middle - bar / 2, y + 22, bar, progress);
+        if (painter.hovered(middle - bar / 2 - 1, y - 2, bar + 2, 32)) {
             painter.tooltip(this.masteryTooltip(done, all));
         }
     }
@@ -396,6 +409,8 @@ public class GuideReader implements AbstractPainter.Navigator {
 
     // A small trophy, every pixel solid: a cup with a rim, loop handles, a stem and a foot.
     private static final net.ixdarklord.folios.internal.client.paint.PixelIcon TROPHY = net.ixdarklord.folios.internal.client.paint.PixelIcon.of("trophy", 9, 9);
+    /** A band of light sweeping across the trophy once the book is mastered: a flipbook over it. */
+    private static final net.ixdarklord.folios.internal.client.paint.PixelIcon TROPHY_SHEEN = net.ixdarklord.folios.internal.client.paint.PixelIcon.of("trophy_sheen", 9, 9, 10);
 
     // A divider under the book's name: two rules running out from a diamond, each ending in a dot.
     private static void flourish(GuidePainter painter, int middle, int y) {
@@ -523,15 +538,18 @@ public class GuideReader implements AbstractPainter.Navigator {
         int textRight = right - (fresh ? 10 : 0);
         // How far along it is: a count at the right and a bar along its foot, for a category's reading or a quest.
         float progress = -1;
+        int steps = 1;
         Component count = null;
         if (row.category != null && book.showProgress() && row.link != null) {
             int[] read = this.progress(row.category);
             count = Component.literal(read[0] + "/" + read[1]);
             progress = read[1] == 0 ? 0 : read[0] / (float) read[1];
+            steps = read[1];
         } else if (!row.quest.isEmpty()) {
             int done = 0;
             for (GuideObjective objective : row.quest) if (objective.isDone(book)) done++;
             progress = GuideObjective.progress(book, row.quest);
+            steps = row.quest.size();
             count = done == row.quest.size() ? Component.literal("✔") : Component.literal(done + "/" + row.quest.size());
         }
         boolean complete = progress >= 1;
@@ -546,7 +564,7 @@ public class GuideReader implements AbstractPainter.Navigator {
         if (fresh) net.ixdarklord.folios.internal.client.screen.GuideBar.sparkle(painter, right - 7, y + (ROW - 1 - 7) / 2, y * 0.037F,
                 palette.accent() | 0xFF000000);
         if (progress >= 0) {
-            QuestPage.bar(painter, left + 20, y + ROW - 3, right - left - 20, 2, progress, complete ? 0xFF4CAF50 : palette.accent());
+            QuestPageElement.stepped(painter, left + 20, y + ROW - 5, right - left - 20, progress, steps, complete ? 0xFF4CAF50 : palette.accent());
         } else {
             painter.fill(left + 20, y + ROW - 2, right, y + ROW - 1, GuidePalette.alpha(palette.line(), 0x60));
         }

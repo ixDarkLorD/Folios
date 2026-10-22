@@ -16,6 +16,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.FormattedCharSequence;
@@ -23,6 +24,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.Util;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 // The bar over a book, a ribbon banner: a band of cloth in the cover's colour across the book, its swallowtail ends
@@ -223,25 +225,25 @@ public final class GuideBar {
         } else {
             this.field(painter, searchLeft, searchRight, searchOpen, field);
         }
-        // Where the reader is, shrunk to the room it has (to no less than three fifths), cut short only past that;
-        // the bookmark star right after it, on an entry.
+        // Where the reader is, in the room it has: on one line, shrunk to no less than four fifths; past that on two
+        // smaller lines, the book or category over the rest; cut short only if it still doesn't fit. The bookmark star
+        // right after it, on an entry.
         GuideBook.Location here = reader.here();
-        Component where = this.where();
         // Up to the fold pocket in the middle (or the search field, if that is nearer), its star after it.
         int end = Math.min(searchLeft - 6, (width - POCKET_WIDTH) / 2 - 4);
         int room = end - x - (here != null ? 18 : 0);
-        int wide = font.width(where);
-        float shrink = wide <= room ? 1.0F : Math.max(0.6F, room / (float) wide);
-        int fits = Math.round(room / shrink);
-        FormattedCharSequence line = wide * shrink <= room ? where.getVisualOrderText()
-                : Language.getInstance().getVisualOrder(FormattedText.composite(font.substrByWidth(where, fits - font.width("…")), FormattedText.of("…")));
-        painter.push();
-        painter.translate(x, INSET + 8 - 4 * shrink);
-        painter.scale(shrink);
-        painter.text(line, 0, 0, text);
-        painter.pop();
+        Fitted where = this.fit(room);
+        float lineHeight = 9 * where.scale();
+        float top = INSET + 8 - (where.lines().size() * lineHeight - where.scale()) / 2;
+        for (int index = 0; index < where.lines().size(); index++) {
+            painter.push();
+            painter.translate(x, top + index * lineHeight);
+            painter.scale(where.scale());
+            painter.text(where.lines().get(index), 0, 0, index == 0 ? text : GuidePalette.mix(cover, text, 0.85F));
+            painter.pop();
+        }
         if (here != null) {
-            int star = x + Math.min(room, Math.round(Math.min(wide, fits) * shrink)) + 2;
+            int star = x + Math.min(room, where.width()) + 2;
             boolean marked = reader.memory.isBookmarked(here.entry());
             Component starName = marked ? Component.translatableWithFallback("folios.bookmark.remove", "Remove bookmark")
                     : Component.translatableWithFallback("folios.bookmark.add", "Bookmark this page");
@@ -403,25 +405,98 @@ public final class GuideBar {
     }
 
     // Book › Category › Entry, or what the reader is looking at.
+    /** Where the reader is as drawn: its lines, how large, and how wide they come to on the bar. */
+    private record Fitted(List<FormattedCharSequence> lines, float scale, int width) {}
+
+    private Fitted fit(int room) {
+        Component where = this.where();
+        int wide = font.width(where);
+        // On two lines: split where the trail steps on, else wherever the words wrap; as large as lets the longer fit.
+        // Only when that is larger than one line would be.
+        List<Component> parts = this.whereParts();
+        float oneLine = room / (float) wide;
+        float twoLines = parts.size() == 2
+                ? Math.min(0.75F, room / (float) Math.max(font.width(parts.get(0)), font.width(parts.get(1)) + font.width("› ")))
+                : 0.75F;
+        if (oneLine >= 0.8F || oneLine >= twoLines) {
+            float scale = Math.max(0.6F, Math.min(1.0F, oneLine));
+            int fits = Math.round(room / scale);
+            FormattedCharSequence line = wide <= fits ? where.getVisualOrderText()
+                    : Language.getInstance().getVisualOrder(FormattedText.composite(font.substrByWidth(where, fits - font.width("…")), FormattedText.of("…")));
+            return new Fitted(List.of(line), scale, Math.round(Math.min(wide, fits) * scale));
+        }
+        List<FormattedText> lines = new ArrayList<>();
+        if (parts.size() == 2) {
+            lines.add(parts.get(0));
+            lines.add(Component.literal("› ").withStyle(ChatFormatting.GRAY).append(parts.get(1)));
+        } else {
+            lines.addAll(font.getSplitter().splitLines(where, Math.round(room / 0.75F), net.minecraft.network.chat.Style.EMPTY));
+        }
+        int longest = 0;
+        for (FormattedText line : lines) longest = Math.max(longest, font.width(line));
+        float scale = Math.max(0.6F, Math.min(0.75F, room / (float) Math.max(1, longest)));
+        int fits = Math.round(room / scale);
+        List<FormattedCharSequence> shown = new ArrayList<>();
+        int widest = 0;
+        for (int index = 0; index < Math.min(2, lines.size()); index++) {
+            FormattedText line = lines.get(index);
+            boolean more = index == 1 && lines.size() > 2;
+            if (font.width(line) > fits || more) {
+                line = FormattedText.composite(font.substrByWidth(line, fits - font.width("…")), FormattedText.of("…"));
+            }
+            shown.add(Language.getInstance().getVisualOrder(line));
+            widest = Math.max(widest, font.width(line));
+        }
+        return new Fitted(shown, scale, Math.round(widest * scale));
+    }
+
+    // The trail's first step and the rest, for setting it on two lines; one part when it has no steps.
+    private List<Component> whereParts() {
+        List<Component> steps = this.trail();
+        if (steps.size() < 2) return List.of(this.where());
+        return List.of(steps.get(0), join(steps.subList(1, steps.size())));
+    }
+
     private Component where() {
+        return join(this.trail());
+    }
+
+    // Steps of the trail, one after another with an arrow between them.
+    private static Component join(List<Component> steps) {
+        MutableComponent line = Component.empty();
+        for (int index = 0; index < steps.size(); index++) {
+            if (index > 0) line.append(Component.literal("  ›  ").withStyle(ChatFormatting.GRAY));
+            line.append(steps.get(index));
+        }
+        return line;
+    }
+
+    // Where the reader is, step by step: the book (or, inside an entry, its category: the icon beside it already names
+    // the book) in bold, then the category, entry, search, bookmarks or index.
+    private List<Component> trail() {
         String chapter = reader.spot.chapter();
-        Component path = book.title().copy().withStyle(ChatFormatting.BOLD);
-        // Inside an entry, the book's name gives way to the category: the icon beside it already names the book.
         GuideEntry open = reader.entry();
         GuideCategory owner = reader.category();
         if (open != null && owner != null) {
-            return owner.title().copy().withStyle(ChatFormatting.BOLD).append(Component.literal("  ›  ").withStyle(ChatFormatting.GRAY))
-                    .append(open.title().copy().withStyle(style -> style.withBold(false)));
+            return List.of(bold(owner.title()), plain(open.title()));
         }
+        List<Component> steps = new ArrayList<>();
+        steps.add(bold(book.title()));
         Component step = null;
         if (chapter.startsWith("search:")) step = Component.translatableWithFallback("folios.search.results", "Search");
         else if (chapter.equals("bookmarks")) step = Component.translatableWithFallback("folios.bookmarks", "Bookmarks");
         else if (chapter.equals("index")) step = Component.translatableWithFallback("folios.index", "Index");
-        else if (owner != null) {
-            path = path.copy().append(Component.literal("  ›  ").withStyle(ChatFormatting.GRAY)).append(owner.title().copy().withStyle(style -> style.withBold(false)));
-        }
-        if (step != null) path = path.copy().append(Component.literal("  ›  ").withStyle(ChatFormatting.GRAY)).append(step.copy().withStyle(style -> style.withBold(false)));
-        return path;
+        else if (owner != null) steps.add(plain(owner.title()));
+        if (step != null) steps.add(plain(step));
+        return steps;
+    }
+
+    private static Component bold(Component text) {
+        return text.copy().withStyle(ChatFormatting.BOLD);
+    }
+
+    private static Component plain(Component text) {
+        return text.copy().withStyle(style -> style.withBold(false));
     }
 
     // ---- Pixel icons ----
