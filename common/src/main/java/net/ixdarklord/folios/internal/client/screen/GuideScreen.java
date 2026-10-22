@@ -82,9 +82,14 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
     private float scale = 1;
 
     public GuideScreen(GuideBook book, GuideSession session, GuideBook.@Nullable Location at) {
+        this(book, session, at, null);
+    }
+
+    /** A book opened from a copy in {@code hand} (null for none), whose own progress it keeps if the book says so. */
+    public GuideScreen(GuideBook book, GuideSession session, GuideBook.@Nullable Location at, net.minecraft.world.@Nullable InteractionHand hand) {
         super(book.title());
         this.book = book;
-        this.reader = new GuideReader(book, session, at);
+        this.reader = new GuideReader(book, session, at, hand);
         this.bar = new GuideBar(this.reader, true, this::onClose, field -> {
             this.setFocused(field);
             field.setFocused(true);
