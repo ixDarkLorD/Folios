@@ -1,30 +1,33 @@
 name: Documentation
+# The site's source is private; the built site is published to the gh-pages branch of the public Folios repository,
+# which GitHub Pages serves at ixdarklord.github.io/Folios. FOLIOS_DEPLOY_KEY is a deploy key with write access there.
 on:
   push:
     branches:
-      - master
       - main
   workflow_dispatch:
 permissions:
   contents: read
-  pages: write
-  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/configure-pages@v6
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: 3.x
       - run: pip install zensical
       - run: zensical build --clean
-      - uses: actions/upload-pages-artifact@v5
+      - uses: peaceiris/actions-gh-pages@v4
         with:
-          path: site
-      - uses: actions/deploy-pages@v5
-        id: deployment
+          deploy_key: ${{ secrets.FOLIOS_DEPLOY_KEY }}
+          external_repository: ixDarkLorD/Folios
+          publish_branch: gh-pages
+          publish_dir: ./site
+          force_orphan: true
+          user_name: '!DARK'
+          user_email: 34784038+ixDarkLorD@users.noreply.github.com
+          commit_message: Publish the site
