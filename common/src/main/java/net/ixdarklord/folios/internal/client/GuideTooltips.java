@@ -16,7 +16,7 @@ import java.util.List;
 
 // The books' tooltips: a dark ground with a gilt frame, a name and, under it, a quieter line saying more (how far
 // along, which keys). Text that brings its own colours (an item's name by its rarity) keeps them. Their colours are
-// the book's ("colors" › "tooltip"), by default its cover's for the ground and gilt warmed by its accent for the
+// the book's (its "panel" scheme), by default its cover's for the ground and gilt warmed by its accent for the
 // frame; the sprites are grey, tinted with them, so the tooltip is drawn here rather than as a vanilla style.
 public final class GuideTooltips {
     private static final Identifier BACKGROUND = Folios.rl("tooltip/guide_background");
@@ -34,7 +34,22 @@ public final class GuideTooltips {
 
     /** The text colour of a tooltip's name in a book's colours. */
     public static int titleColor(GuideBook book) {
-        return book.colors().tooltip().getOrDefault("title", TITLE);
+        return book.colors().panel().getOrDefault("title", TITLE);
+    }
+
+    /** A tooltip's ground in a book's colours: its own, else its cover's darkened. */
+    public static int backgroundColor(GuideBook book) {
+        return book.colors().panel().getOrDefault("background", GuidePalette.mix(0xFF000000 | book.cover(), 0xFF120C08, 0.55F));
+    }
+
+    /** A tooltip's frame in a book's colours: its own, else gilt warmed by its accent. */
+    public static int frameColor(GuideBook book) {
+        return book.colors().panel().getOrDefault("frame", GuidePalette.mix(GILT, 0xFF000000 | book.accent(), 0.3F));
+    }
+
+    /** The text colour of a tooltip's quieter lines in a book's colours. */
+    public static int detailColor(GuideBook book) {
+        return book.colors().panel().getOrDefault("detail", DETAIL);
     }
 
     /**
@@ -52,9 +67,9 @@ public final class GuideTooltips {
 
     /** As the others, the frame {@code inset} pixels out from the content each way (12 for a tooltip's). */
     public static void frame(GuiGraphicsExtractor graphics, int x, int y, int width, int height, GuideBook book, int alpha, int inset) {
-        var colors = book.colors().tooltip();
-        int ground = colors.getOrDefault("background", GuidePalette.mix(0xFF000000 | book.cover(), 0xFF120C08, 0.55F));
-        int frame = colors.getOrDefault("frame", GuidePalette.mix(GILT, 0xFF000000 | book.accent(), 0.3F));
+        var colors = book.colors().panel();
+        int ground = backgroundColor(book);
+        int frame = frameColor(book);
         int x0 = x - inset;
         int y0 = y - inset;
         graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BACKGROUND, x0, y0, width + inset * 2, height + inset * 2, GuidePalette.alpha(ground, (ground >>> 24) * alpha / 255));
@@ -75,7 +90,7 @@ public final class GuideTooltips {
      */
     public static void show(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY, GuideBook book, int ruleBefore) {
         if (lines.isEmpty()) return;
-        var colors = book.colors().tooltip();
+        var colors = book.colors().panel();
         int title = colors.getOrDefault("title", TITLE);
         int detail = colors.getOrDefault("detail", DETAIL);
         List<FormattedCharSequence> styled = new ArrayList<>(lines.size());

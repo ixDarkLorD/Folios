@@ -11,5 +11,14 @@
     "effect": "folios:burn",
     "seconds": 1.2,
     "unread": true
+  },
+  "celebrations": {
+    "entry": false
+  },
+  "panel": {
+    "background": "#16202E",
+    "frame": "#7FB7FF",
+    "title": "#E8F2FF",
+    "detail": "#9DB4CC"
   }
 }

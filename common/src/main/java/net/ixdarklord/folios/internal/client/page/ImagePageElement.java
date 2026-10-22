@@ -16,14 +16,14 @@ import java.util.Optional;
 
 // Pictures across the page at their own proportions (at most `height` tall), one at a time with arrows to step
 // through several; a caption under them.
-public record ImagePage(List<Identifier> images, Optional<String> title, String text, boolean border, int height) implements GuidePage {
-    public static final MapCodec<ImagePage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Codec.withAlternative(Identifier.CODEC.listOf(1, 32), Identifier.CODEC.xmap(List::of, List::getFirst)).fieldOf("images").forGetter(ImagePage::images),
-            Codec.STRING.optionalFieldOf("title").forGetter(ImagePage::title),
-            Codec.STRING.optionalFieldOf("text", "").forGetter(ImagePage::text),
-            Codec.BOOL.optionalFieldOf("border", true).forGetter(ImagePage::border),
-            Codec.intRange(16, 140).optionalFieldOf("height", 90).forGetter(ImagePage::height)
-    ).apply(instance, ImagePage::new));
+public record ImagePageElement(List<Identifier> images, Optional<String> title, String text, boolean border, int height) implements GuidePage {
+    public static final MapCodec<ImagePageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Codec.withAlternative(Identifier.CODEC.listOf(1, 32), Identifier.CODEC.xmap(List::of, List::getFirst)).fieldOf("images").forGetter(ImagePageElement::images),
+            Codec.STRING.optionalFieldOf("title").forGetter(ImagePageElement::title),
+            Codec.STRING.optionalFieldOf("text", "").forGetter(ImagePageElement::text),
+            Codec.BOOL.optionalFieldOf("border", true).forGetter(ImagePageElement::border),
+            Codec.intRange(16, 140).optionalFieldOf("height", 90).forGetter(ImagePageElement::height)
+    ).apply(instance, ImagePageElement::new));
 
     private static final int ARROWS = 12;
 

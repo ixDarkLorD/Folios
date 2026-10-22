@@ -1,0 +1,48 @@
+{
+  "name": "guide.foliostest.handbook.entry.world.sampler.name",
+  "icon": "minecraft:diamond_block",
+  "sort": 9,
+  "pages": [
+    {
+      "type": "multiblock",
+      "title": "guide.foliostest.handbook.entry.world.sampler.page1.title",
+      "pattern": [
+        [
+          "abcde",
+          "fghij",
+          "klmno",
+          "pqrst",
+          "uvwxy"
+        ]
+      ],
+      "mapping": {
+        "a": "minecraft:stone",
+        "b": "minecraft:granite",
+        "c": "minecraft:diorite",
+        "d": "minecraft:andesite",
+        "e": "minecraft:cobblestone",
+        "f": "minecraft:oak_planks",
+        "g": "minecraft:spruce_planks",
+        "h": "minecraft:birch_planks",
+        "i": "minecraft:jungle_planks",
+        "j": "minecraft:acacia_planks",
+        "k": "minecraft:dark_oak_planks",
+        "l": "minecraft:bricks",
+        "m": "minecraft:sandstone",
+        "n": "minecraft:red_sandstone",
+        "o": "minecraft:gold_block",
+        "p": "minecraft:iron_block",
+        "q": "minecraft:diamond_block",
+        "r": "minecraft:emerald_block",
+        "s": "minecraft:lapis_block",
+        "t": "minecraft:redstone_block",
+        "u": "minecraft:coal_block",
+        "v": "minecraft:quartz_block",
+        "w": "minecraft:glowstone",
+        "x": "minecraft:sea_lantern",
+        "y": "minecraft:prismarine"
+      },
+      "text": "guide.foliostest.handbook.entry.world.sampler.page1.text"
+    }
+  ]
+}
