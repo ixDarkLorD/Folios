@@ -32,10 +32,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// Reads every book from resources (assets/<namespace>/guides/<book>/...) when they reload, and keeps what was laid
+// Reads every book from resources (assets/<namespace>/folios/<book>/...) when they reload, and keeps what was laid
 // out from them until the next reload or a change of language.
 public final class GuideLibrary {
-    private static final FileToIdConverter FILES = FileToIdConverter.json("guides");
+    private static final FileToIdConverter FILES = FileToIdConverter.json("folios");
     private static final int DEFAULT_ACCENT = 0x8B6CFF;
     private static final int DEFAULT_COVER = 0x3A2E58;
     private static final float DEFAULT_TILT = 6.0F;
