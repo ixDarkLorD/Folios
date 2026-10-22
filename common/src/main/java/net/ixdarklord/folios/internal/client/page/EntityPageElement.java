@@ -21,16 +21,19 @@ import java.util.List;
 import java.util.Optional;
 
 // A creature in a little window of its own, turning slowly (drag the window to turn it on a screen), named under it.
-public record EntityPage(Identifier entity, Optional<String> title, String text, float zoom, float spin, float yaw, int height) implements GuidePage {
-    public static final MapCodec<EntityPage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Identifier.CODEC.fieldOf("entity").forGetter(EntityPage::entity),
-            Codec.STRING.optionalFieldOf("title").forGetter(EntityPage::title),
-            Codec.STRING.optionalFieldOf("text", "").forGetter(EntityPage::text),
-            Codec.floatRange(0.25F, 4.0F).optionalFieldOf("zoom", 1.0F).forGetter(EntityPage::zoom),
-            Codec.FLOAT.optionalFieldOf("spin", 24.0F).forGetter(EntityPage::spin),
-            Codec.FLOAT.optionalFieldOf("yaw", 30.0F).forGetter(EntityPage::yaw),
-            Codec.intRange(40, 130).optionalFieldOf("height", 74).forGetter(EntityPage::height)
-    ).apply(instance, EntityPage::new));
+public record EntityPageElement(Identifier entity, Optional<String> title, String text, float zoom, float spin, float yaw, int height) implements GuidePage {
+    public static final MapCodec<EntityPageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Identifier.CODEC.fieldOf("entity").forGetter(EntityPageElement::entity),
+            Codec.STRING.optionalFieldOf("title").forGetter(EntityPageElement::title),
+            Codec.STRING.optionalFieldOf("text", "").forGetter(EntityPageElement::text),
+            Codec.floatRange(0.25F, 4.0F).optionalFieldOf("zoom", 1.0F).forGetter(EntityPageElement::zoom),
+            Codec.FLOAT.optionalFieldOf("spin", 24.0F).forGetter(EntityPageElement::spin),
+            Codec.FLOAT.optionalFieldOf("yaw", 30.0F).forGetter(EntityPageElement::yaw),
+            Codec.intRange(40, 130).optionalFieldOf("height", 74).forGetter(EntityPageElement::height)
+    ).apply(instance, EntityPageElement::new));
+
+    /** Ids for the entities pages show, counting down from -1 so they meet no entity in the world. */
+    private static final java.util.concurrent.atomic.AtomicInteger SHOWN_IDS = new java.util.concurrent.atomic.AtomicInteger();
 
     @Override
     public List<Laid> lay(GuideLayout layout) {
@@ -47,6 +50,8 @@ public record EntityPage(Identifier entity, Optional<String> title, String text,
             if (shown[0] == null && type != null && Minecraft.getInstance().level != null) {
                 shown[0] = type.create(Minecraft.getInstance().level, EntitySpawnReason.LOAD);
                 if (shown[0] != null) {
+                    // Never in the world, but drawn as if it were, which asks its id: one of its own, below any real one.
+                    shown[0].setId(SHOWN_IDS.decrementAndGet());
                     view.entity(shown[0], 0, 0, 0, 0);
                     // Framed to fit the window whole: wide enough for it turned corner-on, and for all its height at the
                     // window's proportions, with a little room round it; zoom then brings it nearer or further.

@@ -53,5 +53,33 @@ Everything except `name` is optional.
 A category has `name`, `description`, `icon` and `sort`. An entry has `name`, `icon`, `sort`, optional `featured`, and
 `pages`. Either can be locked with `"advancement": "<id>"`.
 
-Page types: `text`, `spotlight`, `recipe` (`recipe` or `recipes`), `entity`, `multiblock`, `links`, `quest`,
-`spread` (two pages wide: a map, picture or build) and `empty`. A plain string in `pages` is a text page.
+A page is a `title` and its `elements`, shown one under another; one that doesn't fit starts the next page, and text
+runs on. A plain string is a text element, and a page written as one element (`{"type": "recipe", ...}`) is a page of
+that element alone:
+
+```json
+{"title": "Torches", "elements": ["Light the way:", {"type": "recipe", "recipe": "minecraft:torch"}, {"type": "build", "build": "tower", "height": 60}]}
+```
+
+Element types: `text`, `spotlight`, `image`, `recipe` (`recipe` or `recipes`), `entity`, `multiblock`, `structure`,
+`build`, `links` and `quest`, each with its own `title` and `text` if it has them. Two are pages of their own: `spread`
+(two pages wide: a map, picture or build) and `empty`.
+
+- `multiblock`: a `pattern` (layers top to bottom) and a `mapping` from each character to a block state, or to a tag
+  any block of which will do (`"#minecraft:logs[axis=y]"`, shown in turn). Doors and beds count as one block.
+- `structure`: `"structure": "minecraft:igloo/top"`, or `"structures": [...]` (ids, or `{"id": ..., "name": ...}`)
+  for several in one window, picked with `"selector": "arrows"` (the default) or `"numbers"`.
+- `build`: as `structure`, with `"build"`/`"builds"` naming files in the book's `builds/` folder:
+
+```json
+{
+  "name": "Watchtower",
+  "pattern": [["L L", "   ", "L L"]],
+  "mapping": {"L": "#minecraft:logs"},
+  "blocks": [
+    {"block": "minecraft:cobblestone", "from": [0, -1, 0], "to": [2, -1, 2]},
+    {"block": "#minecraft:planks", "from": [0, 1, 0], "to": [2, 3, 2], "hollow": true},
+    {"block": "minecraft:lantern", "pos": [1, 2, 1]}
+  ]
+}
+```
