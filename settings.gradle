@@ -1,7 +1,9 @@
-// The mod's modules (common and one per loader) are in the root folder; the test mods (the demo books) in testmods/.
+// The mod's modules (common and one per loader) are in the root folder; the test mods (the demo books) in testmods/,
+// left out with -Ptestmods=false (the Maven workflow does: they need mods from Maven Local).
 def loaders = project_loaders.split(",").toList()
 (["common"] + loaders).each { include(":$it") }
-loaders.each { loader ->
+def testmods = providers.gradleProperty("testmods").getOrElse("true").toBoolean()
+loaders.findAll { testmods && file("testmods/$it").isDirectory() }.each { loader ->
     include(":testmod-$loader")
     project(":testmod-$loader").projectDir = file("testmods/$loader")
 }
