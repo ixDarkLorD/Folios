@@ -25,6 +25,11 @@ all its words in lang files:
 }
 ```
 
+Any key works. The book template and Folios's own demo books name theirs after the book, as `book.json`'s own default
+name does: `guide.<namespace>.<book>.name`, `.subtitle`, `.landing`, `.category.<id>.name`, `.entry.<id>.name` and
+`.entry.<id>.page<n>.text`, `.title`, `.link<n>`, `.objective<n>`, `.reward` and `.place.<id>` for a map's places. To
+translate a book, add `lang/<language>.json` with the same keys.
+
 ## Blocks
 
 These work at the start of a line, in page text and the landing page. Titles and labels are one line and keep them as

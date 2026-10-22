@@ -107,24 +107,24 @@ any book. `textures` names a book's own; any left out keep the default.
 
 | Key | Default | What it is |
 | --- | --- | --- |
-| `page` | `folios:textures/guide/page.png` | Each page's paper, stretched to the page (136 × 180), tinted with the paper colour. |
-| `frame` | `folios:textures/guide/page_frame.png` | Drawn over the paper, under the page's content. Its alpha is how strong each part is. |
-| `cover` | `folios:textures/guide/cover.png` | The cover around the pages, and a handheld book's boards, tinted with the cover colour. |
-| `tab` | `folios:textures/guide/ribbon.png` | A ribbon tab, its tip at the right. Stretched to the tab's length, tinted with its category's colour. |
-| `tab_plate` | `folios:textures/guide/ribbon_plate.png` | The plate under each tab's icon, tinted with the paper colour. |
+| `page` | `folios:textures/book/page.png` | Each page's paper, stretched to the page (136 × 180), tinted with the paper colour. |
+| `frame` | `folios:textures/book/page_frame.png` | Drawn over the paper, under the page's content. Its alpha is how strong each part is. |
+| `cover` | `folios:textures/book/cover.png` | The cover around the pages, and a handheld book's boards, tinted with the cover colour. |
+| `tab` | `folios:textures/book/ribbon.png` | A ribbon tab, its tip at the right. Stretched to the tab's length, tinted with its category's colour. |
+| `tab_plate` | `folios:textures/book/ribbon_plate.png` | The plate under each tab's icon, tinted with the paper colour. |
 | `backdrop` | none (the world, dimmed) | Screen books: drawn over the whole screen behind the book. |
 
 ```json title="book.json"
 {
   "textures": {
-    "page": "mymod:textures/guide/parchment.png",
-    "backdrop": "mymod:textures/guide/desk.png"
+    "page": "mymod:textures/book/parchment.png",
+    "backdrop": "mymod:textures/book/desk.png"
   }
 }
 ```
 
 !!! tip
-    A resource pack that replaces the textures at `folios:textures/guide/` restyles every book that doesn't name its
+    A resource pack that replaces the textures at `folios:textures/book/` restyles every book that doesn't name its
     own.
 
 ## Layout

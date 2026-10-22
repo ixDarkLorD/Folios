@@ -20,6 +20,7 @@
       document.querySelectorAll("[data-type]").forEach((block) => type(block, true));
       return;
     }
+    zoom();
     tilt();
     glow();
     magnetic();
@@ -102,6 +103,39 @@
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
       bar.remove();
+    });
+  }
+
+  // The screenshots in the cards open large when clicked, to look at closely; a click anywhere or Esc closes them.
+  function zoom() {
+    document.querySelectorAll(".fh-shot img").forEach((image) => {
+      const open = (event) => {
+        event.stopPropagation();
+        const view = document.createElement("figure");
+        view.className = "f-zoom";
+        view.setAttribute("role", "dialog");
+        view.setAttribute("aria-label", image.alt);
+        const large = document.createElement("img");
+        large.src = image.currentSrc || image.src;
+        large.alt = image.alt;
+        const caption = document.createElement("figcaption");
+        caption.textContent = image.alt;
+        view.append(large, caption);
+        document.body.appendChild(view);
+        requestAnimationFrame(() => view.classList.add("is-open"));
+        const close = () => {
+          view.classList.remove("is-open");
+          document.removeEventListener("keydown", key);
+          setTimeout(() => view.remove(), 350);
+        };
+        const key = (press) => {
+          if (press.key === "Escape") close();
+        };
+        view.addEventListener("click", close);
+        document.addEventListener("keydown", key);
+      };
+      image.addEventListener("click", open);
+      teardown.push(() => image.removeEventListener("click", open));
     });
   }
 
