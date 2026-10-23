@@ -13,6 +13,8 @@ import net.ixdarklord.folios.api.client.page.GuidePainter;
 import net.ixdarklord.folios.api.client.page.GuidePalette;
 import net.ixdarklord.folios.internal.client.GuideReader;
 import net.ixdarklord.folios.internal.client.GuideSession;
+import net.ixdarklord.folios.internal.client.GuideLibrary;
+import net.ixdarklord.folios.internal.client.PageSize;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.page.Shapes;
 import net.ixdarklord.folios.internal.client.paint.ScreenPainter;
@@ -39,14 +41,11 @@ import java.util.List;
 // its edge open the front, each category and the bookmarks. Leaves turn by folding across the spine. Its pages are
 // the same as a handheld book's (GuideReader), drawn flat in the player's light or dark mode, tinted by the book.
 public final class GuideScreen extends Screen {
-    private static final int PW = GuideLayout.PAGE_WIDTH;
-    private static final int PH = GuideLayout.PAGE_HEIGHT;
     /** How far the cover shows around the pages, and how wide the fold between them is. */
     public static final int BORDER = 7;
     private static final int SPINE = 6;
-    /** The open book across, its border included: as wide as its bar, and the handheld book's. */
-    public static final int BOOK_WIDTH = PW * 2 + SPINE + BORDER * 2;
-    private static final int BOOK_HEIGHT = PH + BORDER * 2;
+    /** The open book across at the default page size, its border included: as wide as its bar, and the handheld book's. */
+    public static final int BOOK_WIDTH = GuideLayout.PAGE_WIDTH * 2 + SPINE + BORDER * 2;
     private static final int BAR = GuideBar.HEIGHT;
     private static final int BAR_GAP = 5;
     private static final int TAB = 22;
@@ -98,14 +97,47 @@ public final class GuideScreen extends Screen {
 
     // ---- Layout ----
 
+    // The pages' size now (larger at a small GUI scale: PageSize), and the open book's, its border included.
+    private int pw = GuideLayout.PAGE_WIDTH;
+    private int ph = GuideLayout.PAGE_HEIGHT;
+    private int bookWidth = BOOK_WIDTH;
+    private int bookHeight = GuideLayout.PAGE_HEIGHT + BORDER * 2;
+
+    // How large the book is drawn, in GUI pixels a book pixel, at the default page size: as large as it would be at the
+    // Auto GUI scale, a whole number of the window's pixels a book pixel so the pixel font stays sharp, no larger than
+    // fits. A window too small for even one is shrunk to fit.
+    private float bookScale(int needWidth, int needHeight) {
+        com.mojang.blaze3d.platform.Window window = net.minecraft.client.Minecraft.getInstance().getWindow();
+        int guiScale = Math.max(1, window.getGuiScale());
+        int auto = window.calculateScale(0, net.minecraft.client.Minecraft.getInstance().isEnforceUnicode());
+        int fits = (int) Math.min(window.getWidth() / (float) needWidth, window.getHeight() / (float) needHeight);
+        int pixels = Math.min(Math.max(auto, guiScale), fits);
+        if (pixels < 1) return Math.min(this.width / (float) needWidth, this.height / (float) needHeight);
+        return pixels / (float) guiScale;
+    }
+
     @Override
     protected void init() {
-        int needWidth = BOOK_WIDTH + TAB * 2 + 8;
-        int needHeight = BOOK_HEIGHT + BAR + BAR_GAP + 8;
-        // Shrunk to fit a small window; never grown, so the pixel font stays sharp.
-        this.scale = Math.min(1, Math.min(this.width / (float) needWidth, this.height / (float) needHeight));
-        this.originX = (this.width - BOOK_WIDTH * this.scale) / 2;
-        this.originY = (this.height - (BOOK_HEIGHT + BAR + BAR_GAP) * this.scale) / 2 + (BAR + BAR_GAP) * this.scale;
+        // At a GUI scale smaller than Auto, larger pages drawn a little larger than the GUI (PageSize says how much of
+        // each), as many times the default as fit the screen; the book keeps about its size and holds more. Otherwise
+        // the default page, drawn as large as at Auto.
+        float factor = PageSize.factor();
+        float drawn = PageSize.drawn();
+        int chromeWidth = SPINE + BORDER * 2 + TAB * 2 + 8;
+        int chromeHeight = BORDER * 2 + BAR + BAR_GAP + 8;
+        factor = Math.min(factor, Math.min((this.width / drawn - chromeWidth) / 2.0F / GuideLayout.PAGE_WIDTH,
+                (this.height / drawn - chromeHeight) / (float) GuideLayout.PAGE_HEIGHT));
+        this.pw = PageSize.width(factor);
+        this.ph = PageSize.height(factor);
+        this.bookWidth = pw * 2 + SPINE + BORDER * 2;
+        this.bookHeight = ph + BORDER * 2;
+        GuideSession sized = GuideLibrary.session(this.book.id(), pw, ph);
+        if (sized != null) this.reader.useSession(sized);
+        int needWidth = bookWidth + TAB * 2 + 8;
+        int needHeight = bookHeight + BAR + BAR_GAP + 8;
+        this.scale = factor > 1 ? drawn : bookScale(needWidth, needHeight);
+        this.originX = (this.width - bookWidth * this.scale) / 2;
+        this.originY = (this.height - (bookHeight + BAR + BAR_GAP) * this.scale) / 2 + (BAR + BAR_GAP) * this.scale;
         this.search = this.addRenderableWidget(this.bar.search(this.search));
     }
 
@@ -157,10 +189,10 @@ public final class GuideScreen extends Screen {
         }
         if (this.reader.flip == null) {
             if (this.press(this.leftHits, x - BORDER, y - BORDER)) return true;
-            if (this.press(this.rightHits, x - BORDER - PW - SPINE, y - BORDER)) return true;
+            if (this.press(this.rightHits, x - BORDER - pw - SPINE, y - BORDER)) return true;
         }
         // Off the book, its bar and its tabs: closes it, if the book says so.
-        boolean onBook = x >= -2 && x < BOOK_WIDTH + 36 && y >= -BAR - BAR_GAP - 2 && y < BOOK_HEIGHT + 2;
+        boolean onBook = x >= -2 && x < bookWidth + 36 && y >= -BAR - BAR_GAP - 2 && y < bookHeight + 2;
         if (!onBook && this.book.clickOutsideCloses()) {
             this.onClose();
             return true;
@@ -214,7 +246,7 @@ public final class GuideScreen extends Screen {
             float bx = this.bookX(x);
             float by = this.bookY(y);
             GuidePainter.Scroll scroll = AbstractPainter.Hit.scrollAt(this.leftHits, bx - BORDER, by - BORDER);
-            if (scroll == null) scroll = AbstractPainter.Hit.scrollAt(this.rightHits, bx - BORDER - PW - SPINE, by - BORDER);
+            if (scroll == null) scroll = AbstractPainter.Hit.scrollAt(this.rightHits, bx - BORDER - pw - SPINE, by - BORDER);
             if (scroll != null) {
                 scroll.scrolled(scrollY);
                 return true;
@@ -308,7 +340,7 @@ public final class GuideScreen extends Screen {
         List<AbstractPainter.Hit> barHits = new ArrayList<>();
         ScreenPainter barPainter = new ScreenPainter(graphics, 0, -BAR - BAR_GAP, 1, this.bar.palette(), this.reader.session, this.reader,
                 this.reader.seconds(), bx, by + BAR + BAR_GAP, barHits);
-        this.bar.draw(barPainter, BOOK_WIDTH, 1);
+        this.bar.draw(barPainter, bookWidth, 1);
         barPainter.end();
         for (AbstractPainter.Hit hit : barHits) this.hit(hit.x0(), hit.y0() - BAR - BAR_GAP, hit.x1(), hit.y1() - BAR - BAR_GAP, hit.action());
         if (barPainter.tooltipLines() != null) this.tooltip = barPainter.tooltipLines();
@@ -316,7 +348,7 @@ public final class GuideScreen extends Screen {
         this.drawTabs(graphics, bx, by);
         graphics.pose().popMatrix();
         super.extractRenderState(graphics, mouseX, mouseY, a);
-        if (this.tooltip != null && !this.tooltip.isEmpty()) net.ixdarklord.folios.internal.client.GuideTooltips.show(graphics, this.font, this.tooltip, mouseX, mouseY, this.book);
+        if (this.tooltip != null && !this.tooltip.isEmpty()) net.ixdarklord.folios.internal.client.GuideTooltips.show(graphics, this.font, this.tooltip, mouseX, mouseY, this.book, -1, this.scale);
     }
 
     private void hit(float x0, float y0, float x1, float y1, Runnable action) {
@@ -347,25 +379,25 @@ public final class GuideScreen extends Screen {
         int cover = 0xFF000000 | this.book.cover();
         // A soft shadow under the book.
         for (int step = 1; step <= 4; step++) {
-            rounded(graphics, -step + 2, step + 1, BOOK_WIDTH + step - 2, BOOK_HEIGHT + step + 2, 0x18000000);
+            rounded(graphics, -step + 2, step + 1, bookWidth + step - 2, bookHeight + step + 2, 0x18000000);
         }
-        rounded(graphics, 0, 0, BOOK_WIDTH, BOOK_HEIGHT, cover);
+        rounded(graphics, 0, 0, bookWidth, bookHeight, cover);
         GuideBook.Textures textures = this.book.textures();
-        layer(graphics, textures.cover(), 1, 1, BOOK_WIDTH - 2, BOOK_HEIGHT - 2, cover);
-        graphics.fill(2, 1, BOOK_WIDTH - 2, 2, GuidePalette.mix(cover, 0xFFFFFFFF, 0.18F));
-        graphics.fill(2, BOOK_HEIGHT - 2, BOOK_WIDTH - 2, BOOK_HEIGHT - 1, GuidePalette.mix(cover, 0xFF000000, 0.3F));
+        layer(graphics, textures.cover(), 1, 1, bookWidth - 2, bookHeight - 2, cover);
+        graphics.fill(2, 1, bookWidth - 2, 2, GuidePalette.mix(cover, 0xFFFFFFFF, 0.18F));
+        graphics.fill(2, bookHeight - 2, bookWidth - 2, bookHeight - 1, GuidePalette.mix(cover, 0xFF000000, 0.3F));
         int gilt = GuidePalette.alpha(GuidePalette.mix(palette.accent(), 0xFFFFFFFF, 0.2F), 0x90);
-        graphics.fill(3, 3, BOOK_WIDTH - 3, 4, gilt);
-        graphics.fill(3, BOOK_HEIGHT - 4, BOOK_WIDTH - 3, BOOK_HEIGHT - 3, gilt);
+        graphics.fill(3, 3, bookWidth - 3, 4, gilt);
+        graphics.fill(3, bookHeight - 4, bookWidth - 3, bookHeight - 3, gilt);
         // The pages, with the fold between them.
         int leftX = BORDER;
-        int rightX = BORDER + PW + SPINE;
+        int rightX = BORDER + pw + SPINE;
         int top = BORDER;
         int paper = palette.paper();
-        int spine = leftX + PW + SPINE / 2;
-        graphics.fill(leftX, top, rightX + PW, top + PH, paper);
-        layer(graphics, textures.page(), leftX, top, PW + SPINE / 2, PH, paper);
-        layer(graphics, textures.page(), spine, top, PW + SPINE / 2, PH, paper);
+        int spine = leftX + pw + SPINE / 2;
+        graphics.fill(leftX, top, rightX + pw, top + ph, paper);
+        layer(graphics, textures.page(), leftX, top, pw + SPINE / 2, ph, paper);
+        layer(graphics, textures.page(), spine, top, pw + SPINE / 2, ph, paper);
         float turned = this.reader.flipProgress();
         GuideReader.Flip flip = this.reader.flip;
         GuideReader.Spot spot = this.reader.spot;
@@ -378,18 +410,18 @@ public final class GuideScreen extends Screen {
         int rightFold = foldStrength(right);
         for (int step = 0; step < 8; step++) {
             float fade = 1 - step / 8.0F;
-            graphics.fill(spine - step - 1, top, spine - step, top + PH, Math.round(leftFold * fade) << 24);
-            graphics.fill(spine + step, top, spine + step + 1, top + PH, Math.round(rightFold * fade) << 24);
+            graphics.fill(spine - step - 1, top, spine - step, top + ph, Math.round(leftFold * fade) << 24);
+            graphics.fill(spine + step, top, spine + step + 1, top + ph, Math.round(rightFold * fade) << 24);
         }
         // The fore-edges of the leaves past each page, the tabs coming out of the right one.
         ScreenPainter edges = new ScreenPainter(graphics, 0, 0, 1, palette, this.reader.session, this.reader, this.reader.seconds(), Float.NaN, Float.NaN, this.unpressable);
-        Shapes.foreEdge(edges, leftX, top + 1, top + PH - 1, false);
-        Shapes.foreEdge(edges, rightX + PW, top + 1, top + PH - 1, true);
+        Shapes.foreEdge(edges, leftX, top + 1, top + ph - 1, false);
+        Shapes.foreEdge(edges, rightX + pw, top + 1, top + ph - 1, true);
         // Each page worn with age at its head, foot and outer side; then the head and foot cut a little rough, over it.
-        Shapes.wornEdges(edges, leftX, top, leftX + PW, top + PH, false, cover);
-        Shapes.wornEdges(edges, rightX, top, rightX + PW, top + PH, true, cover);
-        Shapes.deckle(edges, leftX, rightX + PW, top, false, cover);
-        Shapes.deckle(edges, leftX, rightX + PW, top + PH - 1, true, cover);
+        Shapes.wornEdges(edges, leftX, top, leftX + pw, top + ph, false, cover);
+        Shapes.wornEdges(edges, rightX, top, rightX + pw, top + ph, true, cover);
+        Shapes.deckle(edges, leftX, rightX + pw, top, false, cover);
+        Shapes.deckle(edges, leftX, rightX + pw, top + ph - 1, true, cover);
         edges.end();
 
         boolean settled = flip == null;
@@ -415,12 +447,12 @@ public final class GuideScreen extends Screen {
                       boolean pressable, List<AbstractPainter.Hit> pageHits, GuideReader.Spot spot, boolean right) {
         float pointerX = mouseX - x;
         float pointerY = mouseY - y;
-        boolean on = pressable && pointerX >= 0 && pointerX < PW && pointerY >= 0 && pointerY < PH;
+        boolean on = pressable && pointerX >= 0 && pointerX < pw && pointerY >= 0 && pointerY < ph;
         this.unpressable.clear();
         ScreenPainter painter = new ScreenPainter(graphics, x, y, 1, palette, this.reader.session, this.reader, this.reader.seconds(),
                 on ? pointerX : Float.NaN, on ? pointerY : Float.NaN, pressable ? pageHits : this.unpressable);
         try {
-            Shapes.pageFrame(painter, this.book.textures().frame(), PW, PH, page, right);
+            Shapes.pageFrame(painter, this.book.textures().frame(), pw, ph, page, right);
             if (page != null) this.reader.drawRevealed(painter, page, spot, right);
             // Its number and arrow are the page's own, so they go with it as it turns.
             this.reader.chrome(painter, spot, right, pressable, null);
@@ -436,20 +468,20 @@ public final class GuideScreen extends Screen {
         float upright = Mth.sin(angle);
         boolean faceShown = angle < Mth.HALF_PI;
         GuidePage.Laid shown = faceShown ? (flip.forward() ? flip.oldRight() : flip.newRight()) : (flip.forward() ? flip.newLeft() : flip.oldLeft());
-        int shadow = Math.round(PW * 0.45F * upright);
+        int shadow = Math.round(pw * 0.45F * upright);
         for (int step = 0; step < 6 && shadow > 0; step++) {
             int alpha = Math.round(0x40 * upright * (1 - step / 6.0F));
             int from = Math.round(shadow * step / 6.0F);
             int to = Math.round(shadow * (step + 1) / 6.0F);
-            if (faceShown) graphics.fill(spine - to, top, spine - from, top + PH, alpha << 24);
-            else graphics.fill(spine + from, top, spine + to, top + PH, alpha << 24);
+            if (faceShown) graphics.fill(spine - to, top, spine - from, top + ph, alpha << 24);
+            else graphics.fill(spine + from, top, spine + to, top + ph, alpha << 24);
         }
         // The leaf, cut into upright strips from the spine to its free edge, each turned a little more than the last
         // (for a bending page turn) so the leaf curls, its free edge trailing as it lifts and following as it comes
         // down. Each strip shows its part of the page, stretched to how wide it stands, and is shaded by how far it
         // is turned from facing the reader. Where the strips are, across the screen: from the spine, each a step of
         // the leaf's length turned by its angle.
-        float length = PW + SPINE / 2.0F;
+        float length = pw + SPINE / 2.0F;
         boolean bend = this.book.pageTurn() == GuideBook.PageTurn.BEND;
         float curl = bend ? (flip.forward() ? -1 : 1) * LEAF_BEND * upright : 0;
         float[] edges = new float[LEAF_STRIPS + 1];
@@ -476,40 +508,40 @@ public final class GuideScreen extends Screen {
             if (stretch <= 0.01F) continue;
             int clipFrom = Math.round(Math.min(x0, x1));
             int clipTo = Math.max(clipFrom + 1, Math.round(Math.max(x0, x1)));
-            graphics.enableScissor(clipFrom, top, clipTo, top + PH);
+            graphics.enableScissor(clipFrom, top, clipTo, top + ph);
             graphics.pose().pushMatrix();
             graphics.pose().translate(x0, top);
             graphics.pose().scale(stretch, 1);
             graphics.pose().translate(-u0, 0);
             this.leafPage(graphics, palette, shown, spot, faceShown, fold, stretch > 0.15F);
             // The strip's shade: darker the more it is turned from facing the reader.
-            graphics.fill(0, 0, Math.round(length), PH, Math.round(0x60 * (1 - Math.abs(Mth.cos(turns[strip])))) << 24);
+            graphics.fill(0, 0, Math.round(length), ph, Math.round(0x60 * (1 - Math.abs(Mth.cos(turns[strip])))) << 24);
             graphics.pose().popMatrix();
             graphics.disableScissor();
         }
         // The leaf's free edge, a line of the leaves' colour.
         float outer = edges[LEAF_STRIPS];
         int edgeX = Math.round(outer) - (outer > spine ? 1 : 0);
-        graphics.fill(edgeX, top, edgeX + 1, top + PH, GuidePalette.mix(palette.paper(), palette.line(), 0.8F));
+        graphics.fill(edgeX, top, edgeX + 1, top + ph, GuidePalette.mix(palette.paper(), palette.line(), 0.8F));
     }
 
     // The whole of a turning leaf in its own pixels, the spine at the left for its face (at the right for its back):
     // paper, the fold's shadow at its spine edge, and what is on it, when it stands open enough to be read.
     private void leafPage(GuiGraphicsExtractor graphics, GuidePalette palette, GuidePage.@Nullable Laid shown, GuideReader.Spot spot,
                           boolean faceShown, int fold, boolean content) {
-        graphics.fill(0, 0, PW + SPINE / 2, PH, palette.paper());
-        layer(graphics, this.book.textures().page(), 0, 0, PW + SPINE / 2, PH, palette.paper());
+        graphics.fill(0, 0, pw + SPINE / 2, ph, palette.paper());
+        layer(graphics, this.book.textures().page(), 0, 0, pw + SPINE / 2, ph, palette.paper());
         for (int step = 0; step < 8; step++) {
             int color = Math.round(fold * (1 - step / 8.0F)) << 24;
-            int at = faceShown ? step : PW + SPINE / 2 - step - 1;
-            graphics.fill(at, 0, at + 1, PH, color);
+            int at = faceShown ? step : pw + SPINE / 2 - step - 1;
+            graphics.fill(at, 0, at + 1, ph, color);
         }
         if (!content) return;
         this.unpressable.clear();
         ScreenPainter painter = new ScreenPainter(graphics, faceShown ? SPINE / 2.0F : 0, 0, 1, palette, this.reader.session, this.reader,
                 this.reader.seconds(), Float.NaN, Float.NaN, this.unpressable);
         try {
-            Shapes.pageFrame(painter, this.book.textures().frame(), PW, PH, shown, faceShown);
+            Shapes.pageFrame(painter, this.book.textures().frame(), pw, ph, shown, faceShown);
             if (shown != null) this.reader.drawRevealed(painter, shown, spot, faceShown);
             this.reader.chrome(painter, spot, faceShown, false, null);
         } finally {
@@ -533,12 +565,12 @@ public final class GuideScreen extends Screen {
     // only swings further out, so nothing moves beneath it.
     private void drawTabs(GuiGraphicsExtractor graphics, float mouseX, float mouseY) {
         GuidePalette palette = this.palette();
-        int x = BOOK_WIDTH - 2 + this.book.layout().tabX();
+        int x = bookWidth - 2 + this.book.layout().tabX();
         int gap = this.book.layout().tabSpacing();
         String chapter = this.reader.spot.chapter();
         GuideCategory open = this.reader.category();
         // The foot first, from the bottom up: the index, then the bookmarks once there are any.
-        int foot = BOOK_HEIGHT - 6;
+        int foot = bookHeight - 6;
         int order = 99;
         foot = this.footTab(graphics, mouseX, mouseY, x, foot, palette, new TabSpot("index".equals(chapter),
                 Component.translatableWithFallback("folios.index", "Index"), this.reader::index, null, "index", order--)) - gap;
@@ -604,7 +636,7 @@ public final class GuideScreen extends Screen {
         int color = GuidePalette.mix(this.reader.tabColor(spot.category, palette, moved), 0xFF000000, 0.15F * pressed + 0.06F * depth);
         // The ribbon texture, its swallowtail end at the right, stretched from its root under the page to its tip,
         // in its colour; then the leaves over its root.
-        int edge = BOOK_WIDTH - BORDER;
+        int edge = bookWidth - BORDER;
         int root = Shapes.ribbonRoot(edge, depth);
         layer(graphics, this.book.textures().tab(), root, y, x - root + out, tall, color);
         ScreenPainter tuck = new ScreenPainter(graphics, 0, 0, 1, palette, this.reader.session, this.reader, this.reader.seconds(), Float.NaN, Float.NaN, this.unpressable);

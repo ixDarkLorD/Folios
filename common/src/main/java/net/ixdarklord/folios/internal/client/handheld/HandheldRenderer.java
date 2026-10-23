@@ -172,7 +172,9 @@ public final class HandheldRenderer {
                 sketch(right, true);
             }
             else {
-                if (staticRight != null) book.drawRevealed(right, staticRight, flip == null ? book.spot : flip.staticRight(), true);
+                printed(right, book, staticRight, () -> {
+                    if (staticRight != null) book.drawRevealed(right, staticRight, flip == null ? book.spot : flip.staticRight(), true);
+                });
                 book.chrome(right, flip == null ? book.spot : flip.staticRight(), true, pressable, null);
             }
             right.end();
@@ -213,7 +215,9 @@ public final class HandheldRenderer {
             Shapes.foreEdge(left, 0, 1, PH - 1, false, LEAVES_SHOWN);
             if (book.sketch) sketch(left, false);
             else {
-                if (staticLeft != null) book.drawRevealed(left, staticLeft, flip == null ? book.spot : flip.staticLeft(), false);
+                printed(left, book, staticLeft, () -> {
+                    if (staticLeft != null) book.drawRevealed(left, staticLeft, flip == null ? book.spot : flip.staticLeft(), false);
+                });
                 book.chrome(left, flip == null ? book.spot : flip.staticLeft(), false, pressable, null);
             }
             left.end();
@@ -285,7 +289,9 @@ public final class HandheldRenderer {
                 Shapes.foreEdge(right, PW, 1, PH - 1, true, LEAVES_SHOWN);
                 sketch(right, true);
             } else {
-                if (staticRight != null) reader.drawRevealed(right, staticRight, flip == null ? reader.spot : flip.staticRight(), true);
+                printed(right, reader, staticRight, () -> {
+                    if (staticRight != null) reader.drawRevealed(right, staticRight, flip == null ? reader.spot : flip.staticRight(), true);
+                });
                 reader.chrome(right, flip == null ? reader.spot : flip.staticRight(), true, false, null);
             }
             right.end();
@@ -314,7 +320,9 @@ public final class HandheldRenderer {
             Shapes.foreEdge(left, 0, 1, PH - 1, false, LEAVES_SHOWN);
             if (sketch) sketch(left, false);
             else {
-                if (staticLeft != null) reader.drawRevealed(left, staticLeft, flip == null ? reader.spot : flip.staticLeft(), false);
+                printed(left, reader, staticLeft, () -> {
+                    if (staticLeft != null) reader.drawRevealed(left, staticLeft, flip == null ? reader.spot : flip.staticLeft(), false);
+                });
                 reader.chrome(left, flip == null ? reader.spot : flip.staticLeft(), false, false, null);
             }
             left.end();
@@ -481,7 +489,9 @@ public final class HandheldRenderer {
             Shapes.pageFrame(painter, book.book.textures().frame(), PW, PH, shown, faceShown);
             if (sketch) sketch(painter, faceShown);
             else {
-                if (shown != null) book.drawRevealed(painter, shown, faceShown ? flip.face() : flip.back(), faceShown);
+                printed(painter, book, shown, () -> {
+                    if (shown != null) book.drawRevealed(painter, shown, faceShown ? flip.face() : flip.back(), faceShown);
+                });
                 // Its number and arrow turn with it.
                 book.chrome(painter, faceShown ? flip.face() : flip.back(), faceShown, false, null);
             }
@@ -585,6 +595,32 @@ public final class HandheldRenderer {
         Shapes.wornEdges(painter, x0, 0, x1, PH, right, behind, HANDLED);
         Shapes.deckle(painter, x0, x1, 0, false, behind, HANDLED);
         Shapes.deckle(painter, x0, x1, PH - 1, true, behind, HANDLED);
+    }
+
+    // What is printed on a page: drawn at its pages' own size (larger than a leaf at a small GUI scale: PageSize), scaled
+    // down onto the leaf, so more of it fits on a leaf of the same size. It keeps within the leaf's own margins, clear
+    // of its frame as at the default size, as large as fits them; a spread's half spans the whole leaf, to meet its
+    // other half at the fold. The painter keeps where the pointer is and what can be pressed in step with the scale.
+    private static void printed(WorldPainter painter, GuideReader book, GuidePage.@Nullable Laid page, Runnable draw) {
+        GuideLayout layout = book.session.layout();
+        if (layout.pageWidth() <= PW) {
+            draw.run();
+            return;
+        }
+        painter.printing(true);
+        painter.push();
+        if (page instanceof GuidePage.SpreadHalf) painter.scale(PW / (float) layout.pageWidth());
+        else {
+            float across = GuideLayout.CONTENT_WIDTH / (float) layout.contentWidth();
+            float down = (GuideLayout.CONTENT_BOTTOM - GuideLayout.CONTENT_TOP) / (float) (layout.contentBottom() - GuideLayout.CONTENT_TOP);
+            float scale = Math.min(across, down);
+            painter.translate(GuideLayout.CONTENT_LEFT + (GuideLayout.CONTENT_WIDTH - layout.contentWidth() * scale) / 2, GuideLayout.CONTENT_TOP);
+            painter.scale(scale);
+            painter.translate(-GuideLayout.CONTENT_LEFT, -GuideLayout.CONTENT_TOP);
+        }
+        draw.run();
+        painter.pop();
+        painter.printing(false);
     }
 
     private static WorldPainter painter(PoseStack pose, SubmitNodeCollector collector, int light, GuidePalette palette, GuideReader book,
