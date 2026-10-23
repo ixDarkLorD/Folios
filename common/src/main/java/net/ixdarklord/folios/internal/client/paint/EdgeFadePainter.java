@@ -25,6 +25,17 @@ public final class EdgeFadePainter implements GuidePainter {
     private static final float MARGIN = 14;
 
     private final GuidePainter painter;
+
+    // The page's size is the painter's it wraps.
+    @Override
+    public int pageWidth() {
+        return painter.pageWidth();
+    }
+
+    @Override
+    public int pageHeight() {
+        return painter.pageHeight();
+    }
     private float offsetX;
     private float offsetY;
     private float scale;
@@ -42,7 +53,7 @@ public final class EdgeFadePainter implements GuidePainter {
     private float fade(float x, float y) {
         float px = offsetX + x * scale;
         float py = offsetY + y * scale;
-        float inside = Math.min(Math.min(px, GuideLayout.PAGE_WIDTH - px), Math.min(py, GuideLayout.PAGE_HEIGHT - py));
+        float inside = Math.min(Math.min(px, this.pageWidth() - px), Math.min(py, this.pageHeight() - py));
         float t = Math.max(0, Math.min(1, inside / MARGIN));
         return t * t * (3 - 2 * t);
     }
