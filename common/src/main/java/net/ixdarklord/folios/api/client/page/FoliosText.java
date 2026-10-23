@@ -31,7 +31,7 @@ import java.util.List;
  * </ul>
  * Any text that is a translation key is translated first, so a book can keep its words in lang files.
  */
-public final class GuideText {
+public final class FoliosText {
     /** The insertion text of a link's characters starts with this; the rest is where it goes. */
     public static final String LINK = "folios:";
     public static final int LINE_HEIGHT = 10;
@@ -66,7 +66,7 @@ public final class GuideText {
     private final int height;
     private final int width;
 
-    private GuideText(List<Line> lines, int height, int width) {
+    private FoliosText(List<Line> lines, int height, int width) {
         this.lines = List.copyOf(lines);
         this.height = height;
         this.width = width;
@@ -109,7 +109,7 @@ public final class GuideText {
     }
 
     /** Reads marked-up text and sets it out in lines no wider than {@code width}. */
-    public static GuideText of(Font font, String raw, int width) {
+    public static FoliosText of(Font font, String raw, int width) {
         List<Line> lines = new ArrayList<>();
         int y = 0;
         boolean gap = false;
@@ -180,15 +180,15 @@ public final class GuideText {
             if (kind == Kind.HEADING) y += 2;
         }
         int height = lines.isEmpty() ? 0 : y - 1;
-        return new GuideText(lines, height, width);
+        return new FoliosText(lines, height, width);
     }
 
     /**
      * Splits the text into pieces that fit: the first {@code firstHeight} tall, the rest {@code nextHeight}. A heading
      * is never left alone at the foot of a piece. Each piece's lines start again at y 0.
      */
-    public List<GuideText> split(int firstHeight, int nextHeight) {
-        List<GuideText> pieces = new ArrayList<>();
+    public List<FoliosText> split(int firstHeight, int nextHeight) {
+        List<FoliosText> pieces = new ArrayList<>();
         List<Line> piece = new ArrayList<>();
         int room = firstHeight;
         int top = -1;
@@ -221,20 +221,20 @@ public final class GuideText {
         return pieces;
     }
 
-    private static GuideText rebase(List<Line> lines, int width) {
-        if (lines.isEmpty()) return new GuideText(List.of(), 0, width);
+    private static FoliosText rebase(List<Line> lines, int width) {
+        if (lines.isEmpty()) return new FoliosText(List.of(), 0, width);
         int top = lines.getFirst().y;
         List<Line> moved = new ArrayList<>(lines.size());
         for (Line line : lines) moved.add(new Line(line.text, line.x, line.y - top, line.kind, line.first, line.marker));
         Line last = moved.getLast();
-        return new GuideText(moved, last.y + last.height() - 1, width);
+        return new FoliosText(moved, last.y + last.height() - 1, width);
     }
 
     // ---- Drawing ----
 
     /** Draws the text with its top left at (x, y), its links pressable. */
-    public void draw(GuidePainter painter, int x, int y) {
-        GuidePalette palette = painter.palette();
+    public void draw(FoliosPainter painter, int x, int y) {
+        FoliosPalette palette = painter.palette();
         Font font = painter.font();
         for (int index = 0; index < lines.size(); index++) {
             Line line = lines.get(index);
@@ -249,7 +249,7 @@ public final class GuideText {
                 case QUOTE -> {
                     // A note's lines join into one box; a gap above a line starts a new one.
                     boolean top = index == 0 || lines.get(index - 1).kind != Kind.QUOTE || lines.get(index - 1).y + LINE_HEIGHT < line.y;
-                    painter.fill(x, lineY - (top ? 2 : 0), x + width, lineY + LINE_HEIGHT - 1, GuidePalette.alpha(palette.accent(), 0x1C));
+                    painter.fill(x, lineY - (top ? 2 : 0), x + width, lineY + LINE_HEIGHT - 1, FoliosPalette.alpha(palette.accent(), 0x1C));
                     painter.fill(x, lineY - (top ? 2 : 0), x + 2, lineY + LINE_HEIGHT - 1, palette.accent());
                 }
                 case BULLET, NUMBERED -> {
@@ -310,12 +310,12 @@ public final class GuideText {
     }
 
     // Links take the palette's link colour, the hovered one underlined; text coloured by its writer keeps its colour.
-    private static FormattedCharSequence colorLinks(FormattedCharSequence text, GuidePalette palette, @Nullable String hovered) {
+    private static FormattedCharSequence colorLinks(FormattedCharSequence text, FoliosPalette palette, @Nullable String hovered) {
         return output -> text.accept((position, style, codepoint) -> {
             String insertion = style.getInsertion();
             if (insertion != null && insertion.startsWith(LINK)) {
                 boolean over = hovered != null && insertion.length() == LINK.length() + hovered.length() && insertion.endsWith(hovered);
-                style = style.withColor(over ? GuidePalette.mix(palette.link(), palette.heading(), 0.35F) : palette.link()).withUnderlined(over ? Boolean.TRUE : style.isUnderlined());
+                style = style.withColor(over ? FoliosPalette.mix(palette.link(), palette.heading(), 0.35F) : palette.link()).withUnderlined(over ? Boolean.TRUE : style.isUnderlined());
             } else if (style.getColor() == null && isCode(style)) {
                 style = style.withColor(palette.muted());
             }

@@ -112,9 +112,9 @@ Artifacts are `net.ixdarklord.folios:folios-<module>:<minecraft>+<version>`, the
 [Maven's page](https://ixdarklord.github.io/ModResources/) lists every version, ready to copy.
 
 ```java
-GuideBooks.open(serverPlayer, MyMod.id("handbook"));             // open a book from the server
-ItemStack book = GuideBooks.createStack(MyMod.id("handbook"));    // a book item to give
-Guides.open(MyMod.id("handbook"), "basics/first_steps");          // on the client, at an entry
+FoliosBooks.open(serverPlayer, MyMod.id("handbook"));             // open a book from the server
+ItemStack book = FoliosBooks.createStack(MyMod.id("handbook"));    // a book item to give
+FoliosGuides.open(MyMod.id("handbook"), "basics/first_steps");          // on the client, at an entry
 ```
 
 Page types, reveal effects, styles and objectives each have a register call: see

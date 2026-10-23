@@ -256,8 +256,8 @@ public final class HandheldScreen extends Screen {
         float[] right = book.rightPointer;
         float[] left = book.leftPointer;
         if (inside(right, 0, 300) || inside(left, 0, 300)) {
-            if (inside(right, net.ixdarklord.folios.api.client.page.GuideLayout.PAGE_WIDTH * 0.6F, 400)) book.turn(1);
-            else if (inside(left, 0, net.ixdarklord.folios.api.client.page.GuideLayout.PAGE_WIDTH * 0.4F)) book.turn(-1);
+            if (inside(right, net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_WIDTH * 0.6F, 400)) book.turn(1);
+            else if (inside(left, 0, net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_WIDTH * 0.4F)) book.turn(-1);
             return true;
         }
         if (book.book.clickOutsideCloses()) this.onClose();
@@ -267,14 +267,14 @@ public final class HandheldScreen extends Screen {
     // Whether the pointer is over the shut book: its cover lies over the right page, a little larger than it.
     private static boolean onCover(float[] at) {
         float margin = 6;
-        return !Float.isNaN(at[0]) && at[0] >= -margin && at[0] < net.ixdarklord.folios.api.client.page.GuideLayout.PAGE_WIDTH + margin
-                && at[1] >= -margin && at[1] < net.ixdarklord.folios.api.client.page.GuideLayout.PAGE_HEIGHT + margin;
+        return !Float.isNaN(at[0]) && at[0] >= -margin && at[0] < net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_WIDTH + margin
+                && at[1] >= -margin && at[1] < net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_HEIGHT + margin;
     }
 
     // Whether the pointer is on a page (within its height) between two x's.
     private static boolean inside(float[] at, float x0, float x1) {
-        return !Float.isNaN(at[0]) && at[0] >= x0 && at[0] < Math.min(x1, net.ixdarklord.folios.api.client.page.GuideLayout.PAGE_WIDTH)
-                && at[1] >= 0 && at[1] < net.ixdarklord.folios.api.client.page.GuideLayout.PAGE_HEIGHT;
+        return !Float.isNaN(at[0]) && at[0] >= x0 && at[0] < Math.min(x1, net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_WIDTH)
+                && at[1] >= 0 && at[1] < net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_HEIGHT;
     }
 
     // What on a page is being dragged while the left button is held, and how that page lies on the screen.
@@ -334,7 +334,7 @@ public final class HandheldScreen extends Screen {
         if (scrollY == 0) return true;
         // Over something on a page that takes the wheel (a scene zooming), it goes there; otherwise it turns the page.
         if (book.isOpen()) {
-            net.ixdarklord.folios.api.client.page.GuidePainter.Scroll scroll = null;
+            net.ixdarklord.folios.api.client.page.FoliosPainter.Scroll scroll = null;
             if (!Float.isNaN(book.rightPointer[0])) scroll = AbstractPainter.Hit.scrollAt(book.rightHits, book.rightPointer[0], book.rightPointer[1]);
             if (scroll == null && !Float.isNaN(book.leftPointer[0])) scroll = AbstractPainter.Hit.scrollAt(book.leftHits, book.leftPointer[0], book.leftPointer[1]);
             if (scroll != null) {
