@@ -14,6 +14,7 @@ import net.ixdarklord.folios.api.client.GuideEntry;
 import net.ixdarklord.folios.api.client.GuideLock;
 import net.ixdarklord.folios.api.client.GuideStyles;
 import net.ixdarklord.folios.api.client.page.GuideIcon;
+import net.ixdarklord.folios.api.client.page.GuideLayout;
 import net.ixdarklord.folios.api.client.page.GuidePage;
 import net.ixdarklord.folios.api.client.page.GuidePageTypes;
 import net.ixdarklord.folios.internal.client.page.ErrorPage;
@@ -47,6 +48,8 @@ public final class GuideLibrary {
     private static Map<ResourceLocation, String> authors = Map.of();
     private static Map<ResourceLocation, CelebrationSettings> celebrations = Map.of();
     private static final Map<ResourceLocation, GuideSession> SESSIONS = new HashMap<>();
+    // A book laid out to larger pages (a screen book at a small GUI scale): one size a book at a time, the last asked for.
+    private static final Map<ResourceLocation, GuideSession> LARGER = new HashMap<>();
 
     private GuideLibrary() {}
 
@@ -82,6 +85,20 @@ public final class GuideLibrary {
             if (session != null) session.close();
             session = new GuideSession(book);
             SESSIONS.put(id, session);
+        }
+        return session;
+    }
+
+    /** A book's laid-out pages for pages {@code width} by {@code height}; the default session for the default page size. */
+    public static @Nullable GuideSession session(ResourceLocation id, int width, int height) {
+        if (width <= GuideLayout.PAGE_WIDTH && height <= GuideLayout.PAGE_HEIGHT) return session(id);
+        GuideBook book = books.get(id);
+        if (book == null) return null;
+        GuideSession session = LARGER.get(id);
+        if (session == null || !session.isCurrent() || session.layout().pageWidth() != width || session.layout().pageHeight() != height) {
+            if (session != null) session.close();
+            session = new GuideSession(book, width, height);
+            LARGER.put(id, session);
         }
         return session;
     }
@@ -153,6 +170,8 @@ public final class GuideLibrary {
         celebrations = Map.copyOf(celebrating);
         SESSIONS.values().forEach(GuideSession::close);
         SESSIONS.clear();
+        LARGER.values().forEach(GuideSession::close);
+        LARGER.clear();
         if (!loaded.isEmpty()) Folios.LOGGER.info("Loaded {} guide book(s)", loaded.size());
     }
 

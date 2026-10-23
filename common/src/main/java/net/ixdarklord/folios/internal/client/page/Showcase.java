@@ -79,8 +79,10 @@ final class Showcase {
     }
 
     /** The window and, when there is more than one item, the selector under it. */
-    static Body body(GuideLayout layout, int height, Selector selector, List<Item> items) {
-        SceneViewport view = layout.viewport(GuideLayout.CONTENT_WIDTH * GuideLayout.SCENE_DETAIL, height * GuideLayout.SCENE_DETAIL);
+    static Body body(GuideLayout layout, int authoredHeight, Selector selector, List<Item> items) {
+        int height = layout.scaled(authoredHeight);
+        int contentWidth = layout.contentWidth();
+        SceneViewport view = layout.viewport(contentWidth * GuideLayout.SCENE_DETAIL, height * GuideLayout.SCENE_DETAIL);
         view.refreshRate(30);
         view.ground(0, 1, 0x30808080, 0x55A0A0A0, false);
         Window window = new Window(view, items);
@@ -123,7 +125,8 @@ final class Showcase {
 
         void draw(GuidePainter painter, int y, int height) {
             int left = GuideLayout.CONTENT_LEFT;
-            Shapes.panel(painter, left, y, GuideLayout.CONTENT_RIGHT, y + height);
+            int contentWidth = painter.contentRight() - left;
+            Shapes.panel(painter, left, y, left + contentWidth, y + height);
             State state = items.get(current).state().get();
             // Another item picked, or the one shown just now known: put in the window in place of what was there.
             if (state.blocks() != shown) {
@@ -132,15 +135,15 @@ final class Showcase {
             }
             if (shown != null && !shown.isEmpty()) {
                 scene.update(painter.time());
-                control.draw(painter, left + 1, y + 1, GuideLayout.CONTENT_WIDTH - 2, height - 2);
+                control.draw(painter, left + 1, y + 1, contentWidth - 2, height - 2);
                 return;
             }
             // Nothing to show: what to say instead, in the middle of the window.
             Component message = state.message() != null ? state.message() : Component.translatableWithFallback("folios.showcase.empty", "Nothing to show");
-            List<net.minecraft.util.FormattedCharSequence> lines = painter.font().split(message, GuideLayout.CONTENT_WIDTH - 12);
+            List<net.minecraft.util.FormattedCharSequence> lines = painter.font().split(message, contentWidth - 12);
             int top = y + height / 2 - lines.size() * 10 / 2;
             for (net.minecraft.util.FormattedCharSequence line : lines) {
-                painter.text(line, GuideLayout.PAGE_WIDTH / 2 - painter.font().width(line) / 2, top, painter.palette().muted());
+                painter.text(line, painter.pageWidth() / 2 - painter.font().width(line) / 2, top, painter.palette().muted());
                 top += 10;
             }
         }
@@ -151,8 +154,8 @@ final class Showcase {
         int count = window.size();
         int width = count >= 10 ? Shapes.BUTTON + 4 : Shapes.BUTTON;
         int across = count * width + (count - 1) * GAP;
-        if (selector == Selector.NUMBERS && across <= GuideLayout.CONTENT_WIDTH) {
-            int x = GuideLayout.PAGE_WIDTH / 2 - across / 2;
+        if (selector == Selector.NUMBERS && across <= painter.contentRight() - GuideLayout.CONTENT_LEFT) {
+            int x = painter.pageWidth() / 2 - across / 2;
             for (int index = 0; index < count; index++) {
                 int picked = index;
                 Component name = window.name(index);
@@ -164,7 +167,7 @@ final class Showcase {
             return;
         }
         int left = GuideLayout.CONTENT_LEFT;
-        int right = GuideLayout.CONTENT_RIGHT - Shapes.BUTTON;
+        int right = painter.contentRight() - Shapes.BUTTON;
         boolean back = painter.action(left, y - 1, Shapes.BUTTON, Shapes.BUTTON + 1,
                 Component.translatableWithFallback("folios.showcase.previous", "Previous"), () -> window.pick(window.current() - 1));
         Shapes.button(painter, left, y, Shapes.Icon.PREVIOUS, back);
@@ -178,7 +181,7 @@ final class Showcase {
         int room = right - left - Shapes.BUTTON - 8;
         net.minecraft.client.gui.Font font = painter.font();
         if (name == null) {
-            painter.centeredText(Component.literal(counter), GuideLayout.PAGE_WIDTH / 2, y + 2, palette.muted());
+            painter.centeredText(Component.literal(counter), painter.pageWidth() / 2, y + 2, palette.muted());
             return;
         }
         String suffix = "  " + counter;
@@ -187,7 +190,7 @@ final class Showcase {
                 : net.minecraft.network.chat.FormattedText.composite(font.substrByWidth(name, Math.max(0, nameRoom - font.width("…"))), net.minecraft.network.chat.FormattedText.of("…"));
         net.minecraft.util.FormattedCharSequence line = net.minecraft.locale.Language.getInstance().getVisualOrder(fitted);
         int wide = font.width(line) + font.width(suffix);
-        int x = GuideLayout.PAGE_WIDTH / 2 - wide / 2;
+        int x = painter.pageWidth() / 2 - wide / 2;
         painter.text(line, x, y + 2, palette.text());
         painter.text(Component.literal(suffix), x + font.width(line), y + 2, palette.muted());
     }

@@ -93,6 +93,25 @@ public final class WorldPainter extends AbstractPainter {
         return this;
     }
 
+    // A leaf is the default page's size, whatever its book's pages are; only what is printed on it is drawn at the
+    // pages' own (larger at a small GUI scale), scaled down onto the leaf.
+    private boolean printing;
+
+    /** Whether what is drawn now is printed on the leaf, at its pages' size, rather than the leaf's own frame and chrome. */
+    public void printing(boolean printing) {
+        this.printing = printing;
+    }
+
+    @Override
+    public int pageWidth() {
+        return printing ? super.pageWidth() : net.ixdarklord.folios.api.client.page.GuideLayout.PAGE_WIDTH;
+    }
+
+    @Override
+    public int pageHeight() {
+        return printing ? super.pageHeight() : net.ixdarklord.folios.api.client.page.GuideLayout.PAGE_HEIGHT;
+    }
+
     /** Ends the page: sends its plain shapes and undoes its moves. */
     public void end() {
         this.flush();
