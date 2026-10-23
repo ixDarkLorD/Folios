@@ -72,21 +72,35 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
             Codec.intRange(40, 150).optionalFieldOf("height", 104).forGetter(SpreadPage::height)
     ).apply(instance, SpreadPage::new));
 
-    private static final int PW = GuideLayout.PAGE_WIDTH;
-    /** The window's left edge and width, in the spread's pixels (0 at the left page's left edge). */
+    /** The window's left edge, in the spread's pixels (0 at the left page's left edge). */
     private static final int LEFT = GuideLayout.CONTENT_LEFT;
-    private static final int WIDTH = PW * 2 - GuideLayout.CONTENT_LEFT * 2;
+
+    // The size of the pages it is laid out to (larger on a screen at a small GUI scale): each page's width and height,
+    // the window's width across both, and where content ends at the foot.
+    private record G(int pw, int ph) {
+        static G of(GuideLayout layout) {
+            return new G(layout.pageWidth(), layout.pageHeight());
+        }
+
+        int width() {
+            return pw * 2 - GuideLayout.CONTENT_LEFT * 2;
+        }
+
+        int contentBottom() {
+            return ph - GuideLayout.FOOT;
+        }
+    }
     private static final int NODE = 20;
     /** How far the window's content sits inside its frame. */
     private static final int INNER = 2;
 
     // How tall the window is: as the page asks, but a build's leaves room under it for the blocks it needs and a line
     // of its text above the page number.
-    private int windowHeight() {
+    private int windowHeight(G g) {
         if (build.isEmpty()) return height;
         int top = GuideLayout.CONTENT_TOP + (title.isPresent() && !title.get().isEmpty() ? GuideLayout.TITLE_HEIGHT : 0);
         int below = 5 + Requirements.HEADING + Requirements.SLOT + (text.isEmpty() ? 0 : 5 + 10);
-        return Math.max(40, Math.min(height, GuideLayout.CONTENT_BOTTOM - 6 - top - below));
+        return Math.max(40, Math.min(height, g.contentBottom() - 6 - top - below));
     }
 
     @Override
@@ -96,22 +110,23 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
 
     @Override
     public List<Laid> lay(GuideLayout layout) {
+        G g = G.of(layout);
         Component heading = title.isPresent() && !title.get().isEmpty() ? GuideText.inline(title.get()) : null;
         int top = GuideLayout.CONTENT_TOP + (heading != null ? GuideLayout.TITLE_HEIGHT : 0);
         // A build's blocks, a row under its window, the text under them.
         Requirements needs = build.map(made -> new Requirements(MultiblockPageElement.blocks(made.pattern(), made.mapping()).values()))
                 .filter(made -> !made.isEmpty()).orElse(null);
-        int listTop = top + this.windowHeight() + 5;
-        int textTop = needs != null ? listTop + Requirements.HEADING + Requirements.SLOT + 5 : top + this.windowHeight() + 6;
+        int listTop = top + this.windowHeight(g) + 5;
+        int textTop = needs != null ? listTop + Requirements.HEADING + Requirements.SLOT + 5 : top + this.windowHeight(g) + 6;
         // The text under the window, in centred lines across the spread, as many as there is room for.
-        List<FormattedCharSequence> caption = text.isEmpty() ? List.of() : Minecraft.getInstance().font.split(GuideText.inline(text), WIDTH - 24);
-        List<FormattedCharSequence> under = caption.subList(0, Math.min(caption.size(), Math.max(0, (GuideLayout.CONTENT_BOTTOM - textTop) / 10)));
-        Window window = this.window(layout, top);
+        List<FormattedCharSequence> caption = text.isEmpty() ? List.of() : Minecraft.getInstance().font.split(GuideText.inline(text), g.width() - 24);
+        List<FormattedCharSequence> under = caption.subList(0, Math.min(caption.size(), Math.max(0, (g.contentBottom() - textTop) / 10)));
+        Window window = this.window(layout, top, g);
         Component needed = needs == null ? null : Component.translatableWithFallback("folios.requires", "Blocks needed")
                 .append(" \u00B7 " + needs.total()).withStyle(net.minecraft.ChatFormatting.ITALIC);
-        TextPlate plate = heading == null && under.isEmpty() && needed == null ? null : new TextPlate(layout, heading, needed, listTop, under, textTop);
-        return List.of(new Half(painter -> this.half(new Part(painter, 0), window, plate, needs, heading != null, top, listTop)),
-                new Half(painter -> this.half(new Part(painter, 1), window, plate, needs, heading != null, top, listTop)));
+        TextPlate plate = heading == null && under.isEmpty() && needed == null ? null : new TextPlate(layout, g, heading, needed, listTop, under, textTop);
+        return List.of(new Half(painter -> this.half(new Part(painter, 0, g), window, plate, needs, heading != null, top, listTop)),
+                new Half(painter -> this.half(new Part(painter, 1, g), window, plate, needs, heading != null, top, listTop)));
     }
 
     // One page's half: the rule under the title, the window, its half of the blocks needed, and of the text plate.
@@ -130,6 +145,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
     // The picture is made again only when the paper's colours change (light or dark).
     private static final class TextPlate {
         private final SceneViewport view;
+        private final G g;
         private final @Nullable Component heading;
         private final @Nullable Component needed;
         private final int neededTop;
@@ -137,8 +153,9 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
         private final int textTop;
         private int laidFor;
 
-        TextPlate(GuideLayout layout, @Nullable Component heading, @Nullable Component needed, int neededTop, List<FormattedCharSequence> lines, int textTop) {
-            this.view = layout.viewport(PW * 2 * GuideLayout.SCENE_DETAIL, GuideLayout.PAGE_HEIGHT * GuideLayout.SCENE_DETAIL);
+        TextPlate(GuideLayout layout, G g, @Nullable Component heading, @Nullable Component needed, int neededTop, List<FormattedCharSequence> lines, int textTop) {
+            this.g = g;
+            this.view = layout.viewport(g.pw() * 2 * GuideLayout.SCENE_DETAIL, g.ph() * GuideLayout.SCENE_DETAIL);
             view.spin(0).refreshRate(1);
             this.heading = heading;
             this.needed = needed;
@@ -157,15 +174,15 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
                 float detail = GuideLayout.SCENE_DETAIL;
                 if (heading != null) {
                     FormattedCharSequence bold = heading.copy().withStyle(net.minecraft.ChatFormatting.BOLD).getVisualOrderText();
-                    view.text(bold, (PW - font.width(bold) / 2.0F) * detail, GuideLayout.CONTENT_TOP * detail, palette.heading(), detail);
+                    view.text(bold, (g.pw() - font.width(bold) / 2.0F) * detail, GuideLayout.CONTENT_TOP * detail, palette.heading(), detail);
                 }
                 if (needed != null) {
                     FormattedCharSequence line = needed.getVisualOrderText();
-                    view.text(line, (PW - font.width(line) / 2.0F) * detail, neededTop * detail, palette.muted(), detail);
+                    view.text(line, (g.pw() - font.width(line) / 2.0F) * detail, neededTop * detail, palette.muted(), detail);
                 }
                 int y = textTop;
                 for (FormattedCharSequence line : lines) {
-                    view.text(line, (PW - font.width(line) / 2.0F) * detail, y * detail, palette.text(), detail);
+                    view.text(line, (g.pw() - font.width(line) / 2.0F) * detail, y * detail, palette.text(), detail);
                     y += 10;
                 }
             }
@@ -175,8 +192,9 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
 
     // The rule under the title, then the window on one page: its frame and what is in it.
     private void window(Window window, Part part, boolean titled, int top) {
+        G g = part.g();
         if (titled) part.rule(GuideLayout.CONTENT_TOP);
-        part.frame(LEFT, top, LEFT + WIDTH, top + this.windowHeight());
+        part.frame(LEFT, top, LEFT + g.width(), top + this.windowHeight(g));
         window.draw(part);
     }
 
@@ -188,18 +206,18 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
         }
     }
 
-    private Window window(GuideLayout layout, int top) {
-        if (build.isPresent()) return this.buildWindow(layout, top, build.get());
-        if (map.isPresent()) return this.mapWindow(top, map.get());
+    private Window window(GuideLayout layout, int top, G g) {
+        if (build.isPresent()) return this.buildWindow(layout, top, build.get(), g);
+        if (map.isPresent()) return this.mapWindow(top, map.get(), g);
         Identifier picture = image.orElse(null);
         return part -> {
-            if (picture != null) part.texture(picture, LEFT + INNER, top + INNER, WIDTH - INNER * 2, this.windowHeight() - INNER * 2);
+            if (picture != null) part.texture(picture, LEFT + INNER, top + INNER, g.width() - INNER * 2, this.windowHeight(g) - INNER * 2);
         };
     }
 
-    private Window buildWindow(GuideLayout layout, int top, Build build) {
+    private Window buildWindow(GuideLayout layout, int top, Build build, G g) {
         Map<BlockPos, BlockChoice> blocks = MultiblockPageElement.blocks(build.pattern(), build.mapping());
-        SceneViewport view = layout.viewport(WIDTH * GuideLayout.SCENE_DETAIL, this.windowHeight() * GuideLayout.SCENE_DETAIL);
+        SceneViewport view = layout.viewport(g.width() * GuideLayout.SCENE_DETAIL, this.windowHeight(g) * GuideLayout.SCENE_DETAIL);
         view.refreshRate(30);
         BuildScene scene = new BuildScene(view);
         scene.show(blocks);
@@ -212,17 +230,17 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
             if (minecraft.screen != null) minecraft.screen.onClose();
         });
         return part -> {
-            int[] range = part.clip(LEFT + INNER, LEFT + WIDTH - INNER);
+            int[] range = part.clip(LEFT + INNER, LEFT + g.width() - INNER);
             if (range == null) return;
             scene.update(part.painter.time());
-            float u0 = (range[0] - LEFT - INNER) / (float) (WIDTH - INNER * 2);
-            float u1 = (range[1] - LEFT - INNER) / (float) (WIDTH - INNER * 2);
-            control.drawPart(part.painter, range[0] - part.offset(), top + INNER, range[1] - range[0], this.windowHeight() - INNER * 2, u0, u1,
+            float u0 = (range[0] - LEFT - INNER) / (float) (g.width() - INNER * 2);
+            float u1 = (range[1] - LEFT - INNER) / (float) (g.width() - INNER * 2);
+            control.drawPart(part.painter, range[0] - part.offset(), top + INNER, range[1] - range[0], this.windowHeight(g) - INNER * 2, u0, u1,
                     part.side == 0, part.side == 1, Shapes.Icon.EYE, show);
         };
     }
 
-    private Window mapWindow(int top, MapLayout map) {
+    private Window mapWindow(int top, MapLayout map, G g) {
         Map<String, Node> byId = new HashMap<>();
         Map<String, GuideIcon> icons = new HashMap<>();
         // Where each place sits, in the spread's pixels: kept inside the frame, its plate and shadow too, and off the
@@ -231,14 +249,14 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
         for (Node node : map.nodes()) {
             byId.put(node.id(), node);
             icons.put(node.id(), GuideIcon.read(node.icon()));
-            int x = Math.clamp(LEFT + node.x(), LEFT + INNER + NODE / 2 + 1, LEFT + WIDTH - INNER - NODE / 2 - 3);
-            int y = Math.clamp(top + node.y(), top + INNER + NODE / 2 + 1, top + this.windowHeight() - INNER - NODE / 2 - 3);
-            if (x - NODE / 2 - 1 < PW && x + NODE / 2 + 2 > PW) x = x < PW ? PW - NODE / 2 - 3 : PW + NODE / 2 + 2;
+            int x = Math.clamp(LEFT + node.x(), LEFT + INNER + NODE / 2 + 1, LEFT + g.width() - INNER - NODE / 2 - 3);
+            int y = Math.clamp(top + node.y(), top + INNER + NODE / 2 + 1, top + this.windowHeight(g) - INNER - NODE / 2 - 3);
+            if (x - NODE / 2 - 1 < g.pw() && x + NODE / 2 + 2 > g.pw()) x = x < g.pw() ? g.pw() - NODE / 2 - 3 : g.pw() + NODE / 2 + 2;
             at.put(node.id(), new int[]{x, y});
         }
         return part -> {
             GuidePalette palette = part.painter.palette();
-            map.background().ifPresent(background -> part.texture(background, LEFT + INNER, top + INNER, WIDTH - INNER * 2, this.windowHeight() - INNER * 2));
+            map.background().ifPresent(background -> part.texture(background, LEFT + INNER, top + INNER, g.width() - INNER * 2, this.windowHeight(g) - INNER * 2));
             // The paths first, dotted, under the places they join.
             int ink = GuidePalette.mix(palette.line(), palette.accent(), 0.5F);
             for (List<String> path : map.paths()) {
@@ -295,32 +313,32 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
     // One page's share of the spread: what lies over it is drawn, cut at the fold, moved onto it. `side` 0 is the
     // left page (spread x from 0 to the fold at its width), 1 the right. On a screen book the pages have the spine
     // between them, so the spread is moved half the spine's width in on each and each page draws on half of it.
-    private record Part(GuidePainter painter, int side) {
+    private record Part(GuidePainter painter, int side, G g) {
         private int gap() {
             return painter.flat() ? Shapes.SCREEN_SPINE : 0;
         }
 
         // Where spread x 0 is on this page, less: the page's x is the spread's less this.
         int offset() {
-            return side == 0 ? -this.gap() / 2 : PW + this.gap() / 2;
+            return side == 0 ? -this.gap() / 2 : g.pw() + this.gap() / 2;
         }
 
         boolean holds(int x) {
-            return side == 0 ? x < PW : x >= PW;
+            return side == 0 ? x < g.pw() : x >= g.pw();
         }
 
         // The part of a span on this page's side of the fold, in the spread's pixels; null when none of it is.
         int @Nullable [] clip(int x0, int x1) {
-            int from = side == 0 ? x0 : Math.max(x0, PW);
-            int to = side == 0 ? Math.min(x1, PW) : x1;
+            int from = side == 0 ? x0 : Math.max(x0, g.pw());
+            int to = side == 0 ? Math.min(x1, g.pw()) : x1;
             return from < to ? new int[]{from, to} : null;
         }
 
         // The rule under the title, across the window, with a mark of the book's colour at the fold.
         void rule(int y) {
             GuidePalette palette = painter.palette();
-            this.fill(LEFT, y + 11, LEFT + WIDTH, y + 12, palette.line());
-            this.fill(PW - 12, y + 11, PW + 12, y + 12, palette.accent());
+            this.fill(LEFT, y + 11, LEFT + g.width(), y + 12, palette.line());
+            this.fill(g.pw() - 12, y + 11, g.pw() + 12, y + 12, palette.accent());
         }
 
         // The row of blocks a build needs, split either side of the fold so no slot is cut, a clasp at each end to
@@ -331,20 +349,20 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
             for (int index = 0; index < shown.size(); index++) {
                 boolean left = index < onLeft;
                 if (left != (side == 0)) continue;
-                int x = left ? PW - 3 - (onLeft - index) * Requirements.SLOT : PW + 3 + (index - onLeft) * Requirements.SLOT;
+                int x = left ? g.pw() - 3 - (onLeft - index) * Requirements.SLOT : g.pw() + 3 + (index - onLeft) * Requirements.SLOT;
                 Requirements.slot(painter, shown.get(index), x - this.offset(), y);
             }
             if (!needs.paged(NEEDS_SHOWN)) return;
             int arrowY = y + (Requirements.SLOT - Shapes.BUTTON) / 2;
             if (side == 0) needs.stepper(painter, LEFT + 2 - this.offset(), arrowY, false);
-            else needs.stepper(painter, LEFT + WIDTH - Shapes.BUTTON - 2 - this.offset(), arrowY, true);
+            else needs.stepper(painter, LEFT + g.width() - Shapes.BUTTON - 2 - this.offset(), arrowY, true);
         }
 
         // This page's half of a picture as wide as the spread and as tall as a page.
         void plate(SceneViewport view) {
-            int[] range = this.clip(0, PW * 2);
+            int[] range = this.clip(0, g.pw() * 2);
             if (range == null) return;
-            painter.scene(view, range[0] - this.offset(), 0, range[1] - range[0], GuideLayout.PAGE_HEIGHT, range[0] / (PW * 2.0F), range[1] / (PW * 2.0F));
+            painter.scene(view, range[0] - this.offset(), 0, range[1] - range[0], g.ph(), range[0] / (g.pw() * 2.0F), range[1] / (g.pw() * 2.0F));
         }
 
         void fill(int x0, int y0, int x1, int y1, int argb) {

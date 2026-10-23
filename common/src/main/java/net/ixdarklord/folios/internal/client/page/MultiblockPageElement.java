@@ -61,7 +61,9 @@ public record MultiblockPageElement(List<List<String>> pattern, Map<String, Stri
     /** What it shows between its title and its text. */
     Body body(GuideLayout layout) {
         Map<BlockPos, BlockChoice> blocks = blocks(pattern, mapping);
-        SceneViewport view = layout.viewport(GuideLayout.CONTENT_WIDTH * GuideLayout.SCENE_DETAIL, height * GuideLayout.SCENE_DETAIL);
+        int contentWidth = layout.contentWidth();
+        int height = layout.scaled(this.height);
+        SceneViewport view = layout.viewport(contentWidth * GuideLayout.SCENE_DETAIL, height * GuideLayout.SCENE_DETAIL);
         view.refreshRate(30);
         BuildScene scene = new BuildScene(view);
         scene.show(blocks);
@@ -79,8 +81,8 @@ public record MultiblockPageElement(List<List<String>> pattern, Map<String, Stri
         Requirements needs = new Requirements(blocks.values());
         return new Body(height, (painter, y) -> {
             int left = GuideLayout.CONTENT_LEFT;
-            Shapes.panel(painter, left, y, GuideLayout.CONTENT_RIGHT, y + height);
-            sceneWindow(painter, scene, control, needs, left + 1, y + 1, GuideLayout.CONTENT_WIDTH - 2, height - 2, Shapes.Icon.EYE, build);
+            Shapes.panel(painter, left, y, left + contentWidth, y + height);
+            sceneWindow(painter, scene, control, needs, left + 1, y + 1, contentWidth - 2, height - 2, Shapes.Icon.EYE, build);
         });
     }
 
