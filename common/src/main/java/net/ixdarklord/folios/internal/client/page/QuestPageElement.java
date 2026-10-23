@@ -38,7 +38,7 @@ public record QuestPageElement(List<GuideObjective> objectives, Optional<String>
         return layout.flow(title.orElse("folios.quest"), room, text, (painter, y) -> {
             GuidePalette palette = painter.palette();
             int left = GuideLayout.CONTENT_LEFT;
-            int right = GuideLayout.CONTENT_RIGHT;
+            int right = painter.contentRight();
             float whole = GuideObjective.progress(book, objectives);
             int done = 0;
             for (GuideObjective objective : objectives) if (objective.isDone(book)) done++;

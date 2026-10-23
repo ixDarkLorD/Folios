@@ -33,7 +33,9 @@ public record EntityPageElement(ResourceLocation entity, Optional<String> title,
 
     @Override
     public List<Laid> lay(GuideLayout layout) {
-        SceneViewport view = layout.viewport(GuideLayout.CONTENT_WIDTH * GuideLayout.SCENE_DETAIL, height * GuideLayout.SCENE_DETAIL);
+        int contentWidth = layout.contentWidth();
+        int height = layout.scaled(this.height);
+        SceneViewport view = layout.viewport(contentWidth * GuideLayout.SCENE_DETAIL, height * GuideLayout.SCENE_DETAIL);
         view.refreshRate(30);
         // Stood on a ground of grid lines, with its shadow under it.
         view.ground(0, 1, 0x30808080, 0x55A0A0A0, true);
@@ -50,18 +52,18 @@ public record EntityPageElement(ResourceLocation entity, Optional<String> title,
                     // Framed to fit the window whole: wide enough for it turned corner-on, and for all its height at the
                     // window's proportions, with a little room round it; zoom then brings it nearer or further.
                     float width = shown[0].getBbWidth() * 1.45F;
-                    float tall = shown[0].getBbHeight() * (GuideLayout.CONTENT_WIDTH / (float) height);
+                    float tall = shown[0].getBbHeight() * (contentWidth / (float) height);
                     // Small creatures are drawn no larger than a block and a half fills the window: their models (wings,
                     // fins) reach well past their boxes.
                     view.frame(Math.max(Math.max(width, tall) * 1.5F, 1.9F) / zoom, 0, shown[0].getBbHeight() * 0.52, 0);
                 }
             }
             int left = GuideLayout.CONTENT_LEFT;
-            Shapes.panel(painter, left, y, GuideLayout.CONTENT_RIGHT, y + height);
-            control.draw(painter, left + 1, y + 1, GuideLayout.CONTENT_WIDTH - 2, height - 2);
+            Shapes.panel(painter, left, y, left + contentWidth, y + height);
+            control.draw(painter, left + 1, y + 1, contentWidth - 2, height - 2);
             if (named) {
                 Component name = type != null ? type.getDescription() : Component.literal(entity.toString());
-                painter.centeredText(name.copy().withStyle(ChatFormatting.BOLD), GuideLayout.PAGE_WIDTH / 2, y + height + 4, palette.heading());
+                painter.centeredText(name.copy().withStyle(ChatFormatting.BOLD), painter.pageWidth() / 2, y + height + 4, palette.heading());
             }
         });
     }

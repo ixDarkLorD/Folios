@@ -73,6 +73,17 @@ public abstract class AbstractPainter implements GuidePainter {
      * @param pointerX the pointer on the page, in page pixels; NaN when it isn't on it or the page can't be pressed
      * @param hits     where this page's pressable places are put
      */
+    // The page's size is its book's layout's: larger on a screen book at a small GUI scale.
+    @Override
+    public int pageWidth() {
+        return session.layout().pageWidth();
+    }
+
+    @Override
+    public int pageHeight() {
+        return session.layout().pageHeight();
+    }
+
     protected AbstractPainter(GuidePalette palette, GuideSession session, Navigator navigator, float time, float pointerX, float pointerY, List<Hit> hits) {
         this.palette = palette;
         this.session = session;

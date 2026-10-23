@@ -46,8 +46,8 @@ public record LinksPageElement(List<Link> links, Optional<String> title, String 
                 GuideEntry entry = layout.book().entry(id(link));
                 if (entry == null) continue;
                 boolean open = entry.isOpen();
-                boolean over = open && painter.link(GuideLayout.CONTENT_LEFT, top, GuideLayout.CONTENT_WIDTH, ROW - 2, "entry:" + link.entry);
-                painter.fill(GuideLayout.CONTENT_LEFT, top, GuideLayout.CONTENT_RIGHT, top + ROW - 2,
+                boolean over = open && painter.link(GuideLayout.CONTENT_LEFT, top, painter.contentRight() - GuideLayout.CONTENT_LEFT, ROW - 2, "entry:" + link.entry);
+                painter.fill(GuideLayout.CONTENT_LEFT, top, painter.contentRight(), top + ROW - 2,
                         over ? GuidePalette.alpha(palette.accent(), 0x30) : GuidePalette.alpha(palette.line(), 0x40));
                 painter.fill(GuideLayout.CONTENT_LEFT, top, GuideLayout.CONTENT_LEFT + 2, top + ROW - 2, over ? palette.accent() : palette.line());
                 entry.icon().draw(painter, GuideLayout.CONTENT_LEFT + 4, top + 1);

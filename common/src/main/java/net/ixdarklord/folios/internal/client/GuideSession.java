@@ -49,8 +49,13 @@ public final class GuideSession {
     private @Nullable Map<String, String> searchIndex;
 
     GuideSession(GuideBook book) {
+        this(book, GuideLayout.PAGE_WIDTH, GuideLayout.PAGE_HEIGHT);
+    }
+
+    /** Laid out to pages {@code pageWidth} by {@code pageHeight}. */
+    GuideSession(GuideBook book, int pageWidth, int pageHeight) {
         this.book = book;
-        this.layout = new GuideLayout(book, Minecraft.getInstance().font);
+        this.layout = new GuideLayout(book, Minecraft.getInstance().font, pageWidth, pageHeight);
         this.language = Minecraft.getInstance().getLanguageManager().getSelected();
         this.progress = GuideProgress.version();
     }
