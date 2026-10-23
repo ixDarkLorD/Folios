@@ -42,7 +42,7 @@ public class GuideReader implements AbstractPainter.Navigator {
     private static final int ROW = 18;
 
     public final GuideBook book;
-    public final GuideSession session;
+    public GuideSession session;
     public final GuideMemory memory;
     private final long openedAt = Util.getMillis();
     private final Map<String, List<GuidePage.Laid>> chapters = new HashMap<>();
@@ -112,6 +112,20 @@ public class GuideReader implements AbstractPainter.Navigator {
         }
     }
 
+    /**
+     * Reads on from pages laid out to another size (the screen's GUI scale or window changed): at the same place, an
+     * entry's page found again by the page of its JSON it came from, any other part at the same page as far as it goes.
+     */
+    public void useSession(GuideSession next) {
+        if (next == session) return;
+        GuideBook.Location here = this.here();
+        session = next;
+        chapters.clear();
+        flip = null;
+        int page = here != null ? even(session.pageOf(here)) : spot.page;
+        spot = new Spot(spot.chapter, Math.max(0, Math.min(even(page), even(Math.max(0, this.chapter(spot.chapter).size() - 1)))));
+    }
+
     // Whether a spread the reader left on can be gone back to: the front, the index, the bookmarks, or a category the
     // book still has open to them (not a search, made from what was typed).
     private boolean resumable(@Nullable String chapter) {
@@ -168,7 +182,7 @@ public class GuideReader implements AbstractPainter.Navigator {
 
     // Where a page is across what is revealed together: a spread's halves across the spread, a plain page on its own.
     private float revealX(GuidePage.@Nullable Laid page, boolean right) {
-        return right && page instanceof GuidePage.SpreadHalf ? GuideLayout.PAGE_WIDTH : 0;
+        return right && page instanceof GuidePage.SpreadHalf ? session.layout().pageWidth() : 0;
     }
 
     /**
@@ -273,27 +287,34 @@ public class GuideReader implements AbstractPainter.Navigator {
         boolean mastery = !all.isEmpty();
         int titleBottom = mastery ? 134 : 96;
         List<GuideText> landing = book.landing().isEmpty() ? List.of()
-                : layout.text(book.landing()).split(GuideLayout.CONTENT_BOTTOM - titleBottom, GuideLayout.CONTENT_BOTTOM - GuideLayout.CONTENT_TOP);
+                : layout.text(book.landing()).split(layout.contentBottom() - titleBottom, layout.contentBottom() - GuideLayout.CONTENT_TOP);
         GuideText first = landing.isEmpty() ? null : landing.get(0);
         pages.add(painter -> {
             GuidePalette palette = painter.palette();
-            int middle = GuideLayout.PAGE_WIDTH / 2;
+            int middle = painter.pageWidth() / 2;
             medallion(painter, middle - 22, 12, 44);
             painter.push();
             painter.translate(middle - 16, 18);
             painter.scale(2);
             book.icon().draw(painter, 0, 0);
             painter.pop();
-            List<FormattedCharSequence> title = painter.font().split(book.title().copy().withStyle(ChatFormatting.BOLD), GuideLayout.CONTENT_WIDTH);
+            int contentWidth = painter.contentRight() - GuideLayout.CONTENT_LEFT;
+            List<FormattedCharSequence> title = painter.font().split(book.title().copy().withStyle(ChatFormatting.BOLD), contentWidth);
             int y = 62;
             for (FormattedCharSequence line : title.subList(0, Math.min(2, title.size()))) {
                 painter.text(line, middle - painter.font().width(line) / 2, y, palette.heading());
                 y += 10;
             }
             if (!book.subtitle().isEmpty()) {
-                FormattedCharSequence subtitle = painter.font().split(GuideText.inline(book.subtitle()).copy().withStyle(ChatFormatting.ITALIC), GuideLayout.CONTENT_WIDTH)
-                        .stream().findFirst().orElse(FormattedCharSequence.EMPTY);
-                painter.text(subtitle, middle - painter.font().width(subtitle) / 2, y + 1, palette.muted());
+                // On one line, whole: made smaller as far as it must be to fit.
+                FormattedCharSequence subtitle = GuideText.inline(book.subtitle()).copy().withStyle(ChatFormatting.ITALIC).getVisualOrderText();
+                int wide = painter.font().width(subtitle);
+                float fit = Math.min(1, contentWidth / (float) Math.max(1, wide));
+                painter.push();
+                painter.translate(middle - wide * fit / 2, y + 1 + (1 - fit) * 4);
+                painter.scale(fit);
+                painter.text(subtitle, 0, 0, palette.muted());
+                painter.pop();
             }
             if (mastery) this.mastery(painter, middle, titleBottom - 45, all);
             flourish(painter, middle, titleBottom - 6);
@@ -500,7 +521,7 @@ public class GuideReader implements AbstractPainter.Navigator {
         boolean firstPage = true;
         do {
             int y = firstPage ? top : GuideLayout.CONTENT_TOP;
-            int fits = Math.max(1, (GuideLayout.CONTENT_BOTTOM - y) / ROW);
+            int fits = Math.max(1, (layout.contentBottom() - y) / ROW);
             List<Row> on = rows.subList(index, Math.min(rows.size(), index + fits));
             index += on.size();
             boolean titled = firstPage;
@@ -523,7 +544,7 @@ public class GuideReader implements AbstractPainter.Navigator {
     private void row(GuidePainter painter, Row row, int y) {
         GuidePalette palette = painter.palette();
         int left = GuideLayout.CONTENT_LEFT;
-        int right = GuideLayout.CONTENT_RIGHT;
+        int right = painter.contentRight();
         boolean over = row.link != null && painter.action(left - 2, y, right - left + 4, ROW - 1, null, () -> this.follow(row.link));
         if (over) painter.fill(left - 2, y, right + 2, y + ROW - 1, GuidePalette.alpha(palette.accent(), 0x2A));
         if (!row.icon.isEmpty()) {
@@ -581,7 +602,7 @@ public class GuideReader implements AbstractPainter.Navigator {
     public void chrome(GuidePainter painter, Spot spot, boolean right, boolean pressable, @Nullable Runnable shut) {
         GuidePalette palette = painter.palette();
         GuideBook.Layout layout = book.layout();
-        int width = GuideLayout.PAGE_WIDTH;
+        int width = painter.pageWidth();
         int size = Shapes.BUTTON;
         // The shut clasp is the book's, there whether or not the spread has a right-hand page.
         if (right && shut != null) {
@@ -592,7 +613,7 @@ public class GuideReader implements AbstractPainter.Navigator {
         }
         GuidePage.Laid laid = this.page(spot, right ? 1 : 0);
         if (laid == null) return;
-        int bottom = GuideLayout.PAGE_HEIGHT;
+        int bottom = painter.pageHeight();
         if (laid instanceof GuidePage.SpreadHalf) {
             // One number for the spread, at the fold, each page printing its own part of it.
             Shapes.acrossFold(painter, Component.literal(String.valueOf(spot.page + 1)).getVisualOrderText(), bottom - layout.numberY(), palette.muted(), right);

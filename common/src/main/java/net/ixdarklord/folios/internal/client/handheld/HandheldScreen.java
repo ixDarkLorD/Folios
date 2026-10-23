@@ -38,6 +38,11 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
     @Override
     protected void init() {
         hintY = Integer.MIN_VALUE;
+        // Its pages as large as the GUI scale makes them (PageSize), printed smaller on leaves of the same size.
+        float factor = net.ixdarklord.folios.internal.client.PageSize.handheldFactor();
+        net.ixdarklord.folios.internal.client.GuideSession sized = net.ixdarklord.folios.internal.client.GuideLibrary.session(book.book.id(),
+                net.ixdarklord.folios.internal.client.PageSize.width(factor), net.ixdarklord.folios.internal.client.PageSize.height(factor));
+        if (sized != null) book.useSession(sized);
         this.search = this.addRenderableWidget(this.bar.search(this.search));
     }
 

@@ -30,7 +30,7 @@ public record ImagePageElement(List<ResourceLocation> images, Optional<String> t
     @Override
     public List<Laid> lay(GuideLayout layout) {
         int[] shown = {0};
-        int inner = GuideLayout.CONTENT_WIDTH - (border ? 4 : 0);
+        int inner = layout.contentWidth() - (border ? 4 : 0);
         // The tallest picture sets the room taken, so the text under them stays put as they change.
         int room = 0;
         for (ResourceLocation image : images) room = Math.max(room, fit(image, inner)[1]);
@@ -41,13 +41,13 @@ public record ImagePageElement(List<ResourceLocation> images, Optional<String> t
             int count = images.size();
             ResourceLocation image = images.get(shown[0] % count);
             int[] size = fit(image, inner);
-            int x = GuideLayout.PAGE_WIDTH / 2 - size[0] / 2;
+            int x = painter.pageWidth() / 2 - size[0] / 2;
             int top = y + (pictures - size[1]) / 2;
             if (border) Shapes.panel(painter, x - 2, top - 2, x + size[0] + 2, top + size[1] + 2);
             painter.texture(image, x, top, size[0], size[1], 0, 0, 1, 1, 0xFFFFFFFF);
             if (count > 1) {
                 int arrowsY = y + pictures + 3;
-                int middle = GuideLayout.PAGE_WIDTH / 2;
+                int middle = painter.pageWidth() / 2;
                 painter.centeredText(Component.literal((shown[0] % count + 1) + " / " + count), middle, arrowsY, palette.muted());
                 boolean back = painter.action(middle - 36, arrowsY - 2, 14, 11, null, () -> shown[0] = (shown[0] + count - 1) % count);
                 boolean next = painter.action(middle + 22, arrowsY - 2, 14, 11, null, () -> shown[0] = (shown[0] + 1) % count);
