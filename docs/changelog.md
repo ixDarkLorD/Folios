@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.1.1 Release | Oct 23, 2026
+A mod's own guide book item shows its cover.
+
+### 🐛 Fixes
+- A mod's own guide book item (a `GuideBookItem` made for one book) shows its book's cover text and colours on every stack, not only on stacks given with the book in their `folios:guide_book` component: from the creative tab, `/give` or a recipe, it no longer has blank plates and Folios's own colours. `GuideBooks.bookOf` now gives such an item's own book when the stack names none.
+
 ## v2.1 Release | Oct 23, 2026
 Books make better use of the screen at small GUI scales, and what is on their pages keeps clear of the page frame.
 
