@@ -7,12 +7,12 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.ixdarklord.folios.api.client.GuideObjective;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuidePageTypes;
-import net.ixdarklord.folios.api.client.page.GuideStack;
-import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.api.client.FoliosObjective;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPageElements;
+import net.ixdarklord.folios.api.client.page.FoliosStack;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.util.ExtraCodecs;
 
@@ -25,8 +25,8 @@ import java.util.Optional;
 // of its type is (a plain string is text), with its own title and text if it has them; "text" on the page itself is
 // text before them. An element that doesn't fit in what is left of the page starts the next, and text runs on over as
 // many pages as it needs. A page written as one element ({"type": "recipe", ...}) is a page of that element alone.
-public record TextPage(Optional<String> title, String text, List<GuidePage> elements) implements GuidePage {
-    private static final Codec<GuidePage> ELEMENT = ExtraCodecs.JSON.comapFlatMap(TextPage::element, element -> new JsonObject());
+public record TextPage(Optional<String> title, String text, List<FoliosPageElement> elements) implements FoliosPageElement {
+    private static final Codec<FoliosPageElement> ELEMENT = ExtraCodecs.JSON.comapFlatMap(TextPage::element, element -> new JsonObject());
 
     public static final MapCodec<TextPage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Codec.STRING.optionalFieldOf("title").forGetter(TextPage::title),
@@ -39,7 +39,7 @@ public record TextPage(Optional<String> title, String text, List<GuidePage> elem
 
     // An element: of any type that lays itself out as a title, a part of its own and text do (not a spread, nor a
     // page of elements itself).
-    private static DataResult<GuidePage> element(JsonElement json) {
+    private static DataResult<FoliosPageElement> element(JsonElement json) {
         JsonObject object;
         if (json.isJsonPrimitive()) {
             object = new JsonObject();
@@ -49,32 +49,32 @@ public record TextPage(Optional<String> title, String text, List<GuidePage> elem
         } else {
             return DataResult.error(() -> "an element is an object with a type, or a string of text");
         }
-        var type = GuidePageTypes.id(object.has("type") ? object.get("type").getAsString() : "text");
-        MapCodec<? extends GuidePage> codec = GuidePageTypes.get(type);
+        var type = FoliosPageElements.id(object.has("type") ? object.get("type").getAsString() : "text");
+        MapCodec<? extends FoliosPageElement> codec = FoliosPageElements.get(type);
         if (codec == null) return DataResult.error(() -> "no element type " + type);
         return codec.codec().parse(JsonOps.INSTANCE, object).flatMap(page -> {
             if (page.spread()) return DataResult.error(() -> "a spread is a page of its own, not an element");
             if (page instanceof TextPage text && !text.elements.isEmpty()) return DataResult.error(() -> "an element can't have elements of its own");
-            return DataResult.success((GuidePage) page);
+            return DataResult.success((FoliosPageElement) page);
         });
     }
 
     @Override
-    public List<Laid> lay(GuideLayout layout) {
+    public List<Laid> lay(FoliosLayout layout) {
         if (elements.isEmpty()) return layout.flow(title.orElse(null), 0, text, null);
         // What to set, in order: the page's text, then each element's title, what it shows and its text.
         List<Piece> pieces = new ArrayList<>();
         if (!text.isEmpty()) pieces.add(new Words(layout.text(text)));
         // The page's icon heads its own title, not its elements'.
-        net.ixdarklord.folios.api.client.page.GuideIcon icon = layout.titleIcon();
-        layout.titleIcon(net.ixdarklord.folios.api.client.page.GuideIcon.NONE);
-        for (GuidePage element : elements) {
-            List<GuideLayout.Flow> flows = layout.capture(element);
+        net.ixdarklord.folios.api.client.page.FoliosIcon icon = layout.titleIcon();
+        layout.titleIcon(net.ixdarklord.folios.api.client.page.FoliosIcon.NONE);
+        for (FoliosPageElement element : elements) {
+            List<FoliosLayout.Flow> flows = layout.capture(element);
             if (flows.isEmpty()) Folios.LOGGER.warn("A page's element ({}) lays itself out in a way an element can't be", element.getClass().getSimpleName());
-            for (GuideLayout.Flow flow : flows) {
+            for (FoliosLayout.Flow flow : flows) {
                 if (flow.title() != null && !flow.title().isEmpty()) {
                     String heading = flow.title();
-                    pieces.add(new Fixed(GuideLayout.TITLE_HEIGHT, (painter, y) -> GuideLayout.title(painter, GuideText.inline(heading), y)));
+                    pieces.add(new Fixed(FoliosLayout.TITLE_HEIGHT, (painter, y) -> FoliosLayout.title(painter, FoliosText.inline(heading), y)));
                 }
                 if (flow.part() != null && flow.reserved() > 0) pieces.add(new Fixed(flow.reserved(), flow.part()));
                 if (flow.text() != null && !flow.text().isEmpty()) pieces.add(new Words(layout.text(flow.text())));
@@ -89,24 +89,24 @@ public record TextPage(Optional<String> title, String text, List<GuidePage> elem
 
     private record Fixed(int height, Part part) implements Piece {}
 
-    private record Words(GuideText text) implements Piece {}
+    private record Words(FoliosText text) implements Piece {}
 
     private record Placed(int y, Part part) {}
 
     // The pieces set one under another down the page, onto as many pages as they take.
-    private static List<Laid> set(Optional<String> title, net.ixdarklord.folios.api.client.page.GuideIcon icon, List<Piece> pieces, int bottom) {
+    private static List<Laid> set(Optional<String> title, net.ixdarklord.folios.api.client.page.FoliosIcon icon, List<Piece> pieces, int bottom) {
         List<List<Placed>> pages = new ArrayList<>();
         List<Placed> page = new ArrayList<>();
         pages.add(page);
-        int y = GuideLayout.CONTENT_TOP;
+        int y = FoliosLayout.CONTENT_TOP;
         if (title.isPresent() && !title.get().isEmpty()) {
             String heading = title.get();
-            page.add(new Placed(y, (painter, py) -> GuideLayout.title(painter, GuideText.inline(heading), py, icon)));
-            y += GuideLayout.TITLE_HEIGHT;
+            page.add(new Placed(y, (painter, py) -> FoliosLayout.title(painter, FoliosText.inline(heading), py, icon)));
+            y += FoliosLayout.TITLE_HEIGHT;
         }
         // Whether nothing is on this page yet (but its title): the next piece then goes at its top, with no gap.
         boolean fresh = true;
-        int full = bottom - GuideLayout.CONTENT_TOP;
+        int full = bottom - FoliosLayout.CONTENT_TOP;
         for (Piece piece : pieces) {
             int at = fresh ? y : y + GAP;
             switch (piece) {
@@ -115,23 +115,23 @@ public record TextPage(Optional<String> title, String text, List<GuidePage> elem
                     if (!fresh && at + fixed.height() > bottom) {
                         page = new ArrayList<>();
                         pages.add(page);
-                        at = GuideLayout.CONTENT_TOP;
+                        at = FoliosLayout.CONTENT_TOP;
                     }
                     page.add(new Placed(at, fixed.part()));
                     y = at + fixed.height();
                 }
                 case Words words -> {
-                    List<GuideText> split = words.text().split(Math.max(0, bottom - at), full);
+                    List<FoliosText> split = words.text().split(Math.max(0, bottom - at), full);
                     for (int index = 0; index < split.size(); index++) {
-                        GuideText text = split.get(index);
+                        FoliosText text = split.get(index);
                         if (index > 0) {
                             page = new ArrayList<>();
                             pages.add(page);
-                            at = GuideLayout.CONTENT_TOP;
+                            at = FoliosLayout.CONTENT_TOP;
                         }
                         // An empty first piece: none of it fitted here, so it starts on the next page.
                         if (text.isEmpty()) continue;
-                        page.add(new Placed(at, (painter, py) -> text.draw(painter, GuideLayout.CONTENT_LEFT, py)));
+                        page.add(new Placed(at, (painter, py) -> text.draw(painter, FoliosLayout.CONTENT_LEFT, py)));
                         y = at + text.height();
                     }
                 }
@@ -150,23 +150,23 @@ public record TextPage(Optional<String> title, String text, List<GuidePage> elem
 
     @Override
     public String searchText() {
-        StringBuilder words = new StringBuilder(GuideText.resolve(title.orElse(""))).append(' ').append(GuideText.resolve(text));
-        for (GuidePage element : elements) words.append(' ').append(element.searchText());
+        StringBuilder words = new StringBuilder(FoliosText.resolve(title.orElse(""))).append(' ').append(FoliosText.resolve(text));
+        for (FoliosPageElement element : elements) words.append(' ').append(element.searchText());
         return words.toString();
     }
 
     // Its elements' items and objectives are the page's: pressing a spotlit item anywhere comes here, a quest counts.
     @Override
-    public List<GuideStack> items() {
-        List<GuideStack> items = new ArrayList<>();
-        for (GuidePage element : elements) items.addAll(element.items());
+    public List<FoliosStack> items() {
+        List<FoliosStack> items = new ArrayList<>();
+        for (FoliosPageElement element : elements) items.addAll(element.items());
         return items;
     }
 
     @Override
-    public List<GuideObjective> objectives() {
-        List<GuideObjective> objectives = new ArrayList<>();
-        for (GuidePage element : elements) objectives.addAll(element.objectives());
+    public List<FoliosObjective> objectives() {
+        List<FoliosObjective> objectives = new ArrayList<>();
+        for (FoliosPageElement element : elements) objectives.addAll(element.objectives());
         return objectives;
     }
 }

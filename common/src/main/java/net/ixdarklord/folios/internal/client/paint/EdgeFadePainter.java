@@ -1,9 +1,9 @@
 package net.ixdarklord.folios.internal.client.paint;
 
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePainter;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -20,11 +20,11 @@ import java.util.List;
  * runes melt into the paper instead of stopping short at its border. Each thing drawn takes the fade of where its
  * middle is on the page; past the page it isn't drawn.
  */
-public final class EdgeFadePainter implements GuidePainter {
+public final class EdgeFadePainter implements FoliosPainter {
     /** How far in from each edge (page pixels) the fade reaches. */
     private static final float MARGIN = 14;
 
-    private final GuidePainter painter;
+    private final FoliosPainter painter;
 
     // The page's size is the painter's it wraps.
     @Override
@@ -42,7 +42,7 @@ public final class EdgeFadePainter implements GuidePainter {
     private final Deque<float[]> stack = new ArrayDeque<>();
 
     /** Wraps a page's painter; (x, y) and {@code scale} are where its own pixels are on the page now. */
-    public EdgeFadePainter(GuidePainter painter, float x, float y, float scale) {
+    public EdgeFadePainter(FoliosPainter painter, float x, float y, float scale) {
         this.painter = painter;
         this.offsetX = x;
         this.offsetY = y;
@@ -59,7 +59,7 @@ public final class EdgeFadePainter implements GuidePainter {
     }
 
     private static int faded(int argb, float fade) {
-        return GuidePalette.alpha(argb, Math.round((argb >>> 24) * fade));
+        return FoliosPalette.alpha(argb, Math.round((argb >>> 24) * fade));
     }
 
     @Override
@@ -146,7 +146,7 @@ public final class EdgeFadePainter implements GuidePainter {
     }
 
     @Override
-    public GuidePalette palette() {
+    public FoliosPalette palette() {
         return painter.palette();
     }
 

@@ -5,12 +5,12 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
-import net.ixdarklord.folios.api.client.page.GuideIcon;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuidePainter;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
-import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.api.client.page.FoliosIcon;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.build.BlockChoice;
 import net.ixdarklord.folios.internal.client.build.BuildGuide;
 import net.minecraft.client.Minecraft;
@@ -33,7 +33,7 @@ import java.util.Optional;
 // spine between them, each page draws on into the spine to meet the other. In the window's own pixels a node at x 0 is at its left edge, at the window's
 // width (the spread's, less the margins) its right.
 public record SpreadPage(Optional<String> title, String text, Optional<ResourceLocation> image, Optional<Build> build, Optional<MapLayout> map, int height)
-        implements GuidePage {
+        implements FoliosPageElement {
     /** A build in the window: a multiblock page's pattern and mapping. */
     public record Build(List<List<String>> pattern, Map<String, String> mapping) {
         static final Codec<Build> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -73,21 +73,21 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
     ).apply(instance, SpreadPage::new));
 
     /** The window's left edge, in the spread's pixels (0 at the left page's left edge). */
-    private static final int LEFT = GuideLayout.CONTENT_LEFT;
+    private static final int LEFT = FoliosLayout.CONTENT_LEFT;
 
     // The size of the pages it is laid out to (larger on a screen at a small GUI scale): each page's width and height,
     // the window's width across both, and where content ends at the foot.
     private record G(int pw, int ph) {
-        static G of(GuideLayout layout) {
+        static G of(FoliosLayout layout) {
             return new G(layout.pageWidth(), layout.pageHeight());
         }
 
         int width() {
-            return pw * 2 - GuideLayout.CONTENT_LEFT * 2;
+            return pw * 2 - FoliosLayout.CONTENT_LEFT * 2;
         }
 
         int contentBottom() {
-            return ph - GuideLayout.FOOT;
+            return ph - FoliosLayout.FOOT;
         }
     }
     private static final int NODE = 20;
@@ -98,7 +98,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
     // of its text above the page number.
     private int windowHeight(G g) {
         if (build.isEmpty()) return height;
-        int top = GuideLayout.CONTENT_TOP + (title.isPresent() && !title.get().isEmpty() ? GuideLayout.TITLE_HEIGHT : 0);
+        int top = FoliosLayout.CONTENT_TOP + (title.isPresent() && !title.get().isEmpty() ? FoliosLayout.TITLE_HEIGHT : 0);
         int below = 5 + Requirements.HEADING + Requirements.SLOT + (text.isEmpty() ? 0 : 5 + 10);
         return Math.max(40, Math.min(height, g.contentBottom() - 6 - top - below));
     }
@@ -109,17 +109,17 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
     }
 
     @Override
-    public List<Laid> lay(GuideLayout layout) {
+    public List<Laid> lay(FoliosLayout layout) {
         G g = G.of(layout);
-        Component heading = title.isPresent() && !title.get().isEmpty() ? GuideText.inline(title.get()) : null;
-        int top = GuideLayout.CONTENT_TOP + (heading != null ? GuideLayout.TITLE_HEIGHT : 0);
+        Component heading = title.isPresent() && !title.get().isEmpty() ? FoliosText.inline(title.get()) : null;
+        int top = FoliosLayout.CONTENT_TOP + (heading != null ? FoliosLayout.TITLE_HEIGHT : 0);
         // A build's blocks, a row under its window, the text under them.
         Requirements needs = build.map(made -> new Requirements(MultiblockPageElement.blocks(made.pattern(), made.mapping()).values()))
                 .filter(made -> !made.isEmpty()).orElse(null);
         int listTop = top + this.windowHeight(g) + 5;
         int textTop = needs != null ? listTop + Requirements.HEADING + Requirements.SLOT + 5 : top + this.windowHeight(g) + 6;
         // The text under the window, in centred lines across the spread, as many as there is room for.
-        List<FormattedCharSequence> caption = text.isEmpty() ? List.of() : Minecraft.getInstance().font.split(GuideText.inline(text), g.width() - 24);
+        List<FormattedCharSequence> caption = text.isEmpty() ? List.of() : Minecraft.getInstance().font.split(FoliosText.inline(text), g.width() - 24);
         List<FormattedCharSequence> under = caption.subList(0, Math.min(caption.size(), Math.max(0, (g.contentBottom() - textTop) / 10)));
         Window window = this.window(layout, top, g);
         Component needed = needs == null ? null : Component.translatableWithFallback("folios.requires", "Blocks needed")
@@ -153,9 +153,9 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
         private final int textTop;
         private int laidFor;
 
-        TextPlate(GuideLayout layout, G g, @Nullable Component heading, @Nullable Component needed, int neededTop, List<FormattedCharSequence> lines, int textTop) {
+        TextPlate(FoliosLayout layout, G g, @Nullable Component heading, @Nullable Component needed, int neededTop, List<FormattedCharSequence> lines, int textTop) {
             this.g = g;
-            this.view = layout.viewport(g.pw() * 2 * GuideLayout.SCENE_DETAIL, g.ph() * GuideLayout.SCENE_DETAIL);
+            this.view = layout.viewport(g.pw() * 2 * FoliosLayout.SCENE_DETAIL, g.ph() * FoliosLayout.SCENE_DETAIL);
             view.spin(0).refreshRate(1);
             this.heading = heading;
             this.needed = needed;
@@ -165,16 +165,16 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
         }
 
         void draw(Part part) {
-            GuidePalette palette = part.painter.palette();
+            FoliosPalette palette = part.painter.palette();
             int colours = palette.heading() * 31 + palette.text();
             if (laidFor != colours || view.texts().isEmpty()) {
                 laidFor = colours;
                 view.clearText();
                 net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
-                float detail = GuideLayout.SCENE_DETAIL;
+                float detail = FoliosLayout.SCENE_DETAIL;
                 if (heading != null) {
                     FormattedCharSequence bold = heading.copy().withStyle(net.minecraft.ChatFormatting.BOLD).getVisualOrderText();
-                    view.text(bold, (g.pw() - font.width(bold) / 2.0F) * detail, GuideLayout.CONTENT_TOP * detail, palette.heading(), detail);
+                    view.text(bold, (g.pw() - font.width(bold) / 2.0F) * detail, FoliosLayout.CONTENT_TOP * detail, palette.heading(), detail);
                 }
                 if (needed != null) {
                     FormattedCharSequence line = needed.getVisualOrderText();
@@ -193,7 +193,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
     // The rule under the title, then the window on one page: its frame and what is in it.
     private void window(Window window, Part part, boolean titled, int top) {
         G g = part.g();
-        if (titled) part.rule(GuideLayout.CONTENT_TOP);
+        if (titled) part.rule(FoliosLayout.CONTENT_TOP);
         part.frame(LEFT, top, LEFT + g.width(), top + this.windowHeight(g));
         window.draw(part);
     }
@@ -201,12 +201,12 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
     // One page of the spread.
     private record Half(Laid content) implements SpreadHalf {
         @Override
-        public void draw(GuidePainter painter) {
+        public void draw(FoliosPainter painter) {
             content.draw(painter);
         }
     }
 
-    private Window window(GuideLayout layout, int top, G g) {
+    private Window window(FoliosLayout layout, int top, G g) {
         if (build.isPresent()) return this.buildWindow(layout, top, build.get(), g);
         if (map.isPresent()) return this.mapWindow(top, map.get(), g);
         ResourceLocation picture = image.orElse(null);
@@ -215,15 +215,15 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
         };
     }
 
-    private Window buildWindow(GuideLayout layout, int top, Build build, G g) {
+    private Window buildWindow(FoliosLayout layout, int top, Build build, G g) {
         Map<BlockPos, BlockChoice> blocks = MultiblockPageElement.blocks(build.pattern(), build.mapping());
-        SceneViewport view = layout.viewport(g.width() * GuideLayout.SCENE_DETAIL, this.windowHeight(g) * GuideLayout.SCENE_DETAIL);
+        SceneViewport view = layout.viewport(g.width() * FoliosLayout.SCENE_DETAIL, this.windowHeight(g) * FoliosLayout.SCENE_DETAIL);
         view.refreshRate(30);
         BuildScene scene = new BuildScene(view);
         scene.show(blocks);
         view.ground(0, 1, 0x30808080, 0x55A0A0A0, false);
         SceneControl control = new SceneControl(view, 35, 26, 14);
-        Component name = title.isPresent() ? GuideText.inline(title.get()) : Component.translatableWithFallback("folios.build", "Build");
+        Component name = title.isPresent() ? FoliosText.inline(title.get()) : Component.translatableWithFallback("folios.build", "Build");
         SceneControl.Extra show = new SceneControl.Extra(Component.translatableWithFallback("folios.build.show", "Show in the world"), () -> {
             BuildGuide.start(name, blocks);
             Minecraft minecraft = Minecraft.getInstance();
@@ -242,23 +242,23 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
 
     private Window mapWindow(int top, MapLayout map, G g) {
         Map<String, Node> byId = new HashMap<>();
-        Map<String, GuideIcon> icons = new HashMap<>();
+        Map<String, FoliosIcon> icons = new HashMap<>();
         // Where each place sits, in the spread's pixels: kept inside the frame, its plate and shadow too, and off the
         // fold, so neither page cuts it.
         Map<String, int[]> at = new HashMap<>();
         for (Node node : map.nodes()) {
             byId.put(node.id(), node);
-            icons.put(node.id(), GuideIcon.read(node.icon()));
+            icons.put(node.id(), FoliosIcon.read(node.icon()));
             int x = Math.clamp(LEFT + node.x(), LEFT + INNER + NODE / 2 + 1, LEFT + g.width() - INNER - NODE / 2 - 3);
             int y = Math.clamp(top + node.y(), top + INNER + NODE / 2 + 1, top + this.windowHeight(g) - INNER - NODE / 2 - 3);
             if (x - NODE / 2 - 1 < g.pw() && x + NODE / 2 + 2 > g.pw()) x = x < g.pw() ? g.pw() - NODE / 2 - 3 : g.pw() + NODE / 2 + 2;
             at.put(node.id(), new int[]{x, y});
         }
         return part -> {
-            GuidePalette palette = part.painter.palette();
+            FoliosPalette palette = part.painter.palette();
             map.background().ifPresent(background -> part.texture(background, LEFT + INNER, top + INNER, g.width() - INNER * 2, this.windowHeight(g) - INNER * 2));
             // The paths first, dotted, under the places they join.
-            int ink = GuidePalette.mix(palette.line(), palette.accent(), 0.5F);
+            int ink = FoliosPalette.mix(palette.line(), palette.accent(), 0.5F);
             for (List<String> path : map.paths()) {
                 Node from = byId.get(path.get(0));
                 Node to = byId.get(path.get(1));
@@ -278,21 +278,21 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
                 int x = at.get(node.id())[0] - NODE / 2;
                 int y = at.get(node.id())[1] - NODE / 2;
                 // A plate standing a little off the map: its shadow under it, a rim, a pale line inside the rim.
-                part.fill(x + 1, y + 2, x + NODE + 1, y + NODE + 2, GuidePalette.mix(palette.panel(), palette.text(), 0.22F));
-                part.fill(x, y, x + NODE, y + NODE, GuidePalette.mix(palette.line(), palette.accent(), 0.35F));
-                part.fill(x + 1, y + 1, x + NODE - 1, y + NODE - 1, GuidePalette.mix(palette.panel(), 0xFFFFFFFF, 0.45F));
+                part.fill(x + 1, y + 2, x + NODE + 1, y + NODE + 2, FoliosPalette.mix(palette.panel(), palette.text(), 0.22F));
+                part.fill(x, y, x + NODE, y + NODE, FoliosPalette.mix(palette.line(), palette.accent(), 0.35F));
+                part.fill(x + 1, y + 1, x + NODE - 1, y + NODE - 1, FoliosPalette.mix(palette.panel(), 0xFFFFFFFF, 0.45F));
                 part.fill(x + 2, y + 2, x + NODE - 1, y + NODE - 1, palette.panel());
                 int middle = x + NODE / 2;
                 if (!part.holds(middle)) continue;
-                GuidePainter painter = part.painter;
+                FoliosPainter painter = part.painter;
                 int px = x - part.offset();
                 boolean over = false;
                 if (node.entry().isPresent()) {
                     over = painter.link(px, y, NODE, NODE, "entry:" + node.entry().get());
                 }
-                if (over) painter.fill(px + 1, y + 1, px + NODE - 1, y + NODE - 1, GuidePalette.alpha(palette.accent(), 0x40));
+                if (over) painter.fill(px + 1, y + 1, px + NODE - 1, y + NODE - 1, FoliosPalette.alpha(palette.accent(), 0x40));
                 icons.get(node.id()).draw(painter, px + 2, y + 2);
-                if (node.name().isPresent() && painter.hovered(px, y, NODE, NODE)) painter.tooltip(GuideText.inline(node.name().get()));
+                if (node.name().isPresent() && painter.hovered(px, y, NODE, NODE)) painter.tooltip(FoliosText.inline(node.name().get()));
             }
         };
     }
@@ -300,8 +300,8 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
     @Override
     public String searchText() {
         // Each piece in its words: any of them can be a translation key.
-        StringBuilder words = new StringBuilder(GuideText.resolve(title.orElse(""))).append(' ').append(GuideText.resolve(text));
-        map.ifPresent(layout -> layout.nodes().forEach(node -> node.name().ifPresent(name -> words.append(' ').append(GuideText.resolve(name)))));
+        StringBuilder words = new StringBuilder(FoliosText.resolve(title.orElse(""))).append(' ').append(FoliosText.resolve(text));
+        map.ifPresent(layout -> layout.nodes().forEach(node -> node.name().ifPresent(name -> words.append(' ').append(FoliosText.resolve(name)))));
         return words.toString();
     }
 
@@ -313,7 +313,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
     // One page's share of the spread: what lies over it is drawn, cut at the fold, moved onto it. `side` 0 is the
     // left page (spread x from 0 to the fold at its width), 1 the right. On a screen book the pages have the spine
     // between them, so the spread is moved half the spine's width in on each and each page draws on half of it.
-    private record Part(GuidePainter painter, int side, G g) {
+    private record Part(FoliosPainter painter, int side, G g) {
         private int gap() {
             return painter.flat() ? Shapes.SCREEN_SPINE : 0;
         }
@@ -336,7 +336,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
 
         // The rule under the title, across the window, with a mark of the book's colour at the fold.
         void rule(int y) {
-            GuidePalette palette = painter.palette();
+            FoliosPalette palette = painter.palette();
             this.fill(LEFT, y + 11, LEFT + g.width(), y + 12, palette.line());
             this.fill(g.pw() - 12, y + 11, g.pw() + 12, y + 12, palette.accent());
         }
@@ -373,13 +373,13 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
         // The window's frame, as a print laid on the page: a soft shadow under it and to its right, a dark rim, a pale
         // line inside it, and the ground. At the fold it has no side: rim and ground run on to the page's edge.
         void frame(int x0, int y0, int x1, int y1) {
-            GuidePalette palette = painter.palette();
+            FoliosPalette palette = painter.palette();
             this.fill(x0 + 2, y1, x1 + 2, y1 + 2, 0x30000000);
             this.fill(x1, y0 + 2, x1 + 2, y1, 0x30000000);
             this.fill(x0 + 3, y1 + 2, x1 + 3, y1 + 3, 0x16000000);
             this.fill(x1 + 2, y0 + 3, x1 + 3, y1 + 2, 0x16000000);
-            this.fill(x0, y0, x1, y1, GuidePalette.mix(palette.line(), palette.text(), 0.3F));
-            this.fill(x0 + 1, y0 + 1, x1 - 1, y1 - 1, GuidePalette.mix(palette.panel(), 0xFFFFFFFF, 0.4F));
+            this.fill(x0, y0, x1, y1, FoliosPalette.mix(palette.line(), palette.text(), 0.3F));
+            this.fill(x0 + 1, y0 + 1, x1 - 1, y1 - 1, FoliosPalette.mix(palette.panel(), 0xFFFFFFFF, 0.4F));
             this.fill(x0 + INNER, y0 + INNER, x1 - INNER, y1 - INNER, palette.panel());
         }
 

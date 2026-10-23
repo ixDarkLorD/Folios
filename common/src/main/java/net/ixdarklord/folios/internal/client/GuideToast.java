@@ -1,8 +1,8 @@
 package net.ixdarklord.folios.internal.client;
 
-import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.api.client.page.GuideIcon;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.page.FoliosIcon;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.client.paint.PixelIcon;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.minecraft.client.Minecraft;
@@ -26,14 +26,14 @@ public final class GuideToast implements Toast {
     /** A band of light sweeping across the trophy, over it: a flipbook of its frames. */
     private static final PixelIcon TROPHY_SHEEN = PixelIcon.of("trophy_sheen", 9, 9, 10);
 
-    private final GuideBook book;
+    private final FoliosBook book;
     private final Component heading;
     private final Component name;
-    private final GuideIcon icon;
+    private final FoliosIcon icon;
     private final boolean mastery;
     private final long duration;
 
-    private GuideToast(GuideBook book, Component heading, Component name, GuideIcon icon, boolean mastery, long duration) {
+    private GuideToast(FoliosBook book, Component heading, Component name, FoliosIcon icon, boolean mastery, long duration) {
         this.book = book;
         this.heading = heading;
         this.name = name;
@@ -43,8 +43,8 @@ public final class GuideToast implements Toast {
     }
 
     /** Shows a toast: a heading over a name, with an icon (none for null), or the trophy for mastery. */
-    public static void show(GuideBook book, Component heading, Component name, @Nullable GuideIcon icon, boolean mastery) {
-        Minecraft.getInstance().getToasts().addToast(new GuideToast(book, heading, name, icon != null ? icon : GuideIcon.NONE, mastery, mastery ? 7000 : 5000));
+    public static void show(FoliosBook book, Component heading, Component name, @Nullable FoliosIcon icon, boolean mastery) {
+        Minecraft.getInstance().getToasts().addToast(new GuideToast(book, heading, name, icon != null ? icon : FoliosIcon.NONE, mastery, mastery ? 7000 : 5000));
     }
 
     // 1.21.1 draws a toast and asks whether it still shows in the one call.
@@ -65,8 +65,8 @@ public final class GuideToast implements Toast {
         int slotY = (height - 20) / 2;
         int frame = GuideTooltips.frameColor(book) | 0xFF000000;
         int ground = GuideTooltips.backgroundColor(book) | 0xFF000000;
-        graphics.fill(slotX, slotY, slotX + 20, slotY + 20, GuidePalette.mix(frame, ground, 0.35F));
-        graphics.fill(slotX + 1, slotY + 1, slotX + 19, slotY + 19, GuidePalette.mix(ground, 0xFF000000, 0.45F));
+        graphics.fill(slotX, slotY, slotX + 20, slotY + 20, FoliosPalette.mix(frame, ground, 0.35F));
+        graphics.fill(slotX + 1, slotY + 1, slotX + 19, slotY + 19, FoliosPalette.mix(ground, 0xFF000000, 0.45F));
         if (mastery) {
             this.trophy(graphics, slotX + 2, slotY + 1, seconds);
         } else if (!icon.isEmpty()) {
@@ -87,7 +87,7 @@ public final class GuideToast implements Toast {
         int lineLeft = textX;
         int lineRight = width - 8;
         int y = height - 6;
-        graphics.fill(lineLeft, y, lineRight, y + 1, GuidePalette.alpha(quiet, 0x40));
+        graphics.fill(lineLeft, y, lineRight, y + 1, FoliosPalette.alpha(quiet, 0x40));
         graphics.fill(lineLeft, y, lineLeft + Math.round((lineRight - lineLeft) * left), y + 1, frame);
         return timeSinceVisible < shown ? Toast.Visibility.SHOW : Toast.Visibility.HIDE;
     }

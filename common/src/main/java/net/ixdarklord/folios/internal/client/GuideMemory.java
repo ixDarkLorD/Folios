@@ -1,7 +1,7 @@
 package net.ixdarklord.folios.internal.client;
 
 import net.ixdarklord.coolcatcore.api.network.Network;
-import net.ixdarklord.folios.api.client.GuideBook;
+import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.internal.GuideNetwork;
 import net.ixdarklord.folios.internal.GuidePayloads;
 import net.ixdarklord.folios.internal.GuideRecord;
@@ -39,8 +39,8 @@ public final class GuideMemory {
     private final Set<String> questsDone = new LinkedHashSet<>();
     // What has been celebrated: "category:<id>", "mastery".
     private final Set<String> celebrated = new LinkedHashSet<>();
-    private final List<GuideBook.Location> bookmarks = new ArrayList<>();
-    private GuideBook.@Nullable Location last;
+    private final List<FoliosBook.Location> bookmarks = new ArrayList<>();
+    private FoliosBook.@Nullable Location last;
     // Whether a handheld book was put away lying open: it then opens again by itself, where it was left.
     private boolean leftOpen;
     // The spread last open when it wasn't an entry's (the front, a category, the index, the bookmarks): its chapter
@@ -70,10 +70,10 @@ public final class GuideMemory {
      * The memory a reader of a book uses: for a book that keeps its own ({@code "progress": "book"}) opened from a copy
      * in a hand, that copy's; otherwise the player's.
      */
-    public static GuideMemory forReading(GuideBook book, @Nullable InteractionHand hand) {
+    public static GuideMemory forReading(FoliosBook book, @Nullable InteractionHand hand) {
         GuideMemory own = of(book.id());
         Player player = Minecraft.getInstance().player;
-        if (book.progress() != GuideBook.Progress.BOOK || hand == null || player == null) return own;
+        if (book.progress() != FoliosBook.Progress.BOOK || hand == null || player == null) return own;
         var stack = player.getItemInHand(hand);
         if (!book.id().equals(GuideNetwork.bookOf(stack))) return own;
         GuideMemory copy = new GuideMemory(book.id(), hand, own);
@@ -109,8 +109,8 @@ public final class GuideMemory {
         celebrated.clear();
         celebrated.addAll(record.celebrated());
         bookmarks.clear();
-        record.bookmarks().forEach(place -> bookmarks.add(new GuideBook.Location(place.entry(), place.page())));
-        last = record.last().map(place -> new GuideBook.Location(place.entry(), place.page())).orElse(null);
+        record.bookmarks().forEach(place -> bookmarks.add(new FoliosBook.Location(place.entry(), place.page())));
+        last = record.last().map(place -> new FoliosBook.Location(place.entry(), place.page())).orElse(null);
         leftOpen = record.leftOpen();
         lastChapter = record.lastChapter().orElse(null);
         lastPage = record.lastPage();
@@ -176,7 +176,7 @@ public final class GuideMemory {
         return read.size();
     }
 
-    public synchronized List<GuideBook.Location> bookmarks() {
+    public synchronized List<FoliosBook.Location> bookmarks() {
         return List.copyOf(bookmarks);
     }
 
@@ -185,7 +185,7 @@ public final class GuideMemory {
     }
 
     /** Adds a bookmark at a place, or removes the entry's if it has one; returns whether it is bookmarked now. */
-    public synchronized boolean toggleBookmark(GuideBook.Location location) {
+    public synchronized boolean toggleBookmark(FoliosBook.Location location) {
         dirty = true;
         if (bookmarks.removeIf(mark -> mark.entry().equals(location.entry()))) return false;
         if (bookmarks.size() >= MAX_BOOKMARKS) bookmarks.removeFirst();
@@ -193,11 +193,11 @@ public final class GuideMemory {
         return true;
     }
 
-    public synchronized GuideBook.@Nullable Location last() {
+    public synchronized FoliosBook.@Nullable Location last() {
         return last;
     }
 
-    public synchronized void setLast(GuideBook.@Nullable Location location) {
+    public synchronized void setLast(FoliosBook.@Nullable Location location) {
         if (java.util.Objects.equals(last, location)) return;
         last = location;
         dirty = true;

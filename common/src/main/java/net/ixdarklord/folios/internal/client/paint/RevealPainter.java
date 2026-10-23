@@ -1,10 +1,10 @@
 package net.ixdarklord.folios.internal.client.paint;
 
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
-import net.ixdarklord.folios.api.client.GuideReveal;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuidePainter;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.client.FoliosReveal;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -21,13 +21,13 @@ import java.util.Deque;
 // small cell at a time where the effect differs across them, scenes the same. Items fade, tint and move whole, as the
 // effect has it at their middle. Places are given to the effect across the open spread (the right page's from a page's width on), so
 // an effect runs on over the fold. Where things can be pressed is left as it is.
-public final class RevealPainter implements GuidePainter {
+public final class RevealPainter implements FoliosPainter {
     /** How large the cells are that fills and pictures are cut into while an effect differs across them. */
     private static final int CELL = 6;
     private static final int PICTURE_CELL = 12;
     private static final ResourceLocation RUNES = ResourceLocation.withDefaultNamespace("alt");
 
-    private final GuidePainter painter;
+    private final FoliosPainter painter;
 
     // The page's size is the painter's it wraps.
     @Override
@@ -39,7 +39,7 @@ public final class RevealPainter implements GuidePainter {
     public int pageHeight() {
         return painter.pageHeight();
     }
-    private final GuideReveal effect;
+    private final FoliosReveal effect;
     private final float progress;
     private final float pageX;
     private final Deque<float[]> stack = new ArrayDeque<>();
@@ -47,7 +47,7 @@ public final class RevealPainter implements GuidePainter {
     private float offsetY;
     private float scale = 1;
 
-    private RevealPainter(GuidePainter painter, GuideReveal effect, float progress, float pageX) {
+    private RevealPainter(FoliosPainter painter, FoliosReveal effect, float progress, float pageX) {
         this.painter = painter;
         this.effect = effect;
         this.progress = progress;
@@ -59,41 +59,41 @@ public final class RevealPainter implements GuidePainter {
      *
      * @param pageX where the page starts across the open spread: 0 for the left page, a page's width for the right
      */
-    public static void draw(GuidePainter painter, GuidePage.Laid page, @Nullable GuideReveal effect, float progress, float pageX) {
+    public static void draw(FoliosPainter painter, FoliosPageElement.Laid page, @Nullable FoliosReveal effect, float progress, float pageX) {
         page.draw(of(painter, effect, progress, pageX));
         // Nothing over a page whose reveal has yet to start (the right one, while the left reveals).
         if (effect != null && progress > 0 && progress < 1) above(painter, () -> effect.overlay(new EdgeFadePainter(painter, 0, 0, 1), progress, painter.time(), pageX));
     }
 
     /** The painter to draw a page's content through at this point of its reveal: the page's own once it is done. */
-    public static GuidePainter of(GuidePainter painter, @Nullable GuideReveal effect, float progress, float pageX) {
+    public static FoliosPainter of(FoliosPainter painter, @Nullable FoliosReveal effect, float progress, float pageX) {
         return effect == null || progress >= 1 ? painter : new RevealPainter(painter, effect, progress, pageX);
     }
 
     // How a thing at (x, y) in the current moves looks.
-    private GuideReveal.Look look(float x, float y) {
+    private FoliosReveal.Look look(float x, float y) {
         return effect.look(progress, pageX + offsetX + x * scale, offsetY + y * scale);
     }
 
     private static int faded(int argb, float opacity) {
         int alpha = Math.round((argb >>> 24) * Math.max(0, Math.min(1, opacity)));
-        return GuidePalette.alpha(argb, alpha);
+        return FoliosPalette.alpha(argb, alpha);
     }
 
     // A colour faded and tinted as a look has it.
-    private static int shaded(int argb, GuideReveal.Look look) {
+    private static int shaded(int argb, FoliosReveal.Look look) {
         int tint = look.tint();
-        if ((tint >>> 24) != 0) argb = GuidePalette.alpha(GuidePalette.mix(argb | 0xFF000000, tint | 0xFF000000, (tint >>> 24) / 255.0F), argb >>> 24);
+        if ((tint >>> 24) != 0) argb = FoliosPalette.alpha(FoliosPalette.mix(argb | 0xFF000000, tint | 0xFF000000, (tint >>> 24) / 255.0F), argb >>> 24);
         return faded(argb, look.opacity());
     }
 
-    private static boolean same(GuideReveal.Look a, GuideReveal.Look b) {
+    private static boolean same(FoliosReveal.Look a, FoliosReveal.Look b) {
         return Math.abs(a.opacity() - b.opacity()) < 0.02F && a.tint() == b.tint() && Math.abs(a.dx() - b.dx()) < 0.5F && Math.abs(a.dy() - b.dy()) < 0.5F;
     }
 
     // Whether the effect is the same all over a rectangle: its corners and its middle look alike.
     private boolean even(float x0, float y0, float x1, float y1) {
-        GuideReveal.Look middle = this.look((x0 + x1) / 2, (y0 + y1) / 2);
+        FoliosReveal.Look middle = this.look((x0 + x1) / 2, (y0 + y1) / 2);
         return same(middle, this.look(x0, y0)) && same(middle, this.look(x1, y0)) && same(middle, this.look(x0, y1)) && same(middle, this.look(x1, y1));
     }
 
@@ -109,13 +109,13 @@ public final class RevealPainter implements GuidePainter {
         above(painter, () -> this.around(x, y, 16, 16));
     }
 
-    private static void above(GuidePainter painter, Runnable draw) {
+    private static void above(FoliosPainter painter, Runnable draw) {
         if (painter instanceof AbstractPainter drawing) drawing.above(draw);
         else draw.run();
     }
 
     // Draws something moved by its look, in the page's own pixels (so the move doesn't grow with a scale).
-    private void moved(GuideReveal.Look look, Runnable draw) {
+    private void moved(FoliosReveal.Look look, Runnable draw) {
         if (look.dx() == 0 && look.dy() == 0) {
             draw.run();
             return;
@@ -130,14 +130,14 @@ public final class RevealPainter implements GuidePainter {
     public void fill(int x0, int y0, int x1, int y1, int argb) {
         if (x1 <= x0 || y1 <= y0) return;
         if (this.even(x0, y0, x1, y1)) {
-            GuideReveal.Look look = this.look((x0 + x1) / 2.0F, (y0 + y1) / 2.0F);
+            FoliosReveal.Look look = this.look((x0 + x1) / 2.0F, (y0 + y1) / 2.0F);
             if (look.opacity() > 0.01F) this.moved(look, () -> painter.fill(x0, y0, x1, y1, shaded(argb, look)));
             return;
         }
         for (int y = y0; y < y1; y += CELL) {
             for (int x = x0; x < x1; x += CELL) {
                 int left = x, top = y, right = Math.min(x1, x + CELL), bottom = Math.min(y1, y + CELL);
-                GuideReveal.Look look = this.look((left + right) / 2.0F, (top + bottom) / 2.0F);
+                FoliosReveal.Look look = this.look((left + right) / 2.0F, (top + bottom) / 2.0F);
                 if (look.opacity() > 0.01F) this.moved(look, () -> painter.fill(left, top, right, bottom, shaded(argb, look)));
             }
         }
@@ -149,7 +149,7 @@ public final class RevealPainter implements GuidePainter {
         // Where the effect is the same all along the line, the line at once.
         int lineWidth = font.width(text);
         if (this.even(x, y, x + lineWidth, y + 8)) {
-            GuideReveal.Look look = this.look(x + lineWidth / 2.0F, y + 4);
+            FoliosReveal.Look look = this.look(x + lineWidth / 2.0F, y + 4);
             if (look.opacity() < 0.1F) return;
             if (look.runes() <= 0.01F) {
                 int colour = shaded(argb, look);
@@ -167,10 +167,10 @@ public final class RevealPainter implements GuidePainter {
             int width = font.width(letter);
             at[0] += width;
             if (codePoint == ' ') return true;
-            GuideReveal.Look look = this.look(left + width / 2.0F, y + 4);
+            FoliosReveal.Look look = this.look(left + width / 2.0F, y + 4);
             // Text too faint can't be drawn: it is left out until it shows.
             if (look.opacity() < 0.1F) return true;
-            boolean rune = look.runes() > 0.01F && GuideReveal.noise(Math.round(left) * 31 + y * 131 + flicker * 104729) < look.runes();
+            boolean rune = look.runes() > 0.01F && FoliosReveal.noise(Math.round(left) * 31 + y * 131 + flicker * 104729) < look.runes();
             FormattedCharSequence shown = rune ? FormattedCharSequence.codepoint(codePoint, style.withFont(RUNES)) : letter;
             int colour = shaded(argb, look);
             this.moved(look, () -> {
@@ -187,7 +187,7 @@ public final class RevealPainter implements GuidePainter {
     @Override
     public void texture(ResourceLocation texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
         if (this.even(x, y, x + width, y + height)) {
-            GuideReveal.Look look = this.look(x + width / 2.0F, y + height / 2.0F);
+            FoliosReveal.Look look = this.look(x + width / 2.0F, y + height / 2.0F);
             if (look.opacity() > 0.01F) this.moved(look, () -> painter.texture(texture, x, y, width, height, u0, v0, u1, v1, shaded(argb, look)));
             if (width <= 24 && height <= 24) this.around(x, y, width, height);
             return;
@@ -195,7 +195,7 @@ public final class RevealPainter implements GuidePainter {
         for (int cy = 0; cy < height; cy += PICTURE_CELL) {
             for (int cx = 0; cx < width; cx += PICTURE_CELL) {
                 int w = Math.min(PICTURE_CELL, width - cx), h = Math.min(PICTURE_CELL, height - cy);
-                GuideReveal.Look look = this.look(x + cx + w / 2.0F, y + cy + h / 2.0F);
+                FoliosReveal.Look look = this.look(x + cx + w / 2.0F, y + cy + h / 2.0F);
                 if (look.opacity() <= 0.01F) continue;
                 float cu0 = u0 + (u1 - u0) * cx / width, cu1 = u0 + (u1 - u0) * (cx + w) / width;
                 float cv0 = v0 + (v1 - v0) * cy / height, cv1 = v0 + (v1 - v0) * (cy + h) / height;
@@ -212,7 +212,7 @@ public final class RevealPainter implements GuidePainter {
 
     @Override
     public void item(ItemStack stack, int x, int y, int argb) {
-        GuideReveal.Look look = this.look(x + 8, y + 8);
+        FoliosReveal.Look look = this.look(x + 8, y + 8);
         if (look.opacity() > 0.02F) this.moved(look, () -> painter.item(stack, x, y, shaded(argb, look)));
         this.aroundItem(x, y);
     }
@@ -231,14 +231,14 @@ public final class RevealPainter implements GuidePainter {
     public void scene(SceneViewport viewport, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
         // Whole where the effect is the same all over it; otherwise a cell at a time, as a picture is.
         if (this.even(x, y, x + width, y + height)) {
-            GuideReveal.Look look = this.look(x + width / 2.0F, y + height / 2.0F);
+            FoliosReveal.Look look = this.look(x + width / 2.0F, y + height / 2.0F);
             if (look.opacity() > 0.01F) this.moved(look, () -> painter.scene(viewport, x, y, width, height, u0, v0, u1, v1, shaded(argb, look)));
             return;
         }
         for (int cy = 0; cy < height; cy += PICTURE_CELL) {
             for (int cx = 0; cx < width; cx += PICTURE_CELL) {
                 int w = Math.min(PICTURE_CELL, width - cx), h = Math.min(PICTURE_CELL, height - cy);
-                GuideReveal.Look look = this.look(x + cx + w / 2.0F, y + cy + h / 2.0F);
+                FoliosReveal.Look look = this.look(x + cx + w / 2.0F, y + cy + h / 2.0F);
                 if (look.opacity() <= 0.01F) continue;
                 float cu0 = u0 + (u1 - u0) * cx / width, cu1 = u0 + (u1 - u0) * (cx + w) / width;
                 float cv0 = v0 + (v1 - v0) * cy / height, cv1 = v0 + (v1 - v0) * (cy + h) / height;
@@ -286,7 +286,7 @@ public final class RevealPainter implements GuidePainter {
     }
 
     @Override
-    public GuidePalette palette() {
+    public FoliosPalette palette() {
         return painter.palette();
     }
 

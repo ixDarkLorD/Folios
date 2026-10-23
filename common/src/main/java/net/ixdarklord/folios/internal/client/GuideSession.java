@@ -1,11 +1,11 @@
 package net.ixdarklord.folios.internal.client;
 
-import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.api.client.GuideCategory;
-import net.ixdarklord.folios.api.client.GuideEntry;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.FoliosCategory;
+import net.ixdarklord.folios.api.client.FoliosEntry;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.page.ErrorPage;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.Minecraft;
@@ -22,7 +22,7 @@ import java.util.Map;
 // shown and kept until something they depend on changes (a reload, the language, an unlock).
 public final class GuideSession {
     /** An entry's pages, ready to draw: anchors and the pages of its JSON point into them. */
-    public record EntryPages(List<GuidePage.Laid> pages, Map<String, Integer> anchors, int[] starts) {
+    public record EntryPages(List<FoliosPageElement.Laid> pages, Map<String, Integer> anchors, int[] starts) {
         /** Where a page of the entry's JSON begins among the laid pages. */
         public int start(int page) {
             return page < 0 || page >= starts.length ? 0 : starts[page];
@@ -41,30 +41,30 @@ public final class GuideSession {
     /** Where a link goes. */
     public record Target(@Nullable String entry, int page, @Nullable String category, @Nullable String url) {}
 
-    private final GuideBook book;
-    private final GuideLayout layout;
+    private final FoliosBook book;
+    private final FoliosLayout layout;
     private final String language;
     private final int progress;
     private final Map<String, EntryPages> entries = new HashMap<>();
     private @Nullable Map<String, String> searchIndex;
 
-    GuideSession(GuideBook book) {
-        this(book, GuideLayout.PAGE_WIDTH, GuideLayout.PAGE_HEIGHT);
+    GuideSession(FoliosBook book) {
+        this(book, FoliosLayout.PAGE_WIDTH, FoliosLayout.PAGE_HEIGHT);
     }
 
     /** Laid out to pages {@code pageWidth} by {@code pageHeight}. */
-    GuideSession(GuideBook book, int pageWidth, int pageHeight) {
+    GuideSession(FoliosBook book, int pageWidth, int pageHeight) {
         this.book = book;
-        this.layout = new GuideLayout(book, Minecraft.getInstance().font, pageWidth, pageHeight);
+        this.layout = new FoliosLayout(book, Minecraft.getInstance().font, pageWidth, pageHeight);
         this.language = Minecraft.getInstance().getLanguageManager().getSelected();
         this.progress = GuideProgress.version();
     }
 
-    public GuideBook book() {
+    public FoliosBook book() {
         return book;
     }
 
-    public GuideLayout layout() {
+    public FoliosLayout layout() {
         return layout;
     }
 
@@ -81,13 +81,13 @@ public final class GuideSession {
     }
 
     private EntryPages lay(String id) {
-        GuideEntry entry = book.entry(id);
-        List<GuidePage.Laid> pages = new ArrayList<>();
+        FoliosEntry entry = book.entry(id);
+        List<FoliosPageElement.Laid> pages = new ArrayList<>();
         Map<String, Integer> anchors = new HashMap<>();
         if (entry == null) return new EntryPages(pages, anchors, new int[0]);
         int[] starts = new int[entry.pages().size()];
         for (int index = 0; index < entry.pages().size(); index++) {
-            GuideEntry.Page page = entry.pages().get(index);
+            FoliosEntry.Page page = entry.pages().get(index);
             // A page over both pages starts on a left one.
             if (page.lock().isOpen() && page.page().spread() && pages.size() % 2 == 1) pages.add(painter -> {});
             starts[index] = pages.size();
@@ -95,25 +95,25 @@ public final class GuideSession {
             if (page.anchor() != null) anchors.put(page.anchor(), pages.size());
             try {
                 // The entry's icon heads its first page; a later page shows one only if it names its own.
-                layout.titleIcon(page.icon() != null ? page.icon() : index == 0 ? entry.icon() : net.ixdarklord.folios.api.client.page.GuideIcon.NONE);
+                layout.titleIcon(page.icon() != null ? page.icon() : index == 0 ? entry.icon() : net.ixdarklord.folios.api.client.page.FoliosIcon.NONE);
                 pages.addAll(page.page().lay(layout));
             } catch (RuntimeException e) {
                 Folios.LOGGER.error("Couldn't lay out page {} of the entry {} of the guide {}", index + 1, id, book.id(), e);
                 pages.addAll(new ErrorPage("This page couldn't be shown: " + e).lay(layout));
             }
         }
-        layout.titleIcon(net.ixdarklord.folios.api.client.page.GuideIcon.NONE);
+        layout.titleIcon(net.ixdarklord.folios.api.client.page.FoliosIcon.NONE);
         if (pages.isEmpty()) pages.add(painter -> {});
         return new EntryPages(List.copyOf(pages), Map.copyOf(anchors), starts);
     }
 
     /** A laid page of an entry as a place in the book. */
-    public GuideBook.Location location(String entry, int laid) {
-        return new GuideBook.Location(entry, entry(entry).source(laid));
+    public FoliosBook.Location location(String entry, int laid) {
+        return new FoliosBook.Location(entry, entry(entry).source(laid));
     }
 
     /** Which laid page of its entry a place is. */
-    public int pageOf(GuideBook.Location location) {
+    public int pageOf(FoliosBook.Location location) {
         return entry(location.entry()).start(location.page());
     }
 
@@ -123,7 +123,7 @@ public final class GuideSession {
         if (link.startsWith("http://") || link.startsWith("https://")) return new Target(null, 0, null, link);
         if (link.startsWith("category:")) {
             String id = link.substring(9);
-            GuideCategory category = book.category(id);
+            FoliosCategory category = book.category(id);
             return category != null && category.isOpen() ? new Target(null, 0, id, null) : null;
         }
         String entry = link.startsWith("entry:") ? link.substring(6) : link;
@@ -133,7 +133,7 @@ public final class GuideSession {
             anchor = entry.substring(hash + 1);
             entry = entry.substring(0, hash);
         }
-        GuideEntry found = book.entry(entry);
+        FoliosEntry found = book.entry(entry);
         if (found == null || !found.isOpen()) return null;
         int page = 0;
         if (anchor != null) {
@@ -149,31 +149,31 @@ public final class GuideSession {
         if (target == null) return Component.translatableWithFallback("folios.link.locked", "Not yet discovered");
         if (target.url() != null) return Component.literal(target.url());
         if (target.category() != null) {
-            GuideCategory category = book.category(target.category());
+            FoliosCategory category = book.category(target.category());
             return category != null ? category.title() : Component.literal(target.category());
         }
-        GuideEntry entry = book.entry(target.entry());
+        FoliosEntry entry = book.entry(target.entry());
         return entry != null ? entry.title() : Component.literal(String.valueOf(target.entry()));
     }
 
     // ---- Search ----
 
     /** The open entries whose name or words contain every word of a query, best matches (by name) first. */
-    public List<GuideEntry> search(String query) {
+    public List<FoliosEntry> search(String query) {
         String[] words = query.toLowerCase(Locale.ROOT).strip().split("\\s+");
         if (searchIndex == null) {
             searchIndex = new HashMap<>();
-            for (GuideEntry entry : book.entries().values()) {
+            for (FoliosEntry entry : book.entries().values()) {
                 StringBuilder text = new StringBuilder();
-                for (GuideEntry.Page page : entry.pages()) text.append(' ').append(GuideText.plain(page.page().searchText()));
+                for (FoliosEntry.Page page : entry.pages()) text.append(' ').append(FoliosText.plain(page.page().searchText()));
                 searchIndex.put(entry.id(), text.toString().toLowerCase(Locale.ROOT));
             }
         }
-        List<GuideEntry> named = new ArrayList<>();
-        List<GuideEntry> mentioned = new ArrayList<>();
-        for (GuideEntry entry : book.entries().values()) {
+        List<FoliosEntry> named = new ArrayList<>();
+        List<FoliosEntry> mentioned = new ArrayList<>();
+        for (FoliosEntry entry : book.entries().values()) {
             if (!entry.isOpen()) continue;
-            GuideCategory category = book.category(entry.category());
+            FoliosCategory category = book.category(entry.category());
             if (category == null || !category.isOpen()) continue;
             String name = entry.title().getString().toLowerCase(Locale.ROOT);
             String body = searchIndex.getOrDefault(entry.id(), "");

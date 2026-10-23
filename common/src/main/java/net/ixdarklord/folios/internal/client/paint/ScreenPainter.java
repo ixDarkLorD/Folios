@@ -2,7 +2,7 @@ package net.ixdarklord.folios.internal.client.paint;
 
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
 import net.ixdarklord.coolcatcanvas.internal.client.viewport.SceneViewportManager;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.client.GuideSession;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.folios.internal.compat.RenderPipelines;
@@ -17,7 +17,7 @@ public final class ScreenPainter extends AbstractPainter {
     private static final int UV = 1 << 14;
     private final GuiGraphicsExtractor graphics;
 
-    public ScreenPainter(GuiGraphicsExtractor graphics, float x, float y, float scale, GuidePalette palette, GuideSession session, Navigator navigator,
+    public ScreenPainter(GuiGraphicsExtractor graphics, float x, float y, float scale, FoliosPalette palette, GuideSession session, Navigator navigator,
                          float time, float pointerX, float pointerY, List<Hit> hits) {
         super(palette, session, navigator, time, pointerX, pointerY, hits);
         this.graphics = graphics;

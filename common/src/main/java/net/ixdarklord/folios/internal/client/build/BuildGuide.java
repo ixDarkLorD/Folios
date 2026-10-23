@@ -64,7 +64,7 @@ public final class BuildGuide {
 
     private final Component name;
     // The book it came from, for the panel's colours: the one being read when it was shown; null for none.
-    private final @Nullable net.ixdarklord.folios.api.client.GuideBook book;
+    private final @Nullable net.ixdarklord.folios.api.client.FoliosBook book;
     private final List<Part> parts = new ArrayList<>();
     private final BlockPos size;
     private @Nullable BlockPos anchor;
@@ -105,7 +105,7 @@ public final class BuildGuide {
     }
 
     // The book being read now: on its screen, or in the hands.
-    private static @Nullable net.ixdarklord.folios.api.client.GuideBook reading() {
+    private static @Nullable net.ixdarklord.folios.api.client.FoliosBook reading() {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.screen instanceof net.ixdarklord.folios.internal.client.screen.GuideScreen screen) return screen.reader().book;
         net.ixdarklord.folios.internal.client.handheld.HandheldBook held = net.ixdarklord.folios.internal.client.handheld.HandheldBook.current();
@@ -320,14 +320,14 @@ public final class BuildGuide {
         Minecraft minecraft = Minecraft.getInstance();
         if (guide == null || minecraft.options.hideGui) return;
         Font font = minecraft.font;
-        net.ixdarklord.folios.api.client.GuideBook book = guide.book;
+        net.ixdarklord.folios.api.client.FoliosBook book = guide.book;
         int cover = book != null ? 0xFF000000 | book.cover() : 0xFF3B2618;
         int gilt = book != null ? net.ixdarklord.folios.internal.client.GuideTooltips.titleColor(book) : 0xFFF2E6CC;
         // The book's panel scheme: its frame for the rules, slots and the bar's rim, its detail for quieter text.
         int frame = book != null ? 0xFF000000 | net.ixdarklord.folios.internal.client.GuideTooltips.frameColor(book) : 0xFFE8C66A;
-        int rule = net.ixdarklord.folios.api.client.page.GuidePalette.mix(frame, cover, 0.45F);
+        int rule = net.ixdarklord.folios.api.client.page.FoliosPalette.mix(frame, cover, 0.45F);
         int quiet = book != null ? net.ixdarklord.folios.internal.client.GuideTooltips.detailColor(book)
-                : net.ixdarklord.folios.api.client.page.GuidePalette.mix(gilt, cover, 0.45F);
+                : net.ixdarklord.folios.api.client.page.FoliosPalette.mix(gilt, cover, 0.45F);
         int total = guide.parts.size();
         float progress = total == 0 ? 0 : guide.placed / (float) total;
         Component title = guide.name.copy().withStyle(ChatFormatting.BOLD);
@@ -372,8 +372,8 @@ public final class BuildGuide {
         // How much is placed: a short bar under the name, as wide as the frame's inside, a little in from each side.
         int barLeft = x + 1;
         int barRight = x + wide - 1;
-        int outline = net.ixdarklord.folios.api.client.page.GuidePalette.mix(frame, cover, 0.25F);
-        progressBar(graphics, barLeft, at - 1, barRight - barLeft, progress, net.ixdarklord.folios.api.client.page.GuidePalette.mix(frame, cover, 0.45F));
+        int outline = net.ixdarklord.folios.api.client.page.FoliosPalette.mix(frame, cover, 0.25F);
+        progressBar(graphics, barLeft, at - 1, barRight - barLeft, progress, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(frame, cover, 0.45F));
         at += 6 + 4;
         row = 0;
         for (Need need : guide.needs.values()) {
@@ -398,7 +398,7 @@ public final class BuildGuide {
         for (int px = 0; px < wide; px++) {
             float t = 1 - Math.abs(px + 0.5F - wide / 2.0F) / (wide / 2.0F);
             int alpha = Math.round(255 * t * t * (3 - 2 * t));
-            if (alpha > 4) graphics.fill(x + px, at + 1, x + px + 1, at + 2, net.ixdarklord.folios.api.client.page.GuidePalette.alpha(rule, alpha));
+            if (alpha > 4) graphics.fill(x + px, at + 1, x + px + 1, at + 2, net.ixdarklord.folios.api.client.page.FoliosPalette.alpha(rule, alpha));
         }
         fitted(graphics, font, hint, x, at + 4, wide, quiet);
     }
@@ -416,9 +416,9 @@ public final class BuildGuide {
         graphics.fill(x1, y1, x1 + 1, y1 + 1, 0x28000000);
         // The rim, its corner pixels left out.
         graphics.fill(x + 1, y, x1 - 1, y + 1, rim);
-        graphics.fill(x + 1, y1 - 1, x1 - 1, y1, net.ixdarklord.folios.api.client.page.GuidePalette.mix(rim, 0xFF000000, 0.3F));
+        graphics.fill(x + 1, y1 - 1, x1 - 1, y1, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(rim, 0xFF000000, 0.3F));
         graphics.fill(x, y + 1, x + 1, y1 - 1, rim);
-        graphics.fill(x1 - 1, y + 1, x1, y1 - 1, net.ixdarklord.folios.api.client.page.GuidePalette.mix(rim, 0xFF000000, 0.2F));
+        graphics.fill(x1 - 1, y + 1, x1, y1 - 1, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(rim, 0xFF000000, 0.2F));
         // The groove, shaded under the rim's top.
         graphics.fill(x + 1, y + 1, x1 - 1, y1 - 1, groove);
         graphics.fill(x + 1, y + 1, x1 - 1, y + 2, 0xFF0A0707);
@@ -435,15 +435,15 @@ public final class BuildGuide {
         int right = left + filled;
         // The fill, square at its ends, filling the groove's height.
         graphics.fill(left, y + 1, right, y1 - 1, fill);
-        graphics.fill(left, y + 1, right, y + 2, net.ixdarklord.folios.api.client.page.GuidePalette.mix(fill, 0xFFFFFFFF, 0.45F));
-        graphics.fill(left, y + 2, right, y + 3, net.ixdarklord.folios.api.client.page.GuidePalette.mix(fill, 0xFFFFFFFF, 0.18F));
-        graphics.fill(left, y1 - 2, right, y1 - 1, net.ixdarklord.folios.api.client.page.GuidePalette.mix(fill, 0xFF000000, 0.3F));
+        graphics.fill(left, y + 1, right, y + 2, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFFFFFFFF, 0.45F));
+        graphics.fill(left, y + 2, right, y + 3, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFFFFFFFF, 0.18F));
+        graphics.fill(left, y1 - 2, right, y1 - 1, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFF000000, 0.3F));
         // The tenths it has passed, a shade darker in the fill.
         for (int tenth = 1; tenth < 10; tenth++) {
             int at = left + inside * tenth / 10;
-            if (at < right - 1) graphics.fill(at, y + 3, at + 1, y1 - 2, net.ixdarklord.folios.api.client.page.GuidePalette.mix(fill, 0xFF000000, 0.18F));
+            if (at < right - 1) graphics.fill(at, y + 3, at + 1, y1 - 2, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFF000000, 0.18F));
         }
-        if (filled < inside && filled > 2) graphics.fill(right - 2, y + 2, right - 1, y1 - 2, net.ixdarklord.folios.api.client.page.GuidePalette.mix(fill, 0xFFFFFFFF, 0.6F));
+        if (filled < inside && filled > 2) graphics.fill(right - 2, y + 2, right - 1, y1 - 2, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFFFFFFFF, 0.6F));
     }
 
     // A line in the room it has: as it is if it fits; else shrunk, to no less than three quarters; else in two lines at

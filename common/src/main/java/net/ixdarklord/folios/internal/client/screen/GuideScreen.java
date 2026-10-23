@@ -4,13 +4,13 @@ import net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyledEditBox;
 import net.ixdarklord.coolcatcore.api.config.ConfigTheme;
-import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.api.client.GuideCategory;
-import net.ixdarklord.folios.api.client.GuideEntry;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuidePainter;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.FoliosCategory;
+import net.ixdarklord.folios.api.client.FoliosEntry;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.client.GuideReader;
 import net.ixdarklord.folios.internal.client.GuideSession;
 import net.ixdarklord.folios.internal.client.GuideLibrary;
@@ -45,7 +45,7 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
     public static final int BORDER = 7;
     private static final int SPINE = 6;
     /** The open book across at the default page size, its border included: as wide as its bar, and the handheld book's. */
-    public static final int BOOK_WIDTH = GuideLayout.PAGE_WIDTH * 2 + SPINE + BORDER * 2;
+    public static final int BOOK_WIDTH = FoliosLayout.PAGE_WIDTH * 2 + SPINE + BORDER * 2;
     private static final int BAR = GuideBar.HEIGHT;
     private static final int BAR_GAP = 5;
     private static final int TAB = 22;
@@ -65,7 +65,7 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
     public GuideReader reader() {
         return reader;
     }
-    private final GuideBook book;
+    private final FoliosBook book;
     private final long openedAt = Util.getMillis();
     private final GuideBar bar;
     private @Nullable StyledEditBox search;
@@ -80,12 +80,12 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
     private float originY;
     private float scale = 1;
 
-    public GuideScreen(GuideBook book, GuideSession session, GuideBook.@Nullable Location at) {
+    public GuideScreen(FoliosBook book, GuideSession session, FoliosBook.@Nullable Location at) {
         this(book, session, at, null);
     }
 
     /** A book opened from a copy in {@code hand} (null for none), whose own progress it keeps if the book says so. */
-    public GuideScreen(GuideBook book, GuideSession session, GuideBook.@Nullable Location at, net.minecraft.world.@Nullable InteractionHand hand) {
+    public GuideScreen(FoliosBook book, GuideSession session, FoliosBook.@Nullable Location at, net.minecraft.world.@Nullable InteractionHand hand) {
         super(book.title());
         this.book = book;
         this.reader = new GuideReader(book, session, at, hand);
@@ -98,10 +98,10 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
     // ---- Layout ----
 
     // The pages' size now (larger at a small GUI scale: PageSize), and the open book's, its border included.
-    private int pw = GuideLayout.PAGE_WIDTH;
-    private int ph = GuideLayout.PAGE_HEIGHT;
+    private int pw = FoliosLayout.PAGE_WIDTH;
+    private int ph = FoliosLayout.PAGE_HEIGHT;
     private int bookWidth = BOOK_WIDTH;
-    private int bookHeight = GuideLayout.PAGE_HEIGHT + BORDER * 2;
+    private int bookHeight = FoliosLayout.PAGE_HEIGHT + BORDER * 2;
 
     // How large the book is drawn, in GUI pixels a book pixel, at the default page size: as large as it would be at the
     // Auto GUI scale, a whole number of the window's pixels a book pixel so the pixel font stays sharp, no larger than
@@ -125,8 +125,8 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
         float drawn = PageSize.drawn();
         int chromeWidth = SPINE + BORDER * 2 + TAB * 2 + 8;
         int chromeHeight = BORDER * 2 + BAR + BAR_GAP + 8;
-        factor = Math.min(factor, Math.min((this.width / drawn - chromeWidth) / 2.0F / GuideLayout.PAGE_WIDTH,
-                (this.height / drawn - chromeHeight) / (float) GuideLayout.PAGE_HEIGHT));
+        factor = Math.min(factor, Math.min((this.width / drawn - chromeWidth) / 2.0F / FoliosLayout.PAGE_WIDTH,
+                (this.height / drawn - chromeHeight) / (float) FoliosLayout.PAGE_HEIGHT));
         this.pw = PageSize.width(factor);
         this.ph = PageSize.height(factor);
         this.bookWidth = pw * 2 + SPINE + BORDER * 2;
@@ -142,18 +142,18 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
     }
 
     /** The paper and ink for the player's mode, tinted by the book. */
-    private GuidePalette palette() {
+    private FoliosPalette palette() {
         return pagePalette(this.book);
     }
 
     /** The paper and ink of a screen book's pages, for the player's mode. */
-    public static GuidePalette pagePalette(GuideBook book) {
+    public static FoliosPalette pagePalette(FoliosBook book) {
         int accent = 0xFF000000 | book.accent();
         if (ConfigStyle.mode() == ConfigTheme.Mode.DARK) {
-            int bright = GuidePalette.mix(accent, 0xFFFFFFFF, 0.25F);
-            return book.colors().over(new GuidePalette(0xFF1F222C, 0xFFD5D8E2, 0xFF878DA0, 0xFFFFFFFF, bright, GuidePalette.mix(bright, 0xFFFFFFFF, 0.25F), 0xFF282C38, 0xFF393E4E), true);
+            int bright = FoliosPalette.mix(accent, 0xFFFFFFFF, 0.25F);
+            return book.colors().over(new FoliosPalette(0xFF1F222C, 0xFFD5D8E2, 0xFF878DA0, 0xFFFFFFFF, bright, FoliosPalette.mix(bright, 0xFFFFFFFF, 0.25F), 0xFF282C38, 0xFF393E4E), true);
         }
-        return book.colors().over(new GuidePalette(0xFFF8F4EB, 0xFF35312B, 0xFF8E877B, 0xFF1A1814, accent, GuidePalette.mix(accent, 0xFF000000, 0.2F), 0xFFEEE7D9, 0xFFD8CEBA), false);
+        return book.colors().over(new FoliosPalette(0xFFF8F4EB, 0xFF35312B, 0xFF8E877B, 0xFF1A1814, accent, FoliosPalette.mix(accent, 0xFF000000, 0.2F), 0xFFEEE7D9, 0xFFD8CEBA), false);
     }
 
     private float bookX(double mouseX) {
@@ -245,7 +245,7 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
         if (this.reader.flip == null) {
             float bx = this.bookX(x);
             float by = this.bookY(y);
-            GuidePainter.Scroll scroll = AbstractPainter.Hit.scrollAt(this.leftHits, bx - BORDER, by - BORDER);
+            FoliosPainter.Scroll scroll = AbstractPainter.Hit.scrollAt(this.leftHits, bx - BORDER, by - BORDER);
             if (scroll == null) scroll = AbstractPainter.Hit.scrollAt(this.rightHits, bx - BORDER - pw - SPINE, by - BORDER);
             if (scroll != null) {
                 scroll.scrolled(scrollY);
@@ -317,7 +317,7 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
         // The world stays in sight, dimmed more towards the edges so the book stands out.
         ResourceLocation backdrop = this.book.textures().backdrop();
         if (backdrop != null) {
-            layer(graphics, backdrop, 0, 0, this.width, this.height, GuidePalette.alpha(0xFFFFFFFF, Math.round(255 * this.opening())));
+            layer(graphics, backdrop, 0, 0, this.width, this.height, FoliosPalette.alpha(0xFFFFFFFF, Math.round(255 * this.opening())));
             return;
         }
         int alpha = Math.round(0x90 * this.opening());
@@ -375,18 +375,18 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
 
     // The cover, the two pages and the fold, what is on them, and a leaf folding over while a spread changes.
     private void drawBook(GuiGraphicsExtractor graphics, float mouseX, float mouseY) {
-        GuidePalette palette = this.palette();
+        FoliosPalette palette = this.palette();
         int cover = 0xFF000000 | this.book.cover();
         // A soft shadow under the book.
         for (int step = 1; step <= 4; step++) {
             rounded(graphics, -step + 2, step + 1, bookWidth + step - 2, bookHeight + step + 2, 0x18000000);
         }
         rounded(graphics, 0, 0, bookWidth, bookHeight, cover);
-        GuideBook.Textures textures = this.book.textures();
+        FoliosBook.Textures textures = this.book.textures();
         layer(graphics, textures.cover(), 1, 1, bookWidth - 2, bookHeight - 2, cover);
-        graphics.fill(2, 1, bookWidth - 2, 2, GuidePalette.mix(cover, 0xFFFFFFFF, 0.18F));
-        graphics.fill(2, bookHeight - 2, bookWidth - 2, bookHeight - 1, GuidePalette.mix(cover, 0xFF000000, 0.3F));
-        int gilt = GuidePalette.alpha(GuidePalette.mix(palette.accent(), 0xFFFFFFFF, 0.2F), 0x90);
+        graphics.fill(2, 1, bookWidth - 2, 2, FoliosPalette.mix(cover, 0xFFFFFFFF, 0.18F));
+        graphics.fill(2, bookHeight - 2, bookWidth - 2, bookHeight - 1, FoliosPalette.mix(cover, 0xFF000000, 0.3F));
+        int gilt = FoliosPalette.alpha(FoliosPalette.mix(palette.accent(), 0xFFFFFFFF, 0.2F), 0x90);
         graphics.fill(3, 3, bookWidth - 3, 4, gilt);
         graphics.fill(3, bookHeight - 4, bookWidth - 3, bookHeight - 3, gilt);
         // The pages, with the fold between them.
@@ -402,8 +402,8 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
         GuideReader.Flip flip = this.reader.flip;
         GuideReader.Spot spot = this.reader.spot;
         float angle = flip == null ? 0 : ease(flip.forward() ? turned : 1 - turned) * Mth.PI;
-        GuidePage.Laid left = flip == null ? this.reader.page(spot, 0) : flip.forward() ? flip.oldLeft() : flip.newLeft();
-        GuidePage.Laid right = flip == null ? this.reader.page(spot, 1) : flip.forward() ? flip.newRight() : flip.oldRight();
+        FoliosPageElement.Laid left = flip == null ? this.reader.page(spot, 0) : flip.forward() ? flip.oldLeft() : flip.newLeft();
+        FoliosPageElement.Laid right = flip == null ? this.reader.page(spot, 1) : flip.forward() ? flip.newRight() : flip.oldRight();
         // The fold: a shadow over the paper, deepest at the spine; each side as strong as its own page has it (fainter
         // under half of a spread), so it stays right while a leaf turns between a spread and other pages.
         int leftFold = foldStrength(left);
@@ -433,9 +433,9 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
     }
 
     // How dark the fold's shadow is at the spine on a page: fainter under half of a spread.
-    private static int foldStrength(GuidePage.@Nullable Laid page) {
+    private static int foldStrength(FoliosPageElement.@Nullable Laid page) {
         int fold = ConfigStyle.mode() == ConfigTheme.Mode.DARK ? 0x70 : 0x2C;
-        return page instanceof GuidePage.SpreadHalf ? Math.round(fold * SPREAD_FOLD) : fold;
+        return page instanceof FoliosPageElement.SpreadHalf ? Math.round(fold * SPREAD_FOLD) : fold;
     }
 
     private static float ease(float t) {
@@ -443,7 +443,7 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
         return t < 0.5F ? 4 * t * t * t : 1 - (float) Math.pow(-2 * t + 2, 3) / 2;
     }
 
-    private void page(GuiGraphicsExtractor graphics, GuidePalette palette, GuidePage.@Nullable Laid page, int x, int y, float mouseX, float mouseY,
+    private void page(GuiGraphicsExtractor graphics, FoliosPalette palette, FoliosPageElement.@Nullable Laid page, int x, int y, float mouseX, float mouseY,
                       boolean pressable, List<AbstractPainter.Hit> pageHits, GuideReader.Spot spot, boolean right) {
         float pointerX = mouseX - x;
         float pointerY = mouseY - y;
@@ -464,10 +464,10 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
 
     // A leaf folding over the spine: it narrows as it rises and widens as it lies down on the other side, darker the
     // more it stands up, casting a shadow on the page it uncovers. Its writing is left out while it is very narrow.
-    private void leaf(GuiGraphicsExtractor graphics, GuidePalette palette, GuideReader.Flip flip, float angle, int spine, int top) {
+    private void leaf(GuiGraphicsExtractor graphics, FoliosPalette palette, GuideReader.Flip flip, float angle, int spine, int top) {
         float upright = Mth.sin(angle);
         boolean faceShown = angle < Mth.HALF_PI;
-        GuidePage.Laid shown = faceShown ? (flip.forward() ? flip.oldRight() : flip.newRight()) : (flip.forward() ? flip.newLeft() : flip.oldLeft());
+        FoliosPageElement.Laid shown = faceShown ? (flip.forward() ? flip.oldRight() : flip.newRight()) : (flip.forward() ? flip.newLeft() : flip.oldLeft());
         int shadow = Math.round(pw * 0.45F * upright);
         for (int step = 0; step < 6 && shadow > 0; step++) {
             int alpha = Math.round(0x40 * upright * (1 - step / 6.0F));
@@ -482,7 +482,7 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
         // is turned from facing the reader. Where the strips are, across the screen: from the spine, each a step of
         // the leaf's length turned by its angle.
         float length = pw + SPINE / 2.0F;
-        boolean bend = this.book.pageTurn() == GuideBook.PageTurn.BEND;
+        boolean bend = this.book.pageTurn() == FoliosBook.PageTurn.BEND;
         float curl = bend ? (flip.forward() ? -1 : 1) * LEAF_BEND * upright : 0;
         float[] edges = new float[LEAF_STRIPS + 1];
         float[] turns = new float[LEAF_STRIPS];
@@ -522,12 +522,12 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
         // The leaf's free edge, a line of the leaves' colour.
         float outer = edges[LEAF_STRIPS];
         int edgeX = Math.round(outer) - (outer > spine ? 1 : 0);
-        graphics.fill(edgeX, top, edgeX + 1, top + ph, GuidePalette.mix(palette.paper(), palette.line(), 0.8F));
+        graphics.fill(edgeX, top, edgeX + 1, top + ph, FoliosPalette.mix(palette.paper(), palette.line(), 0.8F));
     }
 
     // The whole of a turning leaf in its own pixels, the spine at the left for its face (at the right for its back):
     // paper, the fold's shadow at its spine edge, and what is on it, when it stands open enough to be read.
-    private void leafPage(GuiGraphicsExtractor graphics, GuidePalette palette, GuidePage.@Nullable Laid shown, GuideReader.Spot spot,
+    private void leafPage(GuiGraphicsExtractor graphics, FoliosPalette palette, FoliosPageElement.@Nullable Laid shown, GuideReader.Spot spot,
                           boolean faceShown, int fold, boolean content) {
         graphics.fill(0, 0, pw + SPINE / 2, ph, palette.paper());
         layer(graphics, this.book.textures().page(), 0, 0, pw + SPINE / 2, ph, palette.paper());
@@ -557,18 +557,18 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
     private static final int TAB_SMALL = 18;
 
     // A tab: what it is for, and its place from the top.
-    private record TabSpot(boolean here, Component name, Runnable action, @Nullable GuideCategory category, String part, int order) {}
+    private record TabSpot(boolean here, Component name, Runnable action, @Nullable FoliosCategory category, String part, int order) {}
 
     // Ribbon tabs out of the book's right edge: the front and each open category from the top, the bookmarks and the
     // index at the foot. At rest each is small; the open one grows as it opens. They are laid one under the other with
     // the same gap between each, whatever their sizes, so the column stays even as one grows. Under the pointer a tab
     // only swings further out, so nothing moves beneath it.
     private void drawTabs(GuiGraphicsExtractor graphics, float mouseX, float mouseY) {
-        GuidePalette palette = this.palette();
+        FoliosPalette palette = this.palette();
         int x = bookWidth - 2 + this.book.layout().tabX();
         int gap = this.book.layout().tabSpacing();
         String chapter = this.reader.spot.chapter();
-        GuideCategory open = this.reader.category();
+        FoliosCategory open = this.reader.category();
         // The foot first, from the bottom up: the index, then the bookmarks once there are any.
         int foot = bookHeight - 6;
         int order = 99;
@@ -583,7 +583,7 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
         order = 0;
         y = this.tab(graphics, mouseX, mouseY, x, y, palette, new TabSpot("home".equals(chapter),
                 Component.translatableWithFallback("folios.introduction", "Introduction"), this.reader::home, null, "home", order++)) + gap;
-        for (GuideCategory category : this.book.visibleCategories()) {
+        for (FoliosCategory category : this.book.visibleCategories()) {
             if (y + TAB > foot) break;
             if (!category.isOpen()) continue;
             y = this.tab(graphics, mouseX, mouseY, x, y, palette, new TabSpot(open != null && open.id().equals(category.id()), category.title(),
@@ -595,7 +595,7 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
     private static final float HOVER_OUT = 0.55F;
 
     // A tab whose foot is at y: drawn up from it; returns its top.
-    private int footTab(GuiGraphicsExtractor graphics, float mouseX, float mouseY, int x, int bottom, GuidePalette palette, TabSpot spot) {
+    private int footTab(GuiGraphicsExtractor graphics, float mouseX, float mouseY, int x, int bottom, FoliosPalette palette, TabSpot spot) {
         boolean hovered = over(mouseX, mouseY, x, bottom - TAB_SMALL, x + 38, bottom);
         float moved = this.reader.tabs.out(GuideReader.tabKey(spot.category, spot.part), hovered, spot.here);
         int tall = tabTall(moved);
@@ -604,7 +604,7 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
     }
 
     // A tab whose top is at y: drawn down from it; returns its foot.
-    private int tab(GuiGraphicsExtractor graphics, float mouseX, float mouseY, int x, int top, GuidePalette palette, TabSpot spot) {
+    private int tab(GuiGraphicsExtractor graphics, float mouseX, float mouseY, int x, int top, FoliosPalette palette, TabSpot spot) {
         boolean hovered = over(mouseX, mouseY, x, top, x + 38, top + TAB_SMALL);
         float moved = this.reader.tabs.out(GuideReader.tabKey(spot.category, spot.part), hovered, spot.here);
         int tall = tabTall(moved);
@@ -622,18 +622,18 @@ public final class GuideScreen extends net.ixdarklord.folios.internal.compat.Com
     }
 
     // What a tab's tooltip says under its name.
-    private @Nullable Component tabDetail(@Nullable GuideCategory category, String part) {
+    private @Nullable Component tabDetail(@Nullable FoliosCategory category, String part) {
         return this.reader.tabDetail(category, part);
     }
 
-    private void tab(GuiGraphicsExtractor graphics, int x, int y, int tall, TabSpot spot, GuidePalette palette, float moved, boolean hovered) {
+    private void tab(GuiGraphicsExtractor graphics, int x, int y, int tall, TabSpot spot, FoliosPalette palette, float moved, boolean hovered) {
         String key = GuideReader.tabKey(spot.category, spot.part);
         float pressed = this.reader.tabs.pressed(key);
         float grow = tabGrow(moved);
         // Tucked deeper in the leaves the lower it is, it lies a little in their shade; open, it rises to the surface.
         int depth = Shapes.tabDepth(Math.min(spot.order, 6), moved);
         int out = Math.round(24 + 15 * moved - 4 * pressed) - depth;
-        int color = GuidePalette.mix(this.reader.tabColor(spot.category, palette, moved), 0xFF000000, 0.15F * pressed + 0.06F * depth);
+        int color = FoliosPalette.mix(this.reader.tabColor(spot.category, palette, moved), 0xFF000000, 0.15F * pressed + 0.06F * depth);
         // The ribbon texture, its swallowtail end at the right, stretched from its root under the page to its tip,
         // in its colour; then the leaves over its root.
         int edge = bookWidth - BORDER;
