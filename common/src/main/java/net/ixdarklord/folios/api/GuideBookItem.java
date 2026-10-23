@@ -44,9 +44,9 @@ public class GuideBookItem extends Item {
         this.book = book;
     }
 
-    /** The book a stack of this item opens, or null when it names none. */
+    /** The book a stack of this item opens: its NBT's, else this item's own; null when it names none. */
     public @Nullable ResourceLocation book(ItemStack stack) {
-        ResourceLocation named = GuideBooks.bookOf(stack);
+        ResourceLocation named = GuideBooks.named(stack);
         return named != null ? named : this.book;
     }
 
