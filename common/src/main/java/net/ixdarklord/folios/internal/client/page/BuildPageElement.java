@@ -7,9 +7,9 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.GuideLibrary;
 import net.ixdarklord.folios.internal.client.build.BlockChoice;
 import net.ixdarklord.folios.internal.core.Folios;
@@ -29,7 +29,7 @@ import java.util.Optional;
 // and "mapping" as a multiblock page's, then "blocks", each {"block": ..., "pos": [x, y, z]} or a box of them
 // {"block": ..., "from": [x, y, z], "to": [x, y, z], "hollow": true}, in order, each over what came before (air clears).
 // A block can be a tag, as on a multiblock page.
-public record BuildPageElement(List<Showcase.Shown> builds, Optional<String> title, String text, int height, Showcase.Selector selector) implements GuidePage {
+public record BuildPageElement(List<Showcase.Shown> builds, Optional<String> title, String text, int height, Showcase.Selector selector) implements FoliosPageElement {
     public static final MapCodec<BuildPageElement> CODEC = RecordCodecBuilder.<BuildPageElement>mapCodec(instance -> instance.group(
             Showcase.Shown.CODEC.listOf().optionalFieldOf("builds", List.of()).forGetter(BuildPageElement::builds),
             Showcase.Shown.CODEC.optionalFieldOf("build").forGetter(page -> Optional.empty()),
@@ -48,23 +48,23 @@ public record BuildPageElement(List<Showcase.Shown> builds, Optional<String> tit
     private static final int MOST_BLOCKS = 65536;
 
     @Override
-    public List<Laid> lay(GuideLayout layout) {
+    public List<Laid> lay(FoliosLayout layout) {
         return Showcase.lay(layout, title, text, height, selector, this.items(layout));
     }
 
     /** What it shows between its title and its text. */
-    Body body(GuideLayout layout) {
+    Body body(FoliosLayout layout) {
         return Showcase.body(layout, height, selector, this.items(layout));
     }
 
-    private List<Showcase.Item> items(GuideLayout layout) {
+    private List<Showcase.Item> items(FoliosLayout layout) {
         ResourceLocation book = layout.book().id();
         List<Showcase.Item> items = new ArrayList<>();
         for (Showcase.Shown shown : builds) {
             ResourceLocation id = shown.id().contains(":") ? ResourceLocation.tryParse(shown.id()) : book.withPath(book.getPath() + "/builds/" + shown.id());
             JsonObject json = id == null ? null : GuideLibrary.build(id);
-            Component name = shown.name().map(GuideText::inline)
-                    .orElse(json != null && json.has("name") ? GuideText.inline(json.get("name").getAsString()) : null);
+            Component name = shown.name().map(FoliosText::inline)
+                    .orElse(json != null && json.has("name") ? FoliosText.inline(json.get("name").getAsString()) : null);
             Showcase.State state;
             if (json == null) {
                 state = Showcase.State.saying(Component.translatableWithFallback("folios.build.missing", "No build %s", shown.id()));
@@ -141,8 +141,8 @@ public record BuildPageElement(List<Showcase.Shown> builds, Optional<String> tit
 
     @Override
     public String searchText() {
-        StringBuilder words = new StringBuilder(GuideText.resolve(title.orElse(""))).append(' ').append(GuideText.resolve(text));
-        builds.forEach(shown -> shown.name().ifPresent(name -> words.append(' ').append(GuideText.resolve(name))));
+        StringBuilder words = new StringBuilder(FoliosText.resolve(title.orElse(""))).append(' ').append(FoliosText.resolve(text));
+        builds.forEach(shown -> shown.name().ifPresent(name -> words.append(' ').append(FoliosText.resolve(name))));
         return words.toString();
     }
 }

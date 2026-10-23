@@ -1,6 +1,6 @@
 package net.ixdarklord.folios.internal.mixin.client;
 
-import net.ixdarklord.folios.api.GuideBookItem;
+import net.ixdarklord.folios.api.FoliosBookItem;
 import net.ixdarklord.folios.internal.client.handheld.SharedBooks;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
@@ -30,8 +30,8 @@ public abstract class SharedBookPoseMixin<T extends LivingEntity> {
         boolean rightMain = entity.getMainArm() == HumanoidArm.RIGHT;
         ItemStack right = rightMain ? entity.getMainHandItem() : entity.getOffhandItem();
         ItemStack left = rightMain ? entity.getOffhandItem() : entity.getMainHandItem();
-        if (right.getItem() instanceof GuideBookItem && model.rightArmPose == HumanoidModel.ArmPose.ITEM) model.rightArm.xRot -= 0.3F;
-        if (left.getItem() instanceof GuideBookItem && model.leftArmPose == HumanoidModel.ArmPose.ITEM) model.leftArm.xRot -= 0.3F;
+        if (right.getItem() instanceof FoliosBookItem && model.rightArmPose == HumanoidModel.ArmPose.ITEM) model.rightArm.xRot -= 0.3F;
+        if (left.getItem() instanceof FoliosBookItem && model.leftArmPose == HumanoidModel.ArmPose.ITEM) model.leftArm.xRot -= 0.3F;
         this.folios$sleeves();
     }
 

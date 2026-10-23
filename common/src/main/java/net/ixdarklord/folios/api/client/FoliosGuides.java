@@ -23,25 +23,25 @@ import java.util.function.BooleanSupplier;
  *     entries/basics/first_steps.json name, category, icon, sort, featured, pages: [...]
  * </pre>
  * Text anywhere can be a translation key, and is written in a small Markdown
- * ({@link net.ixdarklord.folios.api.client.page.GuideText}); the kinds of page are listed in
- * {@link net.ixdarklord.folios.api.client.page.GuidePageTypes}, and a book's {@code "style"} picks how it is
- * shown ({@link GuideStyles}). Categories, entries and pages can be locked behind advancements or flags
- * ({@link GuideLock}).
+ * ({@link net.ixdarklord.folios.api.client.page.FoliosText}); the kinds of page are listed in
+ * {@link net.ixdarklord.folios.api.client.page.FoliosPageElements}, and a book's {@code "style"} picks how it is
+ * shown ({@link FoliosStyles}). Categories, entries and pages can be locked behind advancements or flags
+ * ({@link FoliosLock}).
  * <pre>{@code
- * Guides.open(MyMod.id("handbook"));
- * Guides.open(MyMod.id("handbook"), "basics/first_steps");
- * Guides.setFlag("mymod:hard_mode", () -> MyConfig.HARD_MODE.get());
+ * FoliosGuides.open(MyMod.id("handbook"));
+ * FoliosGuides.open(MyMod.id("handbook"), "basics/first_steps");
+ * FoliosGuides.setFlag("mymod:hard_mode", () -> MyConfig.HARD_MODE.get());
  * }</pre>
- * The server can open books too, and give them as items: {@link net.ixdarklord.folios.api.GuideBooks}.
+ * The server can open books too, and give them as items: {@link net.ixdarklord.folios.api.FoliosBooks}.
  */
-public final class Guides {
-    private Guides() {}
+public final class FoliosGuides {
+    private FoliosGuides() {}
 
-    public static @Nullable GuideBook book(ResourceLocation id) {
+    public static @Nullable FoliosBook book(ResourceLocation id) {
         return GuideLibrary.book(id);
     }
 
-    public static Collection<GuideBook> books() {
+    public static Collection<FoliosBook> books() {
         return GuideLibrary.books().values();
     }
 

@@ -1,10 +1,10 @@
 package net.ixdarklord.folios.internal.client;
 
-import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.api.client.GuideCategory;
-import net.ixdarklord.folios.api.client.GuideEntry;
-import net.ixdarklord.folios.api.client.GuideObjective;
-import net.ixdarklord.folios.api.client.page.GuideIcon;
+import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.FoliosCategory;
+import net.ixdarklord.folios.api.client.FoliosEntry;
+import net.ixdarklord.folios.api.client.FoliosObjective;
+import net.ixdarklord.folios.api.client.page.FoliosIcon;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -31,16 +31,16 @@ public final class Celebrations {
     public static void check() {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.level == null) return;
-        for (GuideBook book : GuideLibrary.books().values()) {
+        for (FoliosBook book : GuideLibrary.books().values()) {
             GuideMemory memory = GuideMemory.of(book.id());
             CelebrationSettings settings = GuideLibrary.celebrations(book.id());
             boolean changed = false;
-            List<GuideObjective> all = new ArrayList<>();
-            for (GuideCategory category : book.visibleCategories()) {
+            List<FoliosObjective> all = new ArrayList<>();
+            for (FoliosCategory category : book.visibleCategories()) {
                 if (!category.isOpen()) continue;
                 int read = 0;
                 int total = 0;
-                for (GuideEntry entry : book.entries(category.id())) {
+                for (FoliosEntry entry : book.entries(category.id())) {
                     all.addAll(entry.objectives());
                     if (!entry.isOpen()) continue;
                     total++;
@@ -57,12 +57,12 @@ public final class Celebrations {
                             category.title(), category.icon());
                 }
             }
-            for (GuideEntry entry : book.entries().values()) {
+            for (FoliosEntry entry : book.entries().values()) {
                 if (!entry.isQuest() || !entry.isOpen()) continue;
-                List<GuideObjective> objectives = entry.objectives();
+                List<FoliosObjective> objectives = entry.objectives();
                 boolean done = true;
                 for (int index = 0; index < objectives.size(); index++) {
-                    GuideObjective objective = objectives.get(index);
+                    FoliosObjective objective = objectives.get(index);
                     if (!objective.isDone(book)) {
                         done = false;
                         continue;
@@ -78,7 +78,7 @@ public final class Celebrations {
                     play(minecraft, book, settings, "quest", Component.translatableWithFallback("folios.toast.quest", "Quest complete"), entry.title(), entry.icon());
                 }
             }
-            if (!all.isEmpty() && GuideObjective.progress(book, all) >= 1 && memory.markCelebrated("mastery")) {
+            if (!all.isEmpty() && FoliosObjective.progress(book, all) >= 1 && memory.markCelebrated("mastery")) {
                 changed = true;
                 play(minecraft, book, settings, "mastery", Component.translatableWithFallback("folios.toast.mastery", "Book mastered"), book.title(), null);
             }
@@ -88,8 +88,8 @@ public final class Celebrations {
 
     // One event's celebration, each part as the book allows: the toast (the trophy for mastery, for which there is no
     // icon), a sound, sparkles round the player, and for mastery fireworks.
-    private static void play(Minecraft minecraft, GuideBook book, CelebrationSettings settings, String event, Component heading, Component name,
-                             @Nullable GuideIcon icon) {
+    private static void play(Minecraft minecraft, FoliosBook book, CelebrationSettings settings, String event, Component heading, Component name,
+                             @Nullable FoliosIcon icon) {
         boolean mastery = event.equals("mastery");
         if (settings.on(event, "toast")) GuideToast.show(book, heading, name, icon, mastery);
         if (settings.on(event, "sound")) {

@@ -1,13 +1,13 @@
 package net.ixdarklord.folios.internal.client.page;
 
-import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 // A creature in a little window of its own, turning slowly (drag the window to turn it on a screen), named under it.
-public record EntityPageElement(ResourceLocation entity, Optional<String> title, String text, float zoom, float spin, float yaw, int height) implements GuidePage {
+public record EntityPageElement(ResourceLocation entity, Optional<String> title, String text, float zoom, float spin, float yaw, int height) implements FoliosPageElement {
     public static final MapCodec<EntityPageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("entity").forGetter(EntityPageElement::entity),
             Codec.STRING.optionalFieldOf("title").forGetter(EntityPageElement::title),
@@ -32,10 +32,10 @@ public record EntityPageElement(ResourceLocation entity, Optional<String> title,
     ).apply(instance, EntityPageElement::new));
 
     @Override
-    public List<Laid> lay(GuideLayout layout) {
+    public List<Laid> lay(FoliosLayout layout) {
         int contentWidth = layout.contentWidth();
         int height = layout.scaled(this.height);
-        SceneViewport view = layout.viewport(contentWidth * GuideLayout.SCENE_DETAIL, height * GuideLayout.SCENE_DETAIL);
+        SceneViewport view = layout.viewport(contentWidth * FoliosLayout.SCENE_DETAIL, height * FoliosLayout.SCENE_DETAIL);
         view.refreshRate(30);
         // Stood on a ground of grid lines, with its shadow under it.
         view.ground(0, 1, 0x30808080, 0x55A0A0A0, true);
@@ -43,7 +43,7 @@ public record EntityPageElement(ResourceLocation entity, Optional<String> title,
         Entity[] shown = {null};
         boolean named = title.isEmpty();
         return layout.flow(title.orElse(null), height + (named ? 12 : 0), text, (painter, y) -> {
-            GuidePalette palette = painter.palette();
+            FoliosPalette palette = painter.palette();
             EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getOptional(entity).orElse(null);
             if (shown[0] == null && type != null && Minecraft.getInstance().level != null) {
                 shown[0] = type.create(Minecraft.getInstance().level);
@@ -58,7 +58,7 @@ public record EntityPageElement(ResourceLocation entity, Optional<String> title,
                     view.frame(Math.max(Math.max(width, tall) * 1.5F, 1.9F) / zoom, 0, shown[0].getBbHeight() * 0.52, 0);
                 }
             }
-            int left = GuideLayout.CONTENT_LEFT;
+            int left = FoliosLayout.CONTENT_LEFT;
             Shapes.panel(painter, left, y, left + contentWidth, y + height);
             control.draw(painter, left + 1, y + 1, contentWidth - 2, height - 2);
             if (named) {
@@ -70,6 +70,6 @@ public record EntityPageElement(ResourceLocation entity, Optional<String> title,
 
     @Override
     public String searchText() {
-        return GuideText.resolve(title.orElse("")) + " " + GuideText.resolve(text);
+        return FoliosText.resolve(title.orElse("")) + " " + FoliosText.resolve(text);
     }
 }

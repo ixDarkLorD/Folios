@@ -6,9 +6,9 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import net.ixdarklord.coolcatcore.api.event.v2.client.ClientCommandEvents;
 import net.ixdarklord.coolcatcore.api.event.v2.client.ClientPlayerEvents;
 import net.ixdarklord.coolcatcore.api.event.v2.client.ClientTickEvents;
-import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.api.client.GuideStyles;
-import net.ixdarklord.folios.api.client.page.GuidePageTypes;
+import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.FoliosStyles;
+import net.ixdarklord.folios.api.client.page.FoliosPageElements;
 import net.ixdarklord.folios.internal.GuideHooks;
 import net.ixdarklord.folios.internal.client.handheld.HandheldBook;
 import net.ixdarklord.folios.internal.client.page.EmptyPage;
@@ -38,23 +38,23 @@ public final class GuideClient {
 
     public static void init() {
         net.ixdarklord.folios.internal.config.FoliosClientConfig.CONFIG.id();
-        GuidePageTypes.register(Folios.rl("text"), TextPage.CODEC);
-        GuidePageTypes.register(Folios.rl("spotlight"), SpotlightPageElement.CODEC);
-        GuidePageTypes.register(Folios.rl("image"), ImagePageElement.CODEC);
-        GuidePageTypes.register(Folios.rl("recipe"), RecipePageElement.CODEC);
-        GuidePageTypes.register(Folios.rl("entity"), EntityPageElement.CODEC);
-        GuidePageTypes.register(Folios.rl("multiblock"), MultiblockPageElement.CODEC);
-        GuidePageTypes.register(Folios.rl("structure"), net.ixdarklord.folios.internal.client.page.StructurePageElement.CODEC);
-        GuidePageTypes.register(Folios.rl("build"), net.ixdarklord.folios.internal.client.page.BuildPageElement.CODEC);
-        GuidePageTypes.register(Folios.rl("links"), LinksPageElement.CODEC);
-        GuidePageTypes.register(Folios.rl("quest"), QuestPageElement.CODEC);
-        GuidePageTypes.register(Folios.rl("empty"), EmptyPage.CODEC);
-        GuidePageTypes.register(Folios.rl("spread"), net.ixdarklord.folios.internal.client.page.SpreadPage.CODEC);
-        GuideStyles.register(GuideStyles.SCREEN, (book, at, hand) -> {
+        FoliosPageElements.register(Folios.rl("text"), TextPage.CODEC);
+        FoliosPageElements.register(Folios.rl("spotlight"), SpotlightPageElement.CODEC);
+        FoliosPageElements.register(Folios.rl("image"), ImagePageElement.CODEC);
+        FoliosPageElements.register(Folios.rl("recipe"), RecipePageElement.CODEC);
+        FoliosPageElements.register(Folios.rl("entity"), EntityPageElement.CODEC);
+        FoliosPageElements.register(Folios.rl("multiblock"), MultiblockPageElement.CODEC);
+        FoliosPageElements.register(Folios.rl("structure"), net.ixdarklord.folios.internal.client.page.StructurePageElement.CODEC);
+        FoliosPageElements.register(Folios.rl("build"), net.ixdarklord.folios.internal.client.page.BuildPageElement.CODEC);
+        FoliosPageElements.register(Folios.rl("links"), LinksPageElement.CODEC);
+        FoliosPageElements.register(Folios.rl("quest"), QuestPageElement.CODEC);
+        FoliosPageElements.register(Folios.rl("empty"), EmptyPage.CODEC);
+        FoliosPageElements.register(Folios.rl("spread"), net.ixdarklord.folios.internal.client.page.SpreadPage.CODEC);
+        FoliosStyles.register(FoliosStyles.SCREEN, (book, at, hand) -> {
             GuideSession session = GuideLibrary.session(book.id());
             if (session != null) HandheldBook.openScreen(book, session, at, hand);
         });
-        GuideStyles.register(GuideStyles.HANDHELD, (book, at, hand) -> {
+        FoliosStyles.register(FoliosStyles.HANDHELD, (book, at, hand) -> {
             GuideSession session = GuideLibrary.session(book.id());
             if (session != null) HandheldBook.open(book, session, at, hand);
         });
@@ -65,15 +65,15 @@ public final class GuideClient {
         // A book's data changing in the hand (marked as being read, and no longer) doesn't swap it out and back: it is
         // the same book while it names the same one.
         net.ixdarklord.coolcatcore.api.client.item.HeldItemSwaps.quiet(net.ixdarklord.folios.internal.core.GuideRegistry.READING);
-        net.ixdarklord.coolcatcore.api.client.item.HeldItemSwaps.register((shown, next) -> shown.getItem() instanceof net.ixdarklord.folios.api.GuideBookItem
-                && next.is(shown.getItem()) && java.util.Objects.equals(net.ixdarklord.folios.api.GuideBooks.bookOf(shown), net.ixdarklord.folios.api.GuideBooks.bookOf(next)));
+        net.ixdarklord.coolcatcore.api.client.item.HeldItemSwaps.register((shown, next) -> shown.getItem() instanceof net.ixdarklord.folios.api.FoliosBookItem
+                && next.is(shown.getItem()) && java.util.Objects.equals(net.ixdarklord.folios.api.FoliosBooks.bookOf(shown), net.ixdarklord.folios.api.FoliosBooks.bookOf(next)));
         GuideHooks.names = id -> {
-            GuideBook book = GuideLibrary.book(id);
+            FoliosBook book = GuideLibrary.book(id);
             return book != null ? book.title() : GuideHooks.defaultName(id);
         };
         GuideHooks.authors = id -> {
             String author = GuideLibrary.author(id);
-            return author != null ? net.ixdarklord.folios.api.client.page.GuideText.inline(author) : GuideHooks.defaultAuthor(id);
+            return author != null ? net.ixdarklord.folios.api.client.page.FoliosText.inline(author) : GuideHooks.defaultAuthor(id);
         };
         ClientTickEvents.END.register(minecraft -> {
             if (pending != null) {
@@ -134,22 +134,22 @@ public final class GuideClient {
 
     /** Opens a book in its style: at an entry (with an optional "#anchor"), or where the player left off for null. */
     public static boolean open(ResourceLocation id, @Nullable String entry, @Nullable InteractionHand hand) {
-        GuideBook book = GuideLibrary.book(id);
+        FoliosBook book = GuideLibrary.book(id);
         if (book == null) {
             Folios.LOGGER.warn("There is no guide book {}", id);
             return false;
         }
-        GuideBook.Location at = null;
+        FoliosBook.Location at = null;
         if (entry != null) {
             GuideSession session = GuideLibrary.session(id);
             GuideSession.Target target = session != null ? session.resolve(entry) : null;
             if (target == null || target.entry() == null) return false;
             at = session.location(target.entry(), target.page());
         }
-        GuideStyles.Style style = GuideStyles.get(book.style());
+        FoliosStyles.Style style = FoliosStyles.get(book.style());
         if (style == null) {
             Folios.LOGGER.warn("The guide book {} has the style {}, which nothing provides; showing it as a screen", id, book.style());
-            style = GuideStyles.get(GuideStyles.SCREEN);
+            style = FoliosStyles.get(FoliosStyles.SCREEN);
         }
         if (style == null) return false;
         style.open(book, at, hand);

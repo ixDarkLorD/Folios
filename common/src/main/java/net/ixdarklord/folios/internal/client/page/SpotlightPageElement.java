@@ -1,13 +1,13 @@
 package net.ixdarklord.folios.internal.client.page;
 
-import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
-import net.ixdarklord.folios.api.client.page.GuideStack;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.api.client.page.FoliosStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.world.item.ItemStack;
 
@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.Optional;
 
 // An item shown large on a card, named under it (unless the page has a title), then text. The book links the item here.
-public record SpotlightPageElement(GuideStack item, Optional<String> title, String text, boolean link) implements GuidePage {
+public record SpotlightPageElement(FoliosStack item, Optional<String> title, String text, boolean link) implements FoliosPageElement {
     public static final MapCodec<SpotlightPageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            GuideStack.CODEC.fieldOf("item").forGetter(SpotlightPageElement::item),
+            FoliosStack.CODEC.fieldOf("item").forGetter(SpotlightPageElement::item),
             Codec.STRING.optionalFieldOf("title").forGetter(SpotlightPageElement::title),
             Codec.STRING.optionalFieldOf("text", "").forGetter(SpotlightPageElement::text),
             Codec.BOOL.optionalFieldOf("link", true).forGetter(SpotlightPageElement::link)
@@ -26,15 +26,15 @@ public record SpotlightPageElement(GuideStack item, Optional<String> title, Stri
     private static final int CARD = 46;
 
     @Override
-    public List<Laid> lay(GuideLayout layout) {
+    public List<Laid> lay(FoliosLayout layout) {
         boolean named = title.isEmpty();
         return layout.flow(title.orElse(null), CARD + (named ? 12 : 0), text, (painter, y) -> {
             int middle = painter.pageWidth() / 2;
             int left = middle - CARD / 2;
             Shapes.panel(painter, left, y, left + CARD, y + CARD);
             // A soft wash of the book's colour behind the item.
-            GuidePalette palette = painter.palette();
-            painter.fill(left + 5, y + 5, left + CARD - 5, y + CARD - 5, GuidePalette.alpha(palette.accent(), 0x22));
+            FoliosPalette palette = painter.palette();
+            painter.fill(left + 5, y + 5, left + CARD - 5, y + CARD - 5, FoliosPalette.alpha(palette.accent(), 0x22));
             ItemStack stack = item.at(painter.time());
             painter.push();
             painter.translate(middle - 16, y + CARD / 2F - 16);
@@ -47,11 +47,11 @@ public record SpotlightPageElement(GuideStack item, Optional<String> title, Stri
 
     @Override
     public String searchText() {
-        return GuideText.resolve(title.orElse("")) + " " + GuideText.resolve(text);
+        return FoliosText.resolve(title.orElse("")) + " " + FoliosText.resolve(text);
     }
 
     @Override
-    public List<GuideStack> items() {
+    public List<FoliosStack> items() {
         return link ? List.of(item) : List.of();
     }
 }

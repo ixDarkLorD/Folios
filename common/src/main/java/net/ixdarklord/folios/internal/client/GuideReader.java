@@ -1,17 +1,17 @@
 package net.ixdarklord.folios.internal.client;
 
-import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.api.client.GuideReveal;
-import net.ixdarklord.folios.api.client.GuideReveals;
-import net.ixdarklord.folios.api.client.GuideCategory;
-import net.ixdarklord.folios.api.client.GuideEntry;
-import net.ixdarklord.folios.api.client.GuideObjective;
-import net.ixdarklord.folios.api.client.page.GuideIcon;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuidePainter;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
-import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.FoliosReveal;
+import net.ixdarklord.folios.api.client.FoliosReveals;
+import net.ixdarklord.folios.api.client.FoliosCategory;
+import net.ixdarklord.folios.api.client.FoliosEntry;
+import net.ixdarklord.folios.api.client.FoliosObjective;
+import net.ixdarklord.folios.api.client.page.FoliosIcon;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.page.QuestPageElement;
 import net.ixdarklord.folios.internal.client.page.Shapes;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
@@ -41,19 +41,19 @@ public class GuideReader implements AbstractPainter.Navigator {
     public static final float FLIP_MILLIS = 420;
     private static final int ROW = 18;
 
-    public final GuideBook book;
+    public final FoliosBook book;
     public GuideSession session;
     public final GuideMemory memory;
     private final long openedAt = Util.getMillis();
-    private final Map<String, List<GuidePage.Laid>> chapters = new HashMap<>();
+    private final Map<String, List<FoliosPageElement.Laid>> chapters = new HashMap<>();
     private final Deque<Spot> history = new ArrayDeque<>();
 
     /** A place in the book: a part of it ("home", "category:<id>", "entry:<id>", "search:<words>", "bookmarks", "index") and the left page of a spread. */
     public record Spot(String chapter, int page) {}
 
     /** Leaves in the air: what was open and what is opening (their pages and spreads), and which way they turn. */
-    public record Flip(GuidePage.@Nullable Laid oldLeft, GuidePage.@Nullable Laid oldRight, GuidePage.@Nullable Laid newLeft,
-                       GuidePage.@Nullable Laid newRight, boolean forward, long start, Spot from, Spot to) {
+    public record Flip(FoliosPageElement.@Nullable Laid oldLeft, FoliosPageElement.@Nullable Laid oldRight, FoliosPageElement.@Nullable Laid newLeft,
+                       FoliosPageElement.@Nullable Laid newRight, boolean forward, long start, Spot from, Spot to) {
         /** The spread whose left page lies to the left while the leaf turns, and whose right page lies to the right. */
         public Spot staticLeft() {
             return forward ? from : to;
@@ -78,7 +78,7 @@ public class GuideReader implements AbstractPainter.Navigator {
     public final TabMotion tabs = new TabMotion();
     public @Nullable Flip flip;
 
-    public GuideReader(GuideBook book, GuideSession session, GuideBook.@Nullable Location at) {
+    public GuideReader(FoliosBook book, GuideSession session, FoliosBook.@Nullable Location at) {
         this(book, session, at, null);
     }
 
@@ -86,17 +86,17 @@ public class GuideReader implements AbstractPainter.Navigator {
      * A reader of a book opened from a copy in {@code hand} (null for none: a command, a link, from code): a book that
      * keeps its own progress reads and keeps that copy's.
      */
-    public GuideReader(GuideBook book, GuideSession session, GuideBook.@Nullable Location at, net.minecraft.world.@Nullable InteractionHand hand) {
+    public GuideReader(FoliosBook book, GuideSession session, FoliosBook.@Nullable Location at, net.minecraft.world.@Nullable InteractionHand hand) {
         this.book = book;
         this.session = session;
         this.memory = GuideMemory.forReading(book, hand);
         READ_BEFORE.computeIfAbsent(book.id(), id -> {
             java.util.Set<String> read = new java.util.HashSet<>();
-            for (GuideEntry entry : book.entries().values()) if (memory.isRead(entry.id())) read.add(entry.id());
+            for (FoliosEntry entry : book.entries().values()) if (memory.isRead(entry.id())) read.add(entry.id());
             return read;
         });
-        GuideBook.Location start = at != null ? at : memory.last();
-        GuideEntry entry = start != null ? book.entry(start.entry()) : null;
+        FoliosBook.Location start = at != null ? at : memory.last();
+        FoliosEntry entry = start != null ? book.entry(start.entry()) : null;
         this.spot = new Spot("home", 0);
         if (entry != null && entry.isOpen()) {
             history.push(spot);
@@ -118,7 +118,7 @@ public class GuideReader implements AbstractPainter.Navigator {
      */
     public void useSession(GuideSession next) {
         if (next == session) return;
-        GuideBook.Location here = this.here();
+        FoliosBook.Location here = this.here();
         session = next;
         chapters.clear();
         flip = null;
@@ -132,7 +132,7 @@ public class GuideReader implements AbstractPainter.Navigator {
         if (chapter == null) return false;
         if (chapter.equals("home") || chapter.equals("index") || chapter.equals("bookmarks")) return true;
         if (!chapter.startsWith("category:")) return false;
-        GuideCategory category = book.category(chapter.substring(9));
+        FoliosCategory category = book.category(chapter.substring(9));
         return category != null && category.isOpen();
     }
 
@@ -160,9 +160,9 @@ public class GuideReader implements AbstractPainter.Navigator {
     }
 
     /** The reveal a spread's pages use: its entry's own, or the book's. */
-    public GuideReveal.Use revealOf(Spot at) {
+    public FoliosReveal.Use revealOf(Spot at) {
         if (at.chapter.startsWith("entry:")) {
-            GuideEntry entry = book.entry(at.chapter.substring(6));
+            FoliosEntry entry = book.entry(at.chapter.substring(6));
             if (entry != null && entry.reveal() != null) return entry.reveal();
         }
         return book.reveal();
@@ -173,33 +173,33 @@ public class GuideReader implements AbstractPainter.Navigator {
      * spread it brings is hidden (its effect at the start), and once it is down its content shows as the effect has
      * it. The page's own painter when there is nothing to reveal.
      */
-    public GuidePainter revealing(GuidePainter painter, Spot at, boolean right) {
-        GuidePage.Laid page = this.page(at, right ? 1 : 0);
+    public FoliosPainter revealing(FoliosPainter painter, Spot at, boolean right) {
+        FoliosPageElement.Laid page = this.page(at, right ? 1 : 0);
         float progress = this.revealProgress(at, page, right);
-        return progress >= 1 ? painter : net.ixdarklord.folios.internal.client.paint.RevealPainter.of(painter, GuideReveals.get(this.revealOf(at).effect()),
+        return progress >= 1 ? painter : net.ixdarklord.folios.internal.client.paint.RevealPainter.of(painter, FoliosReveals.get(this.revealOf(at).effect()),
                 progress, this.revealX(page, right));
     }
 
     // Where a page is across what is revealed together: a spread's halves across the spread, a plain page on its own.
-    private float revealX(GuidePage.@Nullable Laid page, boolean right) {
-        return right && page instanceof GuidePage.SpreadHalf ? session.layout().pageWidth() : 0;
+    private float revealX(FoliosPageElement.@Nullable Laid page, boolean right) {
+        return right && page instanceof FoliosPageElement.SpreadHalf ? session.layout().pageWidth() : 0;
     }
 
     /**
      * Draws a page of the spread at {@code at} (its right page, or its left) as its reveal has it now, with what its
      * effect draws over it.
      */
-    public void drawRevealed(GuidePainter painter, GuidePage.Laid page, Spot at, boolean right) {
+    public void drawRevealed(FoliosPainter painter, FoliosPageElement.Laid page, Spot at, boolean right) {
         float progress = this.revealProgress(at, page, right);
         if (progress >= 1) page.draw(painter);
-        else net.ixdarklord.folios.internal.client.paint.RevealPainter.draw(painter, page, GuideReveals.get(this.revealOf(at).effect()), progress,
+        else net.ixdarklord.folios.internal.client.paint.RevealPainter.draw(painter, page, FoliosReveals.get(this.revealOf(at).effect()), progress,
                 this.revealX(page, right));
     }
 
     // How far the reveal of a page of a spread has gone: 1 when there is nothing (more) to reveal. A spread page's
     // halves reveal together; plain pages one after the other, the left then the right, each over the effect's length.
-    private float revealProgress(Spot at, GuidePage.@Nullable Laid page, boolean right) {
-        GuideReveal.Use use = this.revealOf(at);
+    private float revealProgress(Spot at, FoliosPageElement.@Nullable Laid page, boolean right) {
+        FoliosReveal.Use use = this.revealOf(at);
         if (use.seconds() <= 0 || !net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings.transitions()
                 || use.once() && this.seen(at) || use.unread() && memory.isSeen(this.spreadKey(at))) {
             // Nothing to reveal: the spread open now shows in full at once.
@@ -211,7 +211,7 @@ public class GuideReader implements AbstractPainter.Navigator {
         if (this.revealHeld() && at.equals(spot)) return 0;
         if (!at.equals(spot)) return 1;
         float elapsed = (Util.getMillis() - revealAt) / (use.seconds() * 1000.0F);
-        boolean together = page instanceof GuidePage.SpreadHalf;
+        boolean together = page instanceof FoliosPageElement.SpreadHalf;
         // Shown in full, the whole spread: it has been seen, for reveals that play once (this game) or on unread pages.
         if (elapsed >= (together ? 1 : 2)) {
             SEEN.add(this.seenKey(at));
@@ -254,8 +254,8 @@ public class GuideReader implements AbstractPainter.Navigator {
 
     // ---- The parts of the book ----
 
-    public List<GuidePage.Laid> chapter(String key) {
-        List<GuidePage.Laid> pages = chapters.get(key);
+    public List<FoliosPageElement.Laid> chapter(String key) {
+        List<FoliosPageElement.Laid> pages = chapters.get(key);
         if (pages != null) return pages;
         if (key.equals("home")) pages = this.homePages();
         else if (key.startsWith("category:")) pages = this.categoryPages(key.substring(9));
@@ -270,27 +270,27 @@ public class GuideReader implements AbstractPainter.Navigator {
         return pages;
     }
 
-    public GuidePage.@Nullable Laid page(Spot at, int offset) {
-        List<GuidePage.Laid> pages = this.chapter(at.chapter);
+    public FoliosPageElement.@Nullable Laid page(Spot at, int offset) {
+        List<FoliosPageElement.Laid> pages = this.chapter(at.chapter);
         int index = at.page + offset;
         return index >= 0 && index < pages.size() ? pages.get(index) : null;
     }
 
-    private List<GuidePage.Laid> homePages() {
-        List<GuidePage.Laid> pages = new ArrayList<>();
-        GuideLayout layout = session.layout();
+    private List<FoliosPageElement.Laid> homePages() {
+        List<FoliosPageElement.Laid> pages = new ArrayList<>();
+        FoliosLayout layout = session.layout();
         // Mastery, when the book has quests: how many of all their objectives are done, under its name.
-        List<GuideObjective> all = new ArrayList<>();
-        for (GuideCategory category : book.visibleCategories()) {
-            for (GuideEntry entry : book.entries(category.id())) all.addAll(entry.objectives());
+        List<FoliosObjective> all = new ArrayList<>();
+        for (FoliosCategory category : book.visibleCategories()) {
+            for (FoliosEntry entry : book.entries(category.id())) all.addAll(entry.objectives());
         }
         boolean mastery = !all.isEmpty();
         int titleBottom = mastery ? 134 : 96;
-        List<GuideText> landing = book.landing().isEmpty() ? List.of()
-                : layout.text(book.landing()).split(layout.contentBottom() - titleBottom, layout.contentBottom() - GuideLayout.CONTENT_TOP);
-        GuideText first = landing.isEmpty() ? null : landing.get(0);
+        List<FoliosText> landing = book.landing().isEmpty() ? List.of()
+                : layout.text(book.landing()).split(layout.contentBottom() - titleBottom, layout.contentBottom() - FoliosLayout.CONTENT_TOP);
+        FoliosText first = landing.isEmpty() ? null : landing.get(0);
         pages.add(painter -> {
-            GuidePalette palette = painter.palette();
+            FoliosPalette palette = painter.palette();
             int middle = painter.pageWidth() / 2;
             medallion(painter, middle - 22, 12, 44);
             painter.push();
@@ -298,7 +298,7 @@ public class GuideReader implements AbstractPainter.Navigator {
             painter.scale(2);
             book.icon().draw(painter, 0, 0);
             painter.pop();
-            int contentWidth = painter.contentRight() - GuideLayout.CONTENT_LEFT;
+            int contentWidth = painter.contentRight() - FoliosLayout.CONTENT_LEFT;
             List<FormattedCharSequence> title = painter.font().split(book.title().copy().withStyle(ChatFormatting.BOLD), contentWidth);
             int y = 62;
             for (FormattedCharSequence line : title.subList(0, Math.min(2, title.size()))) {
@@ -307,7 +307,7 @@ public class GuideReader implements AbstractPainter.Navigator {
             }
             if (!book.subtitle().isEmpty()) {
                 // On one line, whole: made smaller as far as it must be to fit.
-                FormattedCharSequence subtitle = GuideText.inline(book.subtitle()).copy().withStyle(ChatFormatting.ITALIC).getVisualOrderText();
+                FormattedCharSequence subtitle = FoliosText.inline(book.subtitle()).copy().withStyle(ChatFormatting.ITALIC).getVisualOrderText();
                 int wide = painter.font().width(subtitle);
                 float fit = Math.min(1, contentWidth / (float) Math.max(1, wide));
                 painter.push();
@@ -318,15 +318,15 @@ public class GuideReader implements AbstractPainter.Navigator {
             }
             if (mastery) this.mastery(painter, middle, titleBottom - 45, all);
             flourish(painter, middle, titleBottom - 6);
-            if (first != null && !first.isEmpty()) first.draw(painter, GuideLayout.CONTENT_LEFT, titleBottom);
+            if (first != null && !first.isEmpty()) first.draw(painter, FoliosLayout.CONTENT_LEFT, titleBottom);
         });
         for (int index = 1; index < landing.size(); index++) {
-            GuideText piece = landing.get(index);
-            pages.add(painter -> piece.draw(painter, GuideLayout.CONTENT_LEFT, GuideLayout.CONTENT_TOP));
+            FoliosText piece = landing.get(index);
+            pages.add(painter -> piece.draw(painter, FoliosLayout.CONTENT_LEFT, FoliosLayout.CONTENT_TOP));
         }
         List<Row> rows = new ArrayList<>();
-        for (GuideCategory category : book.visibleCategories()) {
-            rows.add(new Row(category.isOpen() ? category.title() : Component.literal("???"), category.isOpen() ? category.icon() : GuideIcon.NONE,
+        for (FoliosCategory category : book.visibleCategories()) {
+            rows.add(new Row(category.isOpen() ? category.title() : Component.literal("???"), category.isOpen() ? category.icon() : FoliosIcon.NONE,
                     category.isOpen() ? "category:" + category.id() : null, () -> category.isOpen() && this.unread(category.id()), category.id()));
         }
         pages.addAll(this.rows(Component.translatableWithFallback("folios.categories", "Categories"), null, rows));
@@ -336,20 +336,20 @@ public class GuideReader implements AbstractPainter.Navigator {
     // A framed slot for the book's icon on its first page: a rounded rim, a ring of the book's colour just inside it,
     // and the face, each with the same soft corners so the rings run evenly round them; a faint shade along the face's
     // top inside, as if it were sunk a little.
-    private static void medallion(GuidePainter painter, int x, int y, int size) {
-        GuidePalette palette = painter.palette();
-        int rim = GuidePalette.mix(palette.line(), palette.text(), 0.2F);
-        int ring = GuidePalette.mix(palette.accent(), palette.line(), 0.2F);
-        int face = GuidePalette.mix(palette.panel(), palette.paper(), 0.3F);
+    private static void medallion(FoliosPainter painter, int x, int y, int size) {
+        FoliosPalette palette = painter.palette();
+        int rim = FoliosPalette.mix(palette.line(), palette.text(), 0.2F);
+        int ring = FoliosPalette.mix(palette.accent(), palette.line(), 0.2F);
+        int face = FoliosPalette.mix(palette.panel(), palette.paper(), 0.3F);
         rounded(painter, x, y, x + size, y + size, rim);
         rounded(painter, x + 1, y + 1, x + size - 1, y + size - 1, ring);
         rounded(painter, x + 3, y + 3, x + size - 3, y + size - 3, rim);
         rounded(painter, x + 4, y + 4, x + size - 4, y + size - 4, face);
-        painter.fill(x + 6, y + 4, x + size - 6, y + 5, GuidePalette.mix(face, palette.line(), 0.35F));
+        painter.fill(x + 6, y + 4, x + size - 6, y + 5, FoliosPalette.mix(face, palette.line(), 0.35F));
     }
 
     // A rectangle with its corners rounded off by three pixels.
-    private static void rounded(GuidePainter painter, int x0, int y0, int x1, int y1, int color) {
+    private static void rounded(FoliosPainter painter, int x0, int y0, int x1, int y1, int color) {
         painter.fill(x0 + 3, y0, x1 - 3, y1, color);
         painter.fill(x0 + 1, y0 + 1, x1 - 1, y1 - 1, color);
         painter.fill(x0, y0 + 3, x1, y1 - 3, color);
@@ -357,22 +357,22 @@ public class GuideReader implements AbstractPainter.Navigator {
 
     // The mastery bar: a trophy and "Mastery" over it, under them "Progression:" with how far along it is in percent (a
     // tick once all is done), then the bar of all the book's objectives, centred under the book's name.
-    private void mastery(GuidePainter painter, int middle, int y, List<GuideObjective> all) {
-        GuidePalette palette = painter.palette();
+    private void mastery(FoliosPainter painter, int middle, int y, List<FoliosObjective> all) {
+        FoliosPalette palette = painter.palette();
         int done = 0;
-        for (GuideObjective objective : all) if (objective.isDone(book)) done++;
+        for (FoliosObjective objective : all) if (objective.isDone(book)) done++;
         boolean complete = done == all.size();
-        float progress = GuideObjective.progress(book, all);
+        float progress = FoliosObjective.progress(book, all);
         Component title = Component.translatableWithFallback("folios.mastery.title", "Mastery").withStyle(ChatFormatting.BOLD);
         int titleWidth = 9 + 3 + painter.font().width(title);
         int left = middle - titleWidth / 2;
-        int cup = complete ? 0xFFE0B23A : GuidePalette.mix(palette.muted(), palette.accent(), 0.5F);
+        int cup = complete ? 0xFFE0B23A : FoliosPalette.mix(palette.muted(), palette.accent(), 0.5F);
         // Mastered, the trophy cycles through a rainbow; until then it is quiet, a highlight down its cup's left.
         if (complete) {
             TROPHY.rainbow(painter, left, y - 1, painter.time(), 0xFFE0B23A);
         } else {
             net.ixdarklord.folios.internal.client.screen.GuideBar.pixels(painter, TROPHY, left, y - 1, 9, cup);
-            painter.fill(left + 2, y, left + 3, y + 3, GuidePalette.mix(cup, 0xFFFFFFFF, 0.45F));
+            painter.fill(left + 2, y, left + 3, y + 3, FoliosPalette.mix(cup, 0xFFFFFFFF, 0.45F));
         }
         if (complete) {
             int frame = TROPHY_SHEEN.sweepFrame(painter.time(), 2.4F, 0.5F);
@@ -394,26 +394,26 @@ public class GuideReader implements AbstractPainter.Navigator {
     }
 
     // The mastery bar's tooltip: how far along overall, how many quests are done, and each quest with its own count.
-    private List<Component> masteryTooltip(int done, List<GuideObjective> all) {
+    private List<Component> masteryTooltip(int done, List<FoliosObjective> all) {
         List<Component> lines = new ArrayList<>();
         lines.add(Component.translatableWithFallback("folios.mastery.title", "Mastery").withStyle(ChatFormatting.BOLD));
-        int percent = Math.round(100 * GuideObjective.progress(book, all));
+        int percent = Math.round(100 * FoliosObjective.progress(book, all));
         lines.add(Component.translatableWithFallback("folios.mastery.objectives", "%s of %s objectives done (%s%%)", done, all.size(), percent));
-        List<GuideEntry> quests = new ArrayList<>();
-        for (GuideCategory category : book.visibleCategories()) {
-            for (GuideEntry entry : book.entries(category.id())) if (entry.isQuest()) quests.add(entry);
+        List<FoliosEntry> quests = new ArrayList<>();
+        for (FoliosCategory category : book.visibleCategories()) {
+            for (FoliosEntry entry : book.entries(category.id())) if (entry.isQuest()) quests.add(entry);
         }
         int finished = 0;
-        for (GuideEntry quest : quests) if (quest.objectives().stream().allMatch(objective -> objective.isDone(book))) finished++;
+        for (FoliosEntry quest : quests) if (quest.objectives().stream().allMatch(objective -> objective.isDone(book))) finished++;
         lines.add(Component.translatableWithFallback("folios.mastery.quests", "%s of %s quests complete", finished, quests.size()));
         int shown = 0;
-        for (GuideEntry quest : quests) {
+        for (FoliosEntry quest : quests) {
             if (shown++ == 6) {
                 lines.add(Component.translatableWithFallback("folios.mastery.more", "and %s more", quests.size() - 6).withStyle(ChatFormatting.ITALIC));
                 break;
             }
             int ticked = 0;
-            for (GuideObjective objective : quest.objectives()) if (objective.isDone(book)) ticked++;
+            for (FoliosObjective objective : quest.objectives()) if (objective.isDone(book)) ticked++;
             boolean questDone = ticked == quest.objectives().size();
             Component name = quest.isOpen() ? quest.title() : Component.literal("???");
             lines.add(Component.literal(questDone ? " \u2714 " : " \u2022 ").withStyle(style -> style.withColor(questDone ? 0xFF6FCF73 : 0xFFA89A86))
@@ -434,9 +434,9 @@ public class GuideReader implements AbstractPainter.Navigator {
     private static final net.ixdarklord.folios.internal.client.paint.PixelIcon TROPHY_SHEEN = net.ixdarklord.folios.internal.client.paint.PixelIcon.of("trophy_sheen", 9, 9, 10);
 
     // A divider under the book's name: two rules running out from a diamond, each ending in a dot.
-    private static void flourish(GuidePainter painter, int middle, int y) {
-        GuidePalette palette = painter.palette();
-        int line = GuidePalette.mix(palette.line(), palette.accent(), 0.35F);
+    private static void flourish(FoliosPainter painter, int middle, int y) {
+        FoliosPalette palette = painter.palette();
+        int line = FoliosPalette.mix(palette.line(), palette.accent(), 0.35F);
         painter.fill(middle - 34, y, middle - 5, y + 1, line);
         painter.fill(middle + 5, y, middle + 34, y + 1, line);
         painter.fill(middle - 37, y - 1, middle - 35, y + 2, line);
@@ -447,25 +447,25 @@ public class GuideReader implements AbstractPainter.Navigator {
         painter.fill(middle - 2, y - 1, middle + 2, y + 2, mark);
     }
 
-    private List<GuidePage.Laid> categoryPages(String id) {
-        GuideCategory category = book.category(id);
+    private List<FoliosPageElement.Laid> categoryPages(String id) {
+        FoliosCategory category = book.category(id);
         if (category == null) return List.of();
         List<Row> rows = new ArrayList<>();
-        for (GuideEntry entry : book.entries(id)) rows.add(this.entryRow(entry));
+        for (FoliosEntry entry : book.entries(id)) rows.add(this.entryRow(entry));
         return this.rows(category.title(), category.description().isEmpty() ? null : category.description(), rows);
     }
 
-    private List<GuidePage.Laid> searchPages(String query) {
+    private List<FoliosPageElement.Laid> searchPages(String query) {
         List<Row> rows = new ArrayList<>();
-        for (GuideEntry entry : session.search(query)) rows.add(this.entryRow(entry));
+        for (FoliosEntry entry : session.search(query)) rows.add(this.entryRow(entry));
         String heading = rows.isEmpty() ? "Nothing matches \"" + query + "\"." : null;
         return this.rows(Component.translatableWithFallback("folios.search.results", "Search"), heading, rows);
     }
 
-    private List<GuidePage.Laid> bookmarkPages() {
+    private List<FoliosPageElement.Laid> bookmarkPages() {
         List<Row> rows = new ArrayList<>();
-        for (GuideBook.Location location : memory.bookmarks()) {
-            GuideEntry entry = book.entry(location.entry());
+        for (FoliosBook.Location location : memory.bookmarks()) {
+            FoliosEntry entry = book.entry(location.entry());
             if (entry == null || !entry.isOpen()) continue;
             rows.add(new Row(entry.title(), entry.icon(), "bookmark:" + location.entry() + "#" + location.page(), () -> false, null));
         }
@@ -474,19 +474,19 @@ public class GuideReader implements AbstractPainter.Navigator {
     }
 
     // Every entry of the book, A to Z, wherever it is: those not yet open as "???" at the end.
-    private List<GuidePage.Laid> indexPages() {
-        List<GuideEntry> entries = new ArrayList<>();
-        for (GuideCategory category : book.visibleCategories()) {
+    private List<FoliosPageElement.Laid> indexPages() {
+        List<FoliosEntry> entries = new ArrayList<>();
+        for (FoliosCategory category : book.visibleCategories()) {
             if (category.isOpen()) entries.addAll(book.entries(category.id()));
         }
-        entries.sort(java.util.Comparator.comparing((GuideEntry entry) -> !entry.isOpen()).thenComparing(entry -> entry.title().getString().toLowerCase(java.util.Locale.ROOT)));
+        entries.sort(java.util.Comparator.comparing((FoliosEntry entry) -> !entry.isOpen()).thenComparing(entry -> entry.title().getString().toLowerCase(java.util.Locale.ROOT)));
         List<Row> rows = new ArrayList<>();
-        for (GuideEntry entry : entries) rows.add(this.entryRow(entry));
+        for (FoliosEntry entry : entries) rows.add(this.entryRow(entry));
         return this.rows(Component.translatableWithFallback("folios.index", "Index"), rows.isEmpty() ? "Nothing to list yet." : null, rows);
     }
 
-    private Row entryRow(GuideEntry entry) {
-        Row row = new Row(entry.isOpen() ? entry.title() : Component.literal("???"), entry.isOpen() ? entry.icon() : GuideIcon.NONE,
+    private Row entryRow(FoliosEntry entry) {
+        Row row = new Row(entry.isOpen() ? entry.title() : Component.literal("???"), entry.isOpen() ? entry.icon() : FoliosIcon.NONE,
                 entry.isOpen() ? "entry:" + entry.id() : null, () -> entry.isOpen() && !memory.isRead(entry.id()), null);
         // A quest shows how far along it is.
         return entry.isOpen() && entry.isQuest() ? row.withQuest(entry.objectives()) : row;
@@ -500,37 +500,37 @@ public class GuideReader implements AbstractPainter.Navigator {
      * A row of a list: what it says, its icon, where it goes (null for locked), whether to mark it as new, the
      * category it opens (its read progress is shown), and the objectives of the quest it opens.
      */
-    private record Row(Component label, GuideIcon icon, @Nullable String link, BooleanSupplier fresh, @Nullable String category,
-                       List<GuideObjective> quest) {
-        Row(Component label, GuideIcon icon, @Nullable String link, BooleanSupplier fresh, @Nullable String category) {
+    private record Row(Component label, FoliosIcon icon, @Nullable String link, BooleanSupplier fresh, @Nullable String category,
+                       List<FoliosObjective> quest) {
+        Row(Component label, FoliosIcon icon, @Nullable String link, BooleanSupplier fresh, @Nullable String category) {
             this(label, icon, link, fresh, category, List.of());
         }
 
-        Row withQuest(List<GuideObjective> objectives) {
+        Row withQuest(List<FoliosObjective> objectives) {
             return new Row(label, icon, link, fresh, category, objectives);
         }
     }
 
     // A titled list, with text over it, as many pages as it takes.
-    private List<GuidePage.Laid> rows(Component title, @Nullable String text, List<Row> rows) {
-        GuideLayout layout = session.layout();
-        List<GuidePage.Laid> pages = new ArrayList<>();
-        GuideText description = text == null ? null : layout.text(text);
-        int top = GuideLayout.CONTENT_TOP + GuideLayout.TITLE_HEIGHT + (description != null ? description.height() + 8 : 0);
+    private List<FoliosPageElement.Laid> rows(Component title, @Nullable String text, List<Row> rows) {
+        FoliosLayout layout = session.layout();
+        List<FoliosPageElement.Laid> pages = new ArrayList<>();
+        FoliosText description = text == null ? null : layout.text(text);
+        int top = FoliosLayout.CONTENT_TOP + FoliosLayout.TITLE_HEIGHT + (description != null ? description.height() + 8 : 0);
         int index = 0;
         boolean firstPage = true;
         do {
-            int y = firstPage ? top : GuideLayout.CONTENT_TOP;
+            int y = firstPage ? top : FoliosLayout.CONTENT_TOP;
             int fits = Math.max(1, (layout.contentBottom() - y) / ROW);
             List<Row> on = rows.subList(index, Math.min(rows.size(), index + fits));
             index += on.size();
             boolean titled = firstPage;
             pages.add(painter -> {
                 if (titled) {
-                    GuideLayout.title(painter, title, GuideLayout.CONTENT_TOP);
-                    if (description != null) description.draw(painter, GuideLayout.CONTENT_LEFT, GuideLayout.CONTENT_TOP + GuideLayout.TITLE_HEIGHT);
+                    FoliosLayout.title(painter, title, FoliosLayout.CONTENT_TOP);
+                    if (description != null) description.draw(painter, FoliosLayout.CONTENT_LEFT, FoliosLayout.CONTENT_TOP + FoliosLayout.TITLE_HEIGHT);
                 }
-                int rowY = titled ? top : GuideLayout.CONTENT_TOP;
+                int rowY = titled ? top : FoliosLayout.CONTENT_TOP;
                 for (Row row : on) {
                     this.row(painter, row, rowY);
                     rowY += ROW;
@@ -541,12 +541,12 @@ public class GuideReader implements AbstractPainter.Navigator {
         return pages;
     }
 
-    private void row(GuidePainter painter, Row row, int y) {
-        GuidePalette palette = painter.palette();
-        int left = GuideLayout.CONTENT_LEFT;
+    private void row(FoliosPainter painter, Row row, int y) {
+        FoliosPalette palette = painter.palette();
+        int left = FoliosLayout.CONTENT_LEFT;
         int right = painter.contentRight();
         boolean over = row.link != null && painter.action(left - 2, y, right - left + 4, ROW - 1, null, () -> this.follow(row.link));
-        if (over) painter.fill(left - 2, y, right + 2, y + ROW - 1, GuidePalette.alpha(palette.accent(), 0x2A));
+        if (over) painter.fill(left - 2, y, right + 2, y + ROW - 1, FoliosPalette.alpha(palette.accent(), 0x2A));
         if (!row.icon.isEmpty()) {
             painter.push();
             painter.translate(left, y + 1);
@@ -568,8 +568,8 @@ public class GuideReader implements AbstractPainter.Navigator {
             steps = read[1];
         } else if (!row.quest.isEmpty()) {
             int done = 0;
-            for (GuideObjective objective : row.quest) if (objective.isDone(book)) done++;
-            progress = GuideObjective.progress(book, row.quest);
+            for (FoliosObjective objective : row.quest) if (objective.isDone(book)) done++;
+            progress = FoliosObjective.progress(book, row.quest);
             steps = row.quest.size();
             count = done == row.quest.size() ? Component.literal("✔") : Component.literal(done + "/" + row.quest.size());
         }
@@ -587,7 +587,7 @@ public class GuideReader implements AbstractPainter.Navigator {
         if (progress >= 0) {
             QuestPageElement.stepped(painter, left + 20, y + ROW - 5, right - left - 20, progress, steps, complete ? 0xFF4CAF50 : palette.accent());
         } else {
-            painter.fill(left + 20, y + ROW - 2, right, y + ROW - 1, GuidePalette.alpha(palette.line(), 0x60));
+            painter.fill(left + 20, y + ROW - 2, right, y + ROW - 1, FoliosPalette.alpha(palette.line(), 0x60));
         }
     }
 
@@ -595,13 +595,13 @@ public class GuideReader implements AbstractPainter.Navigator {
      * What is printed round a page's content: its number, the clasp in its lower outer corner that turns back (on a
      * left page) or on (on a right page), and on a right page of a book that can be shut, the clasp at its head that
      * shuts it. They belong to the page, so they turn with it; they are pressable only on a settled spread. Where the
-     * book's layout puts them ({@link GuideBook.Layout}).
+     * book's layout puts them ({@link FoliosBook.Layout}).
      *
      * @param shut what the shut clasp does; null for a book with none
      */
-    public void chrome(GuidePainter painter, Spot spot, boolean right, boolean pressable, @Nullable Runnable shut) {
-        GuidePalette palette = painter.palette();
-        GuideBook.Layout layout = book.layout();
+    public void chrome(FoliosPainter painter, Spot spot, boolean right, boolean pressable, @Nullable Runnable shut) {
+        FoliosPalette palette = painter.palette();
+        FoliosBook.Layout layout = book.layout();
         int width = painter.pageWidth();
         int size = Shapes.BUTTON;
         // The shut clasp is the book's, there whether or not the spread has a right-hand page.
@@ -611,10 +611,10 @@ public class GuideReader implements AbstractPainter.Navigator {
             boolean over = pressable && painter.action(x, top - 1, size, size + 1, Component.translatableWithFallback("folios.shut", "Close the book"), shut);
             Shapes.button(painter, x, top, Shapes.Icon.CLOSE, over);
         }
-        GuidePage.Laid laid = this.page(spot, right ? 1 : 0);
+        FoliosPageElement.Laid laid = this.page(spot, right ? 1 : 0);
         if (laid == null) return;
         int bottom = painter.pageHeight();
-        if (laid instanceof GuidePage.SpreadHalf) {
+        if (laid instanceof FoliosPageElement.SpreadHalf) {
             // One number for the spread, at the fold, each page printing its own part of it.
             Shapes.acrossFold(painter, Component.literal(String.valueOf(spot.page + 1)).getVisualOrderText(), bottom - layout.numberY(), palette.muted(), right);
         } else painter.centeredText(Component.literal(String.valueOf(spot.page + (right ? 2 : 1))), width / 2 + layout.numberX(), bottom - layout.numberY(), palette.muted());
@@ -640,21 +640,21 @@ public class GuideReader implements AbstractPainter.Navigator {
      * A tab's colour: its category's own (or the book's accent, for the front, bookmarks and categories without one),
      * full where the reader is, a little deeper under the pointer, and deeper still towards the cover otherwise.
      */
-    public int tabColor(@Nullable GuideCategory category, GuidePalette palette, boolean here, boolean hovered) {
+    public int tabColor(@Nullable FoliosCategory category, FoliosPalette palette, boolean here, boolean hovered) {
         return this.tabColor(category, palette, here ? 1 : hovered ? 0.55F : 0);
     }
 
     /** A tab's colour as it moves: from its resting colour at 0 to its full one at 1 ({@link TabMotion#out}). */
-    public int tabColor(@Nullable GuideCategory category, GuidePalette palette, float out) {
+    public int tabColor(@Nullable FoliosCategory category, FoliosPalette palette, float out) {
         int base = category != null && category.color() >= 0 ? 0xFF000000 | category.color() : palette.accent() | 0xFF000000;
         // Past 1 as it overshoots it glows a little brighter; knocked in below 0 it stays at its resting colour.
         float t = Math.max(0, out);
-        if (t > 1) return GuidePalette.mix(base, 0xFFFFFFFF, 0.3F * (t - 1));
-        return GuidePalette.mix(base, 0xFF000000 | book.cover(), 0.4F * (1 - t));
+        if (t > 1) return FoliosPalette.mix(base, 0xFFFFFFFF, 0.3F * (t - 1));
+        return FoliosPalette.mix(base, 0xFF000000 | book.cover(), 0.4F * (1 - t));
     }
 
     /** What a tab's tooltip says under its name: how much of a category has been read, what the others hold. */
-    public @Nullable Component tabDetail(@Nullable GuideCategory category, String part) {
+    public @Nullable Component tabDetail(@Nullable FoliosCategory category, String part) {
         if (category != null) {
             int[] read = this.progress(category.id());
             return read[1] == 0 ? null : read[0] == read[1] ? Component.translatableWithFallback("folios.tip.all_read", "All read")
@@ -668,7 +668,7 @@ public class GuideReader implements AbstractPainter.Navigator {
     }
 
     /** The key a tab moves by: its category, or the part of the book it opens ("home", "bookmarks", "index"). */
-    public static String tabKey(@Nullable GuideCategory category, String part) {
+    public static String tabKey(@Nullable FoliosCategory category, String part) {
         return category != null ? "category:" + category.id() : part;
     }
 
@@ -676,9 +676,9 @@ public class GuideReader implements AbstractPainter.Navigator {
     public int[] progress(@Nullable String category) {
         int read = 0;
         int total = 0;
-        for (GuideEntry entry : book.entries().values()) {
+        for (FoliosEntry entry : book.entries().values()) {
             if (category != null && !entry.category().equals(category) || !entry.isOpen()) continue;
-            GuideCategory owner = book.category(entry.category());
+            FoliosCategory owner = book.category(entry.category());
             if (owner == null || !owner.isOpen()) continue;
             total++;
             if (memory.isRead(entry.id())) read++;
@@ -797,7 +797,7 @@ public class GuideReader implements AbstractPainter.Navigator {
     public void follow(String link) {
         if (link.startsWith("bookmark:")) {
             int hash = link.lastIndexOf('#');
-            this.open(new GuideBook.Location(link.substring(9, hash), Integer.parseInt(link.substring(hash + 1))));
+            this.open(new FoliosBook.Location(link.substring(9, hash), Integer.parseInt(link.substring(hash + 1))));
             return;
         }
         GuideSession.Target target = session.resolve(link);
@@ -813,30 +813,30 @@ public class GuideReader implements AbstractPainter.Navigator {
     }
 
     @Override
-    public void open(GuideBook.Location location) {
+    public void open(FoliosBook.Location location) {
         this.go(new Spot("entry:" + location.entry(), even(session.pageOf(location))));
     }
 
     @Override
-    public GuideBook.@Nullable Location here() {
+    public FoliosBook.@Nullable Location here() {
         return spot.chapter.startsWith("entry:") ? session.location(spot.chapter.substring(6), spot.page) : null;
     }
 
     /** The entry open, if an entry is. */
-    public @Nullable GuideEntry entry() {
+    public @Nullable FoliosEntry entry() {
         return spot.chapter.startsWith("entry:") ? book.entry(spot.chapter.substring(6)) : null;
     }
 
     /** The category the reader is in: open, or the one of the entry open. */
-    public @Nullable GuideCategory category() {
+    public @Nullable FoliosCategory category() {
         if (spot.chapter.startsWith("category:")) return book.category(spot.chapter.substring(9));
-        GuideEntry entry = this.entry();
+        FoliosEntry entry = this.entry();
         return entry != null ? book.category(entry.category()) : null;
     }
 
     /** Remembers where the reader left off. */
     public void save() {
-        GuideBook.Location here = this.here();
+        FoliosBook.Location here = this.here();
         // An entry is remembered as where in it the reader was; any other spread (but a search) by its chapter.
         if (here != null) memory.setLast(here);
         boolean other = here == null && !spot.chapter.startsWith("search:");

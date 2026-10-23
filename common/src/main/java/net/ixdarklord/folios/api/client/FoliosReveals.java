@@ -1,8 +1,8 @@
 package net.ixdarklord.folios.api.client;
 
-import net.ixdarklord.folios.api.client.page.GuideLayout;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.internal.core.Folios;
-import net.ixdarklord.folios.api.client.page.GuidePainter;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The reveal effects books can use ({@link GuideReveal}), by id. CoolCatLib's own:
+ * The reveal effects books can use ({@link FoliosReveal}), by id. CoolCatLib's own:
  * <ul>
  *     <li>{@code folios:rise}, the default: each part fades in as it rises a few pixels into place, from the top
  *     of the page down</li>
@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *     <li>{@code none}: shown at once</li>
  * </ul>
  */
-public final class GuideReveals {
+public final class FoliosReveals {
     public static final ResourceLocation NONE = Folios.rl("none");
     public static final ResourceLocation RISE = Folios.rl("rise");
     public static final ResourceLocation FADE = Folios.rl("fade");
@@ -37,49 +37,49 @@ public final class GuideReveals {
     public static final ResourceLocation BURN = Folios.rl("burn");
     public static final ResourceLocation RUNES = Folios.rl("runes");
     /** The reveal a book has when book.json doesn't say. */
-    public static final GuideReveal.Use DEFAULT = new GuideReveal.Use(RISE, 0.45F);
+    public static final FoliosReveal.Use DEFAULT = new FoliosReveal.Use(RISE, 0.45F);
     /** How long an effect takes when book.json names it without a length. */
     public static final float DEFAULT_SECONDS = 0.45F;
 
-    private static final Map<ResourceLocation, GuideReveal> EFFECTS = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, FoliosReveal> EFFECTS = new ConcurrentHashMap<>();
 
     static {
-        register(NONE, (progress, x, y) -> GuideReveal.Look.SHOWN);
-        register(FADE, (progress, x, y) -> new GuideReveal.Look(GuideReveal.smooth(progress), 0, 0));
+        register(NONE, (progress, x, y) -> FoliosReveal.Look.SHOWN);
+        register(FADE, (progress, x, y) -> new FoliosReveal.Look(FoliosReveal.smooth(progress), 0, 0));
         register(RISE, (progress, x, y) -> {
-            float local = GuideReveal.stagger(progress, y / GuideLayout.PAGE_HEIGHT, 0.55F);
-            return new GuideReveal.Look(GuideReveal.smooth(local), 0, (1 - GuideReveal.easeOut(local)) * 6);
+            float local = FoliosReveal.stagger(progress, y / FoliosLayout.PAGE_HEIGHT, 0.55F);
+            return new FoliosReveal.Look(FoliosReveal.smooth(local), 0, (1 - FoliosReveal.easeOut(local)) * 6);
         });
         register(INK, (progress, x, y) -> {
             // A soft edge a fifth of the page tall sweeping down past the foot.
             float edge = progress * 1.2F - 0.2F;
-            return new GuideReveal.Look(GuideReveal.smooth((edge - y / GuideLayout.PAGE_HEIGHT) / 0.2F + 1), 0, 0);
+            return new FoliosReveal.Look(FoliosReveal.smooth((edge - y / FoliosLayout.PAGE_HEIGHT) / 0.2F + 1), 0, 0);
         });
         register(SWEEP, (progress, x, y) -> {
             // Out from the fold to both outer edges.
-            float local = GuideReveal.stagger(progress, Math.abs(x - GuideLayout.PAGE_WIDTH) / GuideLayout.PAGE_WIDTH, 0.6F);
-            return new GuideReveal.Look(GuideReveal.smooth(local), 0, 0);
+            float local = FoliosReveal.stagger(progress, Math.abs(x - FoliosLayout.PAGE_WIDTH) / FoliosLayout.PAGE_WIDTH, 0.6F);
+            return new FoliosReveal.Look(FoliosReveal.smooth(local), 0, 0);
         });
         register(SCATTER, (progress, x, y) -> {
             // Each part's own direction from where it is: a cheap hash of its place.
             int hash = (Math.round(x) * 73856093) ^ (Math.round(y) * 19349663);
             float angle = (hash & 1023) / 1023.0F * (float) (Math.PI * 2);
-            float local = GuideReveal.stagger(progress, ((hash >>> 10) & 255) / 255.0F, 0.45F);
-            float away = (1 - GuideReveal.easeOut(local)) * 10;
-            return new GuideReveal.Look(GuideReveal.smooth(local), (float) Math.cos(angle) * away, (float) Math.sin(angle) * away);
+            float local = FoliosReveal.stagger(progress, ((hash >>> 10) & 255) / 255.0F, 0.45F);
+            float away = (1 - FoliosReveal.easeOut(local)) * 10;
+            return new FoliosReveal.Look(FoliosReveal.smooth(local), (float) Math.cos(angle) * away, (float) Math.sin(angle) * away);
         });
         register(BURN, new Burn());
         register(RUNES, new Runes());
     }
 
-    private GuideReveals() {}
+    private FoliosReveals() {}
 
     // ---- Burn ----
 
     // Each thing on the page is burnt into it in turn, down the page and along each line, left to right: it flares
     // white-hot, burns orange with flames licking up off it, chars dark and settles into its own colour. Sparks and a
     // thin smoke rise off what burns.
-    private static final class Burn implements GuideReveal {
+    private static final class Burn implements FoliosReveal {
         private static final int HOT = 0xFFF2B8;
         private static final int EMBER = 0xFF7A1A;
         private static final int CHAR = 0x3A2410;
@@ -90,27 +90,27 @@ public final class GuideReveals {
 
         // Where a place comes in the order: down the page, and along each line.
         private static float place(float x, float y) {
-            float across = (x % GuideLayout.PAGE_WIDTH) / GuideLayout.PAGE_WIDTH;
-            return Math.min(1, y / GuideLayout.PAGE_HEIGHT * 0.8F + across * 0.2F);
+            float across = (x % FoliosLayout.PAGE_WIDTH) / FoliosLayout.PAGE_WIDTH;
+            return Math.min(1, y / FoliosLayout.PAGE_HEIGHT * 0.8F + across * 0.2F);
         }
 
         private static float own(float progress, float x, float y) {
-            return GuideReveal.stagger(progress, place(x, y), SPREAD);
+            return FoliosReveal.stagger(progress, place(x, y), SPREAD);
         }
 
         @Override
         public Look look(float progress, float x, float y) {
             float t = own(progress, x, y);
             if (t <= 0) return Look.HIDDEN;
-            float shown = GuideReveal.smooth(t / 0.12F);
+            float shown = FoliosReveal.smooth(t / 0.12F);
             // White-hot, then ember, then char, then its own colour.
-            int colour = t < 0.1F ? mix(HOT, EMBER, t / 0.1F) : mix(EMBER, CHAR, GuideReveal.smooth((t - 0.1F) / 0.3F));
-            float strength = 1 - GuideReveal.smooth((t - 0.45F) / 0.55F);
+            int colour = t < 0.1F ? mix(HOT, EMBER, t / 0.1F) : mix(EMBER, CHAR, FoliosReveal.smooth((t - 0.1F) / 0.3F));
+            float strength = 1 - FoliosReveal.smooth((t - 0.45F) / 0.55F);
             return new Look(shown, 0, 0, (Math.round(strength * 0.92F * 255) << 24) | colour, 0);
         }
 
         @Override
-        public void around(GuidePainter painter, float progress, float seconds, float x, float y, float width, float height, float spreadX, float spreadY) {
+        public void around(FoliosPainter painter, float progress, float seconds, float x, float y, float width, float height, float spreadX, float spreadY) {
             float t = own(progress, spreadX, spreadY);
             if (t <= 0 || t >= AFLAME) return;
             float heat = 1 - t / AFLAME;
@@ -141,20 +141,20 @@ public final class GuideReveals {
         }
 
         @Override
-        public void overlay(GuidePainter painter, float progress, float seconds, float pageX) {
-            int width = GuideLayout.PAGE_WIDTH;
-            int height = GuideLayout.PAGE_HEIGHT;
+        public void overlay(FoliosPainter painter, float progress, float seconds, float pageX) {
+            int width = FoliosLayout.PAGE_WIDTH;
+            int height = FoliosLayout.PAGE_HEIGHT;
             // Sparks and smoke rise from the rows burning now.
             float length = 1 - SPREAD;
             float hottest = (progress - length * AFLAME * 0.5F) / SPREAD / 0.8F * height;
             float spread = length * AFLAME / SPREAD / 0.8F * height + 10;
             for (int spark = 0; spark < 24; spark++) {
-                float cycle = seconds * 1.4F + GuideReveal.noise(spark * 977);
+                float cycle = seconds * 1.4F + FoliosReveal.noise(spark * 977);
                 float age = cycle % 1;
                 int round = (int) cycle;
-                float from = hottest + (GuideReveal.noise(spark * 131 + round * 17) - 0.5F) * spread;
+                float from = hottest + (FoliosReveal.noise(spark * 131 + round * 17) - 0.5F) * spread;
                 if (from < 6 || from > height - 4) continue;
-                float x0 = 10 + GuideReveal.noise(spark * 31 + round * 7) * (width - 20);
+                float x0 = 10 + FoliosReveal.noise(spark * 31 + round * 7) * (width - 20);
                 int x = Math.round(x0 + (float) Math.sin(seconds * 3 + spark) * 3 * age);
                 int y = Math.round(from - age * 24);
                 if (y < 2) continue;
@@ -173,7 +173,7 @@ public final class GuideReveals {
 
     // Each letter first shows as a glowing rune that flickers and settles into its own; a soft band of light crosses
     // the spread as they do, and runes drift up and fade.
-    private static final class Runes implements GuideReveal {
+    private static final class Runes implements FoliosReveal {
         private static final int GLOW = 0x7FD8FF;
         private static final String SYMBOLS = "abcdefghijklmnopqrstuvwxyz";
         private static final ResourceLocation FONT = new ResourceLocation("alt");
@@ -181,19 +181,19 @@ public final class GuideReveals {
         @Override
         public Look look(float progress, float x, float y) {
             // A wave across the spread from the fold out, each place a little apart from its neighbours.
-            float place = Math.abs(x - GuideLayout.PAGE_WIDTH) / GuideLayout.PAGE_WIDTH * 0.6F + y / GuideLayout.PAGE_HEIGHT * 0.25F
-                    + GuideReveal.noise(Math.round(x) * 73 + Math.round(y) * 1013) * 0.15F;
-            float local = GuideReveal.stagger(progress, place, 0.5F);
+            float place = Math.abs(x - FoliosLayout.PAGE_WIDTH) / FoliosLayout.PAGE_WIDTH * 0.6F + y / FoliosLayout.PAGE_HEIGHT * 0.25F
+                    + FoliosReveal.noise(Math.round(x) * 73 + Math.round(y) * 1013) * 0.15F;
+            float local = FoliosReveal.stagger(progress, place, 0.5F);
             if (local <= 0) return Look.HIDDEN;
-            float settled = GuideReveal.smooth(local);
-            return new Look(GuideReveal.smooth(local * 3), 0, 0, (Math.round((1 - settled) * 0.8F * 255) << 24) | GLOW, 1 - settled);
+            float settled = FoliosReveal.smooth(local);
+            return new Look(FoliosReveal.smooth(local * 3), 0, 0, (Math.round((1 - settled) * 0.8F * 255) << 24) | GLOW, 1 - settled);
         }
 
         @Override
-        public void overlay(GuidePainter painter, float progress, float seconds, float pageX) {
-            int width = GuideLayout.PAGE_WIDTH;
-            int height = GuideLayout.PAGE_HEIGHT;
-            float fade = 1 - GuideReveal.smooth((progress - 0.55F) / 0.45F);
+        public void overlay(FoliosPainter painter, float progress, float seconds, float pageX) {
+            int width = FoliosLayout.PAGE_WIDTH;
+            int height = FoliosLayout.PAGE_HEIGHT;
+            float fade = 1 - FoliosReveal.smooth((progress - 0.55F) / 0.45F);
             if (fade <= 0) return;
             // A soft band of light, leaning, crossing from the fold outwards on both pages.
             float reach = progress * 1.3F * width;
@@ -210,14 +210,14 @@ public final class GuideReveals {
             }
             // Runes drifting up, swelling into light and out again.
             for (int rune = 0; rune < 12; rune++) {
-                float age = (seconds * 0.45F + GuideReveal.noise(rune * 389)) % 1;
-                float x0 = GuideReveal.noise(rune * 53) * (width * 2 - 20) + 6 - pageX;
+                float age = (seconds * 0.45F + FoliosReveal.noise(rune * 389)) % 1;
+                float x0 = FoliosReveal.noise(rune * 53) * (width * 2 - 20) + 6 - pageX;
                 if (x0 < 2 || x0 > width - 8) continue;
                 int x = Math.round(x0 + (float) Math.sin(seconds + rune) * 2);
                 int y = Math.round(height * 0.9F - age * height * 0.75F);
                 float glow = (float) Math.sin(age * Math.PI) * fade;
                 if (glow < 0.1F) continue;
-                char symbol = SYMBOLS.charAt((int) (GuideReveal.noise(rune * 7 + (int) (seconds * 2)) * SYMBOLS.length()) % SYMBOLS.length());
+                char symbol = SYMBOLS.charAt((int) (FoliosReveal.noise(rune * 7 + (int) (seconds * 2)) * SYMBOLS.length()) % SYMBOLS.length());
                 painter.text(net.minecraft.network.chat.Component.literal(String.valueOf(symbol)).withStyle(style -> style.withFont(FONT)),
                         x, y, (Math.round(glow * 210) << 24) | GLOW);
             }
@@ -225,12 +225,12 @@ public final class GuideReveals {
     }
 
     /** Adds an effect, or replaces the one with that id. Safe to call while mods load. */
-    public static void register(ResourceLocation id, GuideReveal effect) {
+    public static void register(ResourceLocation id, FoliosReveal effect) {
         EFFECTS.put(id, effect);
     }
 
     /** The effect with that id; null when there is none. */
-    public static @Nullable GuideReveal get(ResourceLocation id) {
+    public static @Nullable FoliosReveal get(ResourceLocation id) {
         return EFFECTS.get(id);
     }
 }
