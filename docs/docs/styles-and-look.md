@@ -96,8 +96,8 @@ the range are clamped.
 | Key | Values | Default | Range |
 | --- | --- | --- | --- |
 | `tabs` | `x`: out from the book's edge; `y`: down from the pages' top; `spacing`: between tabs | `0`, `6`, `2` | x -20 to 40, y -20 to 160, spacing -10 to 30 |
-| `turn_buttons` | `x`: in from the page's outer edge; `y`: up from its bottom | `8`, `19` | x 0 to 60, y 0 to 170 |
-| `page_numbers` | `x`: across from the page's middle; `y`: up from its bottom | `0`, `17` | x -60 to 60, y 0 to 170 |
+| `turn_buttons` | `x`: in from the page's outer edge; `y`: up from its bottom | `10`, `21` | x 0 to 60, y 0 to 170 |
+| `page_numbers` | `x`: across from the page's middle; `y`: up from its bottom | `0`, `19` | x -60 to 60, y 0 to 170 |
 | `close_button` | `x`, `y`: a page close clasp, where one is drawn | `14`, `11` | x 0 to 125, y 0 to 169 |
 
 ```json title="book.json"
