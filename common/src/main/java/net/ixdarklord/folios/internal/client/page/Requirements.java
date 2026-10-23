@@ -1,7 +1,7 @@
 package net.ixdarklord.folios.internal.client.page;
 
-import net.ixdarklord.folios.api.client.page.GuidePainter;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.client.build.BlockChoice;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -85,7 +85,7 @@ final class Requirements {
     }
 
     /** The clasp in a window's corner that lays the list over it, at (x, y); pressed again, it takes it away. */
-    void clasp(GuidePainter painter, int x, int y) {
+    void clasp(FoliosPainter painter, int x, int y) {
         Component tooltip = open ? Component.translatableWithFallback("folios.requires.hide", "Hide the requirement list")
                 : Component.translatableWithFallback("folios.requires.show", "Requirement list · %s", total);
         boolean over = painter.action(x, y - 1, Shapes.BUTTON, Shapes.BUTTON + 1, tooltip, () -> open = !open);
@@ -97,15 +97,15 @@ final class Requirements {
      * clasp that closes it at the right and a rule under them; then the slots, from the left in rows. When there are
      * more rows than fit, the mouse wheel scrolls through them, a bar at the right showing where it is.
      */
-    void popup(GuidePainter painter, int x, int y, int width, int height) {
-        GuidePalette palette = painter.palette();
+    void popup(FoliosPainter painter, int x, int y, int width, int height) {
+        FoliosPalette palette = painter.palette();
         Shapes.panel(painter, x, y, x + width, y + height);
         int size = Shapes.BUTTON;
         int closeX = x + width - size - 2;
         boolean over = painter.action(closeX, y + 1, size, size + 1, Component.translatableWithFallback("folios.requires.hide", "Hide the requirement list"), () -> open = false);
         Shapes.button(painter, closeX, y + 2, Shapes.Icon.CLOSE, over);
         painter.text(Component.translatableWithFallback("folios.requires.list", "Requirement list:"), x + PAD + 1, y + 4, palette.heading());
-        painter.fill(x + PAD, y + 15, x + width - PAD, y + 16, GuidePalette.mix(palette.line(), palette.text(), 0.3F));
+        painter.fill(x + PAD, y + 15, x + width - PAD, y + 16, FoliosPalette.mix(palette.line(), palette.text(), 0.3F));
         // The slots: as many rows as fit under the rule, as many across as fit (beside the scroll bar, when there are
         // more than fit and it shows). The rows, with the bar right after them, fill the panel's width, the little left
         // over shared out either side.
@@ -133,10 +133,10 @@ final class Requirements {
     // The scroll bar beside the rows, as tall as they are: a sunken groove with a small arrow at each end, lit while
     // there is more that way; in it a raised thumb as long as the rows shown are of all of them, a light edge on its
     // left, a shadow on its right and grip lines at its middle, brighter while the pointer is over the list.
-    private void scrollBar(GuidePainter painter, int barX, int top, int height, int rows, int allRows, int most, boolean active) {
-        GuidePalette palette = painter.palette();
-        int groove = GuidePalette.mix(palette.panel(), palette.line(), 0.7F);
-        int quiet = GuidePalette.mix(palette.panel(), palette.line(), 0.95F);
+    private void scrollBar(FoliosPainter painter, int barX, int top, int height, int rows, int allRows, int most, boolean active) {
+        FoliosPalette palette = painter.palette();
+        int groove = FoliosPalette.mix(palette.panel(), palette.line(), 0.7F);
+        int quiet = FoliosPalette.mix(palette.panel(), palette.line(), 0.95F);
         int lit = palette.accent();
         // The arrows: a point and a base, three wide.
         painter.fill(barX + 1, top, barX + 2, top + 1, scroll > 0 ? lit : quiet);
@@ -147,22 +147,22 @@ final class Requirements {
         int trackTop = top + 3;
         int track = height - 6;
         painter.fill(barX, trackTop, barX + BAR, trackTop + track, groove);
-        painter.fill(barX, trackTop, barX + 1, trackTop + track, GuidePalette.mix(groove, 0xFF000000, 0.15F));
+        painter.fill(barX, trackTop, barX + 1, trackTop + track, FoliosPalette.mix(groove, 0xFF000000, 0.15F));
         // The thumb.
         int thumb = Math.max(7, track * rows / allRows);
         int thumbY = trackTop + (track - thumb) * scroll / most;
-        int face = GuidePalette.mix(palette.line(), palette.accent(), active ? 0.85F : 0.55F);
+        int face = FoliosPalette.mix(palette.line(), palette.accent(), active ? 0.85F : 0.55F);
         painter.fill(barX, thumbY, barX + BAR, thumbY + thumb, face);
-        painter.fill(barX, thumbY, barX + 1, thumbY + thumb, GuidePalette.mix(face, 0xFFFFFFFF, 0.35F));
-        painter.fill(barX + BAR - 1, thumbY, barX + BAR, thumbY + thumb, GuidePalette.mix(face, 0xFF000000, 0.25F));
-        painter.fill(barX, thumbY + thumb - 1, barX + BAR, thumbY + thumb, GuidePalette.mix(face, 0xFF000000, 0.3F));
-        int grip = GuidePalette.mix(face, 0xFF000000, 0.35F);
+        painter.fill(barX, thumbY, barX + 1, thumbY + thumb, FoliosPalette.mix(face, 0xFFFFFFFF, 0.35F));
+        painter.fill(barX + BAR - 1, thumbY, barX + BAR, thumbY + thumb, FoliosPalette.mix(face, 0xFF000000, 0.25F));
+        painter.fill(barX, thumbY + thumb - 1, barX + BAR, thumbY + thumb, FoliosPalette.mix(face, 0xFF000000, 0.3F));
+        int grip = FoliosPalette.mix(face, 0xFF000000, 0.35F);
         int middle = thumbY + thumb / 2;
         for (int line = -2; line <= 2; line += 2) painter.fill(barX, middle + line, barX + BAR, middle + line + 1, grip);
     }
 
     /** A slot and its stack, at (x, y); a tag's says which tag it is under the pointer. */
-    static void slot(GuidePainter painter, Need need, int x, int y) {
+    static void slot(FoliosPainter painter, Need need, int x, int y) {
         Shapes.slot(painter, x, y);
         painter.item(need.stack(painter.time()), x + 1, y + 1);
         if (need.choice().isTag() && painter.hovered(x + 1, y + 1, 16, 16)) {
@@ -171,7 +171,7 @@ final class Requirements {
     }
 
     /** A clasp that steps the list a page back or on. */
-    void stepper(GuidePainter painter, int x, int y, boolean forward) {
+    void stepper(FoliosPainter painter, int x, int y, boolean forward) {
         int size = Shapes.BUTTON;
         boolean over = painter.action(x, y - 1, size, size + 1, forward ? Component.translatableWithFallback("folios.next", "Next page")
                 : Component.translatableWithFallback("folios.previous", "Previous page"), () -> page += forward ? 1 : -1);

@@ -1,7 +1,7 @@
 package net.ixdarklord.folios.internal.client.page;
 
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
-import net.ixdarklord.folios.api.client.page.GuidePainter;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.minecraft.network.chat.Component;
 
 // A scene's window on a page that the reader can turn: dragged with the left button it stops turning by itself and
@@ -39,7 +39,7 @@ final class SceneControl {
     }
 
     /** Draws the scene in its window, draggable, with the clasp that resets it once it has been turned. */
-    void draw(GuidePainter painter, int x, int y, int width, int height) {
+    void draw(FoliosPainter painter, int x, int y, int width, int height) {
         this.draw(painter, x, y, width, height, null, null);
     }
 
@@ -47,7 +47,7 @@ final class SceneControl {
      * A part of a window over two pages, drawn on one of them: the part of the scene from {@code u0} to {@code u1}
      * across, draggable; the page's clasp in the window's first part, the reset clasp in its last.
      */
-    void drawPart(GuidePainter painter, int x, int y, int width, int height, float u0, float u1, boolean first, boolean last,
+    void drawPart(FoliosPainter painter, int x, int y, int width, int height, float u0, float u1, boolean first, boolean last,
                   Shapes.@org.jspecify.annotations.Nullable Icon extra, @org.jspecify.annotations.Nullable Extra action) {
         painter.scroll(x, y, width, height, this::zoomed);
         painter.drag(x, y, width, height, (dx, dy) -> {
@@ -70,8 +70,8 @@ final class SceneControl {
         Shapes.button(painter, bx, y + 2, Shapes.Icon.RESET, over);
     }
 
-    /** As {@link #draw(GuidePainter, int, int, int, int)}, with a clasp of the page's own in the window's other corner. */
-    void draw(GuidePainter painter, int x, int y, int width, int height, Shapes.@org.jspecify.annotations.Nullable Icon extra,
+    /** As {@link #draw(FoliosPainter, int, int, int, int)}, with a clasp of the page's own in the window's other corner. */
+    void draw(FoliosPainter painter, int x, int y, int width, int height, Shapes.@org.jspecify.annotations.Nullable Icon extra,
               @org.jspecify.annotations.Nullable Extra action) {
         painter.scroll(x, y, width, height, this::zoomed);
         painter.drag(x, y, width, height, (dx, dy) -> {

@@ -1,7 +1,7 @@
 package net.ixdarklord.folios.api.client;
 
-import net.ixdarklord.folios.api.client.page.GuideIcon;
-import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.api.client.page.FoliosIcon;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -12,9 +12,9 @@ import net.minecraft.network.chat.Component;
  * @param sort        lower comes first, then by name
  * @param color       its tab's colour (RGB, {@code "color"} in its JSON); -1 for the book's own
  */
-public record GuideCategory(String id, String name, String description, GuideIcon icon, int sort, GuideLock lock, int color) {
+public record FoliosCategory(String id, String name, String description, FoliosIcon icon, int sort, FoliosLock lock, int color) {
     public Component title() {
-        return GuideText.inline(name);
+        return FoliosText.inline(name);
     }
 
     public boolean isOpen() {

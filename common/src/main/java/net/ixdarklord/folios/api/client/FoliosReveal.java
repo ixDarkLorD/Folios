@@ -5,7 +5,7 @@ import net.minecraft.resources.Identifier;
 /**
  * How a page's content shows once the page is turned to: everything drawn on it (text, pictures, items, scenes,
  * whatever a page type draws) asks the effect how it looks at this point of the reveal, by where it is on the page.
- * Register one with {@link GuideReveals#register}; a book chooses it in book.json and an entry may choose its own:
+ * Register one with {@link FoliosReveals#register}; a book chooses it in book.json and an entry may choose its own:
  * <pre>{@code
  * "reveal": "mymod:shimmer"                                  // an effect, for its default length
  * "reveal": {"effect": "folios:rise", "seconds": 0.6}    // and how long it takes
@@ -17,34 +17,34 @@ import net.minecraft.resources.Identifier;
  * allocation beyond the {@link Look} it returns (or one of the constants).
  * <pre>{@code
  * // Each line slides in from the left, the higher ones first.
- * GuideReveals.register(MyMod.id("slide"), (progress, x, y) -> {
- *     float local = GuideReveal.stagger(progress, y / GuideLayout.PAGE_HEIGHT, 0.5F);
- *     return new GuideReveal.Look(local, -(1 - GuideReveal.easeOut(local)) * 12, 0);
+ * FoliosReveals.register(MyMod.id("slide"), (progress, x, y) -> {
+ *     float local = FoliosReveal.stagger(progress, y / FoliosLayout.PAGE_HEIGHT, 0.5F);
+ *     return new FoliosReveal.Look(local, -(1 - FoliosReveal.easeOut(local)) * 12, 0);
  * });
  * }</pre>
  */
 @FunctionalInterface
-public interface GuideReveal {
+public interface FoliosReveal {
     /**
      * How something drawn at (x, y) looks at this point of the reveal.
      *
      * @param progress how far the reveal has gone, 0 as the page lands to 1 when it is done (and 1 from then on)
      * @param x        where it is drawn across the open spread, in page pixels: 0 at the left page's outer edge,
-     *                 {@code GuideLayout.PAGE_WIDTH} at the fold, twice that at the right page's outer edge; so an
+     *                 {@code FoliosLayout.PAGE_WIDTH} at the fold, twice that at the right page's outer edge; so an
      *                 effect runs on over the fold
-     * @param y        where it is drawn down the page, in page pixels (0 to {@code GuideLayout.PAGE_HEIGHT})
+     * @param y        where it is drawn down the page, in page pixels (0 to {@code FoliosLayout.PAGE_HEIGHT})
      */
     Look look(float progress, float x, float y);
 
     /**
      * Draws over a page while the reveal plays (progress under 1), after its content: fire along a burning edge,
      * smoke, sparks, floating symbols. In the page's own pixels, through its painter; {@code pageX} is where the page
-     * starts across the spread (0 or {@code GuideLayout.PAGE_WIDTH}), for drawing what runs on over the fold. Nothing
+     * starts across the spread (0 or {@code FoliosLayout.PAGE_WIDTH}), for drawing what runs on over the fold. Nothing
      * by default. Each thing drawn here is drawn every frame, so a few hundred fills at most.
      *
      * @param seconds a clock for what flickers or drifts (the book's)
      */
-    default void overlay(net.ixdarklord.folios.api.client.page.GuidePainter painter, float progress, float seconds, float pageX) {
+    default void overlay(net.ixdarklord.folios.api.client.page.FoliosPainter painter, float progress, float seconds, float pageX) {
     }
 
     /**
@@ -54,7 +54,7 @@ public interface GuideReveal {
      * {@link #look} is given it. Called for letters, items and pictures (not for plain fills), so keep it to a few
      * fills, and only where it shows. Nothing by default.
      */
-    default void around(net.ixdarklord.folios.api.client.page.GuidePainter painter, float progress, float seconds,
+    default void around(net.ixdarklord.folios.api.client.page.FoliosPainter painter, float progress, float seconds,
                         float x, float y, float width, float height, float spreadX, float spreadY) {
     }
 
@@ -79,7 +79,7 @@ public interface GuideReveal {
      * keeps its own, so it doesn't play again after a restart or on another computer).
      */
     record Use(Identifier effect, float seconds, boolean once, boolean unread) {
-        public static final Use NONE = new Use(GuideReveals.NONE, 0, false, false);
+        public static final Use NONE = new Use(FoliosReveals.NONE, 0, false, false);
 
         public Use(Identifier effect, float seconds) {
             this(effect, seconds, false, false);

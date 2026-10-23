@@ -23,24 +23,24 @@ import java.util.function.Consumer;
 
 /**
  * An item that opens a guide book when used. Folios registers one, {@code folios:guide_book}, that opens the
- * book its {@code folios:guide_book} component names ({@link GuideBooks#createStack}); a mod can register its own for a
+ * book its {@code folios:guide_book} component names ({@link FoliosBooks#createStack}); a mod can register its own for a
  * single book, which then needs no component:
  * <pre>{@code
- * ITEMS.register("handbook", () -> new GuideBookItem(properties, MyMod.id("handbook")));
+ * ITEMS.register("handbook", () -> new FoliosBookItem(properties, MyMod.id("handbook")));
  * }</pre>
  * Its name is the book's own, unless the stack has a custom name or {@code item_name}; under it, who the book is from:
  * its {@code "author"} in book.json, or the mod its namespace belongs to.
  */
-public class GuideBookItem extends Item {
+public class FoliosBookItem extends Item {
     private final @Nullable Identifier book;
 
     /** An item that opens whichever book its stack's component names. */
-    public GuideBookItem(Properties properties) {
+    public FoliosBookItem(Properties properties) {
         this(properties, null);
     }
 
     /** An item that always opens one book (its stacks' component, if any, wins). */
-    public GuideBookItem(Properties properties, @Nullable Identifier book) {
+    public FoliosBookItem(Properties properties, @Nullable Identifier book) {
         super(properties);
         this.book = book;
     }
