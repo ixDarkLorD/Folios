@@ -10,19 +10,19 @@ import org.jspecify.annotations.Nullable;
  * locked:
  * <ul>
  *     <li>{@code "advancement": "mymod:story/found_ore"}: open once that advancement is done;</li>
- *     <li>{@code "flag": "mymod:hard_mode"}: open while that flag, set by code ({@link Guides#setFlag}), is on; a
+ *     <li>{@code "flag": "mymod:hard_mode"}: open while that flag, set by code ({@link FoliosGuides#setFlag}), is on; a
  *     leading {@code !} reverses it;</li>
  *     <li>{@code "secret": true}: left out until it opens, where it would otherwise be shown locked.</li>
  * </ul>
  */
-public record GuideLock(@Nullable Identifier advancement, @Nullable String flag, boolean secret) {
-    public static final GuideLock NONE = new GuideLock(null, null, false);
+public record FoliosLock(@Nullable Identifier advancement, @Nullable String flag, boolean secret) {
+    public static final FoliosLock NONE = new FoliosLock(null, null, false);
 
-    public static GuideLock read(JsonObject json) {
+    public static FoliosLock read(JsonObject json) {
         Identifier advancement = json.has("advancement") ? Identifier.parse(json.get("advancement").getAsString()) : null;
         String flag = json.has("flag") ? json.get("flag").getAsString() : null;
         boolean secret = json.has("secret") && json.get("secret").getAsBoolean();
-        return advancement == null && flag == null && !secret ? NONE : new GuideLock(advancement, flag, secret);
+        return advancement == null && flag == null && !secret ? NONE : new FoliosLock(advancement, flag, secret);
     }
 
     public boolean isOpen() {

@@ -12,14 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * as the source's value is towards its goal. The value is asked whenever the objective is drawn or checked, so keep it
  * cheap (read it from what the client already has).
  * <pre>{@code
- * GuideObjectives.register(MyMod.id("mana"), player -> ManaClient.current());
- * GuideObjectives.register(MyMod.id("spells_known"), player -> ClientSpells.known().size());
+ * FoliosObjectives.register(MyMod.id("mana"), player -> ManaClient.current());
+ * FoliosObjectives.register(MyMod.id("spells_known"), player -> ClientSpells.known().size());
  * }</pre>
  */
-public final class GuideObjectives {
+public final class FoliosObjectives {
     private static final Map<Identifier, Source> SOURCES = new ConcurrentHashMap<>();
 
-    private GuideObjectives() {}
+    private FoliosObjectives() {}
 
     /** A value to follow, for the local player. */
     @FunctionalInterface

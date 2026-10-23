@@ -13,7 +13,7 @@ package net.ixdarklord.folios.api.client.page;
  * @param panel   boxes set on the page (a recipe's grid, an image's frame)
  * @param line    hairlines: borders and dividers
  */
-public record GuidePalette(int paper, int text, int muted, int heading, int accent, int link, int panel, int line) {
+public record FoliosPalette(int paper, int text, int muted, int heading, int accent, int link, int panel, int line) {
     /** {@code color} with its alpha set (0 to 255). */
     public static int alpha(int color, int alpha) {
         return (alpha & 0xFF) << 24 | color & 0xFFFFFF;
