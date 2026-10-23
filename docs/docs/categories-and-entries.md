@@ -114,7 +114,7 @@ locked:
 | Key | Type | What it does |
 | --- | --- | --- |
 | `advancement` | identifier | Locked until the player has this advancement. |
-| `flag` | string | Locked until this flag, set by a mod with [`Guides.setFlag`](for-mod-developers.md#flags), is on. Start it with `!` to reverse it: open while the flag is off. |
+| `flag` | string | Locked until this flag, set by a mod with [`FoliosGuides.setFlag`](for-mod-developers.md#flags), is on. Start it with `!` to reverse it: open while the flag is off. |
 | `secret` | boolean | Hide it entirely until it opens. Without it, a locked category or entry is still listed, as `???`. |
 
 When both `advancement` and `flag` are given, both must be met.

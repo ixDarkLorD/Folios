@@ -51,7 +51,7 @@ key) shown in place of the one it makes for itself.
 | `{"read": "basics/first_steps"}` | That entry of this book has been read. | "Read *entry name*" |
 | `{"category": "basics"}` | Every open entry in that category has been read. Shows a bar. | "Read all of *category name*" |
 | `{"book": true}` | Every open entry in the book has been read. Shows a bar. | "Read the whole book" |
-| `{"flag": "mymod:met_the_wizard"}` | The flag, set by a mod with [`Guides.setFlag`](for-mod-developers.md#flags), is on. | The flag's name. |
+| `{"flag": "mymod:met_the_wizard"}` | The flag, set by a mod with [`FoliosGuides.setFlag`](for-mod-developers.md#flags), is on. | The flag's name. |
 | `{"item": "minecraft:diamond", "count": 5}` | The player carries that many. | "Collect *item name*", with a count. |
 | `{"source": "mymod:mana", "goal": 100}` | A value a mod reports reaches the goal. | The source's id, with a count. |
 
@@ -60,7 +60,7 @@ Details:
 - `item` takes an item, a `#tag` or a list, as for [icons](categories-and-entries.md#icons). Every matching item in
   the inventory counts. `count` defaults to 1.
 - `source` values come from mods, registered with
-  [`GuideObjectives.register`](for-mod-developers.md#objectives). `goal` defaults to 1. A source no mod registered
+  [`FoliosObjectives.register`](for-mod-developers.md#objectives). `goal` defaults to 1. A source no mod registered
   stays at 0.
 - `goal` and `count` mean the same thing; either works for `item` and `source`.
 - An object names one kind. If it has several of the keys above, the first in the table's order is used.

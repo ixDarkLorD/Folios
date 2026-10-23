@@ -26,7 +26,7 @@ existing books read as they did:
 ]
 ```
 
-A type without a namespace is Folios's own: `"text"` is `folios:text`. Mods can [add element types](for-mod-developers.md#page-types).
+A type without a namespace is Folios's own: `"text"` is `folios:text`. Mods can [add element types](for-mod-developers.md#page-elements).
 
 Pages are laid out for the page size and the reader's language. Text that doesn't fit runs on over the next pages, and
 an element that doesn't fit in what is left of a page starts the next one, so one page object can become several pages

@@ -37,7 +37,7 @@ Set with `"style"` in [book.json](book.md).
 In both styles, other players within 16 blocks see the book in the reader's hands. A handheld book is shown at the
 spread being read, its leaves turning as the reader turns them.
 
-Mods can add more styles with [`GuideStyles.register`](for-mod-developers.md#styles). A book naming a style that no
+Mods can add more styles with [`FoliosStyles.register`](for-mod-developers.md#styles). A book naming a style that no
 mod provides is shown as a screen book.
 
 ### Style keys
@@ -258,4 +258,4 @@ name means `folios:<name>`.
 | `once` | boolean | `false` | Play only the first time each spread is seen this game. Pages of entries read in an earlier game count as seen. |
 | `unread` | boolean | `false` | Play only on spreads the reader hasn't been shown in full before. Remembered with their [reading progress](categories-and-entries.md#reading-progress), so it doesn't play again after a restart. |
 
-Mods can add effects with [`GuideReveals.register`](for-mod-developers.md#reveal-effects).
+Mods can add effects with [`FoliosReveals.register`](for-mod-developers.md#reveal-effects).
