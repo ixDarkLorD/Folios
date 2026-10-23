@@ -25,6 +25,24 @@ public interface GuidePainter {
 
     GuidePalette palette();
 
+    /** The size of the page being drawn: the default page's unless the book's pages are larger (a screen book at a small GUI scale). */
+    default int pageWidth() {
+        return GuideLayout.PAGE_WIDTH;
+    }
+
+    default int pageHeight() {
+        return GuideLayout.PAGE_HEIGHT;
+    }
+
+    /** Where the page's content ends at the right and at the foot. */
+    default int contentRight() {
+        return this.pageWidth() - GuideLayout.MARGIN;
+    }
+
+    default int contentBottom() {
+        return this.pageHeight() - GuideLayout.FOOT;
+    }
+
     /** Seconds since the book was opened: for what moves or cycles on a page. */
     float time();
 

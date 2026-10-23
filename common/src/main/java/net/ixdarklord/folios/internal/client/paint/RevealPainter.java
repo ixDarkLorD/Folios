@@ -29,6 +29,17 @@ public final class RevealPainter implements GuidePainter {
     private static final FontDescription RUNES = new FontDescription.Resource(Identifier.withDefaultNamespace("alt"));
 
     private final GuidePainter painter;
+
+    // The page's size is the painter's it wraps.
+    @Override
+    public int pageWidth() {
+        return painter.pageWidth();
+    }
+
+    @Override
+    public int pageHeight() {
+        return painter.pageHeight();
+    }
     private final GuideReveal effect;
     private final float progress;
     private final float pageX;

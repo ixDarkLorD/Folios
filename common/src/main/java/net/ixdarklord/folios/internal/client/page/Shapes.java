@@ -28,16 +28,26 @@ public final class Shapes {
 
     /**
      * The page's frame, drawn under what is on it: the book's frame texture over the whole page, tinted between the
-     * page's lines and the book's colour, so it sits as quietly on dark paper as on parchment.
+     * page's lines and the book's colour, so it sits as quietly on dark paper as on parchment. On a page larger than
+     * the default its corners and the ornaments at the middle of its head and foot keep their size; only the plain runs
+     * of line between them are drawn longer.
      */
     public static void pageFrame(GuidePainter painter, Identifier texture, int width, int height) {
-        painter.texture(texture, 0, 0, width, height, 0, 0, 1, 1, frameTint(painter));
+        frameSpan(painter, texture, 0, width, 0, FRAME_W, height, frameTint(painter));
     }
 
     /** The spine's width between a screen book's pages, which a spread's halves draw on into to meet. */
     public static final int SCREEN_SPINE = 6;
     /** How much of the frame texture's side is left out at a spread's fold, where its plain middle takes over. */
     private static final int FRAME_SIDE = 12;
+    /** The frame texture's size, in the default page's pixels, and the plain column of it that only has its head and foot lines. */
+    private static final int FRAME_W = GuideLayout.PAGE_WIDTH;
+    private static final int FRAME_H = GuideLayout.PAGE_HEIGHT;
+    private static final int FRAME_PLAIN = 40;
+    // Where the frame texture is cut across and down: {from, to, 1 if it stretches}. The corners (with their ornaments)
+    // and the ornament at the middle of the head and foot keep their size; the runs of plain line between stretch.
+    private static final int[][] FRAME_COLUMNS = {{0, 20, 0}, {20, 58, 1}, {58, 78, 0}, {78, 116, 1}, {116, FRAME_W, 0}};
+    private static final int[][] FRAME_ROWS = {{0, 20, 0}, {20, 160, 1}, {160, FRAME_H, 0}};
 
     /**
      * The page's frame, or for half of a spread the frame joined with the other half's: its side at the fold left
@@ -50,17 +60,58 @@ public final class Shapes {
         }
         int tint = frameTint(painter);
         int over = painter.flat() ? SCREEN_SPINE / 2 : 0;
-        float side = FRAME_SIDE / (float) width;
-        // A column of the texture with only its top and bottom lines (none of the ornaments along them).
-        float middle = 40.0F / width;
-        float column = 1.0F / width;
         if (!right) {
-            painter.texture(texture, 0, 0, width - FRAME_SIDE, height, 0, 0, 1 - side, 1, tint);
-            painter.texture(texture, width - FRAME_SIDE, 0, FRAME_SIDE + over, height, middle, 0, middle + column, 1, tint);
+            frameSpan(painter, texture, 0, width - FRAME_SIDE, 0, FRAME_W - FRAME_SIDE, height, tint);
+            frameSpan(painter, texture, width - FRAME_SIDE, FRAME_SIDE + over, FRAME_PLAIN, FRAME_PLAIN + 1, height, tint);
         } else {
-            painter.texture(texture, -over, 0, FRAME_SIDE + over, height, middle, 0, middle + column, 1, tint);
-            painter.texture(texture, FRAME_SIDE, 0, width - FRAME_SIDE, height, side, 0, 1, 1, tint);
+            frameSpan(painter, texture, -over, FRAME_SIDE + over, FRAME_PLAIN, FRAME_PLAIN + 1, height, tint);
+            frameSpan(painter, texture, FRAME_SIDE, width - FRAME_SIDE, FRAME_SIDE, FRAME_W, height, tint);
         }
+    }
+
+    // The columns `from` to `to` of the frame texture drawn from x across `width`, down `height`: each column piece and
+    // row piece that keeps its size kept, the stretching ones sharing what is left.
+    private static void frameSpan(GuidePainter painter, Identifier texture, int x, int width, int from, int to, int height, int tint) {
+        float[][] columns = slices(FRAME_COLUMNS, from, to, width);
+        float[][] rows = slices(FRAME_ROWS, 0, FRAME_H, height);
+        for (float[] column : columns) {
+            for (float[] row : rows) {
+                int x0 = x + Math.round(column[0]);
+                int x1 = x + Math.round(column[1]);
+                int y0 = Math.round(row[0]);
+                int y1 = Math.round(row[1]);
+                if (x1 <= x0 || y1 <= y0) continue;
+                painter.texture(texture, x0, y0, x1 - x0, y1 - y0, column[2] / FRAME_W, row[2] / FRAME_H, column[3] / FRAME_W, row[3] / FRAME_H, tint);
+            }
+        }
+    }
+
+    // The pieces of the texture from `from` to `to` (cut where `cuts` cuts it), each {drawn from, drawn to, texture from,
+    // texture to}, laid over `length`: the fixed ones their own length, the stretching ones sharing the rest by theirs.
+    private static float[][] slices(int[][] cuts, int from, int to, int length) {
+        java.util.List<float[]> pieces = new java.util.ArrayList<>();
+        int fixed = 0;
+        int stretched = 0;
+        for (int[] cut : cuts) {
+            int a = Math.max(from, cut[0]);
+            int b = Math.min(to, cut[1]);
+            if (b <= a) continue;
+            if (cut[2] == 0) fixed += b - a;
+            else stretched += b - a;
+        }
+        // The stretching pieces' share: all of what is left, or (with none to stretch) the fixed ones scaled to fit.
+        float stretch = stretched > 0 ? Math.max(0, length - fixed) / (float) stretched : 0;
+        float squeeze = stretched > 0 || fixed == 0 ? 1 : length / (float) fixed;
+        float at = 0;
+        for (int[] cut : cuts) {
+            int a = Math.max(from, cut[0]);
+            int b = Math.min(to, cut[1]);
+            if (b <= a) continue;
+            float drawn = (b - a) * (cut[2] == 0 ? squeeze : stretch);
+            pieces.add(new float[]{at, at + drawn, a, b});
+            at += drawn;
+        }
+        return pieces.toArray(new float[0][]);
     }
 
     /**
@@ -70,7 +121,7 @@ public final class Shapes {
      */
     public static void acrossFold(GuidePainter painter, net.minecraft.util.FormattedCharSequence line, int y, int color, boolean right) {
         net.minecraft.client.gui.Font font = painter.font();
-        int width = GuideLayout.PAGE_WIDTH;
+        int width = painter.pageWidth();
         int gap = painter.flat() ? SCREEN_SPINE : 0;
         int offset = right ? width + gap / 2 : -gap / 2;
         int[] x = {width - font.width(line) / 2};
