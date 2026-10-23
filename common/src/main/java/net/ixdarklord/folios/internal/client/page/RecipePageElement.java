@@ -79,7 +79,7 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
     private static void draw(GuidePainter painter, Map<SlotDisplay, List<ItemStack>> resolved, Identifier id, int y) {
         GuidePalette palette = painter.palette();
         int left = GuideLayout.CONTENT_LEFT;
-        int right = GuideLayout.CONTENT_RIGHT;
+        int right = painter.contentRight();
         Shapes.panel(painter, left, y, right, y + BOX);
         List<RecipeDisplay> displays = GuideRecipes.get(id);
         if (displays == null || displays.isEmpty()) {

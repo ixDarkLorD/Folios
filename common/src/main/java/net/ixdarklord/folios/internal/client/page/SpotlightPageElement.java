@@ -29,7 +29,7 @@ public record SpotlightPageElement(GuideStack item, Optional<String> title, Stri
     public List<Laid> lay(GuideLayout layout) {
         boolean named = title.isEmpty();
         return layout.flow(title.orElse(null), CARD + (named ? 12 : 0), text, (painter, y) -> {
-            int middle = GuideLayout.PAGE_WIDTH / 2;
+            int middle = painter.pageWidth() / 2;
             int left = middle - CARD / 2;
             Shapes.panel(painter, left, y, left + CARD, y + CARD);
             // A soft wash of the book's colour behind the item.
