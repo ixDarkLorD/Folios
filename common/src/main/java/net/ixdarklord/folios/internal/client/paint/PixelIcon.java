@@ -1,6 +1,6 @@
 package net.ixdarklord.folios.internal.client.paint;
 
-import net.ixdarklord.folios.api.client.page.GuidePainter;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.folios.internal.compat.RenderPipelines;
@@ -23,12 +23,12 @@ public record PixelIcon(ResourceLocation texture, int width, int height, int fra
     }
 
     /** Draws it with its top left at (x, y), in the colour given. */
-    public void draw(GuidePainter painter, int x, int y, int color) {
+    public void draw(FoliosPainter painter, int x, int y, int color) {
         this.draw(painter, x, y, 0, color);
     }
 
     /** Draws one of its frames (0 for the top one). */
-    public void draw(GuidePainter painter, int x, int y, int frame, int color) {
+    public void draw(FoliosPainter painter, int x, int y, int frame, int color) {
         float v0 = frame / (float) frames;
         painter.texture(texture, x, y, width, height, 0, v0, 1, v0 + 1.0F / frames, color);
     }
@@ -53,7 +53,7 @@ public record PixelIcon(ResourceLocation texture, int width, int height, int fra
      * each pixel its own hue, the hues running across it diagonally from its top left to its bottom right and cycling,
      * then fades out, and two seconds later shows again.
      */
-    public void rainbow(GuidePainter painter, int x, int y, float seconds, int base) {
+    public void rainbow(FoliosPainter painter, int x, int y, float seconds, int base) {
         float strength = rainbowStrength(seconds);
         if (strength <= 0) {
             this.draw(painter, x, y, base);
@@ -92,7 +92,7 @@ public record PixelIcon(ResourceLocation texture, int width, int height, int fra
     // The colour of a diagonal of the rainbow (a pixel's column plus its row) at a time, over the base as strongly as it shows.
     private static int hue(float seconds, int diagonal, int base, float strength) {
         int rainbow = 0xFF000000 | net.minecraft.util.Mth.hsvToRgb((seconds * 0.35F + diagonal * 0.04F) % 1.0F, 0.65F, 1.0F);
-        return net.ixdarklord.folios.api.client.page.GuidePalette.mix(base, rainbow, strength);
+        return net.ixdarklord.folios.api.client.page.FoliosPalette.mix(base, rainbow, strength);
     }
 
     /**

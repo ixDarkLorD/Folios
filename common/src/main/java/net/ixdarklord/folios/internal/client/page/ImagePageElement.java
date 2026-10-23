@@ -1,13 +1,13 @@
 package net.ixdarklord.folios.internal.client.page;
 
-import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
@@ -16,7 +16,7 @@ import java.util.Optional;
 
 // Pictures across the page at their own proportions (at most `height` tall), one at a time with arrows to step
 // through several; a caption under them.
-public record ImagePageElement(List<ResourceLocation> images, Optional<String> title, String text, boolean border, int height) implements GuidePage {
+public record ImagePageElement(List<ResourceLocation> images, Optional<String> title, String text, boolean border, int height) implements FoliosPageElement {
     public static final MapCodec<ImagePageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Codec.either(net.ixdarklord.folios.internal.compat.Compat.listOf(ResourceLocation.CODEC, 1, 32), ResourceLocation.CODEC).xmap(either -> either.map(list -> list, List::of), com.mojang.datafixers.util.Either::left).fieldOf("images").forGetter(ImagePageElement::images),
             Codec.STRING.optionalFieldOf("title").forGetter(ImagePageElement::title),
@@ -28,7 +28,7 @@ public record ImagePageElement(List<ResourceLocation> images, Optional<String> t
     private static final int ARROWS = 12;
 
     @Override
-    public List<Laid> lay(GuideLayout layout) {
+    public List<Laid> lay(FoliosLayout layout) {
         int[] shown = {0};
         int inner = layout.contentWidth() - (border ? 4 : 0);
         // The tallest picture sets the room taken, so the text under them stays put as they change.
@@ -37,7 +37,7 @@ public record ImagePageElement(List<ResourceLocation> images, Optional<String> t
         int pictures = room + (border ? 4 : 0);
         int frame = pictures + (images.size() > 1 ? ARROWS : 0);
         return layout.flow(title.orElse(null), frame, text, (painter, y) -> {
-            GuidePalette palette = painter.palette();
+            FoliosPalette palette = painter.palette();
             int count = images.size();
             ResourceLocation image = images.get(shown[0] % count);
             int[] size = fit(image, inner);
@@ -66,6 +66,6 @@ public record ImagePageElement(List<ResourceLocation> images, Optional<String> t
 
     @Override
     public String searchText() {
-        return GuideText.resolve(title.orElse("")) + " " + GuideText.resolve(text);
+        return FoliosText.resolve(title.orElse("")) + " " + FoliosText.resolve(text);
     }
 }

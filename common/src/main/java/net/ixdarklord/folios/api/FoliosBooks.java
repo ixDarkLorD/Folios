@@ -13,17 +13,17 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * A book lives in resource packs, at {@code assets/<namespace>/folios/<path>/book.json} (id
  * {@code <namespace>:<path>}), with its categories and entries beside it; the client reads them and draws them (see
- * {@code net.ixdarklord.folios.api.client.Guides}). The server only knows books by id.
+ * {@code net.ixdarklord.folios.api.client.FoliosGuides}). The server only knows books by id.
  * <pre>{@code
- * player.addItem(GuideBooks.createStack(MyMod.id("handbook")));
- * player.addItem(GuideBooks.createStack("mymod:handbook"));
- * player.addItem(GuideBooks.createStack(MyItems.HANDBOOK.get(), MyMod.id("handbook")));
- * GuideBooks.open(player, MyMod.id("handbook"), "basics/first_steps");
+ * player.addItem(FoliosBooks.createStack(MyMod.id("handbook")));
+ * player.addItem(FoliosBooks.createStack("mymod:handbook"));
+ * player.addItem(FoliosBooks.createStack(MyItems.HANDBOOK.get(), MyMod.id("handbook")));
+ * FoliosBooks.open(player, MyMod.id("handbook"), "basics/first_steps");
  * }</pre>
  * In commands: {@code /give @s folios:guide_book{folios_book:"mymod:handbook"}}.
  */
-public final class GuideBooks {
-    private GuideBooks() {}
+public final class FoliosBooks {
+    private FoliosBooks() {}
 
     /** Folios's guide book item, opening the given book. */
     public static ItemStack createStack(ResourceLocation book) {
@@ -36,7 +36,7 @@ public final class GuideBooks {
     }
 
     /**
-     * A mod's own item carrying a book in its NBT ({@code folios_book}): a {@link GuideBookItem} of its own opens that
+     * A mod's own item carrying a book in its NBT ({@code folios_book}): a {@link FoliosBookItem} of its own opens that
      * book and takes its name. (On any other item it only names the book, for {@link #bookOf}.)
      */
     public static ItemStack createStack(ItemLike item, ResourceLocation book) {
@@ -46,12 +46,12 @@ public final class GuideBooks {
     }
 
     /**
-     * The book a stack names: in its NBT ({@code folios_book}), on any item, or else the book a {@link GuideBookItem}
+     * The book a stack names: in its NBT ({@code folios_book}), on any item, or else the book a {@link FoliosBookItem}
      * of a mod's own always opens (so its stacks need no NBT to show their cover); null when none.
      */
     public static @Nullable ResourceLocation bookOf(ItemStack stack) {
         if (stack.isEmpty()) return null;
-        return stack.getItem() instanceof GuideBookItem item ? item.book(stack) : named(stack);
+        return stack.getItem() instanceof FoliosBookItem item ? item.book(stack) : named(stack);
     }
 
     /** The book a stack's NBT names; null when none. */

@@ -3,10 +3,10 @@ package net.ixdarklord.folios.internal.client.page;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuidePainter;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.client.build.BlockChoice;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -73,16 +73,16 @@ final class Showcase {
     private Showcase() {}
 
     /** Lays out the page: its title, the window {@code height} tall, the selector when there is more than one item, and the text. */
-    static List<GuidePage.Laid> lay(GuideLayout layout, Optional<String> title, String text, int height, Selector selector, List<Item> items) {
+    static List<FoliosPageElement.Laid> lay(FoliosLayout layout, Optional<String> title, String text, int height, Selector selector, List<Item> items) {
         Body body = body(layout, height, selector, items);
         return layout.flow(title.orElse(null), body.height(), text, body.part());
     }
 
     /** The window and, when there is more than one item, the selector under it. */
-    static Body body(GuideLayout layout, int authoredHeight, Selector selector, List<Item> items) {
+    static Body body(FoliosLayout layout, int authoredHeight, Selector selector, List<Item> items) {
         int height = layout.scaled(authoredHeight);
         int contentWidth = layout.contentWidth();
-        SceneViewport view = layout.viewport(contentWidth * GuideLayout.SCENE_DETAIL, height * GuideLayout.SCENE_DETAIL);
+        SceneViewport view = layout.viewport(contentWidth * FoliosLayout.SCENE_DETAIL, height * FoliosLayout.SCENE_DETAIL);
         view.refreshRate(30);
         view.ground(0, 1, 0x30808080, 0x55A0A0A0, false);
         Window window = new Window(view, items);
@@ -123,8 +123,8 @@ final class Showcase {
             current = Math.floorMod(index, items.size());
         }
 
-        void draw(GuidePainter painter, int y, int height) {
-            int left = GuideLayout.CONTENT_LEFT;
+        void draw(FoliosPainter painter, int y, int height) {
+            int left = FoliosLayout.CONTENT_LEFT;
             int contentWidth = painter.contentRight() - left;
             Shapes.panel(painter, left, y, left + contentWidth, y + height);
             State state = items.get(current).state().get();
@@ -150,11 +150,11 @@ final class Showcase {
     }
 
     // The row that picks which item the window shows: numbered clasps if asked for and they fit, else clasps back and on.
-    private static void selector(GuidePainter painter, Window window, Selector selector, int y) {
+    private static void selector(FoliosPainter painter, Window window, Selector selector, int y) {
         int count = window.size();
         int width = count >= 10 ? Shapes.BUTTON + 4 : Shapes.BUTTON;
         int across = count * width + (count - 1) * GAP;
-        if (selector == Selector.NUMBERS && across <= painter.contentRight() - GuideLayout.CONTENT_LEFT) {
+        if (selector == Selector.NUMBERS && across <= painter.contentRight() - FoliosLayout.CONTENT_LEFT) {
             int x = painter.pageWidth() / 2 - across / 2;
             for (int index = 0; index < count; index++) {
                 int picked = index;
@@ -166,7 +166,7 @@ final class Showcase {
             }
             return;
         }
-        int left = GuideLayout.CONTENT_LEFT;
+        int left = FoliosLayout.CONTENT_LEFT;
         int right = painter.contentRight() - Shapes.BUTTON;
         boolean back = painter.action(left, y - 1, Shapes.BUTTON, Shapes.BUTTON + 1,
                 Component.translatableWithFallback("folios.showcase.previous", "Previous"), () -> window.pick(window.current() - 1));
@@ -175,7 +175,7 @@ final class Showcase {
                 Component.translatableWithFallback("folios.showcase.next", "Next"), () -> window.pick(window.current() + 1));
         Shapes.button(painter, right, y, Shapes.Icon.NEXT, on);
         // Between them, its name and which it is of how many; the name cut short if it must be.
-        GuidePalette palette = painter.palette();
+        FoliosPalette palette = painter.palette();
         String counter = (window.current() + 1) + "/" + count;
         Component name = window.name(window.current());
         int room = right - left - Shapes.BUTTON - 8;

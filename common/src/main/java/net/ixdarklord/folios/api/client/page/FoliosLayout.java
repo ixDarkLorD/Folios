@@ -1,7 +1,7 @@
 package net.ixdarklord.folios.api.client.page;
 
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
-import net.ixdarklord.folios.api.client.GuideBook;
+import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
@@ -18,10 +18,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * A page is {@link #pageWidth()} by {@link #pageHeight()} pixels: {@value #PAGE_WIDTH} by {@value #PAGE_HEIGHT} in a
  * handheld book and on a screen at the Auto GUI scale, larger on a screen at a smaller GUI scale, so more fits on it.
  * Content sits between the margins, from {@link #CONTENT_LEFT} to {@link #contentRight()} and {@link #CONTENT_TOP} to
- * {@link #contentBottom()}. A page type lays itself out to these (and draws to its {@link GuidePainter}'s), so it
+ * {@link #contentBottom()}. A page type lays itself out to these (and draws to its {@link FoliosPainter}'s), so it
  * fills a larger page; the constants are the default page's.
  */
-public final class GuideLayout {
+public final class FoliosLayout {
     /** The default page's size: a handheld book's, and a screen book's at the Auto GUI scale. */
     public static final int PAGE_WIDTH = 136;
     public static final int PAGE_HEIGHT = 180;
@@ -40,20 +40,20 @@ public final class GuideLayout {
 
     private static final AtomicInteger VIEWPORTS = new AtomicInteger();
 
-    private final GuideBook book;
+    private final FoliosBook book;
     private final Font font;
     private final List<SceneViewport> viewports = new ArrayList<>();
     private @Nullable List<Flow> capturing;
-    private GuideIcon titleIcon = GuideIcon.NONE;
+    private FoliosIcon titleIcon = FoliosIcon.NONE;
     private final int pageWidth;
     private final int pageHeight;
 
-    public GuideLayout(GuideBook book, Font font) {
+    public FoliosLayout(FoliosBook book, Font font) {
         this(book, font, PAGE_WIDTH, PAGE_HEIGHT);
     }
 
     /** A layout for pages {@code pageWidth} by {@code pageHeight}, no smaller than the default page. */
-    public GuideLayout(GuideBook book, Font font, int pageWidth, int pageHeight) {
+    public FoliosLayout(FoliosBook book, Font font, int pageWidth, int pageHeight) {
         this.book = book;
         this.font = font;
         this.pageWidth = Math.max(PAGE_WIDTH, pageWidth);
@@ -90,7 +90,7 @@ public final class GuideLayout {
         return pageHeight - FOOT;
     }
 
-    public GuideBook book() {
+    public FoliosBook book() {
         return book;
     }
 
@@ -99,8 +99,8 @@ public final class GuideLayout {
     }
 
     /** Text set out to the content's width. */
-    public GuideText text(String raw) {
-        return GuideText.of(font, raw, this.contentWidth());
+    public FoliosText text(String raw) {
+        return FoliosText.of(font, raw, this.contentWidth());
     }
 
     /**
@@ -109,28 +109,28 @@ public final class GuideLayout {
      *
      * @param part draws the page's own part, given the height it starts at; null for none
      */
-    public List<GuidePage.Laid> flow(@Nullable String title, int reserved, @Nullable String text, GuidePage.@Nullable Part part) {
+    public List<FoliosPageElement.Laid> flow(@Nullable String title, int reserved, @Nullable String text, FoliosPageElement.@Nullable Part part) {
         if (capturing != null) {
             capturing.add(new Flow(title, reserved, text, part));
             return List.of();
         }
-        Component heading = title == null || title.isEmpty() ? null : GuideText.inline(title);
+        Component heading = title == null || title.isEmpty() ? null : FoliosText.inline(title);
         int partTop = CONTENT_TOP + (heading != null ? TITLE_HEIGHT : 0);
         int textTop = partTop + reserved + (reserved > 0 ? 6 : 0);
         int bottom = this.contentBottom();
-        List<GuideText> pieces = text == null || text.isEmpty() ? List.of() : this.text(text).split(Math.max(0, bottom - textTop), bottom - CONTENT_TOP);
+        List<FoliosText> pieces = text == null || text.isEmpty() ? List.of() : this.text(text).split(Math.max(0, bottom - textTop), bottom - CONTENT_TOP);
         // Text with no room left on the first page starts on the next.
         boolean moved = !pieces.isEmpty() && pieces.get(0).isEmpty();
-        List<GuidePage.Laid> pages = new ArrayList<>();
-        GuideIcon icon = titleIcon;
-        GuideText first = pieces.isEmpty() || moved ? null : pieces.get(0);
+        List<FoliosPageElement.Laid> pages = new ArrayList<>();
+        FoliosIcon icon = titleIcon;
+        FoliosText first = pieces.isEmpty() || moved ? null : pieces.get(0);
         pages.add(painter -> {
             if (heading != null) title(painter, heading, CONTENT_TOP, icon);
             if (part != null) part.draw(painter, partTop);
             if (first != null) first.draw(painter, CONTENT_LEFT, textTop);
         });
         for (int index = 1; index < pieces.size(); index++) {
-            GuideText piece = pieces.get(index);
+            FoliosText piece = pieces.get(index);
             pages.add(painter -> piece.draw(painter, CONTENT_LEFT, CONTENT_TOP));
         }
         return pages;
@@ -140,13 +140,13 @@ public final class GuideLayout {
      * What a page asked {@link #flow} for: its title, its own part and how tall it is, and its text. A page that holds
      * others (a page's {@code "elements"}) sets each of them out from these, one under another.
      */
-    public record Flow(@Nullable String title, int reserved, @Nullable String text, GuidePage.@Nullable Part part) {}
+    public record Flow(@Nullable String title, int reserved, @Nullable String text, FoliosPageElement.@Nullable Part part) {}
 
     /**
      * Lays a page out only as far as what it asks {@link #flow} for, to set it inside another page; empty for a page
      * that lays itself out some other way.
      */
-    public List<Flow> capture(GuidePage page) {
+    public List<Flow> capture(FoliosPageElement page) {
         List<Flow> outer = capturing;
         List<Flow> flows = new ArrayList<>();
         capturing = flows;
@@ -160,28 +160,28 @@ public final class GuideLayout {
 
     /**
      * The icon put before the titles of the pages laid out next (as {@link #flow} draws them): their entry's, or a
-     * page's own. The book sets it as it lays out each page of an entry; {@link GuideIcon#NONE} for none.
+     * page's own. The book sets it as it lays out each page of an entry; {@link FoliosIcon#NONE} for none.
      */
-    public void titleIcon(GuideIcon icon) {
+    public void titleIcon(FoliosIcon icon) {
         this.titleIcon = icon;
     }
 
-    public GuideIcon titleIcon() {
+    public FoliosIcon titleIcon() {
         return titleIcon;
     }
 
     /** A page's title: bold, with a line under it. */
-    public static void title(GuidePainter painter, Component title, int y) {
-        title(painter, title, y, GuideIcon.NONE);
+    public static void title(FoliosPainter painter, Component title, int y) {
+        title(painter, title, y, FoliosIcon.NONE);
     }
 
     /**
-     * As {@link #title(GuidePainter, Component, int)}, with an icon before it, unless none: three quarters of its size,
+     * As {@link #title(FoliosPainter, Component, int)}, with an icon before it, unless none: three quarters of its size,
      * centred over a mark of the book's colour that heads the line under the title, the title starting where the rest of
      * the line does. Without an icon the line runs unbroken.
      */
-    public static void title(GuidePainter painter, Component title, int y, GuideIcon icon) {
-        GuidePalette palette = painter.palette();
+    public static void title(FoliosPainter painter, Component title, int y, FoliosIcon icon) {
+        FoliosPalette palette = painter.palette();
         Font font = painter.font();
         int indent = 0;
         if (!icon.isEmpty()) {

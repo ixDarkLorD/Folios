@@ -1,10 +1,10 @@
 package net.ixdarklord.folios.internal.client.page;
 
 import net.ixdarklord.folios.internal.client.paint.PixelIcon;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuidePainter;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.minecraft.resources.ResourceLocation;
 
 // The boxes built-in pages set things in: soft-cornered panels with a hairline edge, and item slots.
@@ -12,18 +12,18 @@ public final class Shapes {
     private Shapes() {}
 
     /** A panel: its corner pixels left out, so it reads as slightly rounded. */
-    public static void panel(GuidePainter painter, int x0, int y0, int x1, int y1) {
-        GuidePalette palette = painter.palette();
+    public static void panel(FoliosPainter painter, int x0, int y0, int x1, int y1) {
+        FoliosPalette palette = painter.palette();
         painter.fill(x0 + 1, y0, x1 - 1, y1, palette.line());
         painter.fill(x0, y0 + 1, x1, y1 - 1, palette.line());
         painter.fill(x0 + 1, y0 + 1, x1 - 1, y1 - 1, palette.panel());
     }
 
     /** An 18-pixel slot for an item drawn at (x + 1, y + 1). */
-    public static void slot(GuidePainter painter, int x, int y) {
-        GuidePalette palette = painter.palette();
-        painter.fill(x, y, x + 18, y + 18, GuidePalette.mix(palette.panel(), palette.line(), 0.55F));
-        painter.fill(x + 1, y + 1, x + 17, y + 17, GuidePalette.mix(palette.panel(), palette.paper(), 0.35F));
+    public static void slot(FoliosPainter painter, int x, int y) {
+        FoliosPalette palette = painter.palette();
+        painter.fill(x, y, x + 18, y + 18, FoliosPalette.mix(palette.panel(), palette.line(), 0.55F));
+        painter.fill(x + 1, y + 1, x + 17, y + 17, FoliosPalette.mix(palette.panel(), palette.paper(), 0.35F));
     }
 
     /**
@@ -32,7 +32,7 @@ public final class Shapes {
      * the default its corners and the ornaments at the middle of its head and foot keep their size; only the plain runs
      * of line between them are drawn longer.
      */
-    public static void pageFrame(GuidePainter painter, ResourceLocation texture, int width, int height) {
+    public static void pageFrame(FoliosPainter painter, ResourceLocation texture, int width, int height) {
         frameSpan(painter, texture, 0, width, 0, FRAME_W, height, frameTint(painter));
     }
 
@@ -41,8 +41,8 @@ public final class Shapes {
     /** How much of the frame texture's side is left out at a spread's fold, where its plain middle takes over. */
     private static final int FRAME_SIDE = 12;
     /** The frame texture's size, in the default page's pixels, and the plain column of it that only has its head and foot lines. */
-    private static final int FRAME_W = GuideLayout.PAGE_WIDTH;
-    private static final int FRAME_H = GuideLayout.PAGE_HEIGHT;
+    private static final int FRAME_W = FoliosLayout.PAGE_WIDTH;
+    private static final int FRAME_H = FoliosLayout.PAGE_HEIGHT;
     private static final int FRAME_PLAIN = 40;
     // Where the frame texture is cut across and down: {from, to, 1 if it stretches}. The corners (with their ornaments)
     // and the ornament at the middle of the head and foot keep their size; the runs of plain line between stretch.
@@ -53,8 +53,8 @@ public final class Shapes {
      * The page's frame, or for half of a spread the frame joined with the other half's: its side at the fold left
      * out, its top and bottom running on (a plain middle column of the texture, stretched) to meet the other page's.
      */
-    public static void pageFrame(GuidePainter painter, ResourceLocation texture, int width, int height, GuidePage.@org.jetbrains.annotations.Nullable Laid page, boolean right) {
-        if (!(page instanceof GuidePage.SpreadHalf)) {
+    public static void pageFrame(FoliosPainter painter, ResourceLocation texture, int width, int height, FoliosPageElement.@org.jetbrains.annotations.Nullable Laid page, boolean right) {
+        if (!(page instanceof FoliosPageElement.SpreadHalf)) {
             pageFrame(painter, texture, width, height);
             return;
         }
@@ -71,7 +71,7 @@ public final class Shapes {
 
     // The columns `from` to `to` of the frame texture drawn from x across `width`, down `height`: each column piece and
     // row piece that keeps its size kept, the stretching ones sharing what is left.
-    private static void frameSpan(GuidePainter painter, ResourceLocation texture, int x, int width, int from, int to, int height, int tint) {
+    private static void frameSpan(FoliosPainter painter, ResourceLocation texture, int x, int width, int from, int to, int height, int tint) {
         float[][] columns = slices(FRAME_COLUMNS, from, to, width);
         float[][] rows = slices(FRAME_ROWS, 0, FRAME_H, height);
         for (float[] column : columns) {
@@ -119,7 +119,7 @@ public final class Shapes {
      * side, placed so the halves meet as one line while the book lies open (on a screen book, across the spine between
      * the pages). Nothing is drawn past the page, so a leaf turning carries its own letters and leaves none behind.
      */
-    public static void acrossFold(GuidePainter painter, net.minecraft.util.FormattedCharSequence line, int y, int color, boolean right) {
+    public static void acrossFold(FoliosPainter painter, net.minecraft.util.FormattedCharSequence line, int y, int color, boolean right) {
         net.minecraft.client.gui.Font font = painter.font();
         int width = painter.pageWidth();
         int gap = painter.flat() ? SCREEN_SPINE : 0;
@@ -139,29 +139,29 @@ public final class Shapes {
 
     // The colour of a leaf of the fore-edge, the first nearest the page: leaves and the thin shadows between them by
     // turns, darkening a little deeper into the block.
-    private static int leaf(GuidePalette palette, int leaf) {
+    private static int leaf(FoliosPalette palette, int leaf) {
         int paper = palette.paper() | 0xFF000000;
         float depth = leaf / (float) (FORE_EDGE - 1);
         float shade = (leaf % 2 == 0 ? 0.14F : 0.42F) + 0.22F * depth;
-        return GuidePalette.mix(paper, palette.line(), Math.min(1, shade));
+        return FoliosPalette.mix(paper, palette.line(), Math.min(1, shade));
     }
 
     /**
      * The fore-edge of a book's leaves: the block of pages showing past the page, a pixel a leaf, from {@code x} (the
      * page's edge) outwards, rightwards or leftwards; from {@code y0} to {@code y1}.
      */
-    public static void foreEdge(GuidePainter painter, int x, int y0, int y1, boolean right) {
+    public static void foreEdge(FoliosPainter painter, int x, int y0, int y1, boolean right) {
         foreEdge(painter, x, y0, y1, right, FORE_EDGE);
     }
 
     /** The same, {@code leaves} wide. */
-    public static void foreEdge(GuidePainter painter, int x, int y0, int y1, boolean right, int leaves) {
-        GuidePalette palette = painter.palette();
+    public static void foreEdge(FoliosPainter painter, int x, int y0, int y1, boolean right, int leaves) {
+        FoliosPalette palette = painter.palette();
         int paper = palette.paper() | 0xFF000000;
         for (int leaf = 0; leaf < leaves; leaf++) {
             int at = right ? x + leaf : x - leaf - 1;
             int color = leaf(palette, leaf);
-            int aged = GuidePalette.mix(color, AGED, 0.2F);
+            int aged = FoliosPalette.mix(color, AGED, 0.2F);
             // Uneven, as a block of real leaves is: in short runs, now a leaf a hair short (a nick in the edge, deeper
             // in the block more often), now one standing proud and catching the light.
             int y = y0;
@@ -170,7 +170,7 @@ public final class Shapes {
                 int end = Math.min(y1, y + 3 + (h & 7));
                 boolean nick = leaf > 0 && ((h >>> 3) & 7) < leaf;
                 int tone = ((h >>> 9) % 5) < 2 ? aged : color;
-                if (!nick) painter.fill(at, y, at + 1, end, ((h >>> 6) & 3) == 0 ? GuidePalette.mix(tone, paper, 0.3F) : tone);
+                if (!nick) painter.fill(at, y, at + 1, end, ((h >>> 6) & 3) == 0 ? FoliosPalette.mix(tone, paper, 0.3F) : tone);
                 y = end;
             }
         }
@@ -181,14 +181,14 @@ public final class Shapes {
      * foot ({@code down} true: the page above): small irregular bites out of the paper, showing {@code behind}, and a
      * faint worn line where the edge is whole.
      */
-    public static void deckle(GuidePainter painter, int x0, int x1, int y, boolean down, int behind) {
+    public static void deckle(FoliosPainter painter, int x0, int x1, int y, boolean down, int behind) {
         deckle(painter, x0, x1, y, down, behind, 1);
     }
 
-    /** As {@link #deckle(GuidePainter, int, int, int, boolean, int)}, cut rougher for a {@code wear} over 1. */
-    public static void deckle(GuidePainter painter, int x0, int x1, int y, boolean down, int behind, float wear) {
-        GuidePalette palette = painter.palette();
-        int worn = GuidePalette.mix(palette.paper() | 0xFF000000, palette.line(), 0.28F);
+    /** As {@link #deckle(FoliosPainter, int, int, int, boolean, int)}, cut rougher for a {@code wear} over 1. */
+    public static void deckle(FoliosPainter painter, int x0, int x1, int y, boolean down, int behind, float wear) {
+        FoliosPalette palette = painter.palette();
+        int worn = FoliosPalette.mix(palette.paper() | 0xFF000000, palette.line(), 0.28F);
         int inward = down ? -1 : 1;
         int x = x0;
         while (x < x1) {
@@ -223,16 +223,16 @@ public final class Shapes {
      * its outer edge. {@code outerRight} for a right-hand page, whose outer side is at x1. Drawn over the paper, under
      * what is on the page; the same every frame.
      */
-    public static void wornEdges(GuidePainter painter, int x0, int y0, int x1, int y1, boolean outerRight, int behind) {
+    public static void wornEdges(FoliosPainter painter, int x0, int y0, int x1, int y1, boolean outerRight, int behind) {
         wornEdges(painter, x0, y0, x1, y1, outerRight, behind, 1);
     }
 
     /**
-     * As {@link #wornEdges(GuidePainter, int, int, int, int, boolean, int)}, as worn as {@code wear} says: 1 lightly,
+     * As {@link #wornEdges(FoliosPainter, int, int, int, int, boolean, int)}, as worn as {@code wear} says: 1 lightly,
      * more for a well-thumbed book, its yellowing deeper and stronger, its nicks more and bigger, more stains, and its
      * outer corners rubbed dark.
      */
-    public static void wornEdges(GuidePainter painter, int x0, int y0, int x1, int y1, boolean outerRight, int behind, float wear) {
+    public static void wornEdges(FoliosPainter painter, int x0, int y0, int x1, int y1, boolean outerRight, int behind, float wear) {
         int seed = outerRight ? 71 : 37;
         int strength = Math.round(40 * wear);
         int extra = Math.round(wear) - 1;
@@ -294,7 +294,7 @@ public final class Shapes {
     }
 
     // A strip of yellowing from an edge row inwards, `deep` rows, fading.
-    private static void stain(GuidePainter painter, int x0, int x1, int y, int inward, int deep, int strength) {
+    private static void stain(FoliosPainter painter, int x0, int x1, int y, int inward, int deep, int strength) {
         for (int step = 0; step < deep; step++) {
             int row = y + inward * step;
             painter.fill(x0, row, x1, row + 1, alpha(AGED, strength - step * strength * 3 / 8));
@@ -302,7 +302,7 @@ public final class Shapes {
     }
 
     private static int alpha(int color, int alpha) {
-        return GuidePalette.alpha(color, Math.max(0, alpha));
+        return FoliosPalette.alpha(color, Math.max(0, alpha));
     }
 
     // A small, well-mixed number from two: the same every frame for the same place.
@@ -339,21 +339,21 @@ public final class Shapes {
      * the block, so it is seen between the leaves at its depth; and a soft shadow they cast on it as it leaves them.
      * {@code ribbon} is the tab's colour, for its shadow.
      */
-    public static void tuck(GuidePainter painter, int edge, int y, int height, int depth, int ribbon) {
-        GuidePalette palette = painter.palette();
+    public static void tuck(FoliosPainter painter, int edge, int y, int height, int depth, int ribbon) {
+        FoliosPalette palette = painter.palette();
         int root = ribbonRoot(edge, depth);
         for (int leaf = 0; edge + leaf < root; leaf++) painter.fill(edge + leaf, y, edge + leaf + 1, y + height, leaf(palette, leaf));
-        painter.fill(root, y, root + 1, y + height, GuidePalette.mix(ribbon, 0xFF000000, 0.34F));
-        painter.fill(root + 1, y, root + 2, y + height, GuidePalette.mix(ribbon, 0xFF000000, 0.2F));
-        painter.fill(root + 2, y, root + 3, y + height, GuidePalette.mix(ribbon, 0xFF000000, 0.08F));
+        painter.fill(root, y, root + 1, y + height, FoliosPalette.mix(ribbon, 0xFF000000, 0.34F));
+        painter.fill(root + 1, y, root + 2, y + height, FoliosPalette.mix(ribbon, 0xFF000000, 0.2F));
+        painter.fill(root + 2, y, root + 3, y + height, FoliosPalette.mix(ribbon, 0xFF000000, 0.08F));
         // Where the leaves above press on it, a hairline shade along its top and foot.
-        painter.fill(root, y, root + 4, y + 1, GuidePalette.mix(ribbon, 0xFF000000, 0.25F));
-        painter.fill(root, y + height - 1, root + 4, y + height, GuidePalette.mix(ribbon, 0xFF000000, 0.25F));
+        painter.fill(root, y, root + 4, y + 1, FoliosPalette.mix(ribbon, 0xFF000000, 0.25F));
+        painter.fill(root, y + height - 1, root + 4, y + height, FoliosPalette.mix(ribbon, 0xFF000000, 0.25F));
     }
 
-    private static int frameTint(GuidePainter painter) {
-        GuidePalette palette = painter.palette();
-        return GuidePalette.mix(palette.line(), palette.accent(), 0.35F) | 0xFF000000;
+    private static int frameTint(FoliosPainter painter) {
+        FoliosPalette palette = painter.palette();
+        return FoliosPalette.mix(palette.line(), palette.accent(), 0.35F) | 0xFF000000;
     }
 
     /** The little controls printed on pages: each a pixel icon on a clasp ('X' in its ink, 'o' a softer shade). */
@@ -383,16 +383,16 @@ public final class Shapes {
      * A control: an eight-sided clasp of the page's own paper with a hairline rim and its icon in the middle. Under the
      * pointer it lifts off the page, casting a little shadow, and its icon takes the book's colour.
      */
-    public static void button(GuidePainter painter, int x, int y, Icon icon, boolean hovered) {
-        GuidePalette palette = painter.palette();
-        int rim = GuidePalette.mix(palette.line(), palette.accent(), hovered ? 0.6F : 0.2F);
-        int face = GuidePalette.mix(GuidePalette.mix(palette.panel(), palette.paper(), 0.4F), palette.accent(), hovered ? 0.14F : 0.0F);
+    public static void button(FoliosPainter painter, int x, int y, Icon icon, boolean hovered) {
+        FoliosPalette palette = painter.palette();
+        int rim = FoliosPalette.mix(palette.line(), palette.accent(), hovered ? 0.6F : 0.2F);
+        int face = FoliosPalette.mix(FoliosPalette.mix(palette.panel(), palette.paper(), 0.4F), palette.accent(), hovered ? 0.14F : 0.0F);
         if (hovered) {
-            octagon(painter, x + 1, y + 1, BUTTON, GuidePalette.mix(palette.paper(), 0xFF000000, 0.22F), 0);
+            octagon(painter, x + 1, y + 1, BUTTON, FoliosPalette.mix(palette.paper(), 0xFF000000, 0.22F), 0);
             y -= 1;
         }
         octagon(painter, x, y, BUTTON, rim, face);
-        int ink = hovered ? palette.accent() : GuidePalette.mix(palette.muted(), palette.text(), 0.35F);
+        int ink = hovered ? palette.accent() : FoliosPalette.mix(palette.muted(), palette.text(), 0.35F);
         // Centred in the clasp by the pixels it actually draws (odd sizes sit exactly in the middle).
         icon.image.draw(painter, x + (BUTTON - icon.image.width()) / 2, y + (BUTTON - icon.image.height()) / 2, ink);
     }
@@ -401,24 +401,24 @@ public final class Shapes {
      * A clasp {@code width} wide with a number on it in place of an icon, for picking one of several things a page
      * shows. The one picked is pressed into the page, its face of the book's colour; another lifts under the pointer.
      */
-    public static void numberButton(GuidePainter painter, int x, int y, int width, String number, boolean hovered, boolean picked) {
-        GuidePalette palette = painter.palette();
-        int rim = GuidePalette.mix(palette.line(), palette.accent(), picked || hovered ? 0.6F : 0.2F);
-        int face = picked ? GuidePalette.mix(palette.panel(), palette.accent(), 0.4F)
-                : GuidePalette.mix(GuidePalette.mix(palette.panel(), palette.paper(), 0.4F), palette.accent(), hovered ? 0.14F : 0.0F);
+    public static void numberButton(FoliosPainter painter, int x, int y, int width, String number, boolean hovered, boolean picked) {
+        FoliosPalette palette = painter.palette();
+        int rim = FoliosPalette.mix(palette.line(), palette.accent(), picked || hovered ? 0.6F : 0.2F);
+        int face = picked ? FoliosPalette.mix(palette.panel(), palette.accent(), 0.4F)
+                : FoliosPalette.mix(FoliosPalette.mix(palette.panel(), palette.paper(), 0.4F), palette.accent(), hovered ? 0.14F : 0.0F);
         if (hovered && !picked) {
-            octagon(painter, x + 1, y + 1, width, GuidePalette.mix(palette.paper(), 0xFF000000, 0.22F), 0);
+            octagon(painter, x + 1, y + 1, width, FoliosPalette.mix(palette.paper(), 0xFF000000, 0.22F), 0);
             y -= 1;
         }
         octagon(painter, x, y, width, rim, face);
-        int ink = picked ? palette.heading() : hovered ? palette.accent() : GuidePalette.mix(palette.muted(), palette.text(), 0.35F);
+        int ink = picked ? palette.heading() : hovered ? palette.accent() : FoliosPalette.mix(palette.muted(), palette.text(), 0.35F);
         net.minecraft.network.chat.Component text = net.minecraft.network.chat.Component.literal(number);
         painter.text(text, x + (width - painter.font().width(text)) / 2 + 1, y + 2, ink);
     }
 
     // An eight-sided shape `width` wide and BUTTON tall: its corners cut by two pixels. With a face, the rim is a
     // pixel round it; without one (0), it is all of the rim's colour.
-    private static void octagon(GuidePainter painter, int x, int y, int width, int rim, int face) {
+    private static void octagon(FoliosPainter painter, int x, int y, int width, int rim, int face) {
         int size = BUTTON;
         painter.fill(x + 2, y, x + width - 2, y + size, rim);
         painter.fill(x, y + 2, x + width, y + size - 2, rim);
@@ -429,7 +429,7 @@ public final class Shapes {
     }
 
     /** A small arrow pointing right, 9 by 7 pixels from (x, y). */
-    public static void arrow(GuidePainter painter, int x, int y, int color) {
+    public static void arrow(FoliosPainter painter, int x, int y, int color) {
         painter.fill(x, y + 3, x + 6, y + 4, color);
         for (int step = 0; step < 4; step++) painter.fill(x + 5 + step, y + step, x + 6 + step, y + 7 - step, color);
     }

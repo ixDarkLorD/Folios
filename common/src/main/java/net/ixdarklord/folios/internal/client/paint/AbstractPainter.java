@@ -1,9 +1,9 @@
 package net.ixdarklord.folios.internal.client.paint;
 
-import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.api.client.GuideEntry;
-import net.ixdarklord.folios.api.client.page.GuidePainter;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.FoliosEntry;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.client.GuideSession;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -20,15 +20,15 @@ import java.util.List;
 
 // What both painters share: the pointer in page pixels through the painter's own moves, the places marked to be
 // pressed, and the tooltip for this frame.
-public abstract class AbstractPainter implements GuidePainter {
+public abstract class AbstractPainter implements FoliosPainter {
     /** Where a book goes when something on a page is pressed. */
     public interface Navigator {
         void follow(String link);
 
-        void open(GuideBook.Location location);
+        void open(FoliosBook.Location location);
 
         /** The page shown, to tell links to it apart from links elsewhere; null when none. */
-        GuideBook.@Nullable Location here();
+        FoliosBook.@Nullable Location here();
     }
 
     /** A rectangle that can be pressed, dragged or scrolled over, in page pixels. One that takes the wheel is never pressed. */
@@ -56,7 +56,7 @@ public abstract class AbstractPainter implements GuidePainter {
     }
 
     protected final Font font = Minecraft.getInstance().font;
-    protected final GuidePalette palette;
+    protected final FoliosPalette palette;
     protected final GuideSession session;
     protected final Navigator navigator;
     private final float time;
@@ -84,7 +84,7 @@ public abstract class AbstractPainter implements GuidePainter {
         return session.layout().pageHeight();
     }
 
-    protected AbstractPainter(GuidePalette palette, GuideSession session, Navigator navigator, float time, float pointerX, float pointerY, List<Hit> hits) {
+    protected AbstractPainter(FoliosPalette palette, GuideSession session, Navigator navigator, float time, float pointerX, float pointerY, List<Hit> hits) {
         this.palette = palette;
         this.session = session;
         this.navigator = navigator;
@@ -100,7 +100,7 @@ public abstract class AbstractPainter implements GuidePainter {
     }
 
     @Override
-    public GuidePalette palette() {
+    public FoliosPalette palette() {
         return palette;
     }
 
@@ -241,10 +241,10 @@ public abstract class AbstractPainter implements GuidePainter {
         this.drawItem(stack, x, y, argb);
         if (!this.hovered(x, y, 16, 16)) return;
         this.tooltip(stack);
-        GuideBook.Location about = session.book().about(stack);
-        GuideBook.Location here = navigator.here();
+        FoliosBook.Location about = session.book().about(stack);
+        FoliosBook.Location here = navigator.here();
         if (about == null || here != null && here.entry().equals(about.entry())) return;
-        GuideEntry entry = session.book().entry(about.entry());
+        FoliosEntry entry = session.book().entry(about.entry());
         if (entry == null || !entry.isOpen()) return;
         if (tooltip != null) tooltip.add(Component.translatableWithFallback("folios.item_link", "Press to read: %s", entry.title())
                 .withStyle(ChatFormatting.ITALIC).withStyle(style -> style.withColor(palette.link())));

@@ -4,9 +4,9 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.GuidePayloads;
 import net.ixdarklord.folios.internal.client.GuideStructures;
 import net.minecraft.network.chat.Component;
@@ -19,7 +19,7 @@ import java.util.Optional;
 // Structures from data packs (data/<namespace>/structure/<path>.nbt, as structure blocks save them and villages are
 // built from), turning in a window: "structure" names one, "structures" several, picked between under the window.
 // Clients don't have data packs, so their blocks are asked of the server the first time the page is shown.
-public record StructurePageElement(List<Showcase.Shown> structures, Optional<String> title, String text, int height, Showcase.Selector selector) implements GuidePage {
+public record StructurePageElement(List<Showcase.Shown> structures, Optional<String> title, String text, int height, Showcase.Selector selector) implements FoliosPageElement {
     public static final MapCodec<StructurePageElement> CODEC = RecordCodecBuilder.<StructurePageElement>mapCodec(instance -> instance.group(
             Showcase.Shown.CODEC.listOf().optionalFieldOf("structures", List.of()).forGetter(StructurePageElement::structures),
             Showcase.Shown.CODEC.optionalFieldOf("structure").forGetter(page -> Optional.empty()),
@@ -35,19 +35,19 @@ public record StructurePageElement(List<Showcase.Shown> structures, Optional<Str
     })).flatXmap(page -> page.structures.isEmpty() ? DataResult.error(() -> "a structure page needs \"structure\" or \"structures\"") : DataResult.success(page), DataResult::success);
 
     @Override
-    public List<Laid> lay(GuideLayout layout) {
+    public List<Laid> lay(FoliosLayout layout) {
         return Showcase.lay(layout, title, text, height, selector, this.items(layout));
     }
 
     /** What it shows between its title and its text. */
-    Body body(GuideLayout layout) {
+    Body body(FoliosLayout layout) {
         return Showcase.body(layout, height, selector, this.items(layout));
     }
 
-    private List<Showcase.Item> items(GuideLayout layout) {
+    private List<Showcase.Item> items(FoliosLayout layout) {
         List<Showcase.Item> items = new ArrayList<>();
         for (Showcase.Shown shown : structures) {
-            Component name = shown.name().map(GuideText::inline).orElse(null);
+            Component name = shown.name().map(FoliosText::inline).orElse(null);
             ResourceLocation id = ResourceLocation.tryParse(shown.id());
             if (id == null) {
                 Showcase.State bad = Showcase.State.saying(Component.translatableWithFallback("folios.structure.missing", "No structure %s", shown.id()));
@@ -72,8 +72,8 @@ public record StructurePageElement(List<Showcase.Shown> structures, Optional<Str
 
     @Override
     public String searchText() {
-        StringBuilder words = new StringBuilder(GuideText.resolve(title.orElse(""))).append(' ').append(GuideText.resolve(text));
-        structures.forEach(shown -> shown.name().ifPresent(name -> words.append(' ').append(GuideText.resolve(name))));
+        StringBuilder words = new StringBuilder(FoliosText.resolve(title.orElse(""))).append(' ').append(FoliosText.resolve(text));
+        structures.forEach(shown -> shown.name().ifPresent(name -> words.append(' ').append(FoliosText.resolve(name))));
         return words.toString();
     }
 }

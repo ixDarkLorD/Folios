@@ -2,7 +2,7 @@ package net.ixdarklord.folios.internal.client.paint;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.client.GuideSession;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.Minecraft;
@@ -72,12 +72,12 @@ public final class WorldPainter extends AbstractPainter {
     // A normal to light the page by, in view space, in place of its own: a turning leaf is lit as the open pages are.
     private @Nullable Vector3f normal;
 
-    public WorldPainter(PoseStack pose, SubmitNodeCollector collector, int light, GuidePalette palette, GuideSession session, Navigator navigator,
+    public WorldPainter(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, GuideSession session, Navigator navigator,
                         float time, float pointerX, float pointerY, List<Hit> hits) {
         this(pose, collector, light, palette, session, navigator, time, pointerX, pointerY, hits, null);
     }
 
-    public WorldPainter(PoseStack pose, SubmitNodeCollector collector, int light, GuidePalette palette, GuideSession session, Navigator navigator,
+    public WorldPainter(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, GuideSession session, Navigator navigator,
                         float time, float pointerX, float pointerY, List<Hit> hits, @Nullable Surface surface) {
         super(palette, session, navigator, time, pointerX, pointerY, hits);
         this.pose = pose;
@@ -104,12 +104,12 @@ public final class WorldPainter extends AbstractPainter {
 
     @Override
     public int pageWidth() {
-        return printing ? super.pageWidth() : net.ixdarklord.folios.api.client.page.GuideLayout.PAGE_WIDTH;
+        return printing ? super.pageWidth() : net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_WIDTH;
     }
 
     @Override
     public int pageHeight() {
-        return printing ? super.pageHeight() : net.ixdarklord.folios.api.client.page.GuideLayout.PAGE_HEIGHT;
+        return printing ? super.pageHeight() : net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_HEIGHT;
     }
 
     /** Ends the page: sends its plain shapes and undoes its moves. */
@@ -146,7 +146,7 @@ public final class WorldPainter extends AbstractPainter {
     public void fill(int x0, int y0, int x1, int y1, int argb) {
         if (x1 <= x0 || y1 <= y0 || (argb >>> 24) == 0) return;
         int alpha = argb >>> 24;
-        int color = alpha >= 0xFF ? argb : GuidePalette.mix(palette.paper() | 0xFF000000, argb | 0xFF000000, alpha / 255.0F);
+        int color = alpha >= 0xFF ? argb : FoliosPalette.mix(palette.paper() | 0xFF000000, argb | 0xFF000000, alpha / 255.0F);
         if (surface == null) this.shape(x0, y0, x1, y1, this.next(), color);
         else this.shape(this.pageX(x0), this.pageY(y0), this.pageX(x1), this.pageY(y1), this.next(), color);
     }
@@ -336,7 +336,7 @@ public final class WorldPainter extends AbstractPainter {
                 int color = argb;
                 if (fold > 0) {
                     float fromSpine = spineRight ? x1 - point[0] : point[0] - x0;
-                    if (fromSpine < fold) color = GuidePalette.mix(shade, argb, Math.max(0, fromSpine) / fold);
+                    if (fromSpine < fold) color = FoliosPalette.mix(shade, argb, Math.max(0, fromSpine) / fold);
                 }
                 corners[at + 5] = Float.intBitsToFloat(color);
             }

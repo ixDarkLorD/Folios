@@ -31,9 +31,9 @@ import java.util.List;
  *     <li>a list of any of these, shown in turn.</li>
  * </ul>
  */
-public final class GuideStack {
-    public static final Codec<GuideStack> CODEC = Codec.PASSTHROUGH.comapFlatMap(
-            dynamic -> DataResult.success(new GuideStack(dynamic.convert(JsonOps.INSTANCE).getValue())),
+public final class FoliosStack {
+    public static final Codec<FoliosStack> CODEC = Codec.PASSTHROUGH.comapFlatMap(
+            dynamic -> DataResult.success(new FoliosStack(dynamic.convert(JsonOps.INSTANCE).getValue())),
             stack -> new com.mojang.serialization.Dynamic<>(JsonOps.INSTANCE, stack.json));
     /** How long each of several items is shown, in seconds. */
     public static final float CYCLE_SECONDS = 1.25F;
@@ -41,13 +41,13 @@ public final class GuideStack {
     private final JsonElement json;
     private @Nullable List<ItemStack> stacks;
 
-    private GuideStack(JsonElement json) {
+    private FoliosStack(JsonElement json) {
         this.json = json;
     }
 
     /** One item. */
-    public static GuideStack of(ResourceLocation item) {
-        return new GuideStack(new com.google.gson.JsonPrimitive(item.toString()));
+    public static FoliosStack of(ResourceLocation item) {
+        return new FoliosStack(new com.google.gson.JsonPrimitive(item.toString()));
     }
 
     /** Every stack it stands for; a missing item is a barrier, so the mistake shows. */
