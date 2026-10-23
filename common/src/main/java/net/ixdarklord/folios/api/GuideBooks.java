@@ -45,8 +45,17 @@ public final class GuideBooks {
         return stack;
     }
 
-    /** The book a stack names in its NBT ({@code folios_book}), on any item; null when none. */
+    /**
+     * The book a stack names: in its NBT ({@code folios_book}), on any item, or else the book a {@link GuideBookItem}
+     * of a mod's own always opens (so its stacks need no NBT to show their cover); null when none.
+     */
     public static @Nullable ResourceLocation bookOf(ItemStack stack) {
+        if (stack.isEmpty()) return null;
+        return stack.getItem() instanceof GuideBookItem item ? item.book(stack) : named(stack);
+    }
+
+    /** The book a stack's NBT names; null when none. */
+    static @Nullable ResourceLocation named(ItemStack stack) {
         if (stack.isEmpty() || stack.getTag() == null || !stack.getTag().contains(GuideRegistry.GUIDE_BOOK, net.minecraft.nbt.Tag.TAG_STRING)) return null;
         return ResourceLocation.tryParse(stack.getTag().getString(GuideRegistry.GUIDE_BOOK));
     }
