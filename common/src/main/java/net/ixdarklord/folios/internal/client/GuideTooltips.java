@@ -89,7 +89,31 @@ public final class GuideTooltips {
      * {@code ruleBefore} (none for -1): what is said set apart from what to do.
      */
     public static void show(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY, GuideBook book, int ruleBefore) {
+        show(graphics, font, lines, mouseX, mouseY, book, ruleBefore, 1);
+    }
+
+    /**
+     * As {@link #show(GuiGraphicsExtractor, Font, List, int, int, GuideBook, int)}, drawn {@code scale} times larger (no
+     * smaller than as it is): to match a book drawn larger than the GUI scale, kept on the screen all the same.
+     */
+    public static void show(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY, GuideBook book, int ruleBefore, float scale) {
         if (lines.isEmpty()) return;
+        float s = Math.max(1, scale);
+        if (s > 1) {
+            graphics.nextStratum();
+            graphics.pose().pushMatrix();
+            graphics.pose().scale(s, s);
+            draw(graphics, font, lines, Math.round(mouseX / s), Math.round(mouseY / s), book, ruleBefore,
+                    (int) (graphics.guiWidth() / s), (int) (graphics.guiHeight() / s), false);
+            graphics.pose().popMatrix();
+            return;
+        }
+        draw(graphics, font, lines, mouseX, mouseY, book, ruleBefore, graphics.guiWidth(), graphics.guiHeight(), true);
+    }
+
+    // The tooltip itself, placed in a screen `screenWidth` by `screenHeight`.
+    private static void draw(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY, GuideBook book, int ruleBefore,
+                             int screenWidth, int screenHeight, boolean newStratum) {
         var colors = book.colors().panel();
         int title = colors.getOrDefault("title", TITLE);
         int detail = colors.getOrDefault("detail", DETAIL);
@@ -105,10 +129,10 @@ public final class GuideTooltips {
         // Placed as vanilla places its own: up and right of the pointer, flipped left at the screen's edge.
         int x = mouseX + 12;
         int y = mouseY - 12;
-        if (x + width > graphics.guiWidth()) x = Math.max(x - 24 - width, 4);
-        if (y + height + 3 > graphics.guiHeight()) y = graphics.guiHeight() - height - 3;
+        if (x + width > screenWidth) x = Math.max(x - 24 - width, 4);
+        if (y + height + 3 > screenHeight) y = screenHeight - height - 3;
         y = Math.max(y, 4);
-        graphics.nextStratum();
+        if (newStratum) graphics.nextStratum();
         frame(graphics, x, y, width, height, book);
         int lineY = y;
         for (int index = 0; index < styled.size(); index++) {

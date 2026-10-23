@@ -81,7 +81,7 @@ public record TextPage(Optional<String> title, String text, List<GuidePage> elem
             }
         }
         layout.titleIcon(icon);
-        return set(title, icon, pieces);
+        return set(title, icon, pieces, layout.contentBottom());
     }
 
     // One thing to set on a page: a title or what an element shows, which stays whole, or text, which can be split.
@@ -94,7 +94,7 @@ public record TextPage(Optional<String> title, String text, List<GuidePage> elem
     private record Placed(int y, Part part) {}
 
     // The pieces set one under another down the page, onto as many pages as they take.
-    private static List<Laid> set(Optional<String> title, net.ixdarklord.folios.api.client.page.GuideIcon icon, List<Piece> pieces) {
+    private static List<Laid> set(Optional<String> title, net.ixdarklord.folios.api.client.page.GuideIcon icon, List<Piece> pieces, int bottom) {
         List<List<Placed>> pages = new ArrayList<>();
         List<Placed> page = new ArrayList<>();
         pages.add(page);
@@ -106,13 +106,13 @@ public record TextPage(Optional<String> title, String text, List<GuidePage> elem
         }
         // Whether nothing is on this page yet (but its title): the next piece then goes at its top, with no gap.
         boolean fresh = true;
-        int full = GuideLayout.CONTENT_BOTTOM - GuideLayout.CONTENT_TOP;
+        int full = bottom - GuideLayout.CONTENT_TOP;
         for (Piece piece : pieces) {
             int at = fresh ? y : y + GAP;
             switch (piece) {
                 case Fixed fixed -> {
                     // Whole, so on the next page if it doesn't fit here (on an empty page, as it is).
-                    if (!fresh && at + fixed.height() > GuideLayout.CONTENT_BOTTOM) {
+                    if (!fresh && at + fixed.height() > bottom) {
                         page = new ArrayList<>();
                         pages.add(page);
                         at = GuideLayout.CONTENT_TOP;
@@ -121,7 +121,7 @@ public record TextPage(Optional<String> title, String text, List<GuidePage> elem
                     y = at + fixed.height();
                 }
                 case Words words -> {
-                    List<GuideText> split = words.text().split(Math.max(0, GuideLayout.CONTENT_BOTTOM - at), full);
+                    List<GuideText> split = words.text().split(Math.max(0, bottom - at), full);
                     for (int index = 0; index < split.size(); index++) {
                         GuideText text = split.get(index);
                         if (index > 0) {

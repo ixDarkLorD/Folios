@@ -103,15 +103,15 @@ public record GuideBook(Identifier id, String name, String subtitle, String land
      * <pre>{@code
      * "layout": {
      *   "tabs":         {"x": 0, "y": 6, "spacing": 2},  // out from the book's edge; down from the pages' top; between tabs
-     *   "turn_buttons": {"x": 11, "y": 21},              // in from the page's outer edge; up from its bottom
-     *   "page_numbers": {"x": 0, "y": 17},               // across from the page's middle; up from its bottom
+     *   "turn_buttons": {"x": 10, "y": 21},              // in from the page's outer edge; up from its bottom
+     *   "page_numbers": {"x": 0, "y": 19},               // across from the page's middle; up from its bottom
      *   "close_button": {"x": 14, "y": 11}                // a page close clasp, where one is drawn (both styles close from their bar)
      * }
      * }</pre>
      * Any value left out keeps its default.
      */
     public record Layout(int tabX, int tabY, int tabSpacing, int buttonX, int buttonY, int numberX, int numberY, int closeX, int closeY) {
-        public static final Layout DEFAULT = new Layout(0, 6, 2, 8, 19, 0, 17, 14, 11);
+        public static final Layout DEFAULT = new Layout(0, 6, 2, 10, 21, 0, 19, 14, 11);
     }
 
     /**
