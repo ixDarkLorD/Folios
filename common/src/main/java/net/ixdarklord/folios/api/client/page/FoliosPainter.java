@@ -12,35 +12,35 @@ import org.jspecify.annotations.Nullable;
  * What a page draws with. The same calls draw it on a screen and on the pages of a book held in the world, so a page
  * is written once for every kind of book.
  * <p>
- * Coordinates are page pixels: (0, 0) is the page's top left, {@link GuideLayout#PAGE_WIDTH} by
- * {@link GuideLayout#PAGE_HEIGHT}, one pixel being one GUI pixel on a screen. {@link #push}, {@link #translate} and
+ * Coordinates are page pixels: (0, 0) is the page's top left, {@link FoliosLayout#PAGE_WIDTH} by
+ * {@link FoliosLayout#PAGE_HEIGHT}, one pixel being one GUI pixel on a screen. {@link #push}, {@link #translate} and
  * {@link #scale} move what follows, and the pointer's place with it, so {@link #hovered} and {@link #link} take the
  * same coordinates as the drawing.
  * <p>
  * There is no click handler on a page: it marks what can be pressed ({@link #link}, {@link #action}) while it draws,
  * and a press lands on what was marked under the pointer in the last frame.
  */
-public interface GuidePainter {
+public interface FoliosPainter {
     Font font();
 
-    GuidePalette palette();
+    FoliosPalette palette();
 
     /** The size of the page being drawn: the default page's unless the book's pages are larger (a screen book at a small GUI scale). */
     default int pageWidth() {
-        return GuideLayout.PAGE_WIDTH;
+        return FoliosLayout.PAGE_WIDTH;
     }
 
     default int pageHeight() {
-        return GuideLayout.PAGE_HEIGHT;
+        return FoliosLayout.PAGE_HEIGHT;
     }
 
     /** Where the page's content ends at the right and at the foot. */
     default int contentRight() {
-        return this.pageWidth() - GuideLayout.MARGIN;
+        return this.pageWidth() - FoliosLayout.MARGIN;
     }
 
     default int contentBottom() {
-        return this.pageHeight() - GuideLayout.FOOT;
+        return this.pageHeight() - FoliosLayout.FOOT;
     }
 
     /** Seconds since the book was opened: for what moves or cycles on a page. */

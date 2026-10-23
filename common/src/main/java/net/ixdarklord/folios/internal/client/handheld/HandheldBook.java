@@ -1,7 +1,7 @@
 package net.ixdarklord.folios.internal.client.handheld;
 
 import net.ixdarklord.coolcatcore.api.network.Network;
-import net.ixdarklord.folios.api.client.GuideBook;
+import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.internal.GuidePayloads;
 import net.ixdarklord.folios.internal.client.GuideReader;
 import net.ixdarklord.folios.internal.client.GuideSession;
@@ -65,7 +65,7 @@ public final class HandheldBook extends GuideReader {
     private @Nullable Spot shared;
     private boolean sharedShut;
 
-    private HandheldBook(GuideBook book, GuideSession session, GuideBook.@Nullable Location at, @Nullable InteractionHand hand, boolean sketch) {
+    private HandheldBook(FoliosBook book, GuideSession session, FoliosBook.@Nullable Location at, @Nullable InteractionHand hand, boolean sketch) {
         super(book, session, at, hand);
         this.hand = hand;
         this.sketch = sketch;
@@ -75,7 +75,7 @@ public final class HandheldBook extends GuideReader {
      * Opens a screen book used from a hand: raised and opened in the hands first, its screen coming up once it lies
      * open. With no hand (a command, a link), the screen opens at once.
      */
-    public static void openScreen(GuideBook book, GuideSession session, GuideBook.@Nullable Location at, @Nullable InteractionHand hand) {
+    public static void openScreen(FoliosBook book, GuideSession session, FoliosBook.@Nullable Location at, @Nullable InteractionHand hand) {
         Minecraft minecraft = Minecraft.getInstance();
         if (hand == null || minecraft.player == null || current != null) {
             minecraft.gui.setScreen(new net.ixdarklord.folios.internal.client.screen.GuideScreen(book, session, at, hand));
@@ -94,7 +94,7 @@ public final class HandheldBook extends GuideReader {
         return current;
     }
 
-    public static void open(GuideBook book, GuideSession session, GuideBook.@Nullable Location at, @Nullable InteractionHand hand) {
+    public static void open(FoliosBook book, GuideSession session, FoliosBook.@Nullable Location at, @Nullable InteractionHand hand) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null) return;
         HandheldBook previous = current;

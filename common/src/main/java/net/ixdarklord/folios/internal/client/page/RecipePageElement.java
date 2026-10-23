@@ -1,15 +1,15 @@
 package net.ixdarklord.folios.internal.client.page;
 
-import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuidePainter;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
-import net.ixdarklord.folios.api.client.page.GuideStack;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.api.client.page.FoliosStack;
 import net.ixdarklord.folios.internal.client.GuideRecipes;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -35,7 +35,7 @@ import java.util.Optional;
 
 // One or two recipes as the game shows them: a crafting grid, a furnace, a stonecutter or a smithing table, each
 // slot showing in turn every item it takes. Recipes are asked of the server the first time the page is shown.
-public record RecipePageElement(List<Identifier> recipes, Optional<String> title, String text) implements GuidePage {
+public record RecipePageElement(List<Identifier> recipes, Optional<String> title, String text) implements FoliosPageElement {
     public static final MapCodec<RecipePageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Codec.mapEither(Identifier.CODEC.listOf(1, 2).fieldOf("recipes"), Identifier.CODEC.fieldOf("recipe"))
                     .xmap(either -> either.map(list -> list, List::of), Either::<List<Identifier>, Identifier>left).forGetter(RecipePageElement::recipes),
@@ -47,27 +47,27 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
     private static final int GAP = 4;
 
     @Override
-    public List<Laid> lay(GuideLayout layout) {
+    public List<Laid> lay(FoliosLayout layout) {
         Body body = this.body(layout);
         return layout.flow(title.orElse(null), body.height(), text, body.part());
     }
 
     /** What it shows between its title and its text. */
-    Body body(GuideLayout layout) {
+    Body body(FoliosLayout layout) {
         Map<SlotDisplay, List<ItemStack>> resolved = new IdentityHashMap<>();
         int room = recipes.size() * BOX + (recipes.size() - 1) * GAP;
         // Without a title of its own, a page of one recipe is named for what it makes, once that is known.
         boolean named = title.isEmpty() && recipes.size() == 1;
-        net.ixdarklord.folios.api.client.page.GuideIcon icon = layout.titleIcon();
-        return new Body(room + (named ? GuideLayout.TITLE_HEIGHT : 0), (painter, y) -> {
+        net.ixdarklord.folios.api.client.page.FoliosIcon icon = layout.titleIcon();
+        return new Body(room + (named ? FoliosLayout.TITLE_HEIGHT : 0), (painter, y) -> {
             int top = y;
             if (named) {
                 List<RecipeDisplay> first = GuideRecipes.get(recipes.getFirst());
                 if (first != null && !first.isEmpty()) {
                     ItemStack made = stacks(resolved, first.getFirst().result()).stream().findFirst().orElse(ItemStack.EMPTY);
-                    if (!made.isEmpty()) GuideLayout.title(painter, made.getHoverName(), y, icon);
+                    if (!made.isEmpty()) FoliosLayout.title(painter, made.getHoverName(), y, icon);
                 }
-                top += GuideLayout.TITLE_HEIGHT;
+                top += FoliosLayout.TITLE_HEIGHT;
             }
             for (Identifier recipe : recipes) {
                 draw(painter, resolved, recipe, top);
@@ -76,9 +76,9 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
         });
     }
 
-    private static void draw(GuidePainter painter, Map<SlotDisplay, List<ItemStack>> resolved, Identifier id, int y) {
-        GuidePalette palette = painter.palette();
-        int left = GuideLayout.CONTENT_LEFT;
+    private static void draw(FoliosPainter painter, Map<SlotDisplay, List<ItemStack>> resolved, Identifier id, int y) {
+        FoliosPalette palette = painter.palette();
+        int left = FoliosLayout.CONTENT_LEFT;
         int right = painter.contentRight();
         Shapes.panel(painter, left, y, right, y + BOX);
         List<RecipeDisplay> displays = GuideRecipes.get(id);
@@ -95,7 +95,7 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
             return;
         }
         // A recipe with several ways to look shows each in turn.
-        RecipeDisplay display = displays.get(Mth.positiveModulo((int) (painter.time() / (GuideStack.CYCLE_SECONDS * 3)), displays.size()));
+        RecipeDisplay display = displays.get(Mth.positiveModulo((int) (painter.time() / (FoliosStack.CYCLE_SECONDS * 3)), displays.size()));
         int gridX = left + 7;
         int gridY = y + 4;
         int resultX = right - 30;
@@ -147,7 +147,7 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
         box(painter, resultX - 4, top - 4, resultX + 26, top + 26, true);
         slot(painter, resolved, display.result(), resultX + 2, top + 2, true);
         if (!stations.isEmpty()) {
-            ItemStack station = stations.get(Mth.positiveModulo((int) (painter.time() / GuideStack.CYCLE_SECONDS), stations.size()));
+            ItemStack station = stations.get(Mth.positiveModulo((int) (painter.time() / FoliosStack.CYCLE_SECONDS), stations.size()));
             int middle = resultX + 11;
             int stationTop = top + 31;
             painter.fill(middle - 1, top + 26, middle + 1, stationTop, frame(palette, false));
@@ -156,36 +156,36 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
         }
     }
 
-    private static int frame(GuidePalette palette, boolean result) {
-        return GuidePalette.mix(palette.line(), palette.accent(), result ? 0.55F : 0.3F);
+    private static int frame(FoliosPalette palette, boolean result) {
+        return FoliosPalette.mix(palette.line(), palette.accent(), result ? 0.55F : 0.3F);
     }
 
     // A box with softened corners: a hairline edge, a face washed with the book's colour (stronger for a result),
     // and a light line under its top edge.
-    private static void box(GuidePainter painter, int x0, int y0, int x1, int y1, boolean result) {
-        GuidePalette palette = painter.palette();
+    private static void box(FoliosPainter painter, int x0, int y0, int x1, int y1, boolean result) {
+        FoliosPalette palette = painter.palette();
         int edge = frame(palette, result);
-        int face = GuidePalette.mix(palette.panel(), palette.accent(), result ? 0.16F : 0.07F);
+        int face = FoliosPalette.mix(palette.panel(), palette.accent(), result ? 0.16F : 0.07F);
         painter.fill(x0 + 1, y0, x1 - 1, y1, edge);
         painter.fill(x0, y0 + 1, x1, y1 - 1, edge);
         painter.fill(x0 + 1, y0 + 1, x1 - 1, y1 - 1, face);
-        painter.fill(x0 + 2, y0 + 1, x1 - 2, y0 + 2, GuidePalette.mix(face, 0xFFFFFFFF, 0.35F));
+        painter.fill(x0 + 2, y0 + 1, x1 - 2, y0 + 2, FoliosPalette.mix(face, 0xFFFFFFFF, 0.35F));
     }
 
-    private static void grid(GuidePainter painter, Map<SlotDisplay, List<ItemStack>> resolved, int x, int y, int columns, int rows) {
+    private static void grid(FoliosPainter painter, Map<SlotDisplay, List<ItemStack>> resolved, int x, int y, int columns, int rows) {
         for (int row = 0; row < rows; row++) {
             for (int column = 0; column < columns; column++) Shapes.slot(painter, x + column * 18, y + row * 18);
         }
     }
 
-    private static void slot(GuidePainter painter, Map<SlotDisplay, List<ItemStack>> resolved, SlotDisplay display, int x, int y, boolean count) {
+    private static void slot(FoliosPainter painter, Map<SlotDisplay, List<ItemStack>> resolved, SlotDisplay display, int x, int y, boolean count) {
         List<ItemStack> stacks = stacks(resolved, display);
         if (stacks.isEmpty()) return;
-        ItemStack stack = stacks.get(Mth.positiveModulo((int) (painter.time() / GuideStack.CYCLE_SECONDS), stacks.size()));
+        ItemStack stack = stacks.get(Mth.positiveModulo((int) (painter.time() / FoliosStack.CYCLE_SECONDS), stacks.size()));
         painter.item(count ? stack : stack.copyWithCount(1), x + 1, y + 1);
     }
 
-    private static void flame(GuidePainter painter, int x, int y) {
+    private static void flame(FoliosPainter painter, int x, int y) {
         int color = 0xFFE8862A;
         painter.fill(x + 3, y, x + 5, y + 2, color);
         painter.fill(x + 2, y + 2, x + 6, y + 5, color);
@@ -211,6 +211,6 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
 
     @Override
     public String searchText() {
-        return GuideText.resolve(title.orElse("")) + " " + GuideText.resolve(text);
+        return FoliosText.resolve(title.orElse("")) + " " + FoliosText.resolve(text);
     }
 }

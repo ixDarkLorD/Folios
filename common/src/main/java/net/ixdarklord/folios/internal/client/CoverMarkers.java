@@ -4,9 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.ixdarklord.folios.api.client.GuideBook;
+import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.internal.core.Folios;
-import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -29,7 +29,7 @@ import java.util.Optional;
  */
 public final class CoverMarkers {
     /** A marked line: where and how large, and the z of the face it lies on. */
-    public record Marked(GuideBook.CoverText.Line line, float z) {}
+    public record Marked(FoliosBook.CoverText.Line line, float z) {}
 
     /** What a model marks; either may be null. */
     public record Markers(@Nullable Marked title, @Nullable Marked subtitle, @Nullable Marked summary) {
@@ -37,7 +37,7 @@ public final class CoverMarkers {
     }
 
     /** What is lettered where: the book's name, its subtitle, its summary (up to {@code lines} lines), each its own colour. */
-    public record Lettering(Component text, GuideBook.CoverText.Line line, float z, int lines, Kind kind) {}
+    public record Lettering(Component text, FoliosBook.CoverText.Line line, float z, int lines, Kind kind) {}
 
     /** RULE: a soft rule with a diamond stud at its middle, its line's size its thickness, its width its length. */
     public enum Kind { TITLE, SUBTITLE, SUMMARY, RULE }
@@ -51,39 +51,39 @@ public final class CoverMarkers {
      * name; its subtitle under the name on the same plate when it has a summary (the summary on the lower plate), or
      * on the lower plate when it hasn't. {@code z} is used where nothing is marked.
      */
-    public static java.util.List<Lettering> layout(GuideBook book, Markers marked, GuideBook.CoverText.Line titleDefault,
-                                                   GuideBook.CoverText.Line lowerDefault, float z) {
-        GuideBook.CoverText text = book.coverText();
+    public static java.util.List<Lettering> layout(FoliosBook book, Markers marked, FoliosBook.CoverText.Line titleDefault,
+                                                   FoliosBook.CoverText.Line lowerDefault, float z) {
+        FoliosBook.CoverText text = book.coverText();
         java.util.List<Lettering> out = new java.util.ArrayList<>();
-        GuideBook.CoverText.Line title = text.titleOr(marked.title() != null ? marked.title().line() : titleDefault);
+        FoliosBook.CoverText.Line title = text.titleOr(marked.title() != null ? marked.title().line() : titleDefault);
         float titleZ = marked.title() != null ? marked.title().z() : z;
         Marked lowerMark = marked.summary() != null ? marked.summary() : marked.subtitle();
         float lowerZ = lowerMark != null ? lowerMark.z() : z;
         boolean hasSubtitle = !book.subtitle().isEmpty();
-        Component subtitle = hasSubtitle ? GuideText.inline(book.subtitle()) : Component.empty();
+        Component subtitle = hasSubtitle ? FoliosText.inline(book.subtitle()) : Component.empty();
         if (!text.summaryText().isEmpty()) {
             // The plate's height, from its line (a marked line is UP of it); the name in its upper part, the subtitle under.
             float plate = title.size() / UP;
             boolean own = text.title() != null;
-            GuideBook.CoverText.Line name = !hasSubtitle || own ? title
-                    : new GuideBook.CoverText.Line(title.x(), title.y() + plate * 0.2F, plate * NAME_SHARE * UP * 1.15F, title.width());
+            FoliosBook.CoverText.Line name = !hasSubtitle || own ? title
+                    : new FoliosBook.CoverText.Line(title.x(), title.y() + plate * 0.2F, plate * NAME_SHARE * UP * 1.15F, title.width());
             out.add(new Lettering(book.title(), name, titleZ, 1, Kind.TITLE));
             if (hasSubtitle) {
-                GuideBook.CoverText.Line under = text.subtitle() != null ? text.subtitle()
-                        : new GuideBook.CoverText.Line(title.x(), title.y() - plate * 0.28F, plate * SUBTITLE_SHARE, title.width() * 0.92F);
+                FoliosBook.CoverText.Line under = text.subtitle() != null ? text.subtitle()
+                        : new FoliosBook.CoverText.Line(title.x(), title.y() - plate * 0.28F, plate * SUBTITLE_SHARE, title.width() * 0.92F);
                 out.add(new Lettering(subtitle, under, titleZ, 1, Kind.SUBTITLE));
                 // Between them, a soft rule with a stud at its middle.
                 if (!own && text.subtitle() == null) {
-                    out.add(new Lettering(Component.empty(), new GuideBook.CoverText.Line(title.x(), title.y() - plate * 0.06F, plate * 0.035F, title.width() * 0.7F),
+                    out.add(new Lettering(Component.empty(), new FoliosBook.CoverText.Line(title.x(), title.y() - plate * 0.06F, plate * 0.035F, title.width() * 0.7F),
                             titleZ, 1, Kind.RULE));
                 }
             }
-            GuideBook.CoverText.Line summary = text.summary() != null ? text.summary() : lowerMark != null ? lowerMark.line() : lowerDefault;
-            out.add(new Lettering(GuideText.inline(text.summaryText()), summary, lowerZ, 2, Kind.SUMMARY));
+            FoliosBook.CoverText.Line summary = text.summary() != null ? text.summary() : lowerMark != null ? lowerMark.line() : lowerDefault;
+            out.add(new Lettering(FoliosText.inline(text.summaryText()), summary, lowerZ, 2, Kind.SUMMARY));
         } else {
             out.add(new Lettering(book.title(), title, titleZ, 1, Kind.TITLE));
             if (hasSubtitle) {
-                GuideBook.CoverText.Line lower = text.subtitleOr(lowerMark != null ? lowerMark.line() : lowerDefault);
+                FoliosBook.CoverText.Line lower = text.subtitleOr(lowerMark != null ? lowerMark.line() : lowerDefault);
                 out.add(new Lettering(subtitle, lower, lowerZ, 1, Kind.SUBTITLE));
             }
         }
@@ -92,14 +92,14 @@ public final class CoverMarkers {
 
     /** A lettering's colour: the name in gilt, the subtitle and summary quieter, toward the cover. */
     public static int color(Kind kind, int gilt, int cover) {
-        return kind == Kind.TITLE ? gilt : net.ixdarklord.folios.api.client.page.GuidePalette.mix(gilt, cover, kind == Kind.SUBTITLE ? 0.3F : 0.4F);
+        return kind == Kind.TITLE ? gilt : net.ixdarklord.folios.api.client.page.FoliosPalette.mix(gilt, cover, kind == Kind.SUBTITLE ? 0.3F : 0.4F);
     }
 
     /**
      * A soft rule's pieces, in model units about its middle: {x0, x1, alpha} runs of its line, fading out to its ends,
      * then the stud's half size.
      */
-    public static float[][] rule(GuideBook.CoverText.Line line) {
+    public static float[][] rule(FoliosBook.CoverText.Line line) {
         int steps = 24;
         float half = line.width() / 2;
         float stud = line.size() * 3.2F;
@@ -126,7 +126,7 @@ public final class CoverMarkers {
      * at its width at that size, then shrunk to fit across.
      */
     public static Rows rows(net.minecraft.client.gui.Font font, Lettering lettering) {
-        GuideBook.CoverText.Line line = lettering.line();
+        FoliosBook.CoverText.Line line = lettering.line();
         float full = line.size() * 1.6F / 9.0F;
         float shared = lettering.lines() > 1 ? full / lettering.lines() * 0.64F : full;
         // A summary of more than one line is set small enough for the whole of it to fit: it is wrapped narrower and
@@ -205,7 +205,7 @@ public final class CoverMarkers {
     // Whether a point is on a marked plate's box.
     private static boolean on(@Nullable Marked mark, float x, float y) {
         if (mark == null) return false;
-        GuideBook.CoverText.Line line = mark.line();
+        FoliosBook.CoverText.Line line = mark.line();
         return Math.abs(x - line.x()) <= line.width() / ACROSS / 2 && Math.abs(y - line.y()) <= line.size() / UP / 2;
     }
 
@@ -213,17 +213,17 @@ public final class CoverMarkers {
      * What a plate of a book's cover says, as {@link #layout} letters it: on the name's plate the name, with the
      * subtitle under it when the lower plate holds the summary; on the lower plate the summary, or the subtitle.
      */
-    public static java.util.List<Component> plateText(GuideBook book, Kind plate) {
+    public static java.util.List<Component> plateText(FoliosBook book, Kind plate) {
         boolean summary = !book.coverText().summaryText().isEmpty();
         boolean subtitle = !book.subtitle().isEmpty();
         java.util.List<Component> out = new java.util.ArrayList<>();
         if (plate == Kind.TITLE) {
             out.add(book.title());
-            if (summary && subtitle) out.add(GuideText.inline(book.subtitle()));
+            if (summary && subtitle) out.add(FoliosText.inline(book.subtitle()));
         } else if (summary) {
-            out.add(GuideText.inline(book.coverText().summaryText()));
+            out.add(FoliosText.inline(book.coverText().summaryText()));
         } else if (subtitle) {
-            out.add(GuideText.inline(book.subtitle()));
+            out.add(FoliosText.inline(book.subtitle()));
         }
         return out;
     }
@@ -248,7 +248,7 @@ public final class CoverMarkers {
         float x0 = from.get(0).getAsFloat(), y0 = from.get(1).getAsFloat();
         float x1 = to.get(0).getAsFloat(), y1 = to.get(1).getAsFloat();
         float z = Math.max(from.get(2).getAsFloat(), to.get(2).getAsFloat());
-        GuideBook.CoverText.Line line = new GuideBook.CoverText.Line((x0 + x1) / 2, (y0 + y1) / 2, Math.abs(y1 - y0) * UP, Math.abs(x1 - x0) * ACROSS);
+        FoliosBook.CoverText.Line line = new FoliosBook.CoverText.Line((x0 + x1) / 2, (y0 + y1) / 2, Math.abs(y1 - y0) * UP, Math.abs(x1 - x0) * ACROSS);
         return new Marked(line, z + 0.01F);
     }
 }

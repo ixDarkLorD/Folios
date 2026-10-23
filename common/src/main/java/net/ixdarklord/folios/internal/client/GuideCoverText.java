@@ -4,9 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.ixdarklord.folios.api.GuideBooks;
-import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.FoliosBooks;
+import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -33,15 +33,15 @@ public record GuideCoverText(float x, float titleY, float subtitleY, float z, fl
 
     @Override
     public void submit(@Nullable Identifier id, PoseStack pose, SubmitNodeCollector collector, int light, int overlay, boolean foil, int outline) {
-        GuideBook book = id != null ? GuideLibrary.book(id) : null;
+        FoliosBook book = id != null ? GuideLibrary.book(id) : null;
         if (book == null) return;
         Font font = Minecraft.getInstance().font;
         int cover = 0xFF000000 | book.cover();
-        int gilt = GuidePalette.mix(0xFFE8C66A, cover, 0.15F);
+        int gilt = FoliosPalette.mix(0xFFE8C66A, cover, 0.15F);
         // Where the book says, or where the model marks them, or where this renderer puts them.
         CoverMarkers.Markers marked = markers != null ? CoverMarkers.of(markers) : CoverMarkers.Markers.NONE;
-        for (CoverMarkers.Lettering lettering : CoverMarkers.layout(book, marked, new GuideBook.CoverText.Line(x, titleY, GuideBook.CoverText.TITLE.size(), width),
-                new GuideBook.CoverText.Line(x, subtitleY, GuideBook.CoverText.SUBTITLE.size(), width), z)) {
+        for (CoverMarkers.Lettering lettering : CoverMarkers.layout(book, marked, new FoliosBook.CoverText.Line(x, titleY, FoliosBook.CoverText.TITLE.size(), width),
+                new FoliosBook.CoverText.Line(x, subtitleY, FoliosBook.CoverText.SUBTITLE.size(), width), z)) {
             if (lettering.kind() == CoverMarkers.Kind.RULE) this.rule(pose, collector, lettering, gilt, cover, light);
             else this.lines(pose, collector, font, lettering, CoverMarkers.color(lettering.kind(), gilt, cover), light);
         }
@@ -50,8 +50,8 @@ public record GuideCoverText(float x, float titleY, float subtitleY, float z, fl
     // A soft rule fading to its ends, a diamond stud at its middle, in gilt.
     private void rule(PoseStack pose, SubmitNodeCollector collector, CoverMarkers.Lettering lettering, int gilt, int cover, int light) {
         // Faded toward the plate's own dark leather, solid: a see-through face over the item showed what was behind it.
-        int plate = GuidePalette.mix(cover, 0xFF000000, 0.55F);
-        GuideBook.CoverText.Line line = lettering.line();
+        int plate = FoliosPalette.mix(cover, 0xFF000000, 0.55F);
+        FoliosBook.CoverText.Line line = lettering.line();
         float unit = 1 / 16.0F;
         float[][] runs = CoverMarkers.rule(line);
         float thick = line.size() / 2;
@@ -63,7 +63,7 @@ public record GuideCoverText(float x, float titleY, float subtitleY, float z, fl
             for (int index = 0; index < runs.length - 1; index++) {
                 float[] run = runs[index];
                 if (run[2] < 0.05F) continue;
-                int color = GuidePalette.mix(plate, gilt, run[2]);
+                int color = FoliosPalette.mix(plate, gilt, run[2]);
                 quad(consumer, last, run[0], -thick, run[1], -thick, run[1], thick, run[0], thick, color, light);
             }
             quad(consumer, last, 0, -stud, stud, 0, 0, stud, -stud, 0, gilt, light);
@@ -81,7 +81,7 @@ public record GuideCoverText(float x, float titleY, float subtitleY, float z, fl
 
     // A lettering's lines, centred on its place, shrunk to the room across.
     private void lines(PoseStack pose, SubmitNodeCollector collector, Font font, CoverMarkers.Lettering lettering, int color, int light) {
-        GuideBook.CoverText.Line line = lettering.line();
+        FoliosBook.CoverText.Line line = lettering.line();
         float unit = 1 / 16.0F;
         CoverMarkers.Rows rows = CoverMarkers.rows(font, lettering);
         pose.pushPose();
@@ -104,7 +104,7 @@ public record GuideCoverText(float x, float titleY, float subtitleY, float z, fl
 
     @Override
     public @Nullable Identifier extractArgument(ItemStack stack) {
-        return GuideBooks.bookOf(stack);
+        return FoliosBooks.bookOf(stack);
     }
 
     public record Unbaked(float x, float titleY, float subtitleY, float z, float width, java.util.Optional<Identifier> markers) implements SpecialModelRenderer.Unbaked<Identifier> {
