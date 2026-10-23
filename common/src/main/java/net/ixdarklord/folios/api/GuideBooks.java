@@ -45,9 +45,14 @@ public final class GuideBooks {
         return stack;
     }
 
-    /** The book a stack names with the {@code folios:guide_book} component, on any item; null when none. */
+    /**
+     * The book a stack names: its {@code folios:guide_book} component, on any item, or else the book a
+     * {@link GuideBookItem} of a mod's own always opens (so its stacks need no component to show their cover); null
+     * when none.
+     */
     public static @Nullable Identifier bookOf(ItemStack stack) {
-        return stack.isEmpty() ? null : stack.get(GuideRegistry.GUIDE_BOOK.get());
+        if (stack.isEmpty()) return null;
+        return stack.getItem() instanceof GuideBookItem item ? item.book(stack) : stack.get(GuideRegistry.GUIDE_BOOK.get());
     }
 
     /** Opens a book on a player's screen at its first page. */
