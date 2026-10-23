@@ -2,8 +2,8 @@ package net.ixdarklord.folios.internal.client.handheld;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
+import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.internal.GuidePayloads;
 import net.ixdarklord.folios.internal.client.GuideLibrary;
 import net.ixdarklord.folios.internal.client.GuideReader;
@@ -85,7 +85,7 @@ public final class SharedBooks {
             return;
         }
         // A book this client has too: read from the spread its reader has open.
-        GuideBook book = GuideLibrary.book(at.book());
+        FoliosBook book = GuideLibrary.book(at.book());
         GuideSession session = GuideLibrary.session(at.book());
         if (book == null || session == null) {
             BOOKS.remove(payload.reader());
@@ -126,7 +126,7 @@ public final class SharedBooks {
      * as wide as the open one and sits in the middle, so each hand reaches in by half a board's width (in model
      * pixels) over the arm's 10.
      */
-    private static final float SHUT_IN = (float) Math.atan((GuideLayout.PAGE_WIDTH + HandheldRenderer.EDGE) / 2.0F
+    private static final float SHUT_IN = (float) Math.atan((FoliosLayout.PAGE_WIDTH + HandheldRenderer.EDGE) / 2.0F
             * HandheldRenderer.SCALE * SIZE * 16 / 10.0F);
 
     /** How far open the book someone holds up is drawn now, 0 shut to 1 open; 1 for none. */
@@ -191,7 +191,7 @@ public final class SharedBooks {
         pose.rotate(Axis.YP.rotationDegrees(180.0F));
         pose.rotate(Axis.XP.rotationDegrees(-LEAN));
         pose.scale(HandheldRenderer.SCALE * SIZE, -HandheldRenderer.SCALE * SIZE, HandheldRenderer.SCALE * SIZE);
-        pose.translate(0.0F, -GuideLayout.PAGE_HEIGHT / 2.0F, 0.0F);
+        pose.translate(0.0F, -FoliosLayout.PAGE_HEIGHT / 2.0F, 0.0F);
         // Lit as its reader is, by the world round them.
         HandheldRenderer.drawShared(pose, collector, state.lightCoords, reader, open);
         pose.popPose();

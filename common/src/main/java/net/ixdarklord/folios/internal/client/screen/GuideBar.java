@@ -5,11 +5,11 @@ import net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyledEditBox;
 import net.ixdarklord.coolcatcore.api.config.ConfigTheme;
-import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.api.client.GuideCategory;
-import net.ixdarklord.folios.api.client.GuideEntry;
-import net.ixdarklord.folios.api.client.page.GuidePainter;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.FoliosCategory;
+import net.ixdarklord.folios.api.client.FoliosEntry;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.client.GuideReader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -55,7 +55,7 @@ public final class GuideBar {
     private static boolean folded;
 
     private final GuideReader reader;
-    private final GuideBook book;
+    private final FoliosBook book;
     private final Font font;
     private final boolean modeToggle;
     private final @Nullable Runnable close;
@@ -157,21 +157,21 @@ public final class GuideBar {
     // ---- Drawing ----
 
     /** The colours its painter is given: the cover's, so what is drawn see-through lies over the leather. */
-    public GuidePalette palette() {
+    public FoliosPalette palette() {
         int cover = 0xFF000000 | book.cover();
         int text = 0xFFF2EEE6;
-        return new GuidePalette(cover, text, GuidePalette.alpha(text, 0xA0), 0xFFFFFFFF, this.gilt(), this.gilt(), cover, this.gilt());
+        return new FoliosPalette(cover, text, FoliosPalette.alpha(text, 0xA0), 0xFFFFFFFF, this.gilt(), this.gilt(), cover, this.gilt());
     }
 
     private int gilt() {
-        return GuidePalette.mix(GuidePalette.mix(0xFF000000 | book.accent(), 0xFFE8C66A, 0.5F), 0xFF000000 | book.cover(), 0.15F);
+        return FoliosPalette.mix(FoliosPalette.mix(0xFF000000 | book.accent(), 0xFFE8C66A, 0.5F), 0xFF000000 | book.cover(), 0.15F);
     }
 
     /**
      * Draws it in its own pixels, the given width across. {@code appear}, 0 to 1, grows it out of its pull as it
      * comes (a handheld book's, once the book is open); 1 when it is simply there.
      */
-    public void draw(GuidePainter painter, int width, float appear) {
+    public void draw(FoliosPainter painter, int width, float appear) {
         this.width = width;
         if (appear < 0.03F) {
             if (search != null && search.isFocused()) search.setFocused(false);
@@ -190,14 +190,14 @@ public final class GuideBar {
             if (this.shown() < 0.05F) {
                 boolean hovered = painter.action(x0, bottom - tall - 2, wide, tall + 4,
                         Component.translatableWithFallback("folios.bar.show", "Show the bar"), () -> this.fold(false));
-                int ink = hovered ? 0xFFFFFFFF : GuidePalette.mix(cover, 0xFFF2EEE6, 0.7F);
+                int ink = hovered ? 0xFFFFFFFF : FoliosPalette.mix(cover, 0xFFF2EEE6, 0.7F);
                 pixels(painter, UNFOLD, x0 + (wide - 9) / 2, bottom - tall + (tall - 9) / 2, 9, ink);
             }
             return;
         }
         this.ribbon(painter, 0, 0, width, bottom, cover, gilt);
         int text = 0xFFF2EEE6;
-        int dim = GuidePalette.mix(cover, text, 0.62F);
+        int dim = FoliosPalette.mix(cover, text, 0.62F);
         int x = 8;
         // Folding it away: a pocket in the middle of its foot, where its pull is once it is folded.
         this.foldPocket(painter, cover, gilt, text);
@@ -220,7 +220,7 @@ public final class GuideBar {
         StyledEditBox field = search;
         if (searchOpen < 0.005F) {
             boolean searching = field != null && !field.getValue().isBlank();
-            this.button(painter, searchLeft, GLASS, searching ? GuidePalette.mix(gilt, 0xFFFFE680, 0.65F) : text,
+            this.button(painter, searchLeft, GLASS, searching ? FoliosPalette.mix(gilt, 0xFFFFE680, 0.65F) : text,
                     Component.translatableWithFallback("folios.search", "Search"), Component.translatableWithFallback("folios.tip.search", "Ctrl + F"), field == null ? () -> {} : () -> focus.focus(field));
         } else {
             this.field(painter, searchLeft, searchRight, searchOpen, field);
@@ -228,7 +228,7 @@ public final class GuideBar {
         // Where the reader is, in the room it has: on one line, shrunk to no less than four fifths; past that on two
         // smaller lines, the book or category over the rest; cut short only if it still doesn't fit. The bookmark star
         // right after it, on an entry.
-        GuideBook.Location here = reader.here();
+        FoliosBook.Location here = reader.here();
         // Up to the fold pocket in the middle (or the search field, if that is nearer), its star after it.
         int end = Math.min(searchLeft - 6, (width - POCKET_WIDTH) / 2 - 4);
         int room = end - x - (here != null ? 18 : 0);
@@ -239,7 +239,7 @@ public final class GuideBar {
             painter.push();
             painter.translate(x, top + index * lineHeight);
             painter.scale(where.scale());
-            painter.text(where.lines().get(index), 0, 0, index == 0 ? text : GuidePalette.mix(cover, text, 0.85F));
+            painter.text(where.lines().get(index), 0, 0, index == 0 ? text : FoliosPalette.mix(cover, text, 0.85F));
             painter.pop();
         }
         if (here != null) {
@@ -251,16 +251,16 @@ public final class GuideBar {
             if (hovered && !marked) painter.tooltip(net.ixdarklord.folios.internal.client.GuideTooltips.of(starName, Component.translatableWithFallback("folios.tip.bookmark", "Find it again under the star tab")));
             if (hovered) rounded(painter, star, INSET, star + 16, INSET + 16, 0x30FFFFFF);
             // A marked page's star shines: the gilt lifted toward pale gold, so it stands out on dark leather.
-            int shine = GuidePalette.mix(gilt, 0xFFFFE680, 0.65F);
+            int shine = FoliosPalette.mix(gilt, 0xFFFFE680, 0.65F);
             pixels(painter, marked ? STAR : STAR_OUTLINE, star, INSET, 16, marked ? (hovered ? 0xFFFFF4C0 : shine) : hovered ? text : dim);
         }
     }
 
     // The search field, opening out of the glass: pale paper with what is typed in it (its end, if it is too long) and
     // a blinking caret, or the hint while it is empty. Pressed, it takes the keyboard.
-    private void field(GuidePainter painter, int x0, int x1, float open, @Nullable StyledEditBox field) {
+    private void field(FoliosPainter painter, int x0, int x1, float open, @Nullable StyledEditBox field) {
         int paper = 0xFFF4F1EA;
-        rounded(painter, x0, INSET, x1, INSET + 16, GuidePalette.mix(paper, 0xFF000000, 0.35F));
+        rounded(painter, x0, INSET, x1, INSET + 16, FoliosPalette.mix(paper, 0xFF000000, 0.35F));
         rounded(painter, x0 + 1, INSET + 1, x1 - 1, INSET + 15, paper);
         if (field == null) return;
         String value = field.getValue();
@@ -275,15 +275,15 @@ public final class GuideBar {
                 field.setValue("");
                 focus.focus(field);
             });
-            if (over) rounded(painter, bx + 1, INSET + 2, bx + 13, INSET + 14, GuidePalette.mix(paper, ink, 0.12F));
-            pixels(painter, CLOSE, bx, INSET + 1, 14, over ? ink : GuidePalette.mix(paper, ink, 0.55F));
+            if (over) rounded(painter, bx + 1, INSET + 2, bx + 13, INSET + 14, FoliosPalette.mix(paper, ink, 0.12F));
+            pixels(painter, CLOSE, bx, INSET + 1, 14, over ? ink : FoliosPalette.mix(paper, ink, 0.55F));
         }
         int room = x1 - x0 - 8 - (clearable ? 12 : 0);
         if (value.isEmpty()) {
             // Waiting for keys, the hint steps aside for the caret before it.
             int hintX = x0 + 4 + (field.isFocused() ? 4 : 0);
             painter.text(Component.translatableWithFallback("folios.search.hint", "Search...").withStyle(ChatFormatting.ITALIC).getVisualOrderText(),
-                    hintX, INSET + 4, GuidePalette.mix(paper, ink, 0.45F));
+                    hintX, INSET + 4, FoliosPalette.mix(paper, ink, 0.45F));
         } else {
             String shown = font.width(value) <= room ? value : font.plainSubstrByWidth(value, room, true);
             painter.text(Component.literal(shown).getVisualOrderText(), x0 + 4, INSET + 4, ink);
@@ -301,14 +301,14 @@ public final class GuideBar {
     // The pocket the bar folds away from: sunk into the middle of its foot, its top corners rounded off smoothly, a
     // shade along its top inside edge and a gilt rim following its shape where the bar's lower gilt line meets it;
     // an arrow up in it. Pressed, the bar folds away into its pull.
-    private void foldPocket(GuidePainter painter, int cover, int gilt, int text) {
+    private void foldPocket(FoliosPainter painter, int cover, int gilt, int text) {
         int x0 = (width - POCKET_WIDTH) / 2;
         int x1 = x0 + POCKET_WIDTH;
         int y0 = HEIGHT - POCKET_HEIGHT;
         int y1 = HEIGHT;
         boolean hovered = painter.action(x0, y0, POCKET_WIDTH, POCKET_HEIGHT, Component.translatableWithFallback("folios.bar.hide", "Hide the bar"), () -> this.fold(true));
-        int rim = GuidePalette.mix(cover, gilt, 0.56F);
-        int well = GuidePalette.mix(cover, 0xFF000000, hovered ? 0.2F : 0.38F);
+        int rim = FoliosPalette.mix(cover, gilt, 0.56F);
+        int well = FoliosPalette.mix(cover, 0xFF000000, hovered ? 0.2F : 0.38F);
         // The rim: the bar's lower gilt line runs up around the pocket, its corners eased by a step of two.
         painter.fill(x0 - 1, y1 - 3, x0, y1 - 2, cover);
         painter.fill(x1, y1 - 3, x1 + 1, y1 - 2, cover);
@@ -323,8 +323,8 @@ public final class GuideBar {
         painter.fill(x0 + 3, y0, x1 - 3, y1, well);
         painter.fill(x0 + 1, y0 + 1, x1 - 1, y1, well);
         painter.fill(x0, y0 + 3, x1, y1, well);
-        painter.fill(x0 + 3, y0, x1 - 3, y0 + 1, GuidePalette.mix(well, 0xFF000000, 0.3F));
-        int ink = hovered ? 0xFFFFFFFF : GuidePalette.mix(cover, text, 0.75F);
+        painter.fill(x0 + 3, y0, x1 - 3, y0 + 1, FoliosPalette.mix(well, 0xFF000000, 0.3F));
+        int ink = hovered ? 0xFFFFFFFF : FoliosPalette.mix(cover, text, 0.75F);
         pixels(painter, FOLD, x0 + (POCKET_WIDTH - 9) / 2, y0 + (POCKET_HEIGHT - 9) / 2, 9, ink);
     }
 
@@ -335,10 +335,10 @@ public final class GuideBar {
     // A ribbon from x0 to x1: its two swallowtail tails behind its ends, hanging a little lower, a fold where each
     // turns back; then the band over them, its cloth woven faintly, lit along its top and shaded along its foot, a
     // stitched gilt seam a pixel inside each edge.
-    private void ribbon(GuidePainter painter, int x0, int y0, int x1, int y1, int cover, int gilt) {
+    private void ribbon(FoliosPainter painter, int x0, int y0, int x1, int y1, int cover, int gilt) {
         int tall = y1 - y0;
-        int back = GuidePalette.mix(cover, 0xFF000000, 0.32F);
-        int fold = GuidePalette.mix(cover, 0xFF000000, 0.55F);
+        int back = FoliosPalette.mix(cover, 0xFF000000, 0.32F);
+        int fold = FoliosPalette.mix(cover, 0xFF000000, 0.55F);
         for (int side = 0; side < 2; side++) {
             boolean left = side == 0;
             int end = left ? x0 : x1;
@@ -354,7 +354,7 @@ public final class GuideBar {
                 int reach = TAIL - cut;
                 int a = left ? end - reach : end - 4;
                 int b = left ? end + 4 : end + reach;
-                painter.fill(a, top + row, b, top + row + 1, row == rows - 1 ? GuidePalette.mix(back, 0xFF000000, 0.25F) : back);
+                painter.fill(a, top + row, b, top + row + 1, row == rows - 1 ? FoliosPalette.mix(back, 0xFF000000, 0.25F) : back);
             }
             // The fold where the tail turns back under the band: a small dark triangle under the band's corner.
             for (int row = 0; row < TAIL_DROP; row++) {
@@ -367,13 +367,13 @@ public final class GuideBar {
         // The band.
         painter.fill(x0, y0, x1, y1, cover);
         // A faint weave: every other row a shade darker.
-        int weave = GuidePalette.alpha(0xFF000000, 0x09);
+        int weave = FoliosPalette.alpha(0xFF000000, 0x09);
         for (int y = y0 + 1; y < y1 - 1; y += 2) painter.fill(x0, y, x1, y + 1, weave);
-        painter.fill(x0, y0, x1, y0 + 1, GuidePalette.mix(cover, 0xFFFFFFFF, 0.2F));
-        painter.fill(x0, y1 - 1, x1, y1, GuidePalette.mix(cover, 0xFF000000, 0.35F));
+        painter.fill(x0, y0, x1, y0 + 1, FoliosPalette.mix(cover, 0xFFFFFFFF, 0.2F));
+        painter.fill(x0, y1 - 1, x1, y1, FoliosPalette.mix(cover, 0xFF000000, 0.35F));
         if (tall >= 10) {
             // The seams: stitches of three pixels with gaps of two, a pixel in from each edge and the ends.
-            int stitch = GuidePalette.mix(cover, gilt, 0.7F);
+            int stitch = FoliosPalette.mix(cover, gilt, 0.7F);
             for (int x = x0 + 3; x < x1 - 3; x += 5) {
                 int e = Math.min(x + 3, x1 - 3);
                 painter.fill(x, y0 + 2, e, y0 + 3, stitch);
@@ -384,20 +384,20 @@ public final class GuideBar {
 
     // A brass plate pinned to the ribbon for a button: bevelled, lit along its top, a rivet's glint at each upper
     // corner; brighter under the pointer.
-    private static void plate(GuidePainter painter, int x, int y, int gilt, int cover, boolean hovered) {
-        int brass = GuidePalette.mix(cover, gilt, hovered ? 0.62F : 0.42F);
-        rounded(painter, x, y, x + 16, y + 16, GuidePalette.mix(brass, 0xFF000000, 0.35F));
+    private static void plate(FoliosPainter painter, int x, int y, int gilt, int cover, boolean hovered) {
+        int brass = FoliosPalette.mix(cover, gilt, hovered ? 0.62F : 0.42F);
+        rounded(painter, x, y, x + 16, y + 16, FoliosPalette.mix(brass, 0xFF000000, 0.35F));
         rounded(painter, x + 1, y + 1, x + 15, y + 15, brass);
-        painter.fill(x + 2, y + 1, x + 14, y + 2, GuidePalette.mix(brass, 0xFFFFFFFF, 0.3F));
-        painter.fill(x + 2, y + 14, x + 14, y + 15, GuidePalette.mix(brass, 0xFF000000, 0.25F));
+        painter.fill(x + 2, y + 1, x + 14, y + 2, FoliosPalette.mix(brass, 0xFFFFFFFF, 0.3F));
+        painter.fill(x + 2, y + 14, x + 14, y + 15, FoliosPalette.mix(brass, 0xFF000000, 0.25F));
     }
 
-    private void button(GuidePainter painter, int x, PixelIcon icon, int color, Component name, Runnable action) {
+    private void button(FoliosPainter painter, int x, PixelIcon icon, int color, Component name, Runnable action) {
         this.button(painter, x, icon, color, name, null, action);
     }
 
     // A button, its tooltip a name and a line saying more (a key for it).
-    private void button(GuidePainter painter, int x, PixelIcon icon, int color, Component name, @Nullable Component detail, Runnable action) {
+    private void button(FoliosPainter painter, int x, PixelIcon icon, int color, Component name, @Nullable Component detail, Runnable action) {
         boolean hovered = painter.action(x, INSET, 16, 16, name, action);
         if (hovered && detail != null) painter.tooltip(net.ixdarklord.folios.internal.client.GuideTooltips.of(name, detail));
         plate(painter, x, INSET, this.gilt(), 0xFF000000 | book.cover(), hovered);
@@ -475,8 +475,8 @@ public final class GuideBar {
     // the book) in bold, then the category, entry, search, bookmarks or index.
     private List<Component> trail() {
         String chapter = reader.spot.chapter();
-        GuideEntry open = reader.entry();
-        GuideCategory owner = reader.category();
+        FoliosEntry open = reader.entry();
+        FoliosCategory owner = reader.category();
         if (open != null && owner != null) {
             return List.of(bold(owner.title()), plain(open.title()));
         }
@@ -524,15 +524,15 @@ public final class GuideBar {
      * sparkles so they don't all blink together. Brighter on its flare. The blink is smooth: the sparkle eases from
      * rest out to its flare, down to a point and back, each pixel fading between the frames on either side.
      */
-    public static void sparkle(GuidePainter painter, int x, int y, float phase, int color) {
+    public static void sparkle(FoliosPainter painter, int x, int y, float phase, int color) {
         float t = (painter.time() + phase) % BLINK_EVERY;
         float frame = t < BLINK_TIME ? blink(t / BLINK_TIME) : 3;
         int low = Math.min(SPARKLE.frames() - 2, (int) frame);
         float between = frame - low;
-        int ink = GuidePalette.mix(color, 0xFFFFFFFF, 0.35F * Math.max(0, frame - 3));
+        int ink = FoliosPalette.mix(color, 0xFFFFFFFF, 0.35F * Math.max(0, frame - 3));
         int alpha = ink >>> 24;
-        if (between < 0.98F) SPARKLE.draw(painter, x, y, low, GuidePalette.alpha(ink, Math.round(alpha * (1 - between))));
-        if (between > 0.02F) SPARKLE.draw(painter, x, y, low + 1, GuidePalette.alpha(ink, Math.round(alpha * between)));
+        if (between < 0.98F) SPARKLE.draw(painter, x, y, low, FoliosPalette.alpha(ink, Math.round(alpha * (1 - between))));
+        if (between > 0.02F) SPARKLE.draw(painter, x, y, low + 1, FoliosPalette.alpha(ink, Math.round(alpha * between)));
     }
 
     // Where the blink is at, as a frame between 0 (a point) and 4 (the flare), 3 at rest: out to the flare, down to a
@@ -559,11 +559,11 @@ public final class GuideBar {
     }
 
     /** The same, through a painter (a page, a handheld book's tab, the bar). */
-    public static void pixels(GuidePainter painter, PixelIcon icon, int boxX, int boxY, int boxSize, int color) {
+    public static void pixels(FoliosPainter painter, PixelIcon icon, int boxX, int boxY, int boxSize, int color) {
         icon.draw(painter, boxX + (boxSize - icon.width()) / 2, boxY + (boxSize - icon.height()) / 2, color);
     }
 
-    private static void rounded(GuidePainter painter, int x0, int y0, int x1, int y1, int color) {
+    private static void rounded(FoliosPainter painter, int x0, int y0, int x1, int y1, int color) {
         painter.fill(x0 + 2, y0, x1 - 2, y1, color);
         painter.fill(x0 + 1, y0 + 1, x0 + 2, y1 - 1, color);
         painter.fill(x1 - 2, y0 + 1, x1 - 1, y1 - 1, color);

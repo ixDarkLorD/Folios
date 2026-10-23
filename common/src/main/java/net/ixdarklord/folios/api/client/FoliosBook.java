@@ -1,9 +1,9 @@
 package net.ixdarklord.folios.api.client;
 
-import net.ixdarklord.folios.api.client.page.GuideIcon;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
-import net.ixdarklord.folios.api.client.page.GuideStack;
-import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.api.client.page.FoliosIcon;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.api.client.page.FoliosStack;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
@@ -24,7 +24,7 @@ import java.util.Map;
  * @param name      raw, as written: a translation key or text ({@link #title()} reads it)
  * @param subtitle  raw; empty for none
  * @param landing   raw marked-up text of the book's first page
- * @param style     how the book is shown: {@link GuideStyles#SCREEN}, {@link GuideStyles#HANDHELD} or one a mod adds
+ * @param style     how the book is shown: {@link FoliosStyles#SCREEN}, {@link FoliosStyles#HANDHELD} or one a mod adds
  * @param accent    the book's colour, for marks, links and highlights (RGB)
  * @param cover     the colour of a handheld book's cover (RGB)
  * @param coverTexture a texture for a handheld book's cover, drawn over its colour; null for none
@@ -33,7 +33,7 @@ import java.util.Map;
  * @param tilt      how far a handheld book leans back from facing the reader, in degrees (0 faces them squarely)
  * @param distance  how far a handheld book is held from the reader's eyes, in blocks
  * @param pageTurn  how a handheld book's leaves turn
- * @param reveal    how a page's content shows once it is turned to ({@code "reveal"}; see {@link GuideReveal})
+ * @param reveal    how a page's content shows once it is turned to ({@code "reveal"}; see {@link FoliosReveal})
  * @param textures  the layers it is drawn with
  * @param layout    where the tabs, turn buttons and page numbers sit
  * @param clickOutsideCloses whether a click off the book closes it ({@code "close_on_click_outside"}; by default true for a handheld book, false for a screen one)
@@ -42,9 +42,9 @@ import java.util.Map;
  * @param coverText where its name and subtitle are lettered on its cover, and how large ({@code "cover_text"})
  * @param progress  where what is read in it is kept: with each player, or on each copy of the book ({@code "progress"})
  */
-public record GuideBook(Identifier id, String name, String subtitle, String landing, Identifier style, int accent, int cover,
-                        @Nullable Identifier coverTexture, GuideIcon icon, Models models, boolean showProgress, float tilt, float distance, PageTurn pageTurn, GuideReveal.Use reveal, Textures textures, Layout layout, boolean clickOutsideCloses, Handling handling, Colors colors, CoverText coverText,
-                        Progress progress, List<GuideCategory> categories, Map<String, GuideEntry> entries, Map<Item, Location> itemIndex) {
+public record FoliosBook(Identifier id, String name, String subtitle, String landing, Identifier style, int accent, int cover,
+                        @Nullable Identifier coverTexture, FoliosIcon icon, Models models, boolean showProgress, float tilt, float distance, PageTurn pageTurn, FoliosReveal.Use reveal, Textures textures, Layout layout, boolean clickOutsideCloses, Handling handling, Colors colors, CoverText coverText,
+                        Progress progress, List<FoliosCategory> categories, Map<String, FoliosEntry> entries, Map<Item, Location> itemIndex) {
     /** The item model the {@code folios:guide_book} item takes for this book; null for its own. */
     public @Nullable Identifier itemModel() {
         return models.item();
@@ -156,10 +156,10 @@ public record GuideBook(Identifier id, String name, String subtitle, String land
         }
 
         /** A palette with this scheme's colours for it laid over it. */
-        public GuidePalette over(GuidePalette palette, boolean darkMode) {
+        public FoliosPalette over(FoliosPalette palette, boolean darkMode) {
             Map<String, Integer> colors = darkMode ? dark : light;
             if (colors.isEmpty()) return palette;
-            return new GuidePalette(colors.getOrDefault("paper", palette.paper()), colors.getOrDefault("text", palette.text()),
+            return new FoliosPalette(colors.getOrDefault("paper", palette.paper()), colors.getOrDefault("text", palette.text()),
                     colors.getOrDefault("muted", palette.muted()), colors.getOrDefault("heading", palette.heading()),
                     colors.getOrDefault("accent", palette.accent()), colors.getOrDefault("link", palette.link()),
                     colors.getOrDefault("panel", palette.panel()), colors.getOrDefault("line", palette.line()));
@@ -234,50 +234,50 @@ public record GuideBook(Identifier id, String name, String subtitle, String land
     /** A place in a book: an entry, and a page of it (0 for its first). */
     public record Location(String entry, int page) {}
 
-    public GuideBook(Identifier id, String name, String subtitle, String landing, Identifier style, int accent, int cover,
-                     @Nullable Identifier coverTexture, GuideIcon icon, Models models, boolean showProgress, float tilt, float distance, PageTurn pageTurn, GuideReveal.Use reveal, Textures textures, Layout layout, boolean clickOutsideCloses, Handling handling, Colors colors, CoverText coverText,
-                     Progress progress, List<GuideCategory> categories, List<GuideEntry> entries) {
+    public FoliosBook(Identifier id, String name, String subtitle, String landing, Identifier style, int accent, int cover,
+                     @Nullable Identifier coverTexture, FoliosIcon icon, Models models, boolean showProgress, float tilt, float distance, PageTurn pageTurn, FoliosReveal.Use reveal, Textures textures, Layout layout, boolean clickOutsideCloses, Handling handling, Colors colors, CoverText coverText,
+                     Progress progress, List<FoliosCategory> categories, List<FoliosEntry> entries) {
         this(id, name, subtitle, landing, style, accent, cover, coverTexture, icon, models, showProgress, tilt, distance, pageTurn, reveal, textures, layout, clickOutsideCloses, handling, colors, coverText,
                 progress, sortCategories(categories), sortEntries(entries), new HashMap<>());
     }
 
-    private static List<GuideCategory> sortCategories(List<GuideCategory> categories) {
-        List<GuideCategory> sorted = new ArrayList<>(categories);
-        sorted.sort(Comparator.comparingInt(GuideCategory::sort).thenComparing(category -> category.title().getString()));
+    private static List<FoliosCategory> sortCategories(List<FoliosCategory> categories) {
+        List<FoliosCategory> sorted = new ArrayList<>(categories);
+        sorted.sort(Comparator.comparingInt(FoliosCategory::sort).thenComparing(category -> category.title().getString()));
         return List.copyOf(sorted);
     }
 
-    private static Map<String, GuideEntry> sortEntries(List<GuideEntry> entries) {
-        List<GuideEntry> sorted = new ArrayList<>(entries);
-        sorted.sort(Comparator.comparing((GuideEntry entry) -> !entry.featured()).thenComparingInt(GuideEntry::sort)
+    private static Map<String, FoliosEntry> sortEntries(List<FoliosEntry> entries) {
+        List<FoliosEntry> sorted = new ArrayList<>(entries);
+        sorted.sort(Comparator.comparing((FoliosEntry entry) -> !entry.featured()).thenComparingInt(FoliosEntry::sort)
                 .thenComparing(entry -> entry.title().getString()));
-        Map<String, GuideEntry> byId = new LinkedHashMap<>();
-        for (GuideEntry entry : sorted) byId.put(entry.id(), entry);
+        Map<String, FoliosEntry> byId = new LinkedHashMap<>();
+        for (FoliosEntry entry : sorted) byId.put(entry.id(), entry);
         return byId;
     }
 
     public Component title() {
-        return GuideText.inline(name);
+        return FoliosText.inline(name);
     }
 
-    public @Nullable GuideCategory category(String id) {
-        for (GuideCategory category : categories) {
+    public @Nullable FoliosCategory category(String id) {
+        for (FoliosCategory category : categories) {
             if (category.id().equals(id)) return category;
         }
         return null;
     }
 
-    public @Nullable GuideEntry entry(String id) {
+    public @Nullable FoliosEntry entry(String id) {
         return entries.get(id);
     }
 
     /** The categories the player can see, in order. */
-    public List<GuideCategory> visibleCategories() {
-        return categories.stream().filter(GuideCategory::isVisible).toList();
+    public List<FoliosCategory> visibleCategories() {
+        return categories.stream().filter(FoliosCategory::isVisible).toList();
     }
 
     /** A category's entries the player can see, featured first. */
-    public List<GuideEntry> entries(String category) {
+    public List<FoliosEntry> entries(String category) {
         return entries.values().stream().filter(entry -> entry.category().equals(category) && entry.isVisible()).toList();
     }
 
@@ -293,9 +293,9 @@ public record GuideBook(Identifier id, String name, String subtitle, String land
 
     // The index is built the first time it's needed in a world, when items can be resolved.
     private void index() {
-        for (GuideEntry entry : entries.values()) {
+        for (FoliosEntry entry : entries.values()) {
             for (int page = 0; page < entry.pages().size(); page++) {
-                for (GuideStack stack : entry.pages().get(page).page().items()) {
+                for (FoliosStack stack : entry.pages().get(page).page().items()) {
                     for (ItemStack item : stack.stacks()) {
                         if (!item.isEmpty()) itemIndex.putIfAbsent(item.getItem(), new Location(entry.id(), page));
                     }
