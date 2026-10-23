@@ -6,17 +6,17 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.MapCodec;
-import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.api.client.GuideReveal;
-import net.ixdarklord.folios.api.client.GuideReveals;
-import net.ixdarklord.folios.api.client.GuideCategory;
-import net.ixdarklord.folios.api.client.GuideEntry;
-import net.ixdarklord.folios.api.client.GuideLock;
-import net.ixdarklord.folios.api.client.GuideStyles;
-import net.ixdarklord.folios.api.client.page.GuideIcon;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuidePageTypes;
+import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.FoliosReveal;
+import net.ixdarklord.folios.api.client.FoliosReveals;
+import net.ixdarklord.folios.api.client.FoliosCategory;
+import net.ixdarklord.folios.api.client.FoliosEntry;
+import net.ixdarklord.folios.api.client.FoliosLock;
+import net.ixdarklord.folios.api.client.FoliosStyles;
+import net.ixdarklord.folios.api.client.page.FoliosIcon;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPageElements;
 import net.ixdarklord.folios.internal.client.page.ErrorPage;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.resources.FileToIdConverter;
@@ -43,7 +43,7 @@ public final class GuideLibrary {
     private static final float DEFAULT_TILT = 6.0F;
     private static final float DEFAULT_DISTANCE = 0.64F;
 
-    private static Map<Identifier, GuideBook> books = Map.of();
+    private static Map<Identifier, FoliosBook> books = Map.of();
     private static Map<Identifier, JsonObject> builds = Map.of();
     private static Map<Identifier, String> authors = Map.of();
     private static Map<Identifier, CelebrationSettings> celebrations = Map.of();
@@ -53,11 +53,11 @@ public final class GuideLibrary {
 
     private GuideLibrary() {}
 
-    public static @Nullable GuideBook book(Identifier id) {
+    public static @Nullable FoliosBook book(Identifier id) {
         return books.get(id);
     }
 
-    public static Map<Identifier, GuideBook> books() {
+    public static Map<Identifier, FoliosBook> books() {
         return books;
     }
 
@@ -78,7 +78,7 @@ public final class GuideLibrary {
 
     /** A book's laid-out pages, kept between openings; null when there is no such book. */
     public static @Nullable GuideSession session(Identifier id) {
-        GuideBook book = books.get(id);
+        FoliosBook book = books.get(id);
         if (book == null) return null;
         GuideSession session = SESSIONS.get(id);
         if (session == null || !session.isCurrent()) {
@@ -91,8 +91,8 @@ public final class GuideLibrary {
 
     /** A book's laid-out pages for pages {@code width} by {@code height}; the default session for the default page size. */
     public static @Nullable GuideSession session(Identifier id, int width, int height) {
-        if (width <= GuideLayout.PAGE_WIDTH && height <= GuideLayout.PAGE_HEIGHT) return session(id);
-        GuideBook book = books.get(id);
+        if (width <= FoliosLayout.PAGE_WIDTH && height <= FoliosLayout.PAGE_HEIGHT) return session(id);
+        FoliosBook book = books.get(id);
         if (book == null) return null;
         GuideSession session = LARGER.get(id);
         if (session == null || !session.isCurrent() || session.layout().pageWidth() != width || session.layout().pageHeight() != height) {
@@ -144,7 +144,7 @@ public final class GuideLibrary {
                         .entries.put(path.substring(entries + 9), json);
             }
         }
-        Map<Identifier, GuideBook> loaded = new LinkedHashMap<>();
+        Map<Identifier, FoliosBook> loaded = new LinkedHashMap<>();
         for (Map.Entry<Identifier, JsonObject> file : bookFiles.entrySet()) {
             Identifier id = file.getKey();
             try {
@@ -175,23 +175,23 @@ public final class GuideLibrary {
         if (!loaded.isEmpty()) Folios.LOGGER.info("Loaded {} guide book(s)", loaded.size());
     }
 
-    private static GuideBook readBook(Identifier id, JsonObject json, Files files) {
+    private static FoliosBook readBook(Identifier id, JsonObject json, Files files) {
         String name = string(json, "name", "guide." + id.getNamespace() + "." + id.getPath().replace('/', '.') + ".name");
-        Identifier style = json.has("style") ? GuideStyles.id(json.get("style").getAsString()) : GuideStyles.SCREEN;
-        List<GuideCategory> categories = new ArrayList<>();
+        Identifier style = json.has("style") ? FoliosStyles.id(json.get("style").getAsString()) : FoliosStyles.SCREEN;
+        List<FoliosCategory> categories = new ArrayList<>();
         for (Map.Entry<String, JsonObject> file : files.categories.entrySet()) {
             try {
                 JsonObject category = file.getValue();
-                categories.add(new GuideCategory(file.getKey(), string(category, "name", file.getKey()), string(category, "description", ""),
-                        GuideIcon.read(category.get("icon")), integer(category, "sort", 0), GuideLock.read(category), color(category, "color", -1)));
+                categories.add(new FoliosCategory(file.getKey(), string(category, "name", file.getKey()), string(category, "description", ""),
+                        FoliosIcon.read(category.get("icon")), integer(category, "sort", 0), FoliosLock.read(category), color(category, "color", -1)));
             } catch (Exception e) {
                 Folios.LOGGER.error("Couldn't load the category {} of the guide {}: {}", file.getKey(), id, e.getMessage());
             }
         }
-        List<GuideEntry> entries = new ArrayList<>();
+        List<FoliosEntry> entries = new ArrayList<>();
         for (Map.Entry<String, JsonObject> file : files.entries.entrySet()) {
             try {
-                GuideEntry entry = readEntry(id, file.getKey(), file.getValue());
+                FoliosEntry entry = readEntry(id, file.getKey(), file.getValue());
                 if (categories.stream().noneMatch(category -> category.id().equals(entry.category()))) {
                     Folios.LOGGER.warn("The entry {} of the guide {} is in the category {}, which the book doesn't have", entry.id(), id, entry.category());
                     continue;
@@ -201,24 +201,24 @@ public final class GuideLibrary {
                 Folios.LOGGER.error("Couldn't load the entry {} of the guide {}: {}", file.getKey(), id, e.getMessage());
             }
         }
-        return new GuideBook(id, name, string(json, "subtitle", ""), string(json, "landing", ""), style,
+        return new FoliosBook(id, name, string(json, "subtitle", ""), string(json, "landing", ""), style,
                 color(json, "accent", DEFAULT_ACCENT), color(json, "cover", DEFAULT_COVER),
                 json.has("cover_texture") ? Identifier.parse(json.get("cover_texture").getAsString()) : null,
-                json.has("icon") ? GuideIcon.read(json.get("icon")) : ownItem(id),
+                json.has("icon") ? FoliosIcon.read(json.get("icon")) : ownItem(id),
                 models(json),
                 !json.has("show_progress") || json.get("show_progress").getAsBoolean(),
                 json.has("tilt") ? Mth.clamp(json.get("tilt").getAsFloat(), -45.0F, 80.0F) : DEFAULT_TILT,
                 json.has("distance") ? Mth.clamp(json.get("distance").getAsFloat(), 0.3F, 1.5F) : DEFAULT_DISTANCE,
-                json.has("page_turn") ? GuideBook.PageTurn.valueOf(json.get("page_turn").getAsString().toUpperCase(java.util.Locale.ROOT)) : GuideBook.PageTurn.BEND,
-                json.has("reveal") ? reveal(json.get("reveal")) : GuideReveals.DEFAULT,
+                json.has("page_turn") ? FoliosBook.PageTurn.valueOf(json.get("page_turn").getAsString().toUpperCase(java.util.Locale.ROOT)) : FoliosBook.PageTurn.BEND,
+                json.has("reveal") ? reveal(json.get("reveal")) : FoliosReveals.DEFAULT,
                 textures(json.has("textures") ? json.getAsJsonObject("textures") : new JsonObject()),
                 layout(json.has("layout") ? json.getAsJsonObject("layout") : new JsonObject()),
                 // A handheld book is put away by a click off it unless it says otherwise; a screen book stays.
-                json.has("close_on_click_outside") ? json.get("close_on_click_outside").getAsBoolean() : style.equals(GuideStyles.HANDHELD),
+                json.has("close_on_click_outside") ? json.get("close_on_click_outside").getAsBoolean() : style.equals(FoliosStyles.HANDHELD),
                 handling(json.has("handheld") ? json.getAsJsonObject("handheld") : new JsonObject()),
                 colors(json.has("colors") ? json.getAsJsonObject("colors") : new JsonObject(), json.get("panel")),
                 coverText(json.has("cover_text") ? json.getAsJsonObject("cover_text") : new JsonObject(), string(json, "summary", "")),
-                json.has("progress") ? GuideBook.Progress.valueOf(json.get("progress").getAsString().toUpperCase(java.util.Locale.ROOT)) : GuideBook.Progress.PLAYER,
+                json.has("progress") ? FoliosBook.Progress.valueOf(json.get("progress").getAsString().toUpperCase(java.util.Locale.ROOT)) : FoliosBook.Progress.PLAYER,
                 categories, entries);
     }
 
@@ -227,10 +227,10 @@ public final class GuideLibrary {
     private static final java.util.Set<String> PANEL_COLORS = java.util.Set.of("background", "frame", "title", "detail");
 
     // The page colours, and the panel scheme: "panel" in book.json, else "colors" › "tooltip" as it was before.
-    private static GuideBook.Colors colors(JsonObject json, @Nullable JsonElement panel) {
+    private static FoliosBook.Colors colors(JsonObject json, @Nullable JsonElement panel) {
         Map<String, Integer> panelColors = panel != null && panel.isJsonObject() ? named(panel.getAsJsonObject(), PANEL_COLORS)
                 : json.has("tooltip") ? named(json.getAsJsonObject("tooltip"), PANEL_COLORS) : Map.of();
-        return new GuideBook.Colors(named(json, PAGE_COLORS), json.has("dark") ? named(json.getAsJsonObject("dark"), PAGE_COLORS) : Map.of(), panelColors);
+        return new FoliosBook.Colors(named(json, PAGE_COLORS), json.has("dark") ? named(json.getAsJsonObject("dark"), PAGE_COLORS) : Map.of(), panelColors);
     }
 
     // The colours of a block of a book's scheme, opaque unless given with their alpha.
@@ -246,51 +246,51 @@ public final class GuideLibrary {
         return Map.copyOf(colors);
     }
 
-    private static GuideBook.CoverText coverText(JsonObject json, String summary) {
-        return new GuideBook.CoverText(line(json, "title", GuideBook.CoverText.TITLE), line(json, "subtitle", GuideBook.CoverText.SUBTITLE),
-                line(json, "summary", GuideBook.CoverText.SUBTITLE), summary);
+    private static FoliosBook.CoverText coverText(JsonObject json, String summary) {
+        return new FoliosBook.CoverText(line(json, "title", FoliosBook.CoverText.TITLE), line(json, "subtitle", FoliosBook.CoverText.SUBTITLE),
+                line(json, "summary", FoliosBook.CoverText.SUBTITLE), summary);
     }
 
     // A line of a cover's lettering, its values left out taken from its default; null when the book says nothing of it.
-    private static GuideBook.CoverText.@Nullable Line line(JsonObject json, String key, GuideBook.CoverText.Line fallback) {
+    private static FoliosBook.CoverText.@Nullable Line line(JsonObject json, String key, FoliosBook.CoverText.Line fallback) {
         if (!json.has(key)) return null;
         JsonObject line = json.getAsJsonObject(key);
-        return new GuideBook.CoverText.Line(
+        return new FoliosBook.CoverText.Line(
                 line.has("x") ? line.get("x").getAsFloat() : fallback.x(),
                 line.has("y") ? line.get("y").getAsFloat() : fallback.y(),
                 line.has("size") ? Mth.clamp(line.get("size").getAsFloat(), 0.1F, 4.0F) : fallback.size(),
                 line.has("width") ? Mth.clamp(line.get("width").getAsFloat(), 0.5F, 16.0F) : fallback.width());
     }
 
-    private static GuideBook.Handling handling(JsonObject json) {
-        return new GuideBook.Handling(!json.has("look_around") || json.get("look_around").getAsBoolean(),
+    private static FoliosBook.Handling handling(JsonObject json) {
+        return new FoliosBook.Handling(!json.has("look_around") || json.get("look_around").getAsBoolean(),
                 !json.has("walk") || json.get("walk").getAsBoolean());
     }
 
-    private static GuideEntry readEntry(Identifier book, String id, JsonObject json) {
+    private static FoliosEntry readEntry(Identifier book, String id, JsonObject json) {
         String category = json.has("category") ? json.get("category").getAsString() : id.contains("/") ? id.substring(0, id.indexOf('/')) : "";
-        List<GuideEntry.Page> pages = new ArrayList<>();
+        List<FoliosEntry.Page> pages = new ArrayList<>();
         // An entry of nothing but text can say so: "text" in place of "pages".
-        if (json.has("text")) pages.add(new GuideEntry.Page(readPage(book, id, 0, new JsonPrimitive(json.get("text").getAsString())), null, GuideLock.NONE));
+        if (json.has("text")) pages.add(new FoliosEntry.Page(readPage(book, id, 0, new JsonPrimitive(json.get("text").getAsString())), null, FoliosLock.NONE));
         if (json.has("pages")) {
             int index = pages.size();
             for (JsonElement page : json.getAsJsonArray("pages")) {
                 JsonObject object = page.isJsonObject() ? page.getAsJsonObject() : null;
-                pages.add(new GuideEntry.Page(readPage(book, id, index++, page),
+                pages.add(new FoliosEntry.Page(readPage(book, id, index++, page),
                         object != null && object.has("anchor") ? object.get("anchor").getAsString() : null,
-                        object != null ? GuideLock.read(object) : GuideLock.NONE, object != null ? pageIcon(object.get("icon")) : null));
+                        object != null ? FoliosLock.read(object) : FoliosLock.NONE, object != null ? pageIcon(object.get("icon")) : null));
             }
         }
-        return new GuideEntry(id, category, string(json, "name", id), GuideIcon.read(json.get("icon")), integer(json, "sort", 0),
-                json.has("featured") && json.get("featured").getAsBoolean(), GuideLock.read(json), pages, json.has("reveal") ? reveal(json.get("reveal")) : null);
+        return new FoliosEntry(id, category, string(json, "name", id), FoliosIcon.read(json.get("icon")), integer(json, "sort", 0),
+                json.has("featured") && json.get("featured").getAsBoolean(), FoliosLock.read(json), pages, json.has("reveal") ? reveal(json.get("reveal")) : null);
     }
 
     // The icon a page shows before its title: null to take its entry's, none for "none".
-    private static @Nullable GuideIcon pageIcon(@Nullable JsonElement json) {
+    private static @Nullable FoliosIcon pageIcon(@Nullable JsonElement json) {
         if (json == null || json.isJsonNull()) return null;
-        if (json.isJsonPrimitive() && json.getAsString().equals("none")) return GuideIcon.NONE;
+        if (json.isJsonPrimitive() && json.getAsString().equals("none")) return FoliosIcon.NONE;
         try {
-            return GuideIcon.read(json);
+            return FoliosIcon.read(json);
         } catch (Exception e) {
             Folios.LOGGER.warn("A page names an icon it can't read, {}: {}", json, e.getMessage());
             return null;
@@ -298,7 +298,7 @@ public final class GuideLibrary {
     }
 
     // A page that can't be read is shown as what went wrong, where it would have been, for the book's writer to see.
-    private static GuidePage readPage(Identifier book, String entry, int index, JsonElement json) {
+    private static FoliosPageElement readPage(Identifier book, String entry, int index, JsonElement json) {
         try {
             JsonObject object;
             if (json.isJsonPrimitive()) {
@@ -307,8 +307,8 @@ public final class GuideLibrary {
             } else {
                 object = json.getAsJsonObject();
             }
-            Identifier type = GuidePageTypes.id(object.has("type") ? object.get("type").getAsString() : "text");
-            MapCodec<? extends GuidePage> codec = GuidePageTypes.get(type);
+            Identifier type = FoliosPageElements.id(object.has("type") ? object.get("type").getAsString() : "text");
+            MapCodec<? extends FoliosPageElement> codec = FoliosPageElements.get(type);
             if (codec == null) throw new IllegalArgumentException("no page type " + type);
             return codec.codec().parse(JsonOps.INSTANCE, object).getOrThrow(IllegalArgumentException::new);
         } catch (Exception e) {
@@ -318,9 +318,9 @@ public final class GuideLibrary {
     }
 
     // The models the book names, the default for the rest; "item_model" as well, as it was before "models".
-    private static GuideBook.Models models(JsonObject book) {
+    private static FoliosBook.Models models(JsonObject book) {
         JsonObject json = book.has("models") ? book.getAsJsonObject("models") : new JsonObject();
-        GuideBook.Models fallback = GuideBook.Models.DEFAULT;
+        FoliosBook.Models fallback = FoliosBook.Models.DEFAULT;
         Identifier item = json.has("item") ? Identifier.parse(json.get("item").getAsString())
                 : book.has("item_model") ? Identifier.parse(book.get("item_model").getAsString()) : fallback.item();
         Identifier open = json.has("open") ? Identifier.parse(json.get("open").getAsString()) : fallback.open();
@@ -330,60 +330,60 @@ public final class GuideLibrary {
             cover = named.equals("none") ? null : Identifier.parse(named);
         }
         boolean guiModel = json.has("gui") ? json.get("gui").getAsString().equals("model") : fallback.guiModel();
-        return new GuideBook.Models(item, open, cover, !json.has("hands") || json.get("hands").getAsBoolean(), guiModel);
+        return new FoliosBook.Models(item, open, cover, !json.has("hands") || json.get("hands").getAsBoolean(), guiModel);
     }
 
     // A reveal: "none", an effect's id (for its default length), or {"effect": id, "seconds": n, "once": true, "unread": true}. An effect no mod has
     // registered is warned of and shows the content at once.
-    private static GuideReveal.Use reveal(JsonElement json) {
+    private static FoliosReveal.Use reveal(JsonElement json) {
         String effect;
-        float seconds = GuideReveals.DEFAULT_SECONDS;
+        float seconds = FoliosReveals.DEFAULT_SECONDS;
         boolean once = false;
         boolean unread = false;
         if (json.isJsonObject()) {
             JsonObject object = json.getAsJsonObject();
-            effect = string(object, "effect", GuideReveals.DEFAULT.effect().toString());
+            effect = string(object, "effect", FoliosReveals.DEFAULT.effect().toString());
             if (object.has("seconds")) seconds = Mth.clamp(object.get("seconds").getAsFloat(), 0.0F, 5.0F);
             once = object.has("once") && object.get("once").getAsBoolean();
             unread = object.has("unread") && object.get("unread").getAsBoolean();
         } else {
             effect = json.getAsString();
         }
-        if (effect.equals("none")) return GuideReveal.Use.NONE;
+        if (effect.equals("none")) return FoliosReveal.Use.NONE;
         Identifier id = effect.contains(":") ? Identifier.parse(effect) : Identifier.fromNamespaceAndPath("folios", effect);
-        if (GuideReveals.get(id) == null) {
+        if (FoliosReveals.get(id) == null) {
             Folios.LOGGER.warn("A guide asks for the reveal effect {}, which no mod has registered", id);
-            return GuideReveal.Use.NONE;
+            return FoliosReveal.Use.NONE;
         }
-        return new GuideReveal.Use(id, seconds, once, unread);
+        return new FoliosReveal.Use(id, seconds, once, unread);
     }
 
     // A book's icon when it names none: its own guide book item, as the book's item is drawn.
-    private static GuideIcon ownItem(Identifier book) {
+    private static FoliosIcon ownItem(Identifier book) {
         JsonObject stack = new JsonObject();
         stack.addProperty("id", "folios:guide_book");
         JsonObject components = new JsonObject();
         components.addProperty("folios:guide_book", book.toString());
         stack.add("components", components);
-        return GuideIcon.read(stack);
+        return FoliosIcon.read(stack);
     }
 
     // Each layer the book names, the default for the rest.
-    private static GuideBook.Textures textures(JsonObject json) {
-        GuideBook.Textures fallback = GuideBook.Textures.DEFAULT;
-        return new GuideBook.Textures(texture(json, "page", fallback.page()), texture(json, "frame", fallback.frame()),
+    private static FoliosBook.Textures textures(JsonObject json) {
+        FoliosBook.Textures fallback = FoliosBook.Textures.DEFAULT;
+        return new FoliosBook.Textures(texture(json, "page", fallback.page()), texture(json, "frame", fallback.frame()),
                 texture(json, "cover", fallback.cover()), texture(json, "tab", fallback.tab()), texture(json, "tab_plate", fallback.tabPlate()),
                 json.has("backdrop") ? Identifier.parse(json.get("backdrop").getAsString()) : fallback.backdrop());
     }
 
     // Each position the book sets, the default for the rest; kept within reach of the page.
-    private static GuideBook.Layout layout(JsonObject json) {
-        GuideBook.Layout fallback = GuideBook.Layout.DEFAULT;
+    private static FoliosBook.Layout layout(JsonObject json) {
+        FoliosBook.Layout fallback = FoliosBook.Layout.DEFAULT;
         JsonObject tabs = json.has("tabs") ? json.getAsJsonObject("tabs") : new JsonObject();
         JsonObject buttons = json.has("turn_buttons") ? json.getAsJsonObject("turn_buttons") : new JsonObject();
         JsonObject numbers = json.has("page_numbers") ? json.getAsJsonObject("page_numbers") : new JsonObject();
         JsonObject close = json.has("close_button") ? json.getAsJsonObject("close_button") : new JsonObject();
-        return new GuideBook.Layout(position(tabs, "x", fallback.tabX(), -20, 40), position(tabs, "y", fallback.tabY(), -20, 160),
+        return new FoliosBook.Layout(position(tabs, "x", fallback.tabX(), -20, 40), position(tabs, "y", fallback.tabY(), -20, 160),
                 position(tabs, "spacing", fallback.tabSpacing(), -10, 30), position(buttons, "x", fallback.buttonX(), 0, 60),
                 position(buttons, "y", fallback.buttonY(), 0, 170), position(numbers, "x", fallback.numberX(), -60, 60),
                 position(numbers, "y", fallback.numberY(), 0, 170), position(close, "x", fallback.closeX(), 0, 125),

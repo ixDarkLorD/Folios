@@ -1,6 +1,6 @@
 package net.ixdarklord.folios.internal.client;
 
-import net.ixdarklord.folios.api.client.page.GuideLayout;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.minecraft.client.Minecraft;
 
 // How large a book's pages are for the player's GUI scale. At the Auto scale (or a larger one) they are the default
@@ -53,16 +53,16 @@ public final class PageSize {
      * get too small to read (and a small window keeps the default page).
      */
     public static float handheldFactor() {
-        float readable = Minecraft.getInstance().getWindow().getWidth() * HANDHELD_SPAN / (GuideLayout.PAGE_WIDTH * HANDHELD_PRINT);
+        float readable = Minecraft.getInstance().getWindow().getWidth() * HANDHELD_SPAN / (FoliosLayout.PAGE_WIDTH * HANDHELD_PRINT);
         return Math.max(1, Math.min(factor(), readable));
     }
 
     /** A page {@code factor} times the default, in whole pixels. */
     public static int width(float factor) {
-        return Math.round(GuideLayout.PAGE_WIDTH * Math.max(1, factor));
+        return Math.round(FoliosLayout.PAGE_WIDTH * Math.max(1, factor));
     }
 
     public static int height(float factor) {
-        return Math.round(GuideLayout.PAGE_HEIGHT * Math.max(1, factor));
+        return Math.round(FoliosLayout.PAGE_HEIGHT * Math.max(1, factor));
     }
 }

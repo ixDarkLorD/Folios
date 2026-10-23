@@ -2,8 +2,8 @@ package net.ixdarklord.folios.internal.client;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.ixdarklord.folios.api.GuideBooks;
-import net.ixdarklord.folios.api.client.GuideBook;
+import net.ixdarklord.folios.api.FoliosBooks;
+import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.ixdarklord.folios.internal.core.GuideRegistry;
 import net.minecraft.client.Minecraft;
@@ -44,8 +44,8 @@ public final class GuideBookItemModel implements ItemModel {
     @Override
     public void update(ItemStackRenderState output, ItemStack item, ItemModelResolver resolver, ItemDisplayContext displayContext,
                        @Nullable ClientLevel level, @Nullable ItemOwner owner, int seed) {
-        Identifier id = GuideBooks.bookOf(item);
-        GuideBook book = id != null ? GuideLibrary.book(id) : null;
+        Identifier id = FoliosBooks.bookOf(item);
+        FoliosBook book = id != null ? GuideLibrary.book(id) : null;
         // Held up open by someone reading it, seen from outside them: the book's open model.
         Identifier model = book != null ? book.itemModel() : null;
         boolean thirdPerson = displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || displayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;

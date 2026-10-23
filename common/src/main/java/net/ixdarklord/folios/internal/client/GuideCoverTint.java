@@ -1,8 +1,8 @@
 package net.ixdarklord.folios.internal.client;
 
 import com.mojang.serialization.MapCodec;
-import net.ixdarklord.folios.api.GuideBooks;
-import net.ixdarklord.folios.api.client.GuideBook;
+import net.ixdarklord.folios.api.FoliosBooks;
+import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -22,8 +22,8 @@ public record GuideCoverTint(boolean accent) implements ItemTintSource {
 
     @Override
     public int calculate(ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity owner) {
-        Identifier id = GuideBooks.bookOf(stack);
-        GuideBook book = id != null ? GuideLibrary.book(id) : null;
+        Identifier id = FoliosBooks.bookOf(stack);
+        FoliosBook book = id != null ? GuideLibrary.book(id) : null;
         if (book == null) return accent ? FALLBACK_ACCENT : FALLBACK;
         return 0xFF000000 | (accent ? book.accent() : book.cover());
     }
