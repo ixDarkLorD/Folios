@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.1 Release | Oct 23, 2026
+Books make better use of the screen at small GUI scales, and what is on their pages keeps clear of the page frame.
+
+### ✨ New Features
+- At a GUI scale smaller than Auto, a book keeps its size on the screen and its pages grow, so more fits on each: what is on them is drawn a step larger than the rest of the GUI (in whole pixels, so the print stays sharp), and the pages take the rest, as much as 2.5 times the default page. GUI scale 1 fits more than 2. A handheld book's pages grow too, as far as keeps its print easy to read. Pages of every kind lay themselves out to the page's size: text, recipes, scenes (which keep their shape), pictures, links and quests.
+
+### 🐛 Fixes
+- A screen book no longer shrinks at GUI scale 1 and 2: it is drawn as large as at Auto, and so are its tooltips.
+- What is on a page keeps 4 pixels clear of the page frame on every side, and the turn buttons and page numbers sit clear of its corners (`turn_buttons` now defaults to `10`, `21`, `page_numbers` to `0`, `19`).
+- The page frame keeps its corners and ornaments their size on a larger page.
+- A book's subtitle on its front page shows whole: made a little smaller when it doesn't fit, rather than cut short.
+
 ## v2.0 Release | Oct 22, 2026
 Pages hold elements, structures and builds join multiblocks, and a book chooses how it celebrates and what colours its panels take.
 
