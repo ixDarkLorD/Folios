@@ -45,9 +45,9 @@ public class GuideBookItem extends Item {
         this.book = book;
     }
 
-    /** The book a stack of this item opens, or null when it names none. */
+    /** The book a stack of this item opens: its component's, else this item's own; null when it names none. */
     public @Nullable Identifier book(ItemStack stack) {
-        Identifier named = GuideBooks.bookOf(stack);
+        Identifier named = stack.get(GuideRegistry.GUIDE_BOOK.get());
         return named != null ? named : this.book;
     }
 
