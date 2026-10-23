@@ -4,12 +4,12 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.api.client.GuideCategory;
-import net.ixdarklord.folios.api.client.page.GuideLayout;
-import net.ixdarklord.folios.api.client.page.GuidePage;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
-import net.ixdarklord.folios.api.client.page.GuideText;
+import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.FoliosCategory;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.GuideReader;
 import net.ixdarklord.folios.internal.client.screen.GuideBar;
 import net.ixdarklord.folios.internal.client.page.Shapes;
@@ -47,8 +47,8 @@ public final class HandheldRenderer {
     /** Blocks to a page pixel. */
     // The book's width in blocks kept as it was with a narrower rim (143 page pixels at 0.0024): its pages are smaller.
     static final float SCALE = 0.0024F * 143 / 149;
-    private static final int PW = GuideLayout.PAGE_WIDTH;
-    private static final int PH = GuideLayout.PAGE_HEIGHT;
+    private static final int PW = FoliosLayout.PAGE_WIDTH;
+    private static final int PH = FoliosLayout.PAGE_HEIGHT;
     /** How thick a block of leaves is, how thick a board, and how far a board stands out past the leaves. */
     private static float leaves = 17.5F;
     // How the left board's normals turn back to where they lie shut, while it swings; null when not drawing it.
@@ -68,16 +68,16 @@ public final class HandheldRenderer {
     private HandheldRenderer() {}
 
     /** The paper and ink of a handheld book's pages: parchment, or in dark mode paper gone dark, the ink pale on it. */
-    public static GuidePalette palette(GuideBook book) {
+    public static FoliosPalette palette(FoliosBook book) {
         int accent = 0xFF000000 | book.accent();
         if (net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle.mode() == net.ixdarklord.coolcatcore.api.config.ConfigTheme.Mode.DARK) {
-            int bright = GuidePalette.mix(accent, 0xFFF1E7D0, 0.3F);
-            return book.colors().over(new GuidePalette(0xFF2B2620, 0xFFE2D8C4, 0xFF9C8F7C, 0xFFF6EEDC, bright,
-                    GuidePalette.mix(bright, 0xFFFFFFFF, 0.25F), 0xFF353028, 0xFF4B4337), true);
+            int bright = FoliosPalette.mix(accent, 0xFFF1E7D0, 0.3F);
+            return book.colors().over(new FoliosPalette(0xFF2B2620, 0xFFE2D8C4, 0xFF9C8F7C, 0xFFF6EEDC, bright,
+                    FoliosPalette.mix(bright, 0xFFFFFFFF, 0.25F), 0xFF353028, 0xFF4B4337), true);
         }
         int ink = 0xFF2E241B;
-        int deep = GuidePalette.mix(accent, ink, 0.35F);
-        return book.colors().over(new GuidePalette(0xFFF1E7D0, 0xFF3B3026, 0xFF8B7B66, ink, deep, GuidePalette.mix(deep, 0xFF1A3A8A, 0.25F), 0xFFE6D8BA, 0xFFC4B08C), false);
+        int deep = FoliosPalette.mix(accent, ink, 0.35F);
+        return book.colors().over(new FoliosPalette(0xFFF1E7D0, 0xFF3B3026, 0xFF8B7B66, ink, deep, FoliosPalette.mix(deep, 0xFF1A3A8A, 0.25F), 0xFFE6D8BA, 0xFFC4B08C), false);
     }
 
     /** Draws the book if one is held open; returns whether it was (the hands are then not drawn). */
@@ -98,7 +98,7 @@ public final class HandheldRenderer {
         // Its pages can always be read: never darker than by a lantern. Its boards, spine and cover take the world's
         // light as the shut book in the hand does, so it doesn't brighten as it opens in the dark.
         int lit = LightCoordsUtil.max(light, LightCoordsUtil.pack(11, 0));
-        GuidePalette palette = palette(book.book);
+        FoliosPalette palette = palette(book.book);
         book.leftHits.clear();
         book.rightHits.clear();
         book.tooltip = null;
@@ -142,8 +142,8 @@ public final class HandheldRenderer {
         GuideReader.Flip flip = book.flip;
         // The leaf's angle about the spine: 0 lying on the right, PI on the left.
         float angle = flip == null ? 0 : easeInOut(flip.forward() ? turned : 1 - turned) * Mth.PI;
-        GuidePage.Laid staticLeft = flip == null ? book.page(book.spot, 0) : flip.forward() ? flip.oldLeft() : flip.newLeft();
-        GuidePage.Laid staticRight = flip == null ? book.page(book.spot, 1) : flip.forward() ? flip.newRight() : flip.oldRight();
+        FoliosPageElement.Laid staticLeft = flip == null ? book.page(book.spot, 0) : flip.forward() ? flip.oldLeft() : flip.newLeft();
+        FoliosPageElement.Laid staticRight = flip == null ? book.page(book.spot, 1) : flip.forward() ? flip.newRight() : flip.oldRight();
         boolean pressable = readable && flip == null;
         // A page under a leaf lying (almost) flat on it can't be seen, so it isn't drawn.
         boolean rightCovered = flip != null && angle < COVERED;
@@ -161,7 +161,7 @@ public final class HandheldRenderer {
         pose.mulPose(Axis.YP.rotation(-fold));
         if (!asItem) {
             body(pose, collector, light, book, false);
-            paper(pose, collector, lit, palette, book.book.textures().page(), 0, 0, PW, PH, 0, !(staticRight instanceof GuidePage.SpreadHalf));
+            paper(pose, collector, lit, palette, book.book.textures().page(), 0, 0, PW, PH, 0, !(staticRight instanceof FoliosPageElement.SpreadHalf));
         }
         book.rightClip.set(toClip).mul(pose.last().pose());
         if (open > 0.4F && !rightCovered) {
@@ -203,7 +203,7 @@ public final class HandheldRenderer {
         relight = shutNormals.mul(new org.joml.Matrix3f(pose.last().normal()).invert());
         if (!asItem) {
             body(pose, collector, light, book, true);
-            paper(pose, collector, lit, palette, book.book.textures().page(), -PW, 0, 0, PH, 0, !(staticLeft instanceof GuidePage.SpreadHalf));
+            paper(pose, collector, lit, palette, book.book.textures().page(), -PW, 0, 0, PH, 0, !(staticLeft instanceof FoliosPageElement.SpreadHalf));
         }
         if (open > 0.4F && !leftCovered) {
             pose.pushPose();
@@ -261,15 +261,15 @@ public final class HandheldRenderer {
         leaves = LEAVES_SHUT;
         board = BOARD_SHUT;
         opened = open;
-        GuidePalette palette = palette(reader.book);
+        FoliosPalette palette = palette(reader.book);
         boolean sketch = isSketched(reader.book);
         reader.tabs.frame();
         // A screen book's leaves turn too, as its reader turns them on their screen: a likeness of pages on each.
         float turned = reader.flipProgress();
         GuideReader.Flip flip = reader.flip;
         float angle = flip == null ? 0 : easeInOut(flip.forward() ? turned : 1 - turned) * Mth.PI;
-        GuidePage.Laid staticLeft = flip == null ? reader.page(reader.spot, 0) : flip.forward() ? flip.oldLeft() : flip.newLeft();
-        GuidePage.Laid staticRight = flip == null ? reader.page(reader.spot, 1) : flip.forward() ? flip.newRight() : flip.oldRight();
+        FoliosPageElement.Laid staticLeft = flip == null ? reader.page(reader.spot, 0) : flip.forward() ? flip.oldLeft() : flip.newLeft();
+        FoliosPageElement.Laid staticRight = flip == null ? reader.page(reader.spot, 1) : flip.forward() ? flip.newRight() : flip.oldRight();
         ResourceLocation frame = reader.book.textures().frame();
         // Held in someone's hands, any book lies part open, its halves leaning up from the spine; shut, its left half
         // lies over its right, the shut book's middle where the spine of the open one is.
@@ -284,7 +284,7 @@ public final class HandheldRenderer {
         pose.pushPose();
         pose.mulPose(Axis.YP.rotation(rightAngle));
         body(pose, collector, light, reader, false);
-        paper(pose, collector, light, palette, reader.book.textures().page(), 0, 0, PW, PH, 0, !(staticRight instanceof GuidePage.SpreadHalf));
+        paper(pose, collector, light, palette, reader.book.textures().page(), 0, 0, PW, PH, 0, !(staticRight instanceof FoliosPageElement.SpreadHalf));
         if (pages && !(flip != null && angle < COVERED)) {
             WorldPainter right = painter(pose, collector, light, palette, reader, null, NO_HITS);
             Shapes.pageFrame(right, frame, PW, PH, staticRight, true);
@@ -314,7 +314,7 @@ public final class HandheldRenderer {
         body(pose, collector, light, reader, true);
         // Its front board's outside faces those in front of the reader: its name and subtitle on it.
         cover(pose, collector, light, reader);
-        paper(pose, collector, light, palette, reader.book.textures().page(), -PW, 0, 0, PH, 0, !(staticLeft instanceof GuidePage.SpreadHalf));
+        paper(pose, collector, light, palette, reader.book.textures().page(), -PW, 0, 0, PH, 0, !(staticLeft instanceof FoliosPageElement.SpreadHalf));
         if (pages && !(flip != null && angle > Mth.PI - COVERED)) {
             pose.pushPose();
             pose.translate(-PW, 0, 0);
@@ -341,8 +341,8 @@ public final class HandheldRenderer {
     }
 
     /** Whether a book is shown in the hands as a likeness, its own pages being on a screen: any but a handheld book. */
-    static boolean isSketched(GuideBook book) {
-        return !book.style().equals(net.ixdarklord.folios.api.client.GuideStyles.HANDHELD);
+    static boolean isSketched(FoliosBook book) {
+        return !book.style().equals(net.ixdarklord.folios.api.client.FoliosStyles.HANDHELD);
     }
 
     /** How far each half of a screen book stays folded up from flat as it is held open before its screen, in radians. */
@@ -352,7 +352,7 @@ public final class HandheldRenderer {
     // reader); false when that hand no longer holds a book item.
     private static boolean item(PoseStack pose, SubmitNodeCollector collector, int light, LocalPlayer player, HandheldBook book) {
         net.minecraft.world.item.ItemStack stack = player.getItemInHand(book.hand != null ? book.hand : InteractionHand.MAIN_HAND);
-        if (!(stack.getItem() instanceof net.ixdarklord.folios.api.GuideBookItem)) return false;
+        if (!(stack.getItem() instanceof net.ixdarklord.folios.api.FoliosBookItem)) return false;
         Minecraft minecraft = Minecraft.getInstance();
         pose.pushPose();
         pose.scale(1 / ITEM_FIT, 1 / ITEM_FIT, 1 / ITEM_FIT);
@@ -463,22 +463,22 @@ public final class HandheldRenderer {
     // are, so it doesn't dim as it turns, and its writing is left out while it stands edge-on, where it could not be
     // read anyway. A flat leaf swings stiffly; a bending one curls, its free edge trailing as it lifts and following
     // as it comes down.
-    private static void leaf(PoseStack pose, SubmitNodeCollector collector, int light, GuidePalette palette, GuideReader book, GuideReader.Flip flip, float angle) {
+    private static void leaf(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, GuideReader book, GuideReader.Flip flip, float angle) {
         leaf(pose, collector, light, palette, book, flip, angle, false);
     }
 
     // `sketch`: the leaf of a screen book seen in its reader's hands, a likeness of a page on each side.
-    private static void leaf(PoseStack pose, SubmitNodeCollector collector, int light, GuidePalette palette, GuideReader book, GuideReader.Flip flip, float angle,
+    private static void leaf(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, GuideReader book, GuideReader.Flip flip, float angle,
                              boolean sketch) {
-        GuidePage.Laid face = flip.forward() ? flip.oldRight() : flip.newRight();
-        GuidePage.Laid back = flip.forward() ? flip.newLeft() : flip.oldLeft();
+        FoliosPageElement.Laid face = flip.forward() ? flip.oldRight() : flip.newRight();
+        FoliosPageElement.Laid back = flip.forward() ? flip.newLeft() : flip.oldLeft();
         float upright = Mth.sin(angle);
         boolean edgeOn = Math.abs(Mth.cos(angle)) < 0.09F;
         boolean faceShown = angle < Mth.HALF_PI;
         float settle = Mth.clamp(Math.min(angle, Mth.PI - angle) / COVERED, 0, 1);
         float lift = 0.05F + (WorldPainter.HEIGHT + 0.2F) * settle * settle * (3 - 2 * settle) + upright * 2.0F;
-        GuidePage.Laid shown = faceShown ? face : back;
-        boolean bend = book.book.pageTurn() == GuideBook.PageTurn.BEND;
+        FoliosPageElement.Laid shown = faceShown ? face : back;
+        boolean bend = book.book.pageTurn() == FoliosBook.PageTurn.BEND;
         // Lit as the open pages are, whichever way it faces as it turns.
         Vector3f facing = new Vector3f(PAGE_LIGHT);
         pose.pushPose();
@@ -496,7 +496,7 @@ public final class HandheldRenderer {
                 .lightAs(facing);
         // With the fold's shadow at its spine edge, as the pages it leaves and lands on have: the face's spine is at its
         // left (it is a right-hand page), the back's at its right.
-        painter.paper(0, 0, PW, PH, palette.paper(), book.book.textures().page(), FOLD, shown instanceof GuidePage.SpreadHalf ? GuidePalette.mix(palette.paper(), foldShade(palette), SPREAD_FOLD) : foldShade(palette), !faceShown);
+        painter.paper(0, 0, PW, PH, palette.paper(), book.book.textures().page(), FOLD, shown instanceof FoliosPageElement.SpreadHalf ? FoliosPalette.mix(palette.paper(), foldShade(palette), SPREAD_FOLD) : foldShade(palette), !faceShown);
         if (!edgeOn) {
             Shapes.pageFrame(painter, book.book.textures().frame(), PW, PH, shown, faceShown);
             if (sketch) sketch(painter, faceShown);
@@ -601,7 +601,7 @@ public final class HandheldRenderer {
     private static void deckle(WorldPainter painter, GuideReader book, int x0, int x1, boolean right) {
         // Its nicks and tears show what is behind the page: the leaves under it, in the shadow of the page over them
         // (warm and dark enough to read as a tear, not the black of a hole).
-        int behind = GuidePalette.mix(LEAF_EDGE, 0xFF5A4028, 0.62F);
+        int behind = FoliosPalette.mix(LEAF_EDGE, 0xFF5A4028, 0.62F);
         // Worn with age at its head, foot and outer side, more than the screen book's: it is a book carried about.
         // First, so its yellowing doesn't cover the tears (on a page in the world, what is see-through is laid on solid).
         Shapes.wornEdges(painter, x0, 0, x1, PH, right, behind, HANDLED);
@@ -613,29 +613,29 @@ public final class HandheldRenderer {
     // down onto the leaf, so more of it fits on a leaf of the same size. It keeps within the leaf's own margins, clear
     // of its frame as at the default size, as large as fits them; a spread's half spans the whole leaf, to meet its
     // other half at the fold. The painter keeps where the pointer is and what can be pressed in step with the scale.
-    private static void printed(WorldPainter painter, GuideReader book, GuidePage.@Nullable Laid page, Runnable draw) {
-        GuideLayout layout = book.session.layout();
+    private static void printed(WorldPainter painter, GuideReader book, FoliosPageElement.@Nullable Laid page, Runnable draw) {
+        FoliosLayout layout = book.session.layout();
         if (layout.pageWidth() <= PW) {
             draw.run();
             return;
         }
         painter.printing(true);
         painter.push();
-        if (page instanceof GuidePage.SpreadHalf) painter.scale(PW / (float) layout.pageWidth());
+        if (page instanceof FoliosPageElement.SpreadHalf) painter.scale(PW / (float) layout.pageWidth());
         else {
-            float across = GuideLayout.CONTENT_WIDTH / (float) layout.contentWidth();
-            float down = (GuideLayout.CONTENT_BOTTOM - GuideLayout.CONTENT_TOP) / (float) (layout.contentBottom() - GuideLayout.CONTENT_TOP);
+            float across = FoliosLayout.CONTENT_WIDTH / (float) layout.contentWidth();
+            float down = (FoliosLayout.CONTENT_BOTTOM - FoliosLayout.CONTENT_TOP) / (float) (layout.contentBottom() - FoliosLayout.CONTENT_TOP);
             float scale = Math.min(across, down);
-            painter.translate(GuideLayout.CONTENT_LEFT + (GuideLayout.CONTENT_WIDTH - layout.contentWidth() * scale) / 2, GuideLayout.CONTENT_TOP);
+            painter.translate(FoliosLayout.CONTENT_LEFT + (FoliosLayout.CONTENT_WIDTH - layout.contentWidth() * scale) / 2, FoliosLayout.CONTENT_TOP);
             painter.scale(scale);
-            painter.translate(-GuideLayout.CONTENT_LEFT, -GuideLayout.CONTENT_TOP);
+            painter.translate(-FoliosLayout.CONTENT_LEFT, -FoliosLayout.CONTENT_TOP);
         }
         draw.run();
         painter.pop();
         painter.printing(false);
     }
 
-    private static WorldPainter painter(PoseStack pose, SubmitNodeCollector collector, int light, GuidePalette palette, GuideReader book,
+    private static WorldPainter painter(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, GuideReader book,
                                         float @Nullable [] pointer, List<AbstractPainter.Hit> hits) {
         float x = pointer != null ? pointer[0] : Float.NaN;
         float y = pointer != null ? pointer[1] : Float.NaN;
@@ -652,13 +652,13 @@ public final class HandheldRenderer {
         float width = PW * (0.15F + 0.35F * strength);
         Matrix4f matrix = new Matrix4f(pose.last().pose());
         int paper = 0xFFF1E7D0;
-        int dark = GuidePalette.mix(paper, 0xFF5A4630, 0.35F * strength);
+        int dark = FoliosPalette.mix(paper, 0xFF5A4630, 0.35F * strength);
         collector.submitCustomGeometry(pose, RenderTypes.entityCutout(WorldPainter.WHITE), (last, consumer) -> {
             int steps = 8;
             for (int step = 0; step < steps; step++) {
                 float from = width * step / steps;
                 float to = width * (step + 1) / steps;
-                int color = GuidePalette.mix(dark, paper, step / (float) steps);
+                int color = FoliosPalette.mix(dark, paper, step / (float) steps);
                 if (left) quad(consumer, matrix, last, -to, 0, -from, PH, 0.01F, color, light);
                 else quad(consumer, matrix, last, from, 0, to, PH, 0.01F, color, light);
             }
@@ -701,20 +701,20 @@ public final class HandheldRenderer {
         int y = book.book.layout().tabY();
         int order = 0;
         y = tab(painter, book, x, y, false, null, "home".equals(book.spot.chapter()), "home", order++) + gap;
-        for (GuideCategory category : book.book.visibleCategories()) {
+        for (FoliosCategory category : book.book.visibleCategories()) {
             if (y + TAB_HEIGHT > foot) break;
             if (!category.isOpen()) continue;
             y = tab(painter, book, x, y, false, category, ("category:" + category.id()).equals(book.spot.chapter()) || isIn(book, category), "category", order++) + gap;
         }
     }
 
-    private static boolean isIn(GuideReader book, GuideCategory category) {
+    private static boolean isIn(GuideReader book, FoliosCategory category) {
         if (!book.spot.chapter().startsWith("entry:")) return false;
         var entry = book.book.entry(book.spot.chapter().substring(6));
         return entry != null && entry.category().equals(category.id());
     }
 
-    private static Component tabName(@Nullable GuideCategory category, String part) {
+    private static Component tabName(@Nullable FoliosCategory category, String part) {
         return category != null ? category.title() : switch (part) {
             case "bookmarks" -> Component.translatableWithFallback("folios.bookmarks", "Bookmarks");
             case "index" -> Component.translatableWithFallback("folios.index", "Index");
@@ -725,8 +725,8 @@ public final class HandheldRenderer {
     // A tab, its top at y (or, `fromFoot`, its foot): pressable (pressed, it is knocked in and springs out again, and its
     // part opens); it swings out under the pointer and further while its part is open, growing as it opens. Returns
     // its other edge.
-    private static int tab(WorldPainter painter, GuideReader book, int x, int y, boolean fromFoot, @Nullable GuideCategory category, boolean here, String part, int order) {
-        GuidePalette palette = painter.palette();
+    private static int tab(WorldPainter painter, GuideReader book, int x, int y, boolean fromFoot, @Nullable FoliosCategory category, boolean here, String part, int order) {
+        FoliosPalette palette = painter.palette();
         Component name = tabName(category, part);
         String key = GuideReader.tabKey(category, part);
         Runnable go = category != null ? () -> book.category(category.id()) : switch (part) {
@@ -748,7 +748,7 @@ public final class HandheldRenderer {
         // Tucked deeper in the leaves the lower it is, it lies a little in their shade; open, it rises to the surface.
         int depth = Shapes.tabDepth(Math.min(order, 6), moved, LEAVES_SHOWN);
         int length = Math.round(24 + 15 * moved - 4 * pressed) - depth;
-        int color = GuidePalette.mix(book.tabColor(category, palette, moved), 0xFF000000, 0.15F * pressed + 0.06F * depth);
+        int color = FoliosPalette.mix(book.tabColor(category, palette, moved), 0xFF000000, 0.15F * pressed + 0.06F * depth);
         // The book's ribbon texture, its swallowtail end at the tip, from its root under the page, in the tab's
         // colour; then the leaves over its root.
         int root = Shapes.ribbonRoot(PW, depth);
@@ -800,7 +800,7 @@ public final class HandheldRenderer {
             float lx1 = left ? 0 : PW;
             quad(consumer, matrix, last, lx0, 0.5F, lx1, PH - 0.5F, -0.05F, edge, light);
             float inner = left ? lx1 : lx0;
-            face(consumer, matrix, last, inner, 0.5F, -leaves, inner, PH - 0.5F, -0.05F, GuidePalette.mix(edge, 0xFF000000, 0.18F), light);
+            face(consumer, matrix, last, inner, 0.5F, -leaves, inner, PH - 0.5F, -0.05F, FoliosPalette.mix(edge, 0xFF000000, 0.18F), light);
         });
         // Their edges, worn: the item's page-edge texture (wavering sheets, yellowed, nicked) on the fore-edge, the head
         // and the foot, its sheets running along each.
@@ -815,7 +815,7 @@ public final class HandheldRenderer {
         // The board's faces, inside and out: the item's own leather, laid on as the item lays it on its boards (its
         // middle ten texels across, fourteen down, the spine's side at the spine), so the book raised out of the hand
         // is the one that was in it. A book that names its own cover texture has that instead.
-        boolean own = !book.book.textures().cover().equals(GuideBook.Textures.DEFAULT.cover());
+        boolean own = !book.book.textures().cover().equals(FoliosBook.Textures.DEFAULT.cover());
         ResourceLocation leather = own ? book.book.textures().cover() : LEATHER;
         // The outside lit as if it faced the viewer whichever way it is swung, so it keeps the item's brightness as the
         // cover opens instead of darkening as it turns from the light.
@@ -855,7 +855,7 @@ public final class HandheldRenderer {
     // with rounded shoulders; as the cover opens it bends with it, and open it is drawn in to a ridge behind the fold.
     private static void spine(PoseStack pose, SubmitNodeCollector collector, int light, GuideReader book, float rightAngle, float leftAngle) {
         int cover = 0xFF000000 | book.book.cover();
-        boolean own = !book.book.textures().cover().equals(GuideBook.Textures.DEFAULT.cover());
+        boolean own = !book.book.textures().cover().equals(FoliosBook.Textures.DEFAULT.cover());
         ResourceLocation leather = own ? book.book.textures().cover() : LEATHER;
         // The item's spine strip of its leather: its first column and a half, its middle fourteen rows.
         float u0 = own ? 0 : 0, u1 = own ? 0.1F : 1.5F / 16;
@@ -939,7 +939,7 @@ public final class HandheldRenderer {
                         float[][] edge = y == top ? new float[][]{in0, a, b, in1} : new float[][]{in1, b, a, in0};
                         for (float[] corner : edge) {
                             Vector3f position = matrix.transformPosition(corner[0], y, corner[1], new Vector3f());
-                            consumer.addVertex(position.x, position.y, position.z).setColor(GuidePalette.mix(color, 0xFF000000, 0.2F))
+                            consumer.addVertex(position.x, position.y, position.z).setColor(FoliosPalette.mix(color, 0xFF000000, 0.2F))
                                     .setUv(ua, band.v0()).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(normal.x, normal.y, normal.z);
                         }
                     }
@@ -961,8 +961,8 @@ public final class HandheldRenderer {
     /** How wide the fold's shadow is on each page, from the spine. */
     private static final float FOLD = 9;
 
-    private static int foldShade(GuidePalette palette) {
-        return GuidePalette.mix(palette.paper(), 0xFF7A6448, 0.18F);
+    private static int foldShade(FoliosPalette palette) {
+        return FoliosPalette.mix(palette.paper(), 0xFF7A6448, 0.18F);
     }
 
     // A page's paper from the book's page texture, darkening smoothly into the fold of the spine. The shadow is in the
@@ -974,12 +974,12 @@ public final class HandheldRenderer {
      */
     private static final Vector3f PAGE_LIGHT = new Vector3f(0, 0, 1);
 
-    private static void paper(PoseStack pose, SubmitNodeCollector collector, int light, GuidePalette palette, ResourceLocation texture, float x0, float y0, float x1, float y1, float z,
+    private static void paper(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, ResourceLocation texture, float x0, float y0, float x1, float y1, float z,
                               boolean folded) {
         Matrix4f matrix = new Matrix4f(pose.last().pose());
         int paper = palette.paper();
         // Fainter under a spread, which lies over both pages as one.
-        int shade = folded ? foldShade(palette) : GuidePalette.mix(paper, foldShade(palette), SPREAD_FOLD);
+        int shade = folded ? foldShade(palette) : FoliosPalette.mix(paper, foldShade(palette), SPREAD_FOLD);
         boolean left = x0 < 0;
         float span = x1 - x0;
         float fold = FOLD;
@@ -1016,8 +1016,8 @@ public final class HandheldRenderer {
             collector.submitCustomGeometry(pose, RenderTypes.entityCutout(texture), (last, consumer) ->
                     quad(consumer, matrix, last, -EDGE, -EDGE, PW + EDGE, PH + EDGE, 0, 0xFFFFFFFF, light, 0, 0, 1, 1));
         }
-        int gilt = GuidePalette.mix(0xFFE8C66A, cover, 0.15F);
-        GuidePalette ink = new GuidePalette(cover, gilt, GuidePalette.mix(gilt, cover, 0.4F), gilt, gilt, gilt, cover, gilt);
+        int gilt = FoliosPalette.mix(0xFFE8C66A, cover, 0.15F);
+        FoliosPalette ink = new FoliosPalette(cover, gilt, FoliosPalette.mix(gilt, cover, 0.4F), gilt, gilt, gilt, cover, gilt);
         // Lifted onto the face of the cover model's plates, which stand out from the board.
         pose.translate(0, 0, PLATE_FACE);
         Vector3f facing = pose.last().transformNormal(0, 0, 1, new Vector3f());
@@ -1030,7 +1030,7 @@ public final class HandheldRenderer {
         // Where the book says, in the item's units carried onto the board (its cover 3 to 13 across, 1 to 15 up).
         net.ixdarklord.folios.internal.client.CoverMarkers.Markers marked = net.ixdarklord.folios.internal.client.CoverMarkers.of(ITEM_MODEL);
         for (net.ixdarklord.folios.internal.client.CoverMarkers.Lettering lettering : net.ixdarklord.folios.internal.client.CoverMarkers.layout(book.book, marked,
-                GuideBook.CoverText.TITLE, GuideBook.CoverText.SUBTITLE, 0)) {
+                FoliosBook.CoverText.TITLE, FoliosBook.CoverText.SUBTITLE, 0)) {
             if (lettering.kind() == net.ixdarklord.folios.internal.client.CoverMarkers.Kind.RULE) coverRule(painter, lettering, gilt);
             else coverLines(painter, lettering, net.ixdarklord.folios.internal.client.CoverMarkers.color(lettering.kind(), gilt, cover));
         }
@@ -1045,11 +1045,11 @@ public final class HandheldRenderer {
     // a page of it, in big square pixels: a heading over a rule on the left page, then lines of made-up writing in
     // paragraphs on both, each line's words and length its own but the same every time.
     private static void sketch(WorldPainter painter, boolean right) {
-        GuidePalette palette = painter.palette();
+        FoliosPalette palette = painter.palette();
         int paper = palette.paper() | 0xFF000000;
-        int ink = GuidePalette.mix(paper, palette.text(), 0.34F);
-        int faint = GuidePalette.mix(paper, palette.text(), 0.2F);
-        int accent = GuidePalette.mix(paper, palette.accent(), 0.55F);
+        int ink = FoliosPalette.mix(paper, palette.text(), 0.34F);
+        int faint = FoliosPalette.mix(paper, palette.text(), 0.2F);
+        int accent = FoliosPalette.mix(paper, palette.accent(), 0.55F);
         int x0 = 16;
         int x1 = PW - 16;
         int y = 20;
@@ -1116,7 +1116,7 @@ public final class HandheldRenderer {
     // `room`.
     // The soft rule and its stud, as GuideCoverText draws them on the item, carried onto the board (whole page pixels).
     private static void coverRule(WorldPainter painter, net.ixdarklord.folios.internal.client.CoverMarkers.Lettering lettering, int gilt) {
-        GuideBook.CoverText.Line line = lettering.line();
+        FoliosBook.CoverText.Line line = lettering.line();
         float across = (PW + EDGE) / 10.0F;
         float up = (PH + 2 * EDGE) / 14.0F;
         float[][] runs = net.ixdarklord.folios.internal.client.CoverMarkers.rule(line);
@@ -1127,7 +1127,7 @@ public final class HandheldRenderer {
             float[] run = runs[index];
             int x0 = cx + Math.round(run[0] * across);
             int x1 = cx + Math.round(run[1] * across);
-            if (x1 > x0) painter.fill(x0, cy, x1, cy + thick, GuidePalette.alpha(gilt, Math.round(255 * run[2])));
+            if (x1 > x0) painter.fill(x0, cy, x1, cy + thick, FoliosPalette.alpha(gilt, Math.round(255 * run[2])));
         }
         // The stud: a small diamond, rows widening to its middle and narrowing again.
         int stud = Math.max(2, Math.round(runs[runs.length - 1][0] * up));
@@ -1152,7 +1152,7 @@ public final class HandheldRenderer {
     }
 
     private static void coverLines(WorldPainter painter, net.ixdarklord.folios.internal.client.CoverMarkers.Lettering lettering, int color) {
-        GuideBook.CoverText.Line line = lettering.line();
+        FoliosBook.CoverText.Line line = lettering.line();
         // An item unit across and up the board, in page pixels.
         float across = (PW + EDGE) / 10.0F;
         float up = (PH + 2 * EDGE) / 14.0F;
@@ -1177,8 +1177,8 @@ public final class HandheldRenderer {
     private static void box(VertexConsumer consumer, Matrix4f matrix, PoseStack.Pose normals, float x0, float y0, float z0, float x1, float y1, float z1, int color, int light,
                             boolean back) {
         int front = color;
-        int side = GuidePalette.mix(color, 0xFF000000, 0.18F);
-        int under = GuidePalette.mix(color, 0xFF000000, 0.35F);
+        int side = FoliosPalette.mix(color, 0xFF000000, 0.18F);
+        int under = FoliosPalette.mix(color, 0xFF000000, 0.35F);
         // The face towards the reader, the one away, then the four sides.
         quad(consumer, matrix, normals, x0, y0, x1, y1, z1, front, light);
         if (back) quad(consumer, matrix, normals, x0, y0, x1, y1, z0, under, light);

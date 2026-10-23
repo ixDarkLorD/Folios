@@ -1,7 +1,7 @@
 package net.ixdarklord.folios.internal.client;
 
-import net.ixdarklord.folios.api.client.GuideBook;
-import net.ixdarklord.folios.api.client.page.GuidePalette;
+import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.gui.Font;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
@@ -33,22 +33,22 @@ public final class GuideTooltips {
     }
 
     /** The text colour of a tooltip's name in a book's colours. */
-    public static int titleColor(GuideBook book) {
+    public static int titleColor(FoliosBook book) {
         return book.colors().panel().getOrDefault("title", TITLE);
     }
 
     /** A tooltip's ground in a book's colours: its own, else its cover's darkened. */
-    public static int backgroundColor(GuideBook book) {
-        return book.colors().panel().getOrDefault("background", GuidePalette.mix(0xFF000000 | book.cover(), 0xFF120C08, 0.55F));
+    public static int backgroundColor(FoliosBook book) {
+        return book.colors().panel().getOrDefault("background", FoliosPalette.mix(0xFF000000 | book.cover(), 0xFF120C08, 0.55F));
     }
 
     /** A tooltip's frame in a book's colours: its own, else gilt warmed by its accent. */
-    public static int frameColor(GuideBook book) {
-        return book.colors().panel().getOrDefault("frame", GuidePalette.mix(GILT, 0xFF000000 | book.accent(), 0.3F));
+    public static int frameColor(FoliosBook book) {
+        return book.colors().panel().getOrDefault("frame", FoliosPalette.mix(GILT, 0xFF000000 | book.accent(), 0.3F));
     }
 
     /** The text colour of a tooltip's quieter lines in a book's colours. */
-    public static int detailColor(GuideBook book) {
+    public static int detailColor(FoliosBook book) {
         return book.colors().panel().getOrDefault("detail", DETAIL);
     }
 
@@ -56,28 +56,28 @@ public final class GuideTooltips {
      * A tooltip's ground and gilt frame in the book's colours, round content from (x, y), {@code width} by
      * {@code height}: for anything shown as the books' tooltips are (a hint, say).
      */
-    public static void frame(GuiGraphicsExtractor graphics, int x, int y, int width, int height, GuideBook book) {
+    public static void frame(GuiGraphicsExtractor graphics, int x, int y, int width, int height, FoliosBook book) {
         frame(graphics, x, y, width, height, book, 255);
     }
 
-    /** As {@link #frame(GuiGraphicsExtractor, int, int, int, int, GuideBook)}, faded to {@code alpha} (0 to 255). */
-    public static void frame(GuiGraphicsExtractor graphics, int x, int y, int width, int height, GuideBook book, int alpha) {
+    /** As {@link #frame(GuiGraphicsExtractor, int, int, int, int, FoliosBook)}, faded to {@code alpha} (0 to 255). */
+    public static void frame(GuiGraphicsExtractor graphics, int x, int y, int width, int height, FoliosBook book, int alpha) {
         frame(graphics, x, y, width, height, book, alpha, 12);
     }
 
     /** As the others, the frame {@code inset} pixels out from the content each way (12 for a tooltip's). */
-    public static void frame(GuiGraphicsExtractor graphics, int x, int y, int width, int height, GuideBook book, int alpha, int inset) {
+    public static void frame(GuiGraphicsExtractor graphics, int x, int y, int width, int height, FoliosBook book, int alpha, int inset) {
         var colors = book.colors().panel();
         int ground = backgroundColor(book);
         int frame = frameColor(book);
         int x0 = x - inset;
         int y0 = y - inset;
-        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BACKGROUND, x0, y0, width + inset * 2, height + inset * 2, GuidePalette.alpha(ground, (ground >>> 24) * alpha / 255));
-        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, FRAME, x0, y0, width + inset * 2, height + inset * 2, GuidePalette.alpha(frame, (frame >>> 24) * alpha / 255));
+        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BACKGROUND, x0, y0, width + inset * 2, height + inset * 2, FoliosPalette.alpha(ground, (ground >>> 24) * alpha / 255));
+        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, FRAME, x0, y0, width + inset * 2, height + inset * 2, FoliosPalette.alpha(frame, (frame >>> 24) * alpha / 255));
     }
 
     /** Shows tooltip lines in the book's colours, over everything drawn so far: the first as a name, the rest quieter. */
-    public static void show(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY, GuideBook book) {
+    public static void show(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY, FoliosBook book) {
         show(graphics, font, lines, mouseX, mouseY, book, -1);
     }
 
@@ -85,18 +85,18 @@ public final class GuideTooltips {
     private static final int RULE_GAP = 5;
 
     /**
-     * As {@link #show(GuiGraphicsExtractor, Font, List, int, int, GuideBook)}, with a soft rule above the line at
+     * As {@link #show(GuiGraphicsExtractor, Font, List, int, int, FoliosBook)}, with a soft rule above the line at
      * {@code ruleBefore} (none for -1): what is said set apart from what to do.
      */
-    public static void show(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY, GuideBook book, int ruleBefore) {
+    public static void show(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY, FoliosBook book, int ruleBefore) {
         show(graphics, font, lines, mouseX, mouseY, book, ruleBefore, 1);
     }
 
     /**
-     * As {@link #show(GuiGraphicsExtractor, Font, List, int, int, GuideBook, int)}, drawn {@code scale} times larger (no
+     * As {@link #show(GuiGraphicsExtractor, Font, List, int, int, FoliosBook, int)}, drawn {@code scale} times larger (no
      * smaller than as it is): to match a book drawn larger than the GUI scale, kept on the screen all the same.
      */
-    public static void show(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY, GuideBook book, int ruleBefore, float scale) {
+    public static void show(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY, FoliosBook book, int ruleBefore, float scale) {
         if (lines.isEmpty()) return;
         float s = Math.max(1, scale);
         if (s > 1) {
@@ -112,7 +112,7 @@ public final class GuideTooltips {
     }
 
     // The tooltip itself, placed in a screen `screenWidth` by `screenHeight`.
-    private static void draw(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY, GuideBook book, int ruleBefore,
+    private static void draw(GuiGraphicsExtractor graphics, Font font, List<Component> lines, int mouseX, int mouseY, FoliosBook book, int ruleBefore,
                              int screenWidth, int screenHeight, boolean newStratum) {
         var colors = book.colors().panel();
         int title = colors.getOrDefault("title", TITLE);
@@ -151,11 +151,11 @@ public final class GuideTooltips {
         int fade = Math.max(1, width / 4);
         for (int at = 0; at < width; at++) {
             float strength = Math.min(1, Math.min(at + 0.5F, width - at - 0.5F) / fade);
-            graphics.fill(x + at, y, x + at + 1, y + 1, GuidePalette.alpha(color, Math.round((color >>> 24) * 0.55F * strength)));
+            graphics.fill(x + at, y, x + at + 1, y + 1, FoliosPalette.alpha(color, Math.round((color >>> 24) * 0.55F * strength)));
         }
         int middle = x + width / 2;
         graphics.fill(middle - 1, y, middle + 1, y + 1, color);
-        graphics.fill(middle - 1, y - 1, middle + 1, y, GuidePalette.alpha(color, (color >>> 24) / 2));
-        graphics.fill(middle - 1, y + 1, middle + 1, y + 2, GuidePalette.alpha(color, (color >>> 24) / 2));
+        graphics.fill(middle - 1, y - 1, middle + 1, y, FoliosPalette.alpha(color, (color >>> 24) / 2));
+        graphics.fill(middle - 1, y + 1, middle + 1, y + 2, FoliosPalette.alpha(color, (color >>> 24) / 2));
     }
 }

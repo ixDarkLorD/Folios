@@ -12,8 +12,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.ixdarklord.folios.api.GuideBookItem;
-import net.ixdarklord.folios.api.GuideBooks;
+import net.ixdarklord.folios.api.FoliosBookItem;
+import net.ixdarklord.folios.api.FoliosBooks;
 import net.ixdarklord.folios.internal.core.GuideRegistry;
 import net.minecraft.util.Unit;
 import net.minecraft.world.InteractionHand;
@@ -96,7 +96,7 @@ public final class GuideNetwork {
         if (!payload.reading() || payload.hand() < 0 || payload.hand() >= InteractionHand.values().length) return;
         InteractionHand hand = InteractionHand.values()[payload.hand()];
         ItemStack stack = player.getItemInHand(hand);
-        if (!(stack.getItem() instanceof GuideBookItem) && GuideBooks.bookOf(stack) == null) return;
+        if (!(stack.getItem() instanceof FoliosBookItem) && FoliosBooks.bookOf(stack) == null) return;
         stack.set(GuideRegistry.READING.get(), Unit.INSTANCE);
         READERS.put(player.getUUID(), hand);
     }
@@ -124,7 +124,7 @@ public final class GuideNetwork {
 
     /** The book a stack opens: a guide book item's, or any stack's that names one. */
     public static @Nullable ResourceLocation bookOf(ItemStack stack) {
-        return stack.getItem() instanceof GuideBookItem item ? item.book(stack) : GuideBooks.bookOf(stack);
+        return stack.getItem() instanceof FoliosBookItem item ? item.book(stack) : FoliosBooks.bookOf(stack);
     }
 
     // A reader's open spread: kept, and told to those near them now (the rest hear of it as they come near).

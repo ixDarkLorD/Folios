@@ -5,8 +5,8 @@ import com.google.gson.JsonParser;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.ixdarklord.coolcatcore.api.client.registry.ExtraModels;
-import net.ixdarklord.folios.api.GuideBooks;
-import net.ixdarklord.folios.api.client.GuideBook;
+import net.ixdarklord.folios.api.FoliosBooks;
+import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.internal.compat.SubmitNodeCollector;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.ixdarklord.folios.internal.core.GuideRegistry;
@@ -71,8 +71,8 @@ public final class GuideBookItemModel {
     }
 
     public static void render(ItemStack stack, ItemDisplayContext context, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
-        ResourceLocation id = GuideBooks.bookOf(stack);
-        GuideBook book = id != null ? GuideLibrary.book(id) : null;
+        ResourceLocation id = FoliosBooks.bookOf(stack);
+        FoliosBook book = id != null ? GuideLibrary.book(id) : null;
         boolean thirdPerson = context == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
         ResourceLocation model = book != null && book.itemModel() != null ? itemModel(book.itemModel()) : null;
         // Held up open by someone reading it, seen from outside them: the book's open model.
@@ -112,8 +112,8 @@ public final class GuideBookItemModel {
 
     /** A colour of the book a stack names: its cover's, or its own (for a gem or inlay). */
     public static int tint(ItemStack stack, boolean accentPart) {
-        ResourceLocation id = GuideBooks.bookOf(stack);
-        GuideBook book = id != null ? GuideLibrary.book(id) : null;
+        ResourceLocation id = FoliosBooks.bookOf(stack);
+        FoliosBook book = id != null ? GuideLibrary.book(id) : null;
         if (book == null) return accentPart ? FALLBACK_ACCENT : FALLBACK;
         return 0xFF000000 | (accentPart ? book.accent() : book.cover());
     }

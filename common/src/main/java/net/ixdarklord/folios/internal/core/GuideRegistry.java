@@ -6,7 +6,7 @@ import net.ixdarklord.coolcatcore.api.attachment.AttachmentRegistry;
 import net.ixdarklord.coolcatcore.api.attachment.SyncPolicy;
 import net.ixdarklord.coolcatcore.api.registry.DeferredRegister;
 import net.ixdarklord.coolcatcore.api.registry.RegistryEntry;
-import net.ixdarklord.folios.api.GuideBookItem;
+import net.ixdarklord.folios.api.FoliosBookItem;
 import net.ixdarklord.folios.internal.GuideRecord;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
@@ -39,8 +39,8 @@ public final class GuideRegistry {
             .sync(SyncPolicy.SELF).copyOnDeath().build();
     /** What has been done with this copy of a book that keeps its own ({@code "progress": "book"}): its marks go with it. */
     public static final Attachment<GuideRecord> BOOK_PROGRESS = ATTACHMENTS.builder("book_progress", GuideRecord.CODEC, GuideRecord.EMPTY).build();
-    public static final RegistryEntry<GuideBookItem> BOOK_ITEM = ITEMS.register("guide_book",
-            () -> new GuideBookItem(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
+    public static final RegistryEntry<FoliosBookItem> BOOK_ITEM = ITEMS.register("guide_book",
+            () -> new FoliosBookItem(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
 
     private GuideRegistry() {}
 
