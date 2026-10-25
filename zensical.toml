@@ -7,7 +7,7 @@ repo_url = "https://github.com/ixDarkLorD/Folios"
 repo_name = "ixDarkLorD/Folios"
 copyright = "Copyright &copy; 2026 ixDarkLorD &middot; Use it, build on it and fork it, with credit: <a href=\"/Folios/license/\">Folios License</a>"
 extra_css = ["assets/folios.css"]
-extra_javascript = ["assets/folios.js"]
+extra_javascript = ["assets/folios.js", "assets/mc-version.js"]
 # site_description = "Your project description"
 # site_author = "Your name"
 
@@ -21,41 +21,58 @@ nav = [
   { "Home" = "index.md" },
   { "Docs" = [
     "docs/index.md",
-    { "Your first book" = "docs/getting-started.md" },
-    { "Book" = [
-      { "book.json" = "docs/book.md" },
-      { "Colours" = "docs/colours.md" },
-      { "Styles and look" = "docs/styles-and-look.md" },
-      { "Celebrations" = "docs/celebrations.md" },
+    { "Writing books" = [
+      { "Your first book" = "docs/getting-started.md" },
+      { "Migrating to 3.0" = "docs/migrating-to-3.0.md" },
+      { "The book" = [
+        { "book.json" = "docs/book.md" },
+        { "Colours" = "docs/colours.md" },
+        { "Styles and look" = "docs/styles-and-look.md" },
+        { "Celebrations" = "docs/celebrations.md" },
+      ] },
+      { "Content" = [
+        { "Categories and entries" = "docs/categories-and-entries.md" },
+        { "Pages" = "docs/pages.md" },
+        { "Setting pages" = "docs/setting-pages.md" },
+        { "Text formatting" = "docs/text-formatting.md" },
+        { "Live lists" = "docs/live-lists.md" },
+        { "Spread and empty" = "docs/spread-and-empty.md" },
+      ] },
+      { "Elements" = [
+        { "Text" = "docs/elements/text.md" },
+        { "Spotlight" = "docs/elements/spotlight.md" },
+        { "Image" = "docs/elements/image.md" },
+        { "Recipe" = "docs/elements/recipe.md" },
+        { "Entity" = "docs/elements/entity.md" },
+        { "Multiblock" = "docs/elements/multiblock.md" },
+        { "Structure" = "docs/elements/structure.md" },
+        { "Build" = "docs/elements/build.md" },
+        { "Build files" = "docs/elements/build-files.md" },
+        { "Links" = "docs/elements/links.md" },
+        { "Quest" = "docs/elements/quest.md" },
+      ] },
+      { "Progress" = [
+        { "Quests, locks and progress" = "docs/quests.md" },
+      ] },
     ] },
-    { "Content" = [
-      { "Categories and entries" = "docs/categories-and-entries.md" },
-      { "Pages" = "docs/pages.md" },
-      { "Spread and empty" = "docs/spread-and-empty.md" },
-      { "Text formatting" = "docs/text-formatting.md" },
-    ] },
-    { "Elements" = [
-      { "Text" = "docs/elements/text.md" },
-      { "Spotlight" = "docs/elements/spotlight.md" },
-      { "Image" = "docs/elements/image.md" },
-      { "Recipe" = "docs/elements/recipe.md" },
-      { "Entity" = "docs/elements/entity.md" },
-      { "Multiblock" = "docs/elements/multiblock.md" },
-      { "Structure" = "docs/elements/structure.md" },
-      { "Build" = "docs/elements/build.md" },
-      { "Build files" = "docs/elements/build-files.md" },
-      { "Links" = "docs/elements/links.md" },
-      { "Quest" = "docs/elements/quest.md" },
-    ] },
-    { "Going further" = [
-      { "Quests and progress" = "docs/quests.md" },
-      { "For mod developers" = "docs/for-mod-developers.md" },
+    { "Java API" = [
+      { "Overview and setup" = "docs/api/index.md" },
+      { "Opening books and book items" = "docs/api/books.md" },
+      { "Flags and objectives" = "docs/api/progress.md" },
+      { "Live lists" = "docs/api/live-lists.md" },
+      { "Server quests" = "docs/api/quests.md" },
+      { "Links and popups" = "docs/api/links.md" },
+      { "Page elements" = "docs/api/page-elements.md" },
+      { "Reveal effects" = "docs/api/reveal-effects.md" },
+      { "Styles" = "docs/api/styles.md" },
     ] },
   ] },
+  { "Book upgrader" = "upgrader/index.md" },
   { "Downloads" = "downloads.md" },
   { "Changelog" = "changelog.md" },
   { "License" = "license.md" },
 ]
+
 
 # extra_css = ["stylesheets/extra.css"]
 # extra_javascript = ["javascripts/extra.js"]
@@ -83,14 +100,14 @@ features = [
   "navigation.instant.prefetch",
   "navigation.instant.progress",
   "navigation.path",
-  # "navigation.prune",
+  "navigation.prune",
   "navigation.sections",
-  "navigation.tabs",
+  # "navigation.tabs",
   # "navigation.tabs.sticky",
   "navigation.top",
   "navigation.tracking",
   "search.highlight",
-  # "toc.follow",
+  "toc.follow",
   # "toc.integrate",
 ]
 

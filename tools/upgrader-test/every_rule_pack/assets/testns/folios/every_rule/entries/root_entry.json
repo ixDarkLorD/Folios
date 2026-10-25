@@ -1,0 +1,7 @@
+{
+  "category": "basics",
+  "name": "At the root of entries/",
+  "icon": "minecraft:clock",
+  "text": ["a text", "written as a list"],
+  "pages": "not a list"
+}

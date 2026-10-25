@@ -1,0 +1,7 @@
+{
+  'name': 'Extras',
+  icon: "minecraft:chest",
+  "color": "#00AA00",
+  "flag": "testns:extras_open",
+  "requires": {"advancement": "minecraft:story/mine_stone"}
+}

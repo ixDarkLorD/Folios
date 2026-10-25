@@ -14,11 +14,14 @@ over it and its text is centred under it.
 | `title` | text | none | A heading, centred across the fold. |
 | `text` | text | `""` | Centred lines under the window, as many as fit. |
 | `image` | texture path | none | A wide picture, stretched to the window. |
-| `build` | object | none | A build: `pattern` and `mapping`, as on a [multiblock](elements/multiblock.md) element. Its blocks are listed under it, and its eye clasp [builds it in the world](elements/multiblock.md#building-in-the-world). |
+| `build` | string | none | A [build file](elements/build-files.md) of the book's, named as a [build](elements/build.md) element names one. |
+| `multiblock` | object | none | A build written in place: `pattern` and `mapping`, as on a [multiblock](elements/multiblock.md) element. |
 | `map` | object | none | A map of places. See below. |
 | `height` | integer | `104` | The window's height in page pixels. 40 to 150. A build's window may be shorter, to leave room for its block list and text. |
 
-Give one of `image`, `build` or `map`. If more than one is given, `build` wins, then `map`, then `image`.
+Give one of `image`, `build`, `multiblock` or `map`. If more than one is given, a build (`multiblock`, then `build`)
+wins, then `map`, then `image`. A build's blocks are listed under it, and its eye clasp
+[builds it in the world](elements/multiblock.md#building-in-the-world).
 
 ```json title="A wide picture"
 {
@@ -29,11 +32,19 @@ Give one of `image`, `build` or `map`. If more than one is given, `build` wins, 
 }
 ```
 
-```json title="A build"
+```json title="A build from a build file"
 {
   "type": "spread",
   "title": "A Watchtower",
-  "build": {
+  "build": "watchtower"
+}
+```
+
+```json title="A build written in place"
+{
+  "type": "spread",
+  "title": "A Watchtower",
+  "multiblock": {
     "pattern": [
       ["  L  ", "     ", "     ", "     ", "     "],
       [" CCC ", "C   C", "C   C", "C   C", " CDC "],
@@ -69,7 +80,7 @@ Each node takes:
 | `x`, `y` | integer | required | Where its middle is, in the window's pixels from its top left. The window is 252 pixels wide. Nodes are kept inside the frame and off the fold. |
 | `icon` | [icon](categories-and-entries.md#icons) | `minecraft:book` | Its icon. |
 | `entry` | string | none | The entry it opens. |
-| `name` | text | none | A tooltip shown when the pointer is over it. |
+| `label` | text | none | A tooltip shown when the pointer is over it. |
 
 ```json title="A map"
 {
@@ -77,9 +88,9 @@ Each node takes:
   "title": "The Path Ahead",
   "map": {
     "nodes": [
-      { "id": "start", "x": 22, "y": 58, "icon": "minecraft:oak_sapling", "entry": "basics/first_steps", "name": "First Steps" },
-      { "id": "tools", "x": 84, "y": 90, "icon": "minecraft:iron_pickaxe", "entry": "crafting/tools", "name": "Tools" },
-      { "id": "end", "x": 228, "y": 58, "icon": "minecraft:ender_eye", "entry": "secrets/the_end", "name": "The End" }
+      { "id": "start", "x": 22, "y": 58, "icon": "minecraft:oak_sapling", "entry": "basics/first_steps", "label": "First Steps" },
+      { "id": "tools", "x": 84, "y": 90, "icon": "minecraft:iron_pickaxe", "entry": "crafting/tools", "label": "Tools" },
+      { "id": "end", "x": 228, "y": 58, "icon": "minecraft:ender_eye", "entry": "secrets/the_end", "label": "The End" }
     ],
     "paths": [
       ["start", "tools"],

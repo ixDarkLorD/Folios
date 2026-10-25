@@ -1,0 +1,15 @@
+/* Edge cases: a book a folder down (its 2.x name key has both parts), "format_version" written as 2.x,
+   empty groups, odd colours (alpha, negative, fractions, words, booleans), and keys already in their 3.0 place. */
+{
+  "format_version": "2.0",
+  "colors": {"dark": {"paper": false, "text": 16711680, "line": "0x123456"}},
+  "textures": {},
+  "models": {"cover": {}},
+  "accent": 1.5e3,
+  "cover": true,
+  "progress": "player",
+  "progress_scope": "copy",
+  "panel": {"frame": -1, "title": "#abc", "text": "  0a0b0c	", "background": 2164260863, "detail": "red", "line": 2.5, "link": -16777216},
+  "icon": "minecraft:book",
+  "icon": "minecraft:written_book"
+}

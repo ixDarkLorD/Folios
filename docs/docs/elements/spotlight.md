@@ -19,3 +19,6 @@ One item shown large on a card, then text. Pressing that item anywhere else in t
   "text": "Item tags are shown in turn."
 }
 ```
+
+The card is the book's `spotlight` texture, tinted with its panel colour: set your own under `"textures"` in
+[book.json](../book.md#look), as `"textures": {"spotlight": "mymod:textures/book/my_card.png"}` (46 × 46).

@@ -37,27 +37,31 @@ Set with `"style"` in [book.json](book.md).
 In both styles, other players within 16 blocks see the book in the reader's hands. A handheld book is shown at the
 spread being read, its leaves turning as the reader turns them.
 
-Mods can add more styles with [`FoliosStyles.register`](for-mod-developers.md#styles). A book naming a style that no
+Mods can add more styles with [`FoliosStyles.register`](api/styles.md). A book naming a style that no
 mod provides is shown as a screen book.
 
 ### Style keys
 
 | Key | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `tilt` | number | `6` | Handheld: how far the book leans back from facing the reader, in degrees (-45 to 80). |
-| `distance` | number | `0.64` | Handheld: how far the book is held from the eyes, in blocks (0.3 to 1.5). |
-| `page_turn` | string | `"bend"` | `"bend"` curls each leaf as it turns, with what is on it following the curve; `"flat"` swings it stiffly. Both styles. |
 | `close_on_click_outside` | boolean | `true` for handheld, `false` for screen | Whether a click off the book closes it. |
-| `handheld` | object | both `true` | Handheld: `look_around` (hold the right mouse button to look about) and `walk` (move while reading). |
+| `handheld` | object | see below | How a handheld book is held and turned, and what the reader can do with it open. |
+
+`handheld` takes:
+
+| Key | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `tilt` | number | `6` | How far the book leans back from facing the reader, in degrees (-45 to 80). |
+| `distance` | number | `0.64` | How far the book is held from the eyes, in blocks (0.3 to 1.5). |
+| `page_turn` | string | `"bend"` | `"bend"` curls each leaf as it turns, with what is on it following the curve; `"flat"` swings it stiffly. Screen books turn their leaves this way too. |
+| `look_around` | boolean | `true` | Hold the right mouse button to look about. |
+| `walk` | boolean | `true` | Move while reading. |
 
 ```json title="book.json"
 {
-  "name": "Field Journal",
+  "format_version": "3.0",
   "style": "handheld",
-  "tilt": 10,
-  "distance": 0.7,
-  "page_turn": "flat",
-  "handheld": { "look_around": true, "walk": false }
+  "handheld": { "tilt": 10, "distance": 0.7, "page_turn": "flat", "walk": false }
 }
 ```
 
@@ -70,10 +74,11 @@ any book. `textures` names a book's own; any left out keep the default.
 | --- | --- | --- |
 | `page` | `folios:textures/book/page.png` | Each page's paper, stretched to the page (136 × 180), tinted with the paper colour. |
 | `frame` | `folios:textures/book/page_frame.png` | Drawn over the paper, under the page's content. Its alpha is how strong each part is. |
-| `cover` | `folios:textures/book/cover.png` | The cover around the pages, and a handheld book's boards, tinted with the cover colour. |
+| `boards` | `folios:textures/book/cover.png` | The cover around the pages, and a handheld book's boards, tinted with the cover colour. |
 | `tab` | `folios:textures/book/ribbon.png` | A ribbon tab, its tip at the right. Stretched to the tab's length, tinted with its category's colour. |
 | `tab_plate` | `folios:textures/book/ribbon_plate.png` | The plate under each tab's icon, tinted with the paper colour. |
 | `backdrop` | none (the world, dimmed) | Screen books: drawn over the whole screen behind the book. |
+| `spotlight` | `folios:textures/book/spotlight.png` | The card a [spotlight](elements/spotlight.md) shows its item on (46 × 46), tinted with the panel colour. |
 
 ```json title="book.json"
 {
@@ -87,6 +92,36 @@ any book. `textures` names a book's own; any left out keep the default.
 !!! tip
     A resource pack that replaces the textures at `folios:textures/book/` restyles every book that doesn't name its
     own.
+
+### Widgets
+
+Bars, clasps, panels, item slots and the flip pager are drawn from sprites at
+`folios:textures/gui/sprites/book/`, shared by every book: one file for each part, greyscale with its lights and
+shades painted in, drawn tinted with a colour of the book's palette (white is that colour, greys its shades), so one
+set suits every book in light and dark. Each says how it scales in a `.png.mcmeta`, as Minecraft's own GUI sprites do:
+
+```json title="bar/border.png.mcmeta"
+{ "gui": { "scaling": { "type": "nine_slice", "width": 8, "height": 8,
+  "border": { "left": 2, "top": 2, "right": 3, "bottom": 3 }, "stretch_inner": true } } }
+```
+
+`nine_slice` keeps the border's corners and stretches (or, without `stretch_inner`, repeats) its edges and middle;
+`stretch` and `tile` scale the whole sprite. Black at partial alpha is shadow, which no tint changes.
+
+| Sprite | Tinted with | What it is |
+| --- | --- | --- |
+| `bar/border`, `bar/groove` | the rim's and groove's colours | A bar's rim (lit along its top and left, a pixel of shadow beyond it) and the groove inside. |
+| `bar/fill` | the bar's colour | Its fill: a light top row, a shaded foot, slanting stripes between, repeated. |
+| `bar/glint` | | The bright edge of a fill, and the light sweeping across a full bar. |
+| `bar/tick` | the tick's colour | A tick in the rim between a bar's parts: a mark at its top and its foot. |
+| `bar/tick_line` | the groove, just dimmed | The line in the groove joining a tick's two marks, drawn under the fill. |
+| `bar/gilded_border`, `bar/gilded_groove` | the gilt; the groove as painted | The front page's mastery bar. |
+| `bar/slim_border`, `bar/slim_groove`, `bar/slim_fill` | | An objective's slim bar. |
+| `clasp/border`, `clasp/face` | rim, face | A clasp (a page's buttons); its border alone is the shadow it casts when lifted. |
+| `panel/border`, `panel/face` | line, panel | The panels windows and cards sit in. |
+| `slot/border`, `slot/well` | | An item slot. |
+| `pager/outline`, `pager/face`, `pager/marker`, `pager/square`, `pager/dot` | | The flip pager's pill and its marks. |
+| `arrow` | | The arrow of a recipe. |
 
 ## Layout
 
@@ -119,7 +154,6 @@ flat icon in inventory slots. `models` changes what is drawn:
 | --- | --- | --- | --- |
 | `item` | identifier | Folios's book | The item model of the book's item. |
 | `open` | identifier | Folios's open book | The model used while someone reads the book in hand, as other players see it. |
-| `cover` | identifier or `"none"` | `folios:guide/handheld_cover` | What sits on a handheld book's boards: corner caps, clasps, bands. `"none"` for nothing. |
 | `hands` | boolean | `true` | Whether the reader's hands are drawn holding a handheld book. |
 | `gui` | string | `"flat"` | In inventory slots: `"flat"` for the flat icon, `"model"` for the book's model. |
 
@@ -128,14 +162,11 @@ flat icon in inventory slots. `models` changes what is drawn:
   "models": {
     "item": "mymod:handbook",
     "open": "mymod:handbook_open",
-    "cover": "mymod:guide/handbook_cover",
     "hands": true,
     "gui": "model"
   }
 }
 ```
-
-The older `"item_model"` key at the top of book.json still works in place of `models.item`.
 
 Where `item` and `open` point depends on the version:
 
@@ -149,7 +180,16 @@ Where `item` and `open` point depends on the version:
 
 ### Cover models
 
-A `cover` model is a model in the block and item model format, at `assets/<namespace>/models/<path>.json`. It is laid
+`cover` › `model` in book.json names what sits on a handheld book's boards: corner caps, clasps, bands. It defaults to
+`folios:guide/handheld_cover`; `"none"` puts nothing there.
+
+```json title="book.json"
+{
+  "cover": { "model": "mymod:guide/handbook_cover" }
+}
+```
+
+A cover model is a model in the block and item model format, at `assets/<namespace>/models/<path>.json`. It is laid
 on the outside of each board, mirrored on the left one:
 
 - x runs from 0 at the spine to 16 at the board's outer edge, y from 0 at its foot to 16 at its head, and z from 0 on
@@ -197,7 +237,7 @@ These are for item model definitions on 26.1 and later:
 
 ## Cover lettering
 
-`cover_text` places the book's name (`title`), `subtitle` and `summary` on the cover of the book item and of a handheld
+`cover` › `text` places the book's name (`title`), `subtitle` and `summary` on the cover of the book item and of a handheld
 book. Places are in the item model's units: the default cover runs from 3 to 13 across and from 1 (its foot) to 15
 (its head) up.
 
@@ -213,9 +253,11 @@ the lettering.
 
 ```json title="book.json"
 {
-  "cover_text": {
-    "title": { "x": 8, "y": 11.6, "size": 1.15, "width": 6.4 },
-    "subtitle": { "y": 4.05, "size": 0.85 }
+  "cover": {
+    "text": {
+      "title": { "x": 8, "y": 11.6, "size": 1.15, "width": 6.4 },
+      "subtitle": { "y": 4.05, "size": 0.85 }
+    }
   }
 }
 ```
@@ -258,4 +300,4 @@ name means `folios:<name>`.
 | `once` | boolean | `false` | Play only the first time each spread is seen this game. Pages of entries read in an earlier game count as seen. |
 | `unread` | boolean | `false` | Play only on spreads the reader hasn't been shown in full before. Remembered with their [reading progress](categories-and-entries.md#reading-progress), so it doesn't play again after a restart. |
 
-Mods can add effects with [`FoliosReveals.register`](for-mod-developers.md#reveal-effects).
+Mods can add effects with [`FoliosReveals.register`](api/reveal-effects.md).

@@ -1,0 +1,9 @@
+{
+  "category": "misc",
+  "pages": [
+    {"type": "spread", "build": {"pattern": [["A"]]}, "multiblock": {"pattern": [["B"]]},
+     "map": {"nodes": [{"id": "a", "name": "Old", "label": "New"}]}},
+    {"type": "structure", "structure": {"id": "minecraft:x", "name": "Old", "label": "New"}},
+    {"type": "recipe", "recipes": ["minecraft:a"], "recipe": "minecraft:b"}
+  ]
+}

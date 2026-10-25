@@ -1,0 +1,23 @@
+// A 2.x book: no "format_version", no "name" (so it took guide.testns.every_rule.name).
+{
+  "subtitle": "Every rule of the 3.0 upgrade, once",
+  "accent": 7114751,
+  "cover": "5a3a22",
+  "cover_texture": "testns:textures/gui/cover.png",
+  "cover_text": {"title": {"y": 11.0, "color": "#FFEEDD"}},
+  "models": {"cover": "testns:item/cover_model"},
+  "textures": {"cover": "testns:textures/gui/boards.png", "paper": "testns:textures/gui/paper.png"},
+  "tilt": 12.5,
+  "distance": 1.0,
+  "page_turn": {"seconds": 0.4},
+  "progress": "book",
+  "item_model": "testns:item/every_rule",
+  "colors": {
+    "paper": "f1e7d0",
+    "text": 3878950,
+    "dark": {"paper": "  1a2033 ", "text": "#E6EBF2"},
+    "tooltip": {"background": "16202e", "border": 2164260863}
+  },
+  "unknown_null": null,
+  "icon": "minecraft:book"
+}

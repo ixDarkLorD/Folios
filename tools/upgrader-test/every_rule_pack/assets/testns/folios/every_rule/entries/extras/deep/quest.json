@@ -1,0 +1,26 @@
+{
+  "category": "extras",
+  "name": "A quest, a folder down",
+  "icon": "minecraft:map",
+  "pages": [
+    {
+      "type": "quest",
+      "title": "Old Quest",
+      "objectives": [
+        {"category": "basics"},
+        {"book": true},
+        {"item": "minecraft:oak_log", "count": 3},
+        {"read": "basics/first"},
+        "a string objective, skipped"
+      ]
+    },
+    {
+      "elements": [
+        {
+          "type": "quest",
+          "objectives": [{"item": "minecraft:stone", "count": 1.0}]
+        }
+      ]
+    }
+  ]
+}

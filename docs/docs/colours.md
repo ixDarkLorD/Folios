@@ -1,7 +1,7 @@
 # Colours
 
 A book has two colour schemes: the **page** scheme, `colors`, for the paper and what is on it, in light and dark mode;
-and the **panel** scheme, `panel`, for what the book shows off its pages. `accent` and `cover` in [book.json](book.md)
+and the **panel** scheme, `panel`, for what the book shows off its pages. `accent` and `cover` › `color` in [book.json](book.md)
 set the book's two main colours, which both schemes start from.
 
 ## Page colours
@@ -56,7 +56,7 @@ book: a background from the cover colour, a gilt frame warmed by the accent.
 }
 ```
 
-Before 2.0 this was `colors` › `tooltip`, which is still read when a book has no `panel`.
+In 2.x books this was `colors` › `tooltip`; Folios moves it to `panel` as it [updates](migrating-to-3.0.md) a 2.x book.
 
 A category can give its own tab a colour with `"color"` in its file. See
 [Categories](categories-and-entries.md#categories).

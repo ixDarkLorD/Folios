@@ -9,7 +9,7 @@ blocks are placed, the build is moved so its lowest corner is at 0.
 
 | Key | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `name` | text | none | The name it is shown by, unless the page names it. |
+| `name` | text | none | The name it is shown by, unless the page gives it a `label`. |
 | `pattern`, `mapping` | | none | As on a multiblock. Mappings take tags too. |
 | `blocks` | list | `[]` | Blocks placed one entry at a time. |
 

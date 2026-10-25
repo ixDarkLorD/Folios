@@ -611,3 +611,39 @@ body.fh-page::before {
   .fh-book__leaf--5 { transform: translateZ(1.2px) rotateY(-177.8deg); }
   .fh-book__leaf--6 { transform: translateZ(2px) rotateY(-177.5deg); }
 }
+
+/* ----- The docs hub: two doors, one for writing books and one for the Java API ----- */
+.md-typeset .f-doors { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; margin: 1.4rem 0 1.6rem; }
+.md-typeset a.f-door {
+  display: flex; flex-direction: column; gap: 0.45rem; padding: 1.2rem 1.3rem 1.1rem; border-radius: 14px;
+  background: var(--f-surface); border: 1px solid var(--f-line); color: var(--f-text); text-decoration: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.md-typeset a.f-door:hover, .md-typeset a.f-door:focus-visible { border-color: var(--f-teal); background: var(--f-surface-2); }
+.f-door__eyebrow { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--f-teal); }
+.f-door__title { font-family: var(--f-serif); font-size: 1.3rem; font-weight: 700; line-height: 1.2; }
+.f-door__text { font-size: 0.78rem; line-height: 1.55; color: var(--f-muted); flex: 1; }
+.f-door__go { font-size: 0.78rem; font-weight: 600; color: var(--f-teal); }
+
+/* ----- The Minecraft version picker (mc-version.js) ----- */
+.mc-picker { display: flex; align-items: center; gap: 0.4rem; margin: 0 0.6rem 0 auto; font-size: 0.7rem; color: rgba(246, 238, 219, 0.75); white-space: nowrap; }
+.mc-picker__name { font-weight: 600; letter-spacing: 0.02em; }
+.mc-picker select {
+  appearance: none; -webkit-appearance: none; font: inherit; font-weight: 600; color: #f6eedb; cursor: pointer;
+  padding: 0.25rem 1.5rem 0.25rem 0.6rem; border-radius: 8px; border: 0;
+  background: rgba(230, 235, 242, 0.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23f2c14e' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 0.5rem center;
+  box-shadow: inset 0 0 0 1px rgba(230, 235, 242, 0.12); transition: background-color 0.2s;
+}
+.mc-picker select:hover { background-color: rgba(230, 235, 242, 0.1); }
+.mc-picker select:focus-visible { outline: 2px solid var(--f-gold); outline-offset: 1px; }
+.mc-picker option { color: #17121f; background: #f6eedb; }
+/* On a phone, the word goes and the picker keeps its place by the search. */
+@media (max-width: 44.9375em) {
+  .mc-picker__name { display: none; }
+  .mc-picker { margin-right: 0; }
+  .mc-picker select { padding: 0.2rem 1.1rem 0.2rem 0.4rem; background-position: right 0.35rem center; font-size: 0.65rem; max-width: 6.2rem; text-overflow: ellipsis; }
+}
+/* The version table's row for the picked version. */
+.md-typeset tr.mc-row td { background: color-mix(in srgb, var(--f-teal) 14%, transparent); font-weight: 600; }
+/* Until the picker has run, only the wording that covers every version shows. */
+html:not([data-mc]) .mc-only { display: none; }

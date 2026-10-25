@@ -6,7 +6,7 @@ Pictures, kept at their own proportions. Several are shown one at a time, with a
 
 | Key | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `images` | texture path, or list of 1–32 | required | The pictures, as full texture paths. |
+| `image` | texture path, or list of 1–32 | required | The picture, or several shown in turn, as full texture paths. |
 | `title` | text | none | A heading. |
 | `text` | text | `""` | A caption under the pictures. |
 | `border` | boolean | `true` | Whether the pictures are framed. |
@@ -15,7 +15,7 @@ Pictures, kept at their own proportions. Several are shown one at a time, with a
 ```json
 {
   "type": "image",
-  "images": [
+  "image": [
     "mymod:textures/gui/guide/valley.png",
     "mymod:textures/gui/guide/rift.png"
   ],

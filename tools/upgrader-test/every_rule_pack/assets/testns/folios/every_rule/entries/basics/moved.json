@@ -1,0 +1,40 @@
+{
+  "category": "extras",
+  "name": "Moved",
+  "icon": "minecraft:compass",
+  "flag": "testns:moved_open",
+  "obtained": "minecraft:compass",
+  "requires": [{"advancement": "minecraft:story/smelt_iron"}],
+  "pages": [
+    {
+      "type": "structure",
+      "structure": {"id": "minecraft:igloo/bottom", "name": "Bottom"},
+      "structures": [
+        {"id": "minecraft:igloo/top", "name": "Igloo"},
+        "minecraft:village/plains/houses/plains_small_house_1"
+      ]
+    },
+    {
+      "type": "build",
+      "builds": "testns:tower"
+    },
+    {
+      "type": "build",
+      "builds": [{"build": "testns:tower", "name": "Tower"}, {"build": "testns:hut", "name": "Hut"}]
+    },
+    {
+      "type": "spread",
+      "build": {"pattern": [["A"]], "mapping": {"A": "minecraft:stone"}},
+      "map": {"nodes": [{"x": 1, "y": 2, "name": "Start"}, {"x": 3, "y": 4}]}
+    },
+    {
+      "type": "spread",
+      "build": "testns:tower"
+    },
+    {
+      "advancement": "minecraft:story/mine_stone",
+      "title": "Locked Page",
+      "text": "Opens once stone is mined."
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+/* The book upgrader page (upgrader-ui.js). Built on the site's tokens (folios.css): --f-* for its colours, --md-* for
+   the theme's; the diff's own colours are set for both schemes below. */
+
+.fu {
+  --fu-gone: rgba(192, 72, 64, 0.13);
+  --fu-gone-mark: #b8443c;
+  --fu-came: rgba(26, 111, 102, 0.13);
+  --fu-came-mark: #1a6f66;
+  --fu-warn: rgba(242, 193, 78, 0.16);
+  --fu-warn-mark: #b7871b;
+  --fu-error-mark: #b8443c;
+  margin-block: 1.2rem 2rem;
+}
+
+[data-md-color-scheme="slate"] .fu {
+  --fu-gone: rgba(255, 120, 110, 0.13);
+  --fu-gone-mark: #ff8a80;
+  --fu-came: rgba(79, 209, 197, 0.13);
+  --fu-came-mark: #4fd1c5;
+  --fu-warn: rgba(242, 193, 78, 0.1);
+  --fu-warn-mark: #f2c14e;
+  --fu-error-mark: #ff8a80;
+}
+
+/* ---------- Picking ---------- */
+.fu-drop {
+  display: grid; justify-items: center; gap: 0.6rem; padding: 1.8rem 1rem; text-align: center;
+  border: 2px dashed var(--f-line); border-radius: 12px; background: var(--f-surface);
+  transition: border-color 0.2s, background 0.2s;
+}
+.fu-drop--over { border-color: var(--f-teal); background: var(--f-surface-2); }
+.md-typeset .fu-drop p { margin: 0; }
+.fu-drop__title { font-family: var(--f-serif); font-weight: 700; font-size: 1.1rem; }
+.fu-drop__buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
+.md-typeset .fu-drop__buttons .md-button, .md-typeset .fu-summary .md-button { margin: 0; cursor: pointer; }
+.md-typeset .fu .md-button[disabled] { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.fu-drop__note { color: var(--f-muted); font-size: 0.75rem; }
+.fu--broken .fu-drop { opacity: 0.5; pointer-events: none; }
+
+/* ---------- Notes and the summary ---------- */
+.md-typeset .fu-note { margin: 1rem 0; padding: 0.6rem 0.8rem; border-left: 3px solid var(--f-teal); border-radius: 6px; background: var(--f-surface-2); }
+.md-typeset .fu-note p { margin: 0.3rem 0; }
+.md-typeset .fu-note--warn { border-left-color: var(--fu-warn-mark); background: var(--fu-warn); }
+.md-typeset .fu-note--error { border-left-color: var(--fu-error-mark); background: var(--fu-gone); }
+.fu-field { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-weight: 600; }
+.fu-input {
+  flex: 1 1 10rem; max-width: 18rem; padding: 0.3rem 0.5rem; font: inherit; font-weight: 400; color: inherit;
+  border: 1px solid var(--f-line); border-radius: 6px; background: var(--md-default-bg-color);
+}
+.fu-input:focus { outline: 2px solid var(--f-teal); outline-offset: 1px; }
+
+.fu-summary {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem;
+  margin: 1.2rem 0; padding: 0.8rem 1rem; border: 1px solid var(--f-line); border-radius: 10px; background: var(--f-surface);
+}
+.md-typeset .fu-summary p { margin: 0; }
+
+/* ---------- A book ---------- */
+.fu-book { margin: 1.6rem 0; padding-top: 1rem; border-top: 1px solid var(--f-line); }
+.fu-book__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 0.8rem; }
+.md-typeset .fu-book__id { margin: 0; font-size: 1.1rem; font-weight: 700; overflow-wrap: anywhere; }
+.md-typeset .fu-book__folder { flex-basis: 100%; margin: 0; font-size: 0.75rem; color: var(--f-muted); overflow-wrap: anywhere; }
+.md-typeset .fu-book__count { margin: 0.6rem 0; color: var(--f-muted); }
+
+.fu-badge { padding: 0.1rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+.fu-badge--upgrade { color: #17121f; background: var(--f-teal-bright); }
+.fu-badge--ok { color: var(--f-teal); box-shadow: inset 0 0 0 1px currentColor; }
+.fu-badge--error { color: var(--fu-error-mark); box-shadow: inset 0 0 0 1px currentColor; }
+
+/* ---------- A file ---------- */
+/* A file is a <details>, which Material draws as a collapsible admonition: kept quieter here, with its chevron but
+   without its icon. */
+.md-typeset .fu-file { margin: 0.5rem 0; padding: 0 0.8rem; font-size: 0.8rem; border: 1px solid var(--f-line); border-radius: 8px; background: var(--f-surface); box-shadow: none; }
+.md-typeset .fu-file > summary {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.7rem; margin: 0 -0.8rem; padding: 0.5rem 2.2rem 0.5rem 0.8rem;
+  border: 0; border-radius: 8px; background: none; font-weight: 400; cursor: pointer;
+}
+.md-typeset .fu-file > summary::before { display: none; }
+.fu-file__path { overflow-wrap: anywhere; }
+.fu-file__moved { font-size: 0.75rem; color: var(--fu-warn-mark); overflow-wrap: anywhere; }
+.fu-file__count { margin-left: auto; font-size: 0.75rem; color: var(--f-muted); }
+
+.md-typeset ul.fu-whys { margin: 0.4rem 0 0.8rem; padding: 0; list-style: none; }
+.md-typeset ul.fu-whys > li { margin: 0.6rem 0 0; }
+.md-typeset .fu-why { margin: 0; font-weight: 600; }
+.md-typeset ul.fu-lines { margin: 0.2rem 0 0 1.1rem; font-size: 0.75rem; color: var(--f-muted); }
+.md-typeset ul.fu-lines li { margin: 0.1rem 0; font-size: 0.72rem; overflow-wrap: anywhere; }
+.md-typeset .fu-check { margin: 0.6rem 0 0.6rem 0.8rem; }
+.md-typeset .fu-check > p { margin: 0; }
+
+/* Before and after, side by side; one over the other on a phone. Each scrolls on its own, never the page. */
+.fu-diff { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.8rem; }
+@media (max-width: 760px) { .fu-diff { grid-template-columns: 1fr; } }
+/* (Material centres figures and sizes them to their content: not these.) */
+.md-typeset .fu-code { display: block; width: auto; min-width: 0; max-width: none; margin: 0; text-align: left; }
+.md-typeset .fu-code figcaption { margin: 0 0 0.2rem; max-width: none; font-size: 0.7rem; font-weight: 700; text-align: left; color: var(--f-muted); overflow-wrap: anywhere; }
+.md-typeset .fu-code pre { margin: 0; max-height: 28rem; overflow: auto; border-radius: 6px; background: var(--md-code-bg-color); }
+.md-typeset .fu-code pre > code { display: block; padding: 0.6rem 0; font-size: 0.68rem; line-height: 1.5; background: none; overflow: visible; }
+.fu-line { display: block; min-width: max-content; min-height: 1.5em; padding: 0 0.8rem; white-space: pre; border-left: 3px solid transparent; }
+.fu-line--gone { background: var(--fu-gone); border-left-color: var(--fu-gone-mark); }
+.fu-line--came { background: var(--fu-came); border-left-color: var(--fu-came-mark); }
+
+/* The option to move quests to the server's: a line of its own above the buttons. */
+.fu-option {
+  display: block;
+  margin: 0.6em 0;
+  font-size: 0.85em;
+  color: var(--md-default-fg-color--light);
+}
+.fu-option input {
+  margin: 0 0.4em 0 0;
+  vertical-align: middle;
+}

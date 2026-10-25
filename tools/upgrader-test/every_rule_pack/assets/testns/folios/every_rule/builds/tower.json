@@ -1,0 +1,4 @@
+{
+  "pattern": [["S"], ["S"]],
+  "mapping": {"S": "minecraft:stone_bricks"}
+}

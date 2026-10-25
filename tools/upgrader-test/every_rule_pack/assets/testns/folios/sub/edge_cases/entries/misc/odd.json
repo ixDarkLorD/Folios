@@ -1,0 +1,13 @@
+{
+  "category": "misc",
+  "pages": [
+    {"type": "structure", "structure": ["minecraft:a", "minecraft:b"], "structures": "minecraft:c"},
+    {"type": "structure", "structures": []},
+    {"type": "image", "images": ["x",], "image": "y"},
+    {"type": "recipe", "recipes": null},
+    {"anchor": "a", "marker": "b"},
+    {"advancement": "minecraft:a", "requires": null},
+    [1, 2],
+  ],
+  "obtained": "minecraft:stone"
+}

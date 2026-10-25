@@ -1,43 +1,53 @@
 # book.json
 
-`assets/<namespace>/folios/<book>/book.json` describes the book itself. Every key has a default, but you will want at least a `name`.
+`assets/<namespace>/folios/<book>/book.json` describes the book itself. Every key has a default, so the smallest
+book.json is `{"format_version": "3.0"}`, with its words in your [language files](#words).
 
-Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be translation keys.
+Colours are written `"#RRGGBB"` or `"#AARRGGBB"`. Texts are [Folios Markdown](text-formatting.md), a translation key,
+or `{"translate": ...}`.
 
 ## Example
 
 ```json title="book.json"
 {
-  "name": "My Guide",
-  "subtitle": "Everything about my mod",
-  "summary": "Notes on the land, gathered on the road.",
-  "author": "The Pack Team",
+  "format_version": "3.0",
   "style": "handheld",
-  "accent": "#C0602A",
-  "cover": "#5A3A22",
   "icon": "minecraft:writable_book",
-  "landing": "Welcome to **My Guide**.\n\nPick a category from the tabs, or [start here](entry:getting_started/first_steps).",
-  "show_progress": true,
-  "tilt": 6,
-  "distance": 0.64,
-  "page_turn": "bend",
-  "close_on_click_outside": false,
+  "accent": "#C0602A",
+  "cover": { "color": "#5A3A22" },
+  "handheld": { "tilt": 10, "walk": false },
   "reveal": { "effect": "folios:ink", "seconds": 1.0, "once": true },
-  "handheld": { "look_around": true, "walk": true },
-  "cover_text": {
-    "title": { "x": 8, "y": 11.6, "size": 1.15, "width": 6.4 },
-    "subtitle": { "x": 8, "y": 4.05, "size": 0.85, "width": 6.4 }
-  },
-  "models": { "hands": true, "gui": "flat" },
-  "colors": {
-    "paper": "#F1E7D0",
-    "text": "#3B3026"
-  },
+  "colors": { "paper": "#F1E7D0", "text": "#3B3026" },
   "panel": { "frame": "#E8C66A", "title": "#F2E6CC" },
   "celebrations": { "entry": false },
-  "layout": { "tabs": { "x": 0, "y": 6, "spacing": 2 } }
+  "alignment": "justify"
 }
 ```
+
+```json title="lang/en_us.json"
+{
+  "folios.mymod.my_guide.name": "My Guide",
+  "folios.mymod.my_guide.subtitle": "Everything about my mod",
+  "folios.mymod.my_guide.author": "The Pack Team",
+  "folios.mymod.my_guide.landing": "Welcome to **My Guide**.\n\nPick a category from the tabs, or [start here](entry:getting_started/first_steps)."
+}
+```
+
+## Words
+
+A book's own texts can be written in book.json, or left out to come from the language files under a key named after
+the book (a `/` in the book's path becomes a `.`):
+
+| Key | Language key when left out | What it is |
+| --- | --- | --- |
+| `name` | `folios.<namespace>.<book>.name` | The book's name: on the cover, the front page, the bar and the item. Without the key either, the book's id in title case ("My Guide"). |
+| `subtitle` | `folios.<namespace>.<book>.subtitle` | A line under the name, on the cover and front page. |
+| `summary` | `folios.<namespace>.<book>.summary` | A short description on the cover. With a summary, the name and subtitle share the upper plate of the cover, and the summary (up to two lines) takes the lower one. |
+| `landing` | `folios.<namespace>.<book>.landing` | The text of the book's front page. |
+| `author` | `folios.<namespace>.<book>.author` | Who the book is by: the book item's tooltip says "By: ..." under its name. With neither, it says nothing. |
+
+A key that isn't in the language files leaves that text out (the name excepted, as above). Written in book.json, each
+takes text, a translation key or `{"translate": "key", "with": [...]}`.
 
 ## Keys
 
@@ -45,32 +55,28 @@ Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be tra
 
 | Key | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `name` | text | `guide.<namespace>.<book>.name` | The book's name: on the cover, the front page, the bar and the item. Without it, the book uses that translation key. |
-| `subtitle` | text | none | A line under the name, on the cover and front page. |
-| `summary` | text | none | A short description on the cover. With a summary, the name and subtitle share the upper plate of the cover, and the summary (up to two lines) takes the lower one. |
-| `landing` | text | none | The text of the book's front page, in [Folios Markdown](text-formatting.md). |
+| `format_version` | string | `"2.0"` | The version of the format the book is written in: `"3.0"`. A book without it is read as a 2.x book and updated as it loads. See [Migrating to 3.0](migrating-to-3.0.md#format-versions). |
 | `icon` | [icon](categories-and-entries.md#icons) | the book's own item | The icon shown in the bar and on the front page. |
 | `show_progress` | boolean | `true` | Whether the lists of categories show how much of each has been read, as bars. |
-| `author` | text | the mod its namespace belongs to | Who the book is from: the guide book item's tooltip says "From ..." under its name. Without it, the name of the mod whose namespace the book is in. |
+| `progress_scope` | string | `"player"` | Where what is read is kept: `"player"` or `"copy"`. See [Reading progress](categories-and-entries.md#reading-progress). |
 | `celebrations` | boolean or object | none | How finishing part of the book is celebrated. Off unless the book says so. See [Celebrations](celebrations.md). |
 
 ### Style and handling
 
 | Key | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `style` | string | `"screen"` | How the book is shown: `"screen"` or `"handheld"`. A bare name means `folios:<name>`; mods can [add styles](for-mod-developers.md#styles). See [Styles and look](styles-and-look.md). |
-| `tilt` | number | `6` | Handheld books: how far the book leans back from facing the reader, in degrees. Clamped to -45 to 80. |
-| `distance` | number | `0.64` | Handheld books: how far the book is held from the eyes, in blocks. Clamped to 0.3 to 1.5. |
-| `page_turn` | string | `"bend"` | How leaves turn: `"bend"` curls each leaf as it turns, `"flat"` swings it stiffly. |
+| `style` | string | `"screen"` | How the book is shown: `"screen"` or `"handheld"`. A bare name means `folios:<name>`; mods can [add styles](api/styles.md). See [Styles and look](styles-and-look.md). |
 | `close_on_click_outside` | boolean | `true` for handheld, `false` for screen | Whether clicking off the book closes it. |
-| `handheld` | object | see below | Handheld books: what the reader can do while holding the book open. |
-| `reveal` | string or object | `folios:rise`, 0.45 s | How a page's content appears once its leaf is down. See [Reveal effects](styles-and-look.md#reveal-effects). |
-| `progress` | string | `"player"` | Where what is read in the book is kept. `"player"`: with each player, saved on the server, so it is theirs in any copy of the book and from any computer. `"book"`: on each copy of the book, like a notebook, so whoever reads that copy finds its bookmarks and read pages, and a new copy starts fresh. See [Reading progress](categories-and-entries.md#reading-progress). |
+| `handheld` | object | see below | Handheld books: how the book is held, and what the reader can do while holding it open. |
+| `reveal` | string or object | `folios:rise`, 0.45 s | How a page's content appears once its leaf is down. See [Reveal](#reveal). |
 
-`handheld` has two keys:
+`handheld` takes:
 
 | Key | Type | Default | What it does |
 | --- | --- | --- | --- |
+| `tilt` | number | `6` | How far the book leans back from facing the reader, in degrees. -45 to 80. |
+| `distance` | number | `0.64` | How far the book is held from the eyes, in blocks. 0.3 to 1.5. |
+| `page_turn` | string | `"bend"` | How leaves turn: `"bend"` curls each leaf as it turns, `"flat"` swings it stiffly. Screen books turn their leaves this way too. |
 | `look_around` | boolean | `true` | Holding the right mouse button turns the reader's head, and the book with it. |
 | `walk` | boolean | `true` | The movement keys walk, jump, sneak and sprint while the book is open. The arrow keys still turn the leaves. |
 
@@ -79,9 +85,27 @@ Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be tra
 | Key | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `accent` | colour | `#8B6CFF` | The book's colour, for marks, links, rules and highlights. |
-| `cover` | colour | `#3A2E58` | The colour of the cover and of the book item's leather. |
 | `colors` | object | the style's own | The page colour scheme: page colours and dark mode. See [Colours](colours.md). |
-| `panel` | object | taken from the book | The panel colour scheme, for what the book shows off its pages: its tooltips, its toasts and the build guide's panel. See [Panel colours](colours.md#panel-colours). |
+| `panel` | object | taken from the book | The colours of what the book shows off its pages: its tooltips, its toasts and the build guide's panel. See [Panel colours](colours.md#panel-colours). |
+
+### Cover
+
+`cover` groups everything about the book's cover:
+
+| Key | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `color` | colour | `#3A2E58` | The colour of the cover and of the book item's leather. |
+| `texture` | texture path | none | Handheld books: a texture drawn on the outside of the front cover, over its colour. |
+| `model` | identifier or `"none"` | `folios:guide/handheld_cover` | What sits on a handheld book's boards: corner caps, clasps, bands. See [Cover models](styles-and-look.md#cover-models). |
+| `text` | object | the model's own | Where the name, subtitle and summary are lettered on the cover. See [Cover lettering](styles-and-look.md#cover-lettering). |
+
+```json
+"cover": {
+  "color": "#5A3A22",
+  "texture": "mymod:textures/guide/cover_emboss.png",
+  "text": { "title": { "y": 12 } }
+}
+```
 
 ### Look
 
@@ -89,14 +113,16 @@ Colours are written as `"#RRGGBB"` or `"RRGGBB"` (or a number). Texts can be tra
 | --- | --- | --- | --- |
 | `textures` | object | Folios's own | The texture layers the book is drawn with. See [Textures](styles-and-look.md#textures). |
 | `layout` | object | see [Layout](styles-and-look.md#layout) | Where tabs, turn buttons, page numbers and the close clasp sit. |
-| `models` | object | Folios's own | The book's item model, open model, handheld cover model, hands and slot icon. See [Models](styles-and-look.md#models). |
-| `item_model` | identifier | none | Older way to set the item model; `models.item` takes its place. |
-| `cover_text` | object | the model's own | Where the name, subtitle and summary are lettered on the cover. See [Cover lettering](styles-and-look.md#cover-lettering). |
-| `cover_texture` | texture path | none | Handheld books: a texture drawn on the outside of the front cover, over its colour. |
+| `models` | object | Folios's own | The book's item model, open model, hands and slot icon. See [Models](styles-and-look.md#models). |
+
+### Setting pages
+
+`overflow`, `alignment`, `title_alignment` and `anchor` in book.json set every page of the book, unless a page or an
+element says otherwise. See [Setting pages](setting-pages.md).
 
 ## Reveal
 
-`reveal` is written in one of three ways:
+`reveal` is written in one of these ways:
 
 ```json
 "reveal": "folios:ink"

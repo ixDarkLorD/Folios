@@ -1,0 +1,31 @@
+{
+  "category": "basics",
+  "name": "First",
+  "icon": "minecraft:paper",
+  "text": "An entry-level text, made the first page.",
+  "pages": [
+    {
+      "anchor": "second",
+      "title": "Second",
+      "text": "Named for links the 2.x way."
+    },
+    {
+      "type": "recipe",
+      "recipes": ["minecraft:torch", "minecraft:lantern"],
+      "text": "Two recipes."
+    },
+    {
+      "type": "image",
+      "images": ["testns:textures/gui/one.png"]
+    },
+    {
+      "elements": [
+        {"type": "recipe", "recipes": "minecraft:chest"},
+        {"type": "image", "images": "testns:textures/gui/two.png"},
+        {"recipes": "not a recipe element: left as it is"},
+        "a string element, skipped"
+      ]
+    },
+    "a page written as a string"
+  ]
+}

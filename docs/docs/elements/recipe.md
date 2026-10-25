@@ -8,21 +8,22 @@ under the result.
 
 | Key | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `recipe` | identifier | | One recipe id. |
-| `recipes` | list of 1–2 identifiers | | Two recipes on one page. Use either `recipe` or `recipes`. |
+| `recipe` | identifier, or list of 1–2 | required | One recipe id, or two in a list to show both. |
 | `title` | text | the result's name | A heading. A page with one recipe and no title is named after what it makes. |
 | `text` | text | `""` | Text under the recipes. |
 
 ```json
 {
   "type": "recipe",
-  "recipes": ["minecraft:iron_pickaxe", "minecraft:wooden_pickaxe"],
+  "recipe": ["minecraft:iron_pickaxe", "minecraft:wooden_pickaxe"],
   "text": "Two recipes fit on a page."
 }
 ```
 
 A recipe that doesn't exist shows "No recipe" and its id.
 
-!!! note "Where recipes come from"
-    On 26.1 and later, clients aren't sent recipes, so the page asks the server for them the first time it is shown.
-    On 1.21 and 1.20.1, the page reads the recipes the client was sent when the player joined.
+!!! note mc-26 "Where recipes come from: 26.1 and later"
+    Clients aren't sent recipes, so the page asks the server for them the first time it is shown.
+
+!!! note mc-121 mc-120 "Where recipes come from: 1.21 and 1.20.1"
+    The page reads the recipes the client was sent when the player joined.
