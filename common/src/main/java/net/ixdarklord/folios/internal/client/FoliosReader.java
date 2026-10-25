@@ -19,7 +19,11 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.gui.Font;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import org.jspecify.annotations.Nullable;
@@ -296,7 +300,10 @@ public class FoliosReader implements AbstractPainter.Navigator {
             for (FoliosEntry entry : book.entries(category.id())) all.addAll(entry.objectives());
         }
         boolean mastery = !all.isEmpty();
-        int titleBottom = mastery ? 134 : 96;
+        // The book's name, smaller or over two lines when it is long; what is under it moves down as far as it takes.
+        Component bookTitle = book.title().copy().withStyle(ChatFormatting.BOLD);
+        Name title = fit(layout.font(), bookTitle, layout.contentWidth());
+        int titleBottom = (mastery ? 134 : 96) + title.extra();
         List<FoliosText> landing = FoliosText.isBlank(book.landing()) ? List.of()
                 : layout.text(book.landing()).split(layout.contentBottom() - titleBottom, layout.contentBottom() - FoliosLayout.CONTENT_TOP);
         FoliosText first = landing.isEmpty() ? null : landing.getFirst();
@@ -310,12 +317,18 @@ public class FoliosReader implements AbstractPainter.Navigator {
             book.icon().draw(painter, 0, 0);
             painter.pop();
             int contentWidth = painter.contentRight() - FoliosLayout.CONTENT_LEFT;
-            List<FormattedCharSequence> title = painter.font().split(book.title().copy().withStyle(ChatFormatting.BOLD), contentWidth);
             int y = 62;
-            for (FormattedCharSequence line : title.subList(0, Math.min(2, title.size()))) {
-                painter.text(line, middle - painter.font().width(line) / 2, y, palette.heading());
-                y += 10;
+            for (int line = 0; line < title.lines().size(); line++) {
+                FormattedCharSequence shown = title.lines().get(line);
+                float wide = painter.font().width(shown) * title.scale();
+                painter.push();
+                painter.translate(middle - wide / 2, y + (title.lines().size() == 1 ? (1 - title.scale()) * 4 : line * Name.STEP));
+                painter.scale(title.scale());
+                painter.text(shown, 0, 0, palette.heading());
+                painter.pop();
             }
+            if (title.cut() && painter.hovered(FoliosLayout.CONTENT_LEFT, y, contentWidth, title.height())) painter.tooltip(bookTitle);
+            y += 10 + title.extra();
             if (!FoliosText.isBlank(book.subtitle())) {
                 // On one line, whole: made smaller as far as it must be to fit.
                 FormattedCharSequence subtitle = FoliosText.inline(book.subtitle()).copy().withStyle(ChatFormatting.ITALIC).getVisualOrderText();
@@ -563,7 +576,73 @@ public class FoliosReader implements AbstractPainter.Navigator {
     }
 
     private int height(Row row) {
-        return this.barred(row) ? BAR_ROW : ROW;
+        return (this.barred(row) ? BAR_ROW : ROW) + this.name(row, session.layout().font(), session.layout().contentWidth()).extra();
+    }
+
+    /** A row's name as drawn: its lines, the scale they are drawn at, and whether it was cut short. */
+    private record Name(List<FormattedCharSequence> lines, float scale, boolean cut) {
+        /** The most lines a name takes, and the smallest it is drawn. */
+        static final int MOST = 2;
+        static final float SMALL = 0.75F;
+        /** From one line of a name drawn small to the next. */
+        static final int STEP = 8;
+
+        /** How much taller than a name of one line it is. */
+        int extra() {
+            return (lines.size() - 1) * STEP;
+        }
+
+        /** How tall its text is, from its top. */
+        int height() {
+            return lines.size() == 1 ? 8 : lines.size() * STEP;
+        }
+    }
+
+    // A row's name in the room it has (see fit).
+    private Name name(Row row, Font font, int contentWidth) {
+        return fit(font, row.label, Math.max(10, contentWidth - 20 - FRESH - this.countWidth(row, font)));
+    }
+
+    // Text in the room it has: as it is if it fits; else smaller, down to three quarters; else over two lines at that,
+    // the last cut short with an ellipsis if even they aren't enough.
+    private static Name fit(Font font, Component text, int room) {
+        int width = font.width(text);
+        if (width <= room) return new Name(List.of(text.getVisualOrderText()), 1, false);
+        if (width * Name.SMALL <= room) return new Name(List.of(text.getVisualOrderText()), room / (float) width, false);
+        int across = (int) (room / Name.SMALL);
+        List<FormattedText> parts = font.getSplitter().splitLines(text, across, Style.EMPTY);
+        List<FormattedCharSequence> lines = new ArrayList<>();
+        for (int line = 0; line < Math.min(Name.MOST, parts.size()); line++) {
+            boolean last = line == Name.MOST - 1 && parts.size() > Name.MOST;
+            FormattedText part = last ? FormattedText.composite(parts.get(line), FormattedText.of(" …")) : parts.get(line);
+            if (last && font.width(part) > across) {
+                part = FormattedText.composite(font.substrByWidth(part, across - font.width("…")), FormattedText.of("…"));
+            }
+            lines.add(Language.getInstance().getVisualOrder(part));
+        }
+        return new Name(lines, Name.SMALL, parts.size() > Name.MOST);
+    }
+
+    /** The room kept at a row's end for the sparkle of one unread, whether or not it shows now. */
+    private static final int FRESH = 10;
+
+    // How wide a row's count is, with the room after it; 0 for a row without one.
+    private int countWidth(Row row, Font font) {
+        Component count = this.count(row);
+        return count == null ? 0 : font.width(count) + 4;
+    }
+
+    // A row's count: a category's entries read of all its entries (when the book shows it), or a quest's objectives
+    // done of all of them ("✔" once all are).
+    private @Nullable Component count(Row row) {
+        if (row.category != null && book.showProgress() && row.link != null) {
+            int[] read = this.progress(row.category);
+            return Component.literal(read[0] + "/" + read[1]);
+        }
+        if (row.quest.isEmpty()) return null;
+        int done = 0;
+        for (FoliosObjective objective : row.quest) if (objective.isDone(book)) done++;
+        return done == row.quest.size() ? Component.literal("✔") : Component.literal(done + "/" + row.quest.size());
     }
 
     // A row's highlight under the pointer: a box with its corners rounded by 2 pixels, in rows that don't overlap so
@@ -584,11 +663,12 @@ public class FoliosReader implements AbstractPainter.Navigator {
         boolean over = row.link != null && painter.action(left - 2, y, right - left + 4, height - 1, null, () -> this.follow(row.link));
         if (over) highlight(painter, left - 2, y, right + 2, y + height - 1, FoliosPalette.alpha(palette.accent(), 0x2A));
         boolean barred = this.barred(row);
+        Name name = this.name(row, painter.font(), right - left);
         // Without a bar: the icon with 3 pixels of paper over it and under it before the lines, the name centred on it.
         // With one: the name 2 pixels further down than the row before's line, the bar under it, the icon centred
         // between the name's top and the line along the foot.
-        int iconY = barred ? (y + 3 + y + height - 2) / 2 - 8 : y + 2;
-        int textY = barred ? y + 3 : iconY + 4;
+        int iconY = barred ? (y + 3 + y + height - 2) / 2 - 8 : y + 2 + name.extra() / 2;
+        int textY = barred ? y + 3 : iconY + 8 - name.height() / 2;
         if (!row.icon.isEmpty()) {
             painter.push();
             painter.translate(left, iconY);
@@ -598,22 +678,20 @@ public class FoliosReader implements AbstractPainter.Navigator {
             painter.centeredText(Component.literal("?"), left + 8, iconY + 4, palette.muted());
         }
         boolean fresh = row.fresh.getAsBoolean();
-        int textRight = right - (fresh ? 10 : 0);
+        int textRight = right - (fresh ? FRESH : 0);
         // How far along it is: a count at the right and a bar along its foot, for a category's reading or a quest.
         float progress = -1;
         int steps = 1;
         Component count = null;
         if (row.category != null && book.showProgress() && row.link != null) {
             int[] read = this.progress(row.category);
-            count = Component.literal(read[0] + "/" + read[1]);
+            count = this.count(row);
             progress = read[1] == 0 ? 0 : read[0] / (float) read[1];
             steps = read[1];
         } else if (!row.quest.isEmpty()) {
-            int done = 0;
-            for (FoliosObjective objective : row.quest) if (objective.isDone(book)) done++;
             progress = FoliosObjective.progress(book, row.quest);
             steps = row.quest.size();
-            count = done == row.quest.size() ? Component.literal("✔") : Component.literal(done + "/" + row.quest.size());
+            count = this.count(row);
         }
         boolean complete = progress >= 1;
         if (count != null) {
@@ -621,13 +699,21 @@ public class FoliosReader implements AbstractPainter.Navigator {
             painter.text(count, textRight - width, textY, complete ? 0xFF3E8E41 : palette.muted());
             textRight -= width + 4;
         }
-        FormattedCharSequence shown = painter.font().split(row.label, Math.max(10, textRight - left - 20)).stream().findFirst().orElse(FormattedCharSequence.EMPTY);
-        painter.text(shown, left + 20, textY, row.link == null ? palette.muted() : over ? palette.heading() : palette.text());
+        // Its name: smaller, or over two lines, when it is too long for its line; one cut short is shown whole when hovered.
+        int nameColor = row.link == null ? palette.muted() : over ? palette.heading() : palette.text();
+        for (int line = 0; line < name.lines().size(); line++) {
+            painter.push();
+            painter.translate(left + 20, textY + (name.lines().size() == 1 ? (1 - name.scale()) * 4 : line * Name.STEP));
+            painter.scale(name.scale());
+            painter.text(name.lines().get(line), 0, 0, nameColor);
+            painter.pop();
+        }
+        if (name.cut() && painter.hovered(left + 20, textY, textRight - left - 20, name.height())) painter.tooltip(row.label);
         // Unread: a little four-pointed sparkle at the row's end, blinking now and then (each row at its own moment).
         if (fresh) net.ixdarklord.folios.internal.client.screen.FoliosBar.sparkle(painter, right - 7, textY, y * 0.037F,
                 palette.accent() | 0xFF000000);
         if (progress >= 0) {
-            QuestPageElement.stepped(painter, left + 20, textY + 11, right - left - 21, progress, steps, complete ? 0xFF4CAF50 : palette.accent());
+            QuestPageElement.stepped(painter, left + 20, textY + 11 + name.extra(), right - left - 21, progress, steps, complete ? 0xFF4CAF50 : palette.accent());
         }
         // The line along the row's foot, as every row has; under a bar it falls 6 pixels below the bar's edge.
         painter.fill(left + 20, y + height - 2, right, y + height - 1, FoliosPalette.alpha(palette.line(), 0x60));
