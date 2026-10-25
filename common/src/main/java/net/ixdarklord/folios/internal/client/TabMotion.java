@@ -20,12 +20,12 @@ public final class TabMotion {
 
     // Per tab: how far out, how fast it moves, how pressed, and the time it has yet to step.
     private final Map<String, float[]> tabs = new HashMap<>();
-    private long lastFrame = Util.getMillis();
+    private long lastFrame = net.ixdarklord.folios.internal.client.FoliosClock.millis();
     private float frame;
 
     /** Starts a frame: how much time has passed is read once for every tab. */
     public void frame() {
-        long now = Util.getMillis();
+        long now = net.ixdarklord.folios.internal.client.FoliosClock.millis();
         frame = Math.min(0.1F, (now - lastFrame) / 1000.0F);
         lastFrame = now;
     }

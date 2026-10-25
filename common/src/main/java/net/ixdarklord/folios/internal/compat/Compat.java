@@ -18,6 +18,11 @@ public final class Compat {
         return codec.listOf().flatXmap(list -> sized(list, min, max), list -> sized(list, min, max));
     }
 
+    /** Codec.withAlternative: the first codec, or when it can't read a value, the second. */
+    public static <T> Codec<T> withAlternative(Codec<T> codec, Codec<? extends T> alternative) {
+        return Codec.either(codec, alternative).xmap(either -> either.map(value -> value, value -> value), com.mojang.datafixers.util.Either::left);
+    }
+
     private static <T> DataResult<List<T>> sized(List<T> list, int min, int max) {
         if (list.size() < min) return DataResult.error(() -> "List is too short: " + list.size() + ", expected at least " + min);
         if (list.size() > max) return DataResult.error(() -> "List is too long: " + list.size() + ", expected at most " + max);

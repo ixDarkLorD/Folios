@@ -1,7 +1,7 @@
 package net.ixdarklord.folios.api;
 
-import net.ixdarklord.folios.internal.GuideNetwork;
-import net.ixdarklord.folios.internal.core.GuideRegistry;
+import net.ixdarklord.folios.internal.FoliosNetwork;
+import net.ixdarklord.folios.internal.core.FoliosRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -27,7 +27,7 @@ public final class FoliosBooks {
 
     /** Folios's guide book item, opening the given book. */
     public static ItemStack createStack(ResourceLocation book) {
-        return createStack(GuideRegistry.BOOK_ITEM.get(), book);
+        return createStack(FoliosRegistry.BOOK_ITEM.get(), book);
     }
 
     /** As {@link #createStack(ResourceLocation)}, the book given as {@code "namespace:path"}. */
@@ -41,7 +41,7 @@ public final class FoliosBooks {
      */
     public static ItemStack createStack(ItemLike item, ResourceLocation book) {
         ItemStack stack = new ItemStack(item);
-        stack.getOrCreateTag().putString(GuideRegistry.GUIDE_BOOK, book.toString());
+        stack.getOrCreateTag().putString(FoliosRegistry.GUIDE_BOOK, book.toString());
         return stack;
     }
 
@@ -56,8 +56,8 @@ public final class FoliosBooks {
 
     /** The book a stack's NBT names; null when none. */
     static @Nullable ResourceLocation named(ItemStack stack) {
-        if (stack.isEmpty() || stack.getTag() == null || !stack.getTag().contains(GuideRegistry.GUIDE_BOOK, net.minecraft.nbt.Tag.TAG_STRING)) return null;
-        return ResourceLocation.tryParse(stack.getTag().getString(GuideRegistry.GUIDE_BOOK));
+        if (stack.isEmpty() || stack.getTag() == null || !stack.getTag().contains(FoliosRegistry.GUIDE_BOOK, net.minecraft.nbt.Tag.TAG_STRING)) return null;
+        return ResourceLocation.tryParse(stack.getTag().getString(FoliosRegistry.GUIDE_BOOK));
     }
 
     /** Opens a book on a player's screen at its first page. */
@@ -70,6 +70,6 @@ public final class FoliosBooks {
      * {@code entries/}), or at its start for null. Does nothing for a client without Folios.
      */
     public static void open(ServerPlayer player, ResourceLocation book, @Nullable String entry) {
-        GuideNetwork.open(player, book, entry);
+        FoliosNetwork.open(player, book, entry);
     }
 }

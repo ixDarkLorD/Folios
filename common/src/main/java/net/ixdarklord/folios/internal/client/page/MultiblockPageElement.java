@@ -25,8 +25,8 @@ public record MultiblockPageElement(List<List<String>> pattern, Map<String, Stri
     public static final MapCodec<MultiblockPageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Codec.STRING.listOf().listOf().fieldOf("pattern").forGetter(MultiblockPageElement::pattern),
             Codec.unboundedMap(Codec.STRING, Codec.STRING).fieldOf("mapping").forGetter(MultiblockPageElement::mapping),
-            Codec.STRING.optionalFieldOf("title").forGetter(MultiblockPageElement::title),
-            Codec.STRING.optionalFieldOf("text", "").forGetter(MultiblockPageElement::text),
+            FoliosText.CODEC.optionalFieldOf("title").forGetter(MultiblockPageElement::title),
+            FoliosText.CODEC.optionalFieldOf("text", "").forGetter(MultiblockPageElement::text),
             Codec.intRange(40, 130).optionalFieldOf("height", 78).forGetter(MultiblockPageElement::height)
     ).apply(instance, MultiblockPageElement::new));
 
@@ -64,7 +64,8 @@ public record MultiblockPageElement(List<List<String>> pattern, Map<String, Stri
         int contentWidth = layout.contentWidth();
         int height = layout.scaled(this.height);
         SceneViewport view = layout.viewport(contentWidth * FoliosLayout.SCENE_DETAIL, height * FoliosLayout.SCENE_DETAIL);
-        view.refreshRate(30);
+        // Drawn every frame: a scene drawn fewer times turns in uneven steps.
+        view.refreshRate(240);
         BuildScene scene = new BuildScene(view);
         scene.show(blocks);
         // Set on a ground of grid lines a block wider than it every way.

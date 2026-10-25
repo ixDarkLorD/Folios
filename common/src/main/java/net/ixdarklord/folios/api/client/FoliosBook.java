@@ -90,8 +90,13 @@ public record FoliosBook(ResourceLocation id, String name, String subtitle, Stri
      * @param tabPlate drawn on a tab under its icon, tinted with the paper's colour, so the icon reads on any ribbon
      * @param backdrop drawn over the whole screen behind a screen book; null for the world, dimmed
      */
-    public record Textures(ResourceLocation page, ResourceLocation frame, ResourceLocation cover, ResourceLocation tab, ResourceLocation tabPlate, @Nullable ResourceLocation backdrop) {
-        public static final Textures DEFAULT = new Textures(rl("page"), rl("page_frame"), rl("cover"), rl("ribbon"), rl("ribbon_plate"), null);
+    public record Textures(ResourceLocation page, ResourceLocation frame, ResourceLocation cover, ResourceLocation tab, ResourceLocation tabPlate, @Nullable ResourceLocation backdrop, ResourceLocation spotlight) {
+        public static final Textures DEFAULT = new Textures(rl("page"), rl("page_frame"), rl("cover"), rl("ribbon"), rl("ribbon_plate"), null, rl("spotlight"));
+
+        /** The book's textures, its spotlight card Folios's own. */
+        public Textures(ResourceLocation page, ResourceLocation frame, ResourceLocation cover, ResourceLocation tab, ResourceLocation tabPlate, @Nullable ResourceLocation backdrop) {
+            this(page, frame, cover, tab, tabPlate, backdrop, DEFAULT.spotlight());
+        }
 
         private static ResourceLocation rl(String name) {
             return new ResourceLocation("folios", "textures/book/" + name + ".png");

@@ -28,12 +28,14 @@ import java.util.Map;
 import java.util.Optional;
 
 // One thing over both pages of the open book, a window across the fold: a wide picture ("image"), a build turning in
-// the world's light ("build", as a multiblock page's pattern and mapping), or a map of the book's entries ("map": nodes
+// the world's light ("build", a build file as a build page names one, or "multiblock", blocks written in place as a
+// multiblock page's pattern and mapping), or a map of the book's entries ("map": nodes
 // placed in the window, each a link to an entry, joined by dotted paths). The title is centred over it across the fold,
 // and the text under it, in centred lines. It runs unbroken over the fold: on a screen book, whose pages have the
 // spine between them, each page draws on into the spine to meet the other. In the window's own pixels a node at x 0 is at its left edge, at the window's
 // width (the spread's, less the margins) its right.
-public record SpreadPage(Optional<String> title, String text, Optional<ResourceLocation> image, Optional<Build> build, Optional<MapLayout> map, int height)
+public record SpreadPage(Optional<String> title, String text, Optional<ResourceLocation> image, Optional<String> build, Optional<Build> multiblock,
+                         Optional<MapLayout> map, int height)
         implements FoliosPageElement {
     /** A build in the window: a multiblock page's pattern and mapping. */
     public record Build(List<List<String>> pattern, Map<String, String> mapping) {
@@ -43,15 +45,15 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
         ).apply(instance, Build::new));
     }
 
-    /** A place on the map: where it is in the window, what it shows, and the entry it opens. */
-    public record Node(String id, int x, int y, JsonElement icon, Optional<String> entry, Optional<String> name) {
+    /** A place on the map: where it is in the window, what it shows, the entry it opens, and its label. */
+    public record Node(String id, int x, int y, JsonElement icon, Optional<String> entry, Optional<String> label) {
         static final Codec<Node> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.fieldOf("id").forGetter(Node::id),
                 Codec.INT.fieldOf("x").forGetter(Node::x),
                 Codec.INT.fieldOf("y").forGetter(Node::y),
                 ExtraCodecs.JSON.optionalFieldOf("icon", new com.google.gson.JsonPrimitive("minecraft:book")).forGetter(Node::icon),
                 Codec.STRING.optionalFieldOf("entry").forGetter(Node::entry),
-                Codec.STRING.optionalFieldOf("name").forGetter(Node::name)
+                FoliosText.CODEC.optionalFieldOf("label").forGetter(Node::label)
         ).apply(instance, Node::new));
     }
 
@@ -65,10 +67,11 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
     }
 
     public static final MapCodec<SpreadPage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Codec.STRING.optionalFieldOf("title").forGetter(SpreadPage::title),
-            Codec.STRING.optionalFieldOf("text", "").forGetter(SpreadPage::text),
+            FoliosText.CODEC.optionalFieldOf("title").forGetter(SpreadPage::title),
+            FoliosText.CODEC.optionalFieldOf("text", "").forGetter(SpreadPage::text),
             ResourceLocation.CODEC.optionalFieldOf("image").forGetter(SpreadPage::image),
-            Build.CODEC.optionalFieldOf("build").forGetter(SpreadPage::build),
+            Codec.STRING.optionalFieldOf("build").forGetter(SpreadPage::build),
+            Build.CODEC.optionalFieldOf("multiblock").forGetter(SpreadPage::multiblock),
             MapLayout.CODEC.optionalFieldOf("map").forGetter(SpreadPage::map),
             Codec.intRange(40, 150).optionalFieldOf("height", 104).forGetter(SpreadPage::height)
     ).apply(instance, SpreadPage::new));
@@ -98,7 +101,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
     // How tall the window is: as the page asks, but a build's leaves room under it for the blocks it needs and a line
     // of its text above the page number.
     private int windowHeight(G g) {
-        if (build.isEmpty()) return height;
+        if (build.isEmpty() && multiblock.isEmpty()) return height;
         int top = FoliosLayout.CONTENT_TOP + (title.isPresent() && !title.get().isEmpty() ? FoliosLayout.TITLE_HEIGHT : 0);
         int below = 5 + Requirements.HEADING + Requirements.SLOT + (text.isEmpty() ? 0 : 5 + 10);
         return Math.max(40, Math.min(height, g.contentBottom() - 6 - top - below));
@@ -115,14 +118,14 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
         Component heading = title.isPresent() && !title.get().isEmpty() ? FoliosText.inline(title.get()) : null;
         int top = FoliosLayout.CONTENT_TOP + (heading != null ? FoliosLayout.TITLE_HEIGHT : 0);
         // A build's blocks, a row under its window, the text under them.
-        Requirements needs = build.map(made -> new Requirements(MultiblockPageElement.blocks(made.pattern(), made.mapping()).values()))
-                .filter(made -> !made.isEmpty()).orElse(null);
+        Map<BlockPos, BlockChoice> blocks = this.blocks(layout);
+        Requirements needs = blocks == null || blocks.isEmpty() ? null : new Requirements(blocks.values());
         int listTop = top + this.windowHeight(g) + 5;
         int textTop = needs != null ? listTop + Requirements.HEADING + Requirements.SLOT + 5 : top + this.windowHeight(g) + 6;
         // The text under the window, in centred lines across the spread, as many as there is room for.
         List<FormattedCharSequence> caption = text.isEmpty() ? List.of() : Minecraft.getInstance().font.split(FoliosText.inline(text), g.width() - 24);
         List<FormattedCharSequence> under = caption.subList(0, Math.min(caption.size(), Math.max(0, (g.contentBottom() - textTop) / 10)));
-        Window window = this.window(layout, top, g);
+        Window window = this.window(layout, top, g, blocks);
         Component needed = needs == null ? null : Component.translatableWithFallback("folios.requires", "Blocks needed")
                 .append(" \u00B7 " + needs.total()).withStyle(net.minecraft.ChatFormatting.ITALIC);
         TextPlate plate = heading == null && under.isEmpty() && needed == null ? null : new TextPlate(layout, g, heading, needed, listTop, under, textTop);
@@ -207,8 +210,29 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
         }
     }
 
-    private Window window(FoliosLayout layout, int top, G g) {
-        if (build.isPresent()) return this.buildWindow(layout, top, build.get(), g);
+    // Its build's blocks: a build file's, or those written in place; null for a spread without one. A build file that
+    // can't be found or read shows nothing, with what went wrong in the log.
+    private @Nullable Map<BlockPos, BlockChoice> blocks(FoliosLayout layout) {
+        if (multiblock.isPresent()) return MultiblockPageElement.blocks(multiblock.get().pattern(), multiblock.get().mapping());
+        if (build.isEmpty()) return null;
+        ResourceLocation book = layout.book().id();
+        String named = build.get();
+        ResourceLocation id = named.contains(":") ? ResourceLocation.tryParse(named) : book.withPath(book.getPath() + "/builds/" + named);
+        com.google.gson.JsonObject json = id == null ? null : net.ixdarklord.folios.internal.client.FoliosLibrary.build(id);
+        if (json == null) {
+            net.ixdarklord.folios.internal.core.Folios.LOGGER.error("A spread of the guide {} names the build {}, which it doesn't have", book, named);
+            return Map.of();
+        }
+        try {
+            return BuildPageElement.read(json);
+        } catch (Exception e) {
+            net.ixdarklord.folios.internal.core.Folios.LOGGER.error("Couldn't read the build {} of the guide {}: {}", id, book, e.getMessage());
+            return Map.of();
+        }
+    }
+
+    private Window window(FoliosLayout layout, int top, G g, @Nullable Map<BlockPos, BlockChoice> blocks) {
+        if (blocks != null) return this.buildWindow(layout, top, blocks, g);
         if (map.isPresent()) return this.mapWindow(top, map.get(), g);
         ResourceLocation picture = image.orElse(null);
         return part -> {
@@ -216,10 +240,10 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
         };
     }
 
-    private Window buildWindow(FoliosLayout layout, int top, Build build, G g) {
-        Map<BlockPos, BlockChoice> blocks = MultiblockPageElement.blocks(build.pattern(), build.mapping());
+    private Window buildWindow(FoliosLayout layout, int top, Map<BlockPos, BlockChoice> blocks, G g) {
         SceneViewport view = layout.viewport(g.width() * FoliosLayout.SCENE_DETAIL, this.windowHeight(g) * FoliosLayout.SCENE_DETAIL);
-        view.refreshRate(30);
+        // Drawn every frame: a scene drawn fewer times turns in uneven steps.
+        view.refreshRate(240);
         BuildScene scene = new BuildScene(view);
         scene.show(blocks);
         view.ground(0, 1, 0x30808080, 0x55A0A0A0, false);
@@ -293,7 +317,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
                 }
                 if (over) painter.fill(px + 1, y + 1, px + NODE - 1, y + NODE - 1, FoliosPalette.alpha(palette.accent(), 0x40));
                 icons.get(node.id()).draw(painter, px + 2, y + 2);
-                if (node.name().isPresent() && painter.hovered(px, y, NODE, NODE)) painter.tooltip(FoliosText.inline(node.name().get()));
+                if (node.label().isPresent() && painter.hovered(px, y, NODE, NODE)) painter.tooltip(FoliosText.inline(node.label().get()));
             }
         };
     }
@@ -302,7 +326,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
     public String searchText() {
         // Each piece in its words: any of them can be a translation key.
         StringBuilder words = new StringBuilder(FoliosText.resolve(title.orElse(""))).append(' ').append(FoliosText.resolve(text));
-        map.ifPresent(layout -> layout.nodes().forEach(node -> node.name().ifPresent(name -> words.append(' ').append(FoliosText.resolve(name)))));
+        map.ifPresent(layout -> layout.nodes().forEach(node -> node.label().ifPresent(name -> words.append(' ').append(FoliosText.resolve(name)))));
         return words.toString();
     }
 

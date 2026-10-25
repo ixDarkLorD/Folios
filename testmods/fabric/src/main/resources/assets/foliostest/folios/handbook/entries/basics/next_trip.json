@@ -1,0 +1,14 @@
+{
+  "name": "The Next Trip",
+  "icon": "minecraft:compass",
+  "sort": 4,
+  "pages": [
+    {
+      "type": "quest",
+      "title": "The Next Trip",
+      "quest": "foliostest:next_trip",
+      "locked": "*Finish Supplies first.*",
+      "text": "Opens once Supplies is done: its \"requires\" names that quest, and the server keeps it shut until then."
+    }
+  ]
+}

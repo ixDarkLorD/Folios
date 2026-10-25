@@ -101,8 +101,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly "net.ixdarklord.folios:folios-common:26.1.2+1.0"            // in the common module
-    implementation "net.ixdarklord.folios:folios-fabric:26.1.2+1.0"         // in each loader's module
+    compileOnly "net.ixdarklord.folios:folios-common:26.1.2+3.0"            // in the common module
+    implementation "net.ixdarklord.folios:folios-fabric:26.1.2+3.0"         // in each loader's module
     implementation "net.ixdarklord.coolcatlib:coolcatlib-fabric:26.1.2-6"   // and CoolCatLib, which Folios runs on
 }
 ```

@@ -104,7 +104,7 @@ public interface FoliosPainter {
     boolean hovered(int x, int y, int width, int height);
 
     /**
-     * Makes a rectangle open a link when pressed: {@code entry:<id>}, {@code entry:<id>#<anchor>},
+     * Makes a rectangle open a link when pressed: {@code entry:<id>}, {@code entry:<id>#<marker>},
      * {@code category:<id>}, {@code http(s)://...}, or a bare entry id. Hovering it shows where it goes.
      *
      * @return whether it is hovered
