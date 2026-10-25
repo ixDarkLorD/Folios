@@ -8,17 +8,9 @@ plugins {
 // Every project's Java, jar, resource and publishing setup.
 apply from: "${findProperty("shared_scripts_url") ?: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4"}/main.gradle"
 
-// Versions read <minecraft>+<mod version>, like 1.21.1+1.0 (the shared scripts' own form is 26.1.2-1).
 subprojects {
-    version = "${libs.versions.minecraft.get()}+${mod_version}"
     // Every jar carries the mod's license (MPL-2.0).
     tasks.withType(Jar).configureEach {
         from(rootProject.file("LICENSE"))
-    }
-    // The shared script fixes the Maven version as it applies; this one follows the version above.
-    afterEvaluate {
-        if (project.extensions.findByName("publishing") != null) {
-            publishing.publications.withType(MavenPublication).configureEach { it.version = project.version }
-        }
     }
 }
