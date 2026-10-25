@@ -55,9 +55,8 @@ jobs:
           toml=".modresources/maven/net/ixdarklord/sharedcatalogs/$catalog/sharedcatalogs-$catalog.toml"
           entry() { sed -n "s/^$1 *= *\"\([^\",]*\).*/\1/p" "$toml" | head -n1; }
           modid=$(prop modid)
-          # The shared script names versions <minecraft>-<mod_version>; a mod's build.gradle may use + instead (Folios).
-          separator=-; grep -qF '+${mod_version}' build.gradle && separator=+
-          version="$(entry minecraft)$separator$(prop mod_version)"
+          # Versions are <mod_version>+<minecraft> (8.0.0+26.1.2), as the shared build script names them.
+          version="$(prop mod_version)+$(entry minecraft)"
           group="$(prop mod_maven_group | tr . /)/$modid"
           echo "java=$(entry java)" >> "$GITHUB_OUTPUT"
           echo "name=$(prop mod_name) $version" >> "$GITHUB_OUTPUT"
