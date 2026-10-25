@@ -142,8 +142,17 @@
             // The page's stylesheet, from beside this script (in the head, so it stays put as the page is redrawn).
             const css = new URL("upgrader.css", this.assets).href;
             if (![...document.querySelectorAll("link[rel=stylesheet]")].some(link => link.href === css)) document.head.append(el("link", {rel: "stylesheet", href: css}));
-            this.root.replaceChildren(this.picker(), this.status = el("div", {class: "fu-status", role: "status", "aria-live": "polite"}),
+            this.track = el("ol", {class: "fu-track", "aria-label": "Steps"});
+            this.side = el("aside", {class: "fu-side"},
+                this.drop = this.picker(),
+                this.optionsView(),
+                this.summary = el("div", {class: "fu-card fu-totals", hidden: true}));
+            this.main = el("div", {class: "fu-main"},
+                this.status = el("div", {class: "fu-status", role: "status", "aria-live": "polite"}),
                 this.results = el("div", {class: "fu-results"}));
+            this.root.classList.add("fu--empty");
+            this.root.replaceChildren(this.track, el("div", {class: "fu-layout"}, this.side, this.main));
+            this.step(1);
             try {
                 const need = [];
                 if (!window.FoliosUpgrader) need.push(loadScript(new URL("upgrader.js", this.assets).href));
@@ -162,6 +171,32 @@
             }
         }
 
+        // Where the page is: choosing what to upgrade, looking it over, or downloading it.
+        step(at) {
+            const names = ["Choose a book", "Review the changes", "Download"];
+            this.track.replaceChildren(...names.map((name, index) => el("li", {
+                class: "fu-track__step" + (index + 1 < at ? " fu-track__step--done" : index + 1 === at ? " fu-track__step--now" : ""),
+                "aria-current": index + 1 === at ? "step" : null},
+                el("span", {class: "fu-track__number"}, String(index + 1)), el("span", {class: "fu-track__name"}, name))));
+        }
+
+        // The options card: what the upgrade does besides upgrading.
+        optionsView() {
+            const box = el("input", {type: "checkbox", class: "fu-switch__input", checked: !!this.serverQuests, onchange: () => {
+                this.serverQuests = box.checked;
+                if (!this.books.length) return;
+                this.books.forEach(book => this.upgrade(book));
+                this.render();
+            }});
+            return el("div", {class: "fu-card fu-options"},
+                el("p", {class: "fu-card__title"}, "Options"),
+                el("label", {class: "fu-switch"}, box, el("span", {class: "fu-switch__track", "aria-hidden": "true"}),
+                    el("span", {class: "fu-switch__text"},
+                        el("strong", {}, "Make quests server quests"),
+                        el("span", {}, "Their objectives move to the data pack (", el("code", {}, "data/<mod id>/folios/quests/"),
+                            "), where the server follows them and can give rewards."))));
+        }
+
         // The drop zone and its two buttons.
         picker() {
             const folder = el("input", {type: "file", webkitdirectory: true, multiple: true, hidden: true,
@@ -169,6 +204,7 @@
             const zip = el("input", {type: "file", accept: ".zip,application/zip", hidden: true,
                 onchange: () => zip.files.length && this.take(() => Input.fromZip(zip.files[0]))});
             const zone = el("div", {class: "fu-drop"},
+                el("span", {class: "fu-drop__icon", "aria-hidden": "true"}),
                 el("p", {class: "fu-drop__title", text: "Drop a book folder or a .zip here"}),
                 el("div", {class: "fu-drop__buttons"},
                     el("button", {type: "button", class: "md-button md-button--primary", onclick: () => { folder.value = ""; folder.click(); }}, "Choose a folder"),
@@ -256,30 +292,37 @@
 
         render() {
             const books = this.books;
+            this.root.classList.toggle("fu--empty", books.length === 0);
+            this.drop.querySelector(".fu-drop__title").textContent = books.length ? "Choose other books" : "Drop a book folder or a .zip here";
             if (books.length === 0) {
                 this.say("No book found. A book is a folder with a book.json in it (in a resource pack, assets/<mod id>/folios/<book>/).", "warn");
                 this.results.replaceChildren();
+                this.summary.hidden = true;
+                this.step(1);
                 return;
             }
+            this.say("");
+            this.step(2);
             const toUpgrade = books.filter(book => book.result && !book.result.upToDate).length;
             const toWrite = books.filter(Page.changes).length;
             const upToDate = books.filter(book => book.result && book.result.upToDate).length;
             const broken = books.filter(book => book.error).length;
-            const parts = [plural(toUpgrade, "to upgrade", "to upgrade"), plural(upToDate, "up to date", "up to date")];
-            if (broken) parts.push(plural(broken, "couldn't be read", "couldn't be read"));
-            this.status.replaceChildren(el("div", {class: "fu-summary"},
-                el("p", {}, el("strong", {}, plural(books.length, "book") + " found"), " in ", el("code", {}, this.input.name), ": " + parts.join(", ") + "."),
-                el("label", {class: "fu-option"},
-                    el("input", {type: "checkbox", checked: !!this.serverQuests, onchange: event => {
-                        this.serverQuests = event.currentTarget.checked;
-                        this.books.forEach(book => this.upgrade(book));
-                        this.render();
-                    }}),
-                    " Make quests server quests: their objectives move to a data pack (",
-                    el("code", {}, "data/<mod id>/folios/quests/"), "), where the server follows them and can give rewards."),
-                el("div", {class: "fu-summary__buttons"},
-                    el("button", {type: "button", class: "md-button md-button--primary", disabled: toWrite === 0,
-                        onclick: event => this.download(event.currentTarget)}, "Download upgraded .zip"))));
+            const quests = books.reduce((sum, book) => sum + (book.quests ? book.quests.quests.size : 0), 0);
+            const stat = (value, name, kind) => el("div", {class: "fu-stat" + (kind ? " fu-stat--" + kind : "")},
+                el("span", {class: "fu-stat__value"}, String(value)), el("span", {class: "fu-stat__name"}, name));
+            this.summary.hidden = false;
+            this.summary.replaceChildren(...[
+                el("p", {class: "fu-card__title"}, "Summary"),
+                el("p", {class: "fu-totals__from"}, "From ", el("code", {}, this.input.name)),
+                el("div", {class: "fu-stats"},
+                    stat(books.length, books.length === 1 ? "book" : "books"),
+                    stat(toUpgrade, "to upgrade", toUpgrade ? "upgrade" : ""),
+                    stat(upToDate, "up to date", "ok"),
+                    this.serverQuests ? stat(quests, quests === 1 ? "quest moved" : "quests moved", quests ? "upgrade" : "") : null,
+                    broken ? stat(broken, "couldn't be read", "error") : null),
+                el("button", {type: "button", class: "md-button md-button--primary fu-download", disabled: toWrite === 0,
+                    onclick: event => this.download(event.currentTarget)}, "Download upgraded .zip"),
+                toWrite === 0 ? el("p", {class: "fu-totals__note"}, "Nothing to change: every book is up to date.") : null].filter(Boolean));
             this.results.replaceChildren(...books.map(book => this.bookView(book)));
         }
 
@@ -289,14 +332,17 @@
                 : result.upToDate ? el("span", {class: "fu-badge fu-badge--ok"}, "Up to date (" + result.from + ")")
                     : el("span", {class: "fu-badge fu-badge--upgrade"}, result.from + " → " + window.FoliosUpgrader.FORMAT.CURRENT);
             const header = el("header", {class: "fu-book__head"},
-                el("h2", {class: "fu-book__id"}, book.id), badge,
-                el("p", {class: "fu-book__folder"}, el("code", {}, (book.folder || this.input.name) + "/")));
+                el("span", {class: "fu-book__icon", "aria-hidden": "true"}),
+                el("div", {class: "fu-book__names"},
+                    el("h2", {class: "fu-book__id"}, book.id),
+                    el("p", {class: "fu-book__folder"}, (book.folder || this.input.name) + "/")),
+                badge);
             const body = [];
             if (book.error) body.push(el("p", {class: "fu-note fu-note--error"}, book.error));
             else if (result.upToDate) body.push(...this.checkView(result));
             else body.push(...this.namespaceField(book), ...this.upgradeView(book));
-            if (book.quests) body.push(...this.questsView(book));
-            return el("section", {class: "fu-book"}, header, body);
+            if (book.quests) body.push(el("div", {class: "fu-section"}, el("h3", {class: "fu-section__title"}, "Server quests"), ...this.questsView(book)));
+            return el("section", {class: "fu-book fu-card"}, header, el("div", {class: "fu-book__body"}, body));
         }
 
         // A book without a namespace folder above it (just its own folder was given) that needs one for its name.
@@ -337,7 +383,7 @@
                 const replaced = file.moved && book.texts.has(path);
                 return this.fileView(path, file, groups, replaced);
             });
-            const out = [el("p", {class: "fu-book__count"}, plural(shown.length, "file") + " upgraded"
+            const out = [el("h3", {class: "fu-section__title"}, "Files"), el("p", {class: "fu-book__count"}, plural(shown.length, "file") + " upgraded"
                 + (result.moves.length ? ", " + plural(result.moves.length, "moved", "moved") : "")
                 + (same.length ? "; " + plural(same.length, "file") + " already fine, left as " + (same.length === 1 ? "it is." : "they are.") : "."))];
             out.push(...views);
@@ -449,6 +495,7 @@
                 document.body.append(link);
                 link.click();
                 link.remove();
+                this.step(3);
                 setTimeout(() => URL.revokeObjectURL(link.href), 60000);
             } catch (error) {
                 this.say("Couldn't make the zip: " + error.message, "error");

@@ -22,23 +22,98 @@
   --fu-error-mark: #ff8a80;
 }
 
-/* ---------- Picking ---------- */
+/* ---------- The steps ---------- */
+.md-typeset ol.fu-track { display: flex; gap: 0.4rem; margin: 0 0 1.2rem; padding: 0; list-style: none; }
+.md-typeset .fu-track__step {
+  flex: 1 1 0; display: flex; align-items: center; gap: 0.5rem; margin: 0; padding: 0.55rem 0.7rem;
+  font-size: 0.72rem; color: var(--f-muted); border-bottom: 2px solid var(--f-line);
+}
+.fu-track__number {
+  display: grid; place-items: center; flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  font-weight: 700; font-size: 0.7rem; color: var(--f-muted); box-shadow: inset 0 0 0 1.5px var(--f-line);
+}
+.md-typeset .fu-track__step--now, .md-typeset .fu-track__step--done { color: var(--f-text); border-bottom-color: var(--f-teal); }
+.fu-track__step--now .fu-track__number { color: #17121f; background: var(--f-teal-bright); box-shadow: none; }
+.fu-track__step--done .fu-track__number { color: var(--f-teal); box-shadow: inset 0 0 0 1.5px var(--f-teal); }
+.fu-track__name { font-weight: 600; }
+.md-typeset .fu-track__step { min-width: 0; }
+.fu-track__name { min-width: 0; overflow-wrap: anywhere; }
+/* On a phone: the numbers, and the name of the step it is at. */
+@media (max-width: 600px) {
+  .md-typeset .fu-track__step { flex: 0 0 auto; }
+  .md-typeset .fu-track__step--now { flex: 1 1 auto; }
+  .fu-track__step:not(.fu-track__step--now) .fu-track__name { display: none; }
+}
+
+/* ---------- The layout: a sidebar beside the books; one column before there are any ---------- */
+.fu-layout { display: grid; grid-template-columns: minmax(13rem, 16rem) minmax(0, 1fr); gap: 1.2rem; align-items: start; }
+.fu-side { position: sticky; top: 4.2rem; display: grid; gap: 0.8rem; }
+.fu-main { min-width: 0; }
+.fu--empty .fu-layout { grid-template-columns: minmax(0, 1fr); max-width: 34rem; margin-inline: auto; }
+.fu--empty .fu-side { position: static; }
+@media (max-width: 960px) {
+  .fu-layout { grid-template-columns: minmax(0, 1fr); }
+  .fu-side { position: static; }
+}
+
+/* ---------- Cards ---------- */
+.fu-card { padding: 0.9rem 1rem; border: 1px solid var(--f-line); border-radius: 12px; background: var(--f-surface); }
+.md-typeset .fu-card__title {
+  margin: 0 0 0.6rem; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--f-muted);
+}
+
+/* ---------- Choosing files ---------- */
 .fu-drop {
-  display: grid; justify-items: center; gap: 0.6rem; padding: 1.8rem 1rem; text-align: center;
+  display: grid; justify-items: center; gap: 0.6rem; padding: 1.4rem 1rem; text-align: center;
   border: 2px dashed var(--f-line); border-radius: 12px; background: var(--f-surface);
   transition: border-color 0.2s, background 0.2s;
 }
+.fu--empty .fu-drop { padding: 2.6rem 1.2rem; }
 .fu-drop--over { border-color: var(--f-teal); background: var(--f-surface-2); }
+.fu-drop__icon { display: none; width: 2.6rem; height: 2.6rem; border-radius: 12px; background: var(--f-surface-2); position: relative; }
+.fu--empty .fu-drop__icon { display: block; }
+.fu-drop__icon::after {
+  content: ""; position: absolute; inset: 0.6rem; background: var(--f-teal);
+  -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3l5 5h-3v6h-4V8H7zM5 17h14v3H5z"/></svg>') center / contain no-repeat; mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3l5 5h-3v6h-4V8H7zM5 17h14v3H5z"/></svg>') center / contain no-repeat;
+}
 .md-typeset .fu-drop p { margin: 0; }
-.fu-drop__title { font-family: var(--f-serif); font-weight: 700; font-size: 1.1rem; }
-.fu-drop__buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
-.md-typeset .fu-drop__buttons .md-button, .md-typeset .fu-summary .md-button { margin: 0; cursor: pointer; }
+.fu-drop__title { font-family: var(--f-serif); font-weight: 700; font-size: 1rem; }
+.fu--empty .fu-drop__title { font-size: 1.25rem; }
+.fu-drop__buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+.md-typeset .fu-drop__buttons .md-button { margin: 0; cursor: pointer; }
+:not(.fu--empty) > .fu-layout .fu-drop__buttons .md-button { font-size: 0.66rem; padding: 0.4em 1em; }
 .md-typeset .fu .md-button[disabled] { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
-.fu-drop__note { color: var(--f-muted); font-size: 0.75rem; }
+.fu-drop__note { color: var(--f-muted); font-size: 0.68rem; }
 .fu--broken .fu-drop { opacity: 0.5; pointer-events: none; }
 
-/* ---------- Notes and the summary ---------- */
-.md-typeset .fu-note { margin: 1rem 0; padding: 0.6rem 0.8rem; border-left: 3px solid var(--f-teal); border-radius: 6px; background: var(--f-surface-2); }
+/* ---------- Options: a switch ---------- */
+.fu-switch { position: relative; display: grid; grid-template-columns: auto 1fr; gap: 0.7rem; align-items: start; cursor: pointer; }
+.fu-switch__input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.fu-switch__track { position: relative; width: 2.1rem; height: 1.2rem; margin-top: 0.1rem; border-radius: 999px; background: var(--f-line); transition: background 0.2s; }
+.fu-switch__track::after {
+  content: ""; position: absolute; top: 0.15rem; left: 0.15rem; width: 0.9rem; height: 0.9rem; border-radius: 50%;
+  background: var(--md-default-bg-color); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); transition: transform 0.2s ease;
+}
+.fu-switch__input:checked + .fu-switch__track { background: var(--f-teal); }
+.fu-switch__input:checked + .fu-switch__track::after { transform: translateX(0.9rem); }
+.fu-switch__input:focus-visible + .fu-switch__track { outline: 2px solid var(--f-teal); outline-offset: 2px; }
+.fu-switch__text { display: grid; gap: 0.2rem; font-size: 0.72rem; line-height: 1.45; color: var(--f-muted); }
+.fu-switch__text strong { font-size: 0.78rem; color: var(--f-text); }
+.md-typeset .fu-switch__text code { font-size: 0.85em; overflow-wrap: anywhere; }
+
+/* ---------- The summary ---------- */
+.md-typeset .fu-totals__from { margin: 0 0 0.7rem; font-size: 0.72rem; color: var(--f-muted); overflow-wrap: anywhere; }
+.fu-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.9rem; }
+.fu-stat { display: grid; gap: 0.1rem; padding: 0.5rem 0.6rem; border-radius: 8px; background: var(--f-surface-2); }
+.fu-stat__value { font-family: var(--f-serif); font-size: 1.25rem; font-weight: 700; line-height: 1.1; }
+.fu-stat__name { font-size: 0.66rem; color: var(--f-muted); }
+.fu-stat--upgrade .fu-stat__value { color: var(--f-teal); }
+.fu-stat--error .fu-stat__value { color: var(--fu-error-mark); }
+.md-typeset .fu-download { display: block; width: 100%; margin: 0; text-align: center; cursor: pointer; }
+.md-typeset .fu-totals__note { margin: 0.5rem 0 0; font-size: 0.68rem; color: var(--f-muted); text-align: center; }
+
+/* ---------- Notes ---------- */
+.md-typeset .fu-note { margin: 0 0 1rem; padding: 0.6rem 0.8rem; border-left: 3px solid var(--f-teal); border-radius: 6px; background: var(--f-surface-2); }
 .md-typeset .fu-note p { margin: 0.3rem 0; }
 .md-typeset .fu-note--warn { border-left-color: var(--fu-warn-mark); background: var(--fu-warn); }
 .md-typeset .fu-note--error { border-left-color: var(--fu-error-mark); background: var(--fu-gone); }
@@ -49,20 +124,25 @@
 }
 .fu-input:focus { outline: 2px solid var(--f-teal); outline-offset: 1px; }
 
-.fu-summary {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem;
-  margin: 1.2rem 0; padding: 0.8rem 1rem; border: 1px solid var(--f-line); border-radius: 10px; background: var(--f-surface);
+/* ---------- A book: a card, its head over its files and its quests ---------- */
+.fu-results { display: grid; gap: 1rem; }
+.fu-book.fu-card { padding: 0; overflow: hidden; }
+.fu-book__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.7rem; padding: 0.8rem 1rem; border-bottom: 1px solid var(--f-line); background: var(--f-surface-2); }
+.fu-book__icon {
+  flex: none; width: 2rem; height: 2rem; background: var(--f-teal);
+  -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 3h11a3 3 0 0 1 3 3v15H7a2 2 0 0 1-2-2zm2 14v2h10v-2z"/></svg>') center / 75% no-repeat; mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 3h11a3 3 0 0 1 3 3v15H7a2 2 0 0 1-2-2zm2 14v2h10v-2z"/></svg>') center / 75% no-repeat;
 }
-.md-typeset .fu-summary p { margin: 0; }
+.fu-book__names { flex: 1 1 9rem; min-width: 0; }
+.md-typeset .fu-book__id { margin: 0; padding: 0; border: 0; font-size: 0.95rem; font-weight: 700; line-height: 1.3; overflow-wrap: break-word; }
+.md-typeset .fu-book__folder { margin: 0.1rem 0 0; font-family: var(--md-code-font-family); font-size: 0.64rem; color: var(--f-muted); overflow-wrap: anywhere; }
+.fu-book__body { padding: 0.2rem 1rem 0.8rem; }
+.md-typeset .fu-book__count { margin: 0.2rem 0 0.6rem; font-size: 0.72rem; color: var(--f-muted); }
+.md-typeset .fu-section__title {
+  margin: 0.8rem 0 0.2rem; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--f-muted);
+}
+.fu-section { margin-top: 0.6rem; border-top: 1px dashed var(--f-line); }
 
-/* ---------- A book ---------- */
-.fu-book { margin: 1.6rem 0; padding-top: 1rem; border-top: 1px solid var(--f-line); }
-.fu-book__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 0.8rem; }
-.md-typeset .fu-book__id { margin: 0; font-size: 1.1rem; font-weight: 700; overflow-wrap: anywhere; }
-.md-typeset .fu-book__folder { flex-basis: 100%; margin: 0; font-size: 0.75rem; color: var(--f-muted); overflow-wrap: anywhere; }
-.md-typeset .fu-book__count { margin: 0.6rem 0; color: var(--f-muted); }
-
-.fu-badge { padding: 0.1rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+.fu-badge { flex: none; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.66rem; font-weight: 700; white-space: nowrap; }
 .fu-badge--upgrade { color: #17121f; background: var(--f-teal-bright); }
 .fu-badge--ok { color: var(--f-teal); box-shadow: inset 0 0 0 1px currentColor; }
 .fu-badge--error { color: var(--fu-error-mark); box-shadow: inset 0 0 0 1px currentColor; }
@@ -70,7 +150,7 @@
 /* ---------- A file ---------- */
 /* A file is a <details>, which Material draws as a collapsible admonition: kept quieter here, with its chevron but
    without its icon. */
-.md-typeset .fu-file { margin: 0.5rem 0; padding: 0 0.8rem; font-size: 0.8rem; border: 1px solid var(--f-line); border-radius: 8px; background: var(--f-surface); box-shadow: none; }
+.md-typeset .fu-file { margin: 0.35rem 0; padding: 0 0.8rem; font-size: 0.8rem; border: 1px solid var(--f-line); border-radius: 8px; background: var(--f-surface); box-shadow: none; }
 .md-typeset .fu-file > summary {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.7rem; margin: 0 -0.8rem; padding: 0.5rem 2.2rem 0.5rem 0.8rem;
   border: 0; border-radius: 8px; background: none; font-weight: 400; cursor: pointer;
@@ -100,14 +180,3 @@
 .fu-line--gone { background: var(--fu-gone); border-left-color: var(--fu-gone-mark); }
 .fu-line--came { background: var(--fu-came); border-left-color: var(--fu-came-mark); }
 
-/* The option to move quests to the server's: a line of its own above the buttons. */
-.fu-option {
-  display: block;
-  margin: 0.6em 0;
-  font-size: 0.85em;
-  color: var(--md-default-fg-color--light);
-}
-.fu-option input {
-  margin: 0 0.4em 0 0;
-  vertical-align: middle;
-}

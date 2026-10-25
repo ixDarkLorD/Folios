@@ -1,6 +1,9 @@
 ---
 title: Book upgrader
 description: Rewrites a Folios 2.x guide book into the 3.0 format, in your browser.
+hide:
+  - navigation
+  - toc
 ---
 # Book upgrader
 
