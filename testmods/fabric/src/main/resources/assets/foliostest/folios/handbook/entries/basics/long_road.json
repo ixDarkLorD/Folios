@@ -1,0 +1,22 @@
+{
+  "name": "The Long Road",
+  "icon": "minecraft:compass",
+  "sort": 2,
+  "pages": [
+    {
+      "type": "quest",
+      "title": "The Long Road",
+      "reward": "A map of the world, and a story to tell",
+      "objectives": [
+        { "read": "basics/first_steps", "label": "Read the First Steps entry from start to end" },
+        { "obtained": "minecraft:oak_log", "label": "Chop down a tree for its first log" },
+        { "carried": "minecraft:cobblestone", "goal": 16, "label": "Carry sixteen cobblestone back to camp" },
+        { "obtained": "minecraft:iron_ingot", "label": "Smelt your first iron ingot" },
+        { "obtained": "minecraft:diamond", "label": "Find something shiny deep underground" },
+        { "obtained": "minecraft:obsidian", "label": "Mine a block of obsidian" },
+        { "obtained": "minecraft:ender_pearl", "label": "Take an ender pearl from an enderman" },
+        { "advancement": "minecraft:story/enter_the_nether", "label": "Step through a portal into the Nether" }
+      ]
+    }
+  ]
+}

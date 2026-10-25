@@ -1,16 +1,15 @@
 {
-  "name": "guide.mymod.my_guide.entry.getting_started.recipes.name",
   "icon": "minecraft:crafting_table",
   "sort": 1,
   "pages": [
     {
       "type": "recipe",
       "recipe": "minecraft:torch",
-      "text": "guide.mymod.my_guide.entry.getting_started.recipes.page1.text"
+      "text": "folios.mymod.my_guide.entry.getting_started.recipes.page1.text"
     },
     {
       "type": "recipe",
-      "recipes": [
+      "recipe": [
         "minecraft:iron_pickaxe",
         "minecraft:iron_axe"
       ]

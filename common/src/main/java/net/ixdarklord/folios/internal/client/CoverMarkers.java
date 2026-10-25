@@ -59,9 +59,9 @@ public final class CoverMarkers {
         float titleZ = marked.title() != null ? marked.title().z() : z;
         Marked lowerMark = marked.summary() != null ? marked.summary() : marked.subtitle();
         float lowerZ = lowerMark != null ? lowerMark.z() : z;
-        boolean hasSubtitle = !book.subtitle().isEmpty();
+        boolean hasSubtitle = !FoliosText.isBlank(book.subtitle());
         Component subtitle = hasSubtitle ? FoliosText.inline(book.subtitle()) : Component.empty();
-        if (!text.summaryText().isEmpty()) {
+        if (!FoliosText.isBlank(text.summaryText())) {
             // The plate's height, from its line (a marked line is UP of it); the name in its upper part, the subtitle under.
             float plate = title.size() / UP;
             boolean own = text.title() != null;
@@ -214,8 +214,8 @@ public final class CoverMarkers {
      * subtitle under it when the lower plate holds the summary; on the lower plate the summary, or the subtitle.
      */
     public static java.util.List<Component> plateText(FoliosBook book, Kind plate) {
-        boolean summary = !book.coverText().summaryText().isEmpty();
-        boolean subtitle = !book.subtitle().isEmpty();
+        boolean summary = !FoliosText.isBlank(book.coverText().summaryText());
+        boolean subtitle = !FoliosText.isBlank(book.subtitle());
         java.util.List<Component> out = new java.util.ArrayList<>();
         if (plate == Kind.TITLE) {
             out.add(book.title());

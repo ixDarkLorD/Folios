@@ -25,13 +25,13 @@ public record FoliosEntry(String id, String category, String name, FoliosIcon ic
     /**
      * A page of the entry, with what applies to it whatever its kind.
      *
-     * @param anchor a name links can reach it by; null for none
+     * @param marker a name links can reach it by ({@code entry:<id>#<marker>}); null for none
      * @param icon   shown before its title: its own ({@code "icon"}; {@link FoliosIcon#NONE} for {@code "none"}), or null
      *               for the entry's on its first page and none on the others
      */
-    public record Page(FoliosPageElement page, @Nullable String anchor, FoliosLock lock, @Nullable FoliosIcon icon) {
-        public Page(FoliosPageElement page, @Nullable String anchor, FoliosLock lock) {
-            this(page, anchor, lock, null);
+    public record Page(FoliosPageElement page, @Nullable String marker, FoliosLock lock, @Nullable FoliosIcon icon) {
+        public Page(FoliosPageElement page, @Nullable String marker, FoliosLock lock) {
+            this(page, marker, lock, null);
         }
     }
 

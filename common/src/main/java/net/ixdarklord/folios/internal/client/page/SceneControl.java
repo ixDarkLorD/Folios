@@ -31,11 +31,22 @@ final class SceneControl {
         view.camera(yaw, pitch).spin(spin);
     }
 
+    // A scene turning by itself stands still while the game is paused.
+    private void pause() {
+        if (!held) view.spin(net.ixdarklord.folios.internal.client.FoliosClock.paused() ? 0 : spin);
+    }
+
     // The wheel: in or out by a step a notch, within reach of its first size; the reset clasp then shows.
     private void zoomed(double notches) {
         float factor = (float) Math.pow(ZOOM_STEP, notches);
         view.zoom(Math.max(zoom * ZOOM_MIN, Math.min(zoom * ZOOM_MAX, view.zoom() * factor)));
         held = true;
+    }
+
+    /** Draws the scene in its window only to be looked at: turning by itself, with nothing to drag, zoom or reset. */
+    void look(FoliosPainter painter, int x, int y, int width, int height) {
+        this.pause();
+        painter.scene(view, x, y, width, height);
     }
 
     /** Draws the scene in its window, draggable, with the clasp that resets it once it has been turned. */
@@ -55,6 +66,7 @@ final class SceneControl {
             view.spin(0);
             view.camera(view.yaw() + dx * 2.5F, Math.max(-10, Math.min(80, view.pitch() + dy * 1.5F)));
         });
+        this.pause();
         painter.scene(view, x, y, width, height, u0, u1);
         int size = Shapes.BUTTON;
         if (first && extra != null && action != null) {
@@ -79,6 +91,7 @@ final class SceneControl {
             view.spin(0);
             view.camera(view.yaw() + dx * 2.5F, Math.max(-10, Math.min(80, view.pitch() + dy * 1.5F)));
         });
+        this.pause();
         painter.scene(view, x, y, width, height);
         if (extra != null && action != null) {
             int size = Shapes.BUTTON;

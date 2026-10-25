@@ -1,7 +1,6 @@
 {
   "name": "guide.foliostest.handbook.entry.world.creatures.name",
   "icon": "minecraft:sheep_spawn_egg",
-  "sort": 0,
   "pages": [
     {
       "type": "entity",
