@@ -1,6 +1,5 @@
 {
   "name": "guide.foliostest.handbook.category.basics.name",
   "description": "guide.foliostest.handbook.category.basics.description",
-  "icon": "minecraft:oak_sapling",
-  "sort": 0
+  "icon": "minecraft:oak_sapling"
 }

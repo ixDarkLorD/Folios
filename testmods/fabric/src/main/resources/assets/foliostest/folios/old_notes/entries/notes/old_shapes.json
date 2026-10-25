@@ -1,0 +1,46 @@
+{
+  "category": "notes",
+  "name": "Old Shapes",
+  "icon": "minecraft:clock",
+  "text": "This entry uses 2.x shapes: an entry-level \"text\", a \"category\" key, old objective kinds and a page lock.",
+  "pages": [
+    {
+      "type": "recipe",
+      "recipes": [
+        "minecraft:torch",
+        "minecraft:lantern"
+      ]
+    },
+    {
+      "type": "structure",
+      "structures": [
+        {
+          "id": "minecraft:igloo/top",
+          "name": "Igloo"
+        }
+      ],
+      "height": 60
+    },
+    {
+      "type": "quest",
+      "title": "Old Quest",
+      "objectives": [
+        {
+          "category": "notes"
+        },
+        {
+          "item": "minecraft:oak_log",
+          "count": 3
+        },
+        {
+          "book": true
+        }
+      ]
+    },
+    {
+      "advancement": "minecraft:story/mine_stone",
+      "title": "Locked Page",
+      "text": "Opens once stone is mined."
+    }
+  ]
+}

@@ -108,7 +108,7 @@ public final class BuildGuide {
     // The book being read now: on its screen, or in the hands.
     private static net.ixdarklord.folios.api.client.@Nullable FoliosBook reading() {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.screen instanceof net.ixdarklord.folios.internal.client.screen.GuideScreen screen) return screen.reader().book;
+        if (minecraft.screen instanceof net.ixdarklord.folios.internal.client.screen.FoliosScreen screen) return screen.reader().book;
         net.ixdarklord.folios.internal.client.handheld.HandheldBook held = net.ixdarklord.folios.internal.client.handheld.HandheldBook.current();
         return held != null ? held.book : null;
     }
@@ -324,11 +324,11 @@ public final class BuildGuide {
         Font font = minecraft.font;
         net.ixdarklord.folios.api.client.FoliosBook book = guide.book;
         int cover = book != null ? 0xFF000000 | book.cover() : 0xFF3B2618;
-        int gilt = book != null ? net.ixdarklord.folios.internal.client.GuideTooltips.titleColor(book) : 0xFFF2E6CC;
+        int gilt = book != null ? net.ixdarklord.folios.internal.client.FoliosTooltips.titleColor(book) : 0xFFF2E6CC;
         // The book's panel scheme: its frame for the rules, slots and the bar's rim, its detail for quieter text.
-        int frame = book != null ? 0xFF000000 | net.ixdarklord.folios.internal.client.GuideTooltips.frameColor(book) : 0xFFE8C66A;
+        int frame = book != null ? 0xFF000000 | net.ixdarklord.folios.internal.client.FoliosTooltips.frameColor(book) : 0xFFE8C66A;
         int rule = net.ixdarklord.folios.api.client.page.FoliosPalette.mix(frame, cover, 0.45F);
-        int quiet = book != null ? net.ixdarklord.folios.internal.client.GuideTooltips.detailColor(book)
+        int quiet = book != null ? net.ixdarklord.folios.internal.client.FoliosTooltips.detailColor(book)
                 : net.ixdarklord.folios.api.client.page.FoliosPalette.mix(gilt, cover, 0.45F);
         int total = guide.parts.size();
         float progress = total == 0 ? 0 : guide.placed / (float) total;
@@ -364,7 +364,7 @@ public final class BuildGuide {
         int edge = inset - MARGIN;
         int x = right ? graphics.guiWidth() - edge - wide - offsetX : edge + offsetX;
         int y = bottom ? graphics.guiHeight() - edge - tall - offsetY : edge + offsetY;
-        if (book != null) net.ixdarklord.folios.internal.client.GuideTooltips.frame(graphics, x, y, wide, tall, book, 255, inset);
+        if (book != null) net.ixdarklord.folios.internal.client.FoliosTooltips.frame(graphics, x, y, wide, tall, book, 255, inset);
         else graphics.fill(x - 4, y - 4, x + wide + 4, y + tall + 4, 0xE0201810);
         // The name, cut short if it must, and the count.
         int nameRoom = wide - 8 - font.width(count);

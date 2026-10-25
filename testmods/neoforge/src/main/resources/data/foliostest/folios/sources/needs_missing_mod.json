@@ -1,0 +1,7 @@
+{
+  "source": "foliostest:creatures",
+  "requires_mods": "some_mod_that_is_not_here",
+  "rows": [
+    { "id": "should_not_show", "name": "This row's file needs a missing mod", "danger": 99 }
+  ]
+}

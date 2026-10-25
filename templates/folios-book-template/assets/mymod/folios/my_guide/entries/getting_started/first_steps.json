@@ -1,19 +1,16 @@
 {
-  "name": "guide.mymod.my_guide.entry.getting_started.first_steps.name",
   "icon": "minecraft:wooden_pickaxe",
   "featured": true,
-  "sort": 0,
   "pages": [
     {
-      "type": "text",
-      "title": "guide.mymod.my_guide.entry.getting_started.first_steps.page1.title",
-      "text": "guide.mymod.my_guide.entry.getting_started.first_steps.page1.text"
+      "title": "folios.mymod.my_guide.entry.getting_started.first_steps.page1.title",
+      "text": "folios.mymod.my_guide.entry.getting_started.first_steps.page1.text"
     },
     {
       "type": "spotlight",
       "item": "minecraft:diamond",
-      "title": "guide.mymod.my_guide.entry.getting_started.first_steps.page2.title",
-      "text": "guide.mymod.my_guide.entry.getting_started.first_steps.page2.text"
+      "title": "folios.mymod.my_guide.entry.getting_started.first_steps.page2.title",
+      "text": "folios.mymod.my_guide.entry.getting_started.first_steps.page2.text"
     },
     {
       "type": "links",
@@ -21,7 +18,7 @@
         "getting_started/recipes",
         {
           "entry": "advanced/my_build",
-          "label": "guide.mymod.my_guide.entry.getting_started.first_steps.page3.link2"
+          "label": "folios.mymod.my_guide.entry.getting_started.first_steps.page3.link2"
         }
       ]
     }

@@ -1,0 +1,42 @@
+{
+  "name": "Next Steps",
+  "icon": "minecraft:emerald",
+  "sort": 1,
+  "pages": [
+    {
+      "type": "quest",
+      "title": "Next Steps",
+      "in_order": true,
+      "text": "Each step opens once the one before it is done.",
+      "objectives": [
+        {
+          "read": "basics/first_steps",
+          "label": "Read First Steps from its first page to its last, every word of it"
+        },
+        {
+          "label": "Find an emerald or diamond",
+          "any": [
+            {
+              "obtained": "minecraft:emerald"
+            },
+            {
+              "obtained": "minecraft:diamond"
+            }
+          ]
+        },
+        {
+          "hidden": true,
+          "carried": "minecraft:bread",
+          "goal": 3
+        }
+      ]
+    },
+    {
+      "requires": {
+        "quest": "basics/first_quest"
+      },
+      "title": "After the First Quest",
+      "text": "This page opened once the first quest was finished."
+    }
+  ]
+}

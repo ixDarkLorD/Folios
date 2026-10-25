@@ -1,0 +1,38 @@
+{
+  "book": "foliostest:handbook",
+  "objectives": [
+    {
+      "read": "basics/first_steps",
+      "label": "Read the First Steps entry"
+    },
+    {
+      "obtained": "#minecraft:logs",
+      "label": "Chop down a tree for a log"
+    },
+    {
+      "carried": "minecraft:cobblestone",
+      "goal": 4,
+      "label": "Carry four cobblestone"
+    }
+  ],
+  "rewards": {
+    "items": [
+      "minecraft:diamond*3",
+      "minecraft:bread*8",
+      "minecraft:iron_pickaxe",
+      "minecraft:torch*32",
+      "minecraft:oak_sapling*4",
+      "minecraft:cooked_beef*6",
+      "minecraft:arrow*16",
+      "minecraft:shield"
+    ],
+    "random": [
+      {
+        "item": "minecraft:emerald*4",
+        "weight": 3
+      },
+      "minecraft:gold_ingot*8",
+      "minecraft:iron_ingot*16"
+    ]
+  }
+}

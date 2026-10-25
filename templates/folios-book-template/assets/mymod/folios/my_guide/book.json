@@ -1,56 +1,23 @@
 {
-  "name": "guide.mymod.my_guide.name",
-  "subtitle": "guide.mymod.my_guide.subtitle",
+  "format_version": "3.0",
   "style": "handheld",
-  "accent": "#C0602A",
-  "cover": "#5A3A22",
   "icon": "minecraft:writable_book",
-  "landing": "guide.mymod.my_guide.landing",
-  "show_progress": true,
-  "tilt": 6,
-  "distance": 0.64,
-  "page_turn": "bend",
+  "accent": "#C0602A",
+  "cover": {
+    "color": "#5A3A22"
+  },
   "close_on_click_outside": false,
   "reveal": {
     "effect": "folios:ink",
     "seconds": 1.0,
     "once": true
   },
-  "handheld": {
-    "look_around": true,
-    "walk": true
-  },
-  "cover_text": {
-    "title": {
-      "x": 8,
-      "y": 11.6,
-      "size": 1.15,
-      "width": 6.4
-    },
-    "subtitle": {
-      "x": 8,
-      "y": 4.05,
-      "size": 0.85,
-      "width": 6.4
-    }
-  },
-  "models": {
-    "hands": true,
-    "gui": "flat"
-  },
   "colors": {
     "paper": "#F1E7D0",
-    "text": "#3B3026",
-    "tooltip": {
-      "frame": "#E8C66A",
-      "title": "#F2E6CC"
-    }
+    "text": "#3B3026"
   },
-  "layout": {
-    "tabs": {
-      "x": 0,
-      "y": 6,
-      "spacing": 2
-    }
+  "panel": {
+    "frame": "#E8C66A",
+    "title": "#F2E6CC"
   }
 }

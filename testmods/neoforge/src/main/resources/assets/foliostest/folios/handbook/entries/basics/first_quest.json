@@ -11,20 +11,34 @@
       "reward": "guide.foliostest.handbook.entry.basics.first_quest.page1.reward",
       "objectives": [
         {
-          "read": "basics/first_steps"
+          "read": "basics/first_steps",
+          "label": "Read the First Steps entry to its end"
         },
         {
-          "category": "crafting"
+          "read_category": "crafting",
+          "label": "Read every entry in the Crafting tab"
         },
         {
-          "item": "minecraft:oak_log",
-          "count": 8
+          "carried": "minecraft:oak_log",
+          "goal": 8,
+          "label": "Carry eight oak logs from the forest"
+        },
+        {
+          "obtained": "minecraft:diamond",
+          "label": "Find something shiny deep underground"
         },
         {
           "advancement": "minecraft:story/mine_stone",
           "label": "guide.foliostest.handbook.entry.basics.first_quest.page1.objective4"
         }
       ]
+    },
+    {
+      "title": "A Diamond Was Found",
+      "text": "This page opened once a {item:minecraft:diamond} was in your inventory, and it stays open whatever became of it.",
+      "requires": {
+        "obtained": "minecraft:diamond"
+      }
     }
   ]
 }
