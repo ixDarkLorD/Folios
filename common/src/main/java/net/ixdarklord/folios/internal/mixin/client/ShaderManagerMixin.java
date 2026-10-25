@@ -1,6 +1,6 @@
 package net.ixdarklord.folios.internal.mixin.client;
 
-import net.ixdarklord.folios.internal.client.GuideLibrary;
+import net.ixdarklord.folios.internal.client.FoliosLibrary;
 import net.minecraft.client.renderer.ShaderManager;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -30,6 +30,6 @@ public abstract class ShaderManagerMixin {
 
     @Inject(method = "apply", at = @At("TAIL"))
     private void folios$reloadBooks(CallbackInfo ci) {
-        if (this.folios$manager != null) GuideLibrary.reload(this.folios$manager);
+        if (this.folios$manager != null) FoliosLibrary.reload(this.folios$manager);
     }
 }

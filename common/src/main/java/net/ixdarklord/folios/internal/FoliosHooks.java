@@ -1,0 +1,46 @@
+package net.ixdarklord.folios.internal;
+
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionHand;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Locale;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+
+// What common code (the book item) asks of the client: set by the client's constructor. On a dedicated server
+// nothing is set, and a book's name falls back to its translation key.
+public final class FoliosHooks {
+    public static BiConsumer<Identifier, InteractionHand> opener = (book, hand) -> {};
+    public static Function<Identifier, Component> names = FoliosHooks::defaultName;
+    public static Function<Identifier, @Nullable Component> authors = book -> null;
+
+    private FoliosHooks() {}
+
+    public static void openFromItem(Identifier book, InteractionHand hand) {
+        opener.accept(book, hand);
+    }
+
+    public static Component bookName(Identifier book) {
+        return names.apply(book);
+    }
+
+    /** Who a book says it is by ({@code "author"} in book.json), for its item's tooltip; null when it doesn't say. */
+    public static @Nullable Component bookAuthor(Identifier book) {
+        return authors.apply(book);
+    }
+
+    /** {@code folios.<namespace>.<path>.name}, with the path in title case as the fallback. */
+    public static Component defaultName(Identifier book) {
+        String path = book.getPath();
+        String last = path.substring(path.lastIndexOf('/') + 1).replace('_', ' ');
+        StringBuilder title = new StringBuilder();
+        for (String word : last.split(" ")) {
+            if (word.isEmpty()) continue;
+            if (!title.isEmpty()) title.append(' ');
+            title.append(word.substring(0, 1).toUpperCase(Locale.ROOT)).append(word.substring(1));
+        }
+        return Component.translatableWithFallback("folios." + book.getNamespace() + "." + path.replace('/', '.') + ".name", title.toString());
+    }
+}

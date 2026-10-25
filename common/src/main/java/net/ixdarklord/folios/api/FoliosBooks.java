@@ -1,7 +1,7 @@
 package net.ixdarklord.folios.api;
 
-import net.ixdarklord.folios.internal.GuideNetwork;
-import net.ixdarklord.folios.internal.core.GuideRegistry;
+import net.ixdarklord.folios.internal.FoliosNetwork;
+import net.ixdarklord.folios.internal.core.FoliosRegistry;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -27,7 +27,7 @@ public final class FoliosBooks {
 
     /** Folios's guide book item, opening the given book. */
     public static ItemStack createStack(Identifier book) {
-        return createStack(GuideRegistry.BOOK_ITEM.get(), book);
+        return createStack(FoliosRegistry.BOOK_ITEM.get(), book);
     }
 
     /** As {@link #createStack(Identifier)}, the book given as {@code "namespace:path"}. */
@@ -41,7 +41,7 @@ public final class FoliosBooks {
      */
     public static ItemStack createStack(ItemLike item, Identifier book) {
         ItemStack stack = new ItemStack(item);
-        stack.set(GuideRegistry.GUIDE_BOOK.get(), book);
+        stack.set(FoliosRegistry.GUIDE_BOOK.get(), book);
         return stack;
     }
 
@@ -52,7 +52,7 @@ public final class FoliosBooks {
      */
     public static @Nullable Identifier bookOf(ItemStack stack) {
         if (stack.isEmpty()) return null;
-        return stack.getItem() instanceof FoliosBookItem item ? item.book(stack) : stack.get(GuideRegistry.GUIDE_BOOK.get());
+        return stack.getItem() instanceof FoliosBookItem item ? item.book(stack) : stack.get(FoliosRegistry.GUIDE_BOOK.get());
     }
 
     /** Opens a book on a player's screen at its first page. */
@@ -65,6 +65,6 @@ public final class FoliosBooks {
      * {@code entries/}), or at its start for null. Does nothing for a client without Folios.
      */
     public static void open(ServerPlayer player, Identifier book, @Nullable String entry) {
-        GuideNetwork.open(player, book, entry);
+        FoliosNetwork.open(player, book, entry);
     }
 }

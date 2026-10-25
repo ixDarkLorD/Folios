@@ -1,5 +1,60 @@
 # Changelog
 
+## v3.0.0 Release | Oct 25, 2026
+A breaking release: book JSON gets one clear shape for everything, with `"format_version"` to say which, and older books are updated as they load. Pages can be set and paged in place, show live lists from mods and data packs, and lock on items obtained; the API's classes are all `Folios*`.
+
+Books written for 2.x still load: Folios updates them in memory as it reads them and logs what changed. See the [migration guide](https://ixdarklord.github.io/Folios/docs/migrating-to-3.0/), or update a book's files at once with the [book upgrader](https://ixdarklord.github.io/Folios/upgrader/).
+
+### 💥 Breaking Changes
+- The API's classes are renamed from `Guide*` to `Folios*`: `FoliosBooks`, `FoliosBookItem`, `FoliosGuides` (was `Guides`), `FoliosBook`, `FoliosCategory`, `FoliosEntry`, `FoliosLock`, `FoliosObjective(s)`, `FoliosReveal(s)`, `FoliosStyles`, and under `page`: `FoliosIcon`, `FoliosLayout`, `FoliosPageElement` (was `GuidePage`), `FoliosPageElements` (was `GuidePageTypes`), `FoliosPainter`, `FoliosPalette`, `FoliosStack`, `FoliosText`. Folios's internal classes are renamed the same way.
+- `book.json` has `"format_version": "3.0"`. A book without it is read as a 2.x book and upgraded as it loads, with a warning naming it; a 3.0 book still holding a 2.x shape logs which, and where.
+- A page's `"anchor"` (a place links can go to) is now `"marker"`; `"anchor"` now sets a page down its top, middle or foot.
+- The cover's settings are one group, `"cover"`: `color`, `texture`, `model` and `text` (was `"cover"` as a colour, `"cover_text"`, and `textures.cover`, now `textures.boards`).
+- A handheld book's `tilt`, `distance` and `page_turn` move into `"handheld"`, beside `look_around` and `walk`.
+- `"progress"` is `"progress_scope"`: `"player"` or `"copy"` (was `"book"`).
+- `"item_model"` is gone (`"models"` › `"item"`), and so is `"colors"` › `"tooltip"` (`"panel"`).
+- Colours are written only as `"#RRGGBB"` or `"#AARRGGBB"`.
+- An entry's category is the folder it is in: its `"category"` key is gone, and so is the `"text"` shortcut for a one-page entry (write `"pages"`).
+- `recipe`, `image`, `structure` and `build` take one id or a list under the one key (`"recipes"`, `"images"`, `"structures"` and `"builds"` are gone). A structure or build choice, and a map's node, has a `"label"` (was `"name"`). A spread's `"build"` names a build file; blocks written into it go under `"multiblock"`.
+- Objectives: `category` is `read_category`, `book` is `read_book`, `item` is `carried`, and `count` is `goal`.
+- Locks are `"requires"`: one objective or a list of them, all needed (was `"advancement"` and `"flag"` on the locked thing). `"secret"` stays.
+- A guide book's tooltip says "By: …" with the book's author, and says nothing when it has none (was "From …" and the mod's name).
+
+### ✨ New Features
+- A book's `name`, `subtitle`, `summary`, `landing` and `author` can be left out of book.json: they come from `folios.<namespace>.<book>.<key>` in the lang files. Category names and descriptions come from `folios.<namespace>.<book>.category.<id>.name` / `.description`, and entry names from `folios.<namespace>.<book>.entry.<category>.<id>.name`.
+- Every text can be Markdown, a translation key, or `{"translate": "key", "with": [...], "fallback": "..."}`. Markup has tags for `{lang:key|first|second}` (a translation), `{player}` (the reader's name), `{item:minecraft:diamond}` (the item in a small slot and its name, linking to its page in the book; `{item:minecraft:diamond|16}` sizes the slot, 8 to 18 pixels, 14 by default; a name too long for its line runs on beside its slot), `{slot:minecraft:diamond}` (the slot alone, for rows and grids of items, live lists' too, a grid's slots spread evenly across the page), `{entry:tools/scribe}` (a link with the entry's name) and `{flag:mymod:hard_mode|on|off}`.
+- Overflow: an element or page whose text doesn't fit can `"flow"` on to the next page (as before), `"keep"` to its box, `"flip"` through its text in place (a box with a pager of up to 7 squares, its marker sliding to the page shown, clasps to step back and on with "Page: N/M" tooltips, and the mouse wheel), or `"auto"` (flip when it would run on). `"height"` (`"fill"`, `"fit"` or pixels) and `"min_height"` size the box.
+- Alignment: `"alignment"` (`left`, `center`, `right`, `justify`) for text, `"title_alignment"` for titles, `"anchor"` (`top`, `center`, `bottom`) to set a page down its height, and `->text<-` / `->text` in Markdown to centre or right-align one paragraph. A title too long for its line shrinks a little, then ends with an ellipsis. Set them in book.json for every page, on a page, or on an element.
+- Live lists (observable elements): a page or element can `"observe"` a source and write a line of markup for each of its rows (`"row": "- **{$name}**: {$cost}"`), with `sort` (`"-field"` the other way; numbers sort as numbers), `where` (`is`, `not`, `above`, `below`), `limit`, `header`, `footer`, `separator` and `empty`. The page is written again whenever the list changes. Mods give sources with `FoliosSources`: on the client (`register`) or on the server (`registerServer`, sent to each player as they join and after every data pack reload); data packs add rows to any source in `data/<namespace>/folios/sources/*.json`.
+- Live lists from the game itself, with no code: `folios:items`, `folios:blocks` and `folios:entities` list a registry, narrowed by the page's `"of"` (a tag, `"#minecraft:logs"`, or a mod), and `folios:advancements` lists the advancements the reader has been shown, with whether each is `done`. Data packs can also take rows out of any source (`{"id": ..., "remove": true}`) and leave out rows or whole files unless mods are loaded (`"requires_mods"`). An open book now lays itself out again, at the same place, when what its live lists show changes.
+- Popups: a link to an entity, a structure, a build or a multiblock (`[Blaze](entity:minecraft:blaze)`, `structure:`, `build:`, `multiblock:<entry>#<marker>`, or the tag `{entity:minecraft:blaze}`) shows it in a window over the book while the pointer is over its words, its name along the top and the scene turning under it; pressing the link pins the window, to turn and zoom. Mods add kinds of link of their own, with tooltips, popups and what pressing does: `FoliosLinks` and `FoliosPopup`.
+- Mentioning a page in chat: point at a page with a book open and press M; the chat opens with a mention of it. Players with the book see the page's name, pressed to open it there; players without the book, or who haven't unlocked the page, see it scrambled.
+- The `obtained` lock and objective: items the player has ever had in their inventory, kept with their progress, so a page can open on finding something even after it is used up. `carried` counts what they hold now.
+- Quests: `"in_order": true` opens each objective once the one before it is done (the rest wait, muted and without a bar); an objective can be `"hidden"` (shown as "???" until done); `any` is done when one of its objectives is; `quest` is done when another quest is. Objectives can also be `read_category` and `read_book`.
+- `"format_version"` and the book upgrader: Folios updates 2.x books as it reads them, from the same list of changes the [web upgrader](https://ixdarklord.github.io/Folios/upgrader/) uses to rewrite a book's files.
+
+### 🎨 Changes
+- Bars are redrawn with more to them: a rounded rim with fine ticks for its steps in place of the old segment lines, a shaded fill and a soft shadow; an objective's bar is a slim rounded groove.
+- Category rows are taller, their icon centred on the frame, the unread mark level with the name, and more room between the name and its bar. A quest's objectives sit 4 pixels further apart.
+- Bars, clasps, panels, item slots, the recipe arrow and the flip pager are drawn from GUI sprites in `folios:textures/gui/sprites/book/`, one per part with its shading painted in and its scaling in a `.png.mcmeta` (nine-slice, stretch or tile), tinted with the book's colours as before, so resource packs can restyle them.
+- A spotlight's card is a texture, and a book can give its own: `"textures": {"spotlight": "mymod:textures/book/my_card.png"}`. A bar's ticks have a faint line in the groove between their marks.
+- A quest objective's label too wide for its line is drawn smaller, then over two lines; one still too long is cut short with "…" and shown whole in a tooltip when hovered. A quest too tall for a page keeps its labels to one line each.
+- Items drawn larger or smaller than 16 pixels (a spotlight's, items' slots in text) are drawn sharp at their size on 26.1 and later, not stretched from a 16-pixel picture.
+- Entity previews: an entity's head no longer jitters, the camera starts further back and looks down from the corner, isometric, and turning scenes turn smoothly, drawn every frame.
+- What moves in a book (its scenes turning, preview entities, pages turning and revealing, a held book opening) stands still while the game is paused, and goes on from there.
+- Server quests: a data pack's `data/<namespace>/folios/quests/<name>.json` gives a quest the server follows and checks itself (`advancement`, `read`, `quest`, `flag`, `carried`, `obtained`, `source`, `any`), with `rewards`: items, and random gifts drawn from a weighted list (`random`, `random_rolls`). A quest page shows one with `"quest": "mymod:first_quest"`, and pressing its reward once it is done claims it: the server gives it once, into the inventory or at the player's feet. A resource pack can only change how the book shows it.
+- Server quests can wait on others: `"requires"` keeps one shut, its objectives not counting, until what it names is done; its page says "Not yet open", or its own `"locked"` text. Books' locks can name server quests too (`{"quest": "mymod:first_quest"}`).
+- Reading counts for server quests only as the server sees it: in a book the player has with them (or one the server opened), with each entry open a while (`readSeconds`), and no faster than `readsPerMinute`. A `strict` setting keeps rewarded quests from asking for reading at all. Operators have `/folios quest list|status|complete|reset|flag`, and mods `FoliosQuests` (completion listeners, server values and flags, finishing and resetting quests).
+- Quest pages are a path: each objective a stop in a frame of its own, the line drawn in as far as the player has come, leading to the reward; done stops are ticked, the next one ringed. "2 of 5 done" heads it. A quest too tall for a page draws its labels smaller, then scrolls its objectives while its head and reward stay put. Quests take up to 32 objectives, and labels run to three lines. A server quest's reward is a grid of slots with counts, and a wrapped gift with a question mark for its random draws.
+- The book upgrader can move books' quests to server quests: their objectives go to quest files in the data pack, and the pages name them.
+
+### 🐛 Fixes
+- A bar's shadow no longer has a sharp missing pixel at its bottom-right corner.
+- Turning a page at some GUI scales no longer leaves thin lines across the leaf.
+- Entities in scenes (entity pages and popups) move as they do in the world: a blaze's rods turn, wings beat.
+- A heading in a page's text has a whole rule under it, as a page title has, and room under it.
+- An element's title is no longer left at the foot of a page when what it heads moves on to the next: they move together.
+
 ## v2.1.1 Release | Oct 23, 2026
 A mod's own guide book item shows its cover.
 
