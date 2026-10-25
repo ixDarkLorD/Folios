@@ -70,35 +70,35 @@
         "H": "minecraft:red_bed[part=head,facing=north]"
       },
       "text": "guide.foliostest.field_journal.entry.world.builds.page2.text",
-      "anchor": "hut"
+      "marker": "hut"
     },
     {
       "type": "structure",
       "title": "guide.foliostest.field_journal.entry.world.builds.page3.title",
       "selector": "numbers",
-      "structures": [
+      "text": "guide.foliostest.field_journal.entry.world.builds.page3.text",
+      "marker": "structures",
+      "structure": [
         {
           "id": "minecraft:igloo/top",
-          "name": "guide.foliostest.field_journal.entry.world.builds.igloo"
+          "label": "guide.foliostest.field_journal.entry.world.builds.igloo"
         },
         {
           "id": "minecraft:village/plains/houses/plains_small_house_1",
-          "name": "guide.foliostest.field_journal.entry.world.builds.plains_house"
+          "label": "guide.foliostest.field_journal.entry.world.builds.plains_house"
         },
         "minecraft:shipwreck/rightsideup_full"
-      ],
-      "text": "guide.foliostest.field_journal.entry.world.builds.page3.text",
-      "anchor": "structures"
+      ]
     },
     {
       "type": "build",
       "title": "guide.foliostest.field_journal.entry.world.builds.page4.title",
-      "builds": [
+      "text": "guide.foliostest.field_journal.entry.world.builds.page4.text",
+      "marker": "builds",
+      "build": [
         "watchtower",
         "well"
-      ],
-      "text": "guide.foliostest.field_journal.entry.world.builds.page4.text",
-      "anchor": "builds"
+      ]
     },
     {
       "title": "guide.foliostest.field_journal.entry.world.builds.page5.title",
@@ -131,7 +131,7 @@
           "height": 60
         }
       ],
-      "anchor": "elements"
+      "marker": "elements"
     }
   ]
 }

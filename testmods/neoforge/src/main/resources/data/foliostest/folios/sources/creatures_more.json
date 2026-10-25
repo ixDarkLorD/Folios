@@ -1,0 +1,8 @@
+{
+  "source": "foliostest:creatures",
+  "rows": [
+    { "id": "creeper", "remove": true },
+    { "id": "ghast", "name": "entity.minecraft.ghast", "danger": 6, "requires_mods": "folios" },
+    { "id": "create_golem", "name": "A golem from Create", "danger": 9, "requires_mods": ["create"] }
+  ]
+}

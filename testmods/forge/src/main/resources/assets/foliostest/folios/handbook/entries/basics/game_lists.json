@@ -1,0 +1,52 @@
+{
+  "name": "Lists from the Game",
+  "icon": "minecraft:oak_log",
+  "sort": 6,
+  "pages": [
+    {
+      "title": "Logs",
+      "text": "Every item in the tag #minecraft:logs, from the source folios:items:",
+      "observe": { "source": "folios:items", "of": "#minecraft:logs", "row": "- {item:{$id}}", "limit": 8 }
+    },
+    {
+      "title": "Saplings",
+      "text": "The same source, each item in a slot of its own, set out as a grid of 16-pixel slots:",
+      "observe": { "source": "folios:items", "of": "#minecraft:saplings", "row": "{slot:{$id}|16}", "separator": "" }
+    },
+    {
+      "title": "Monsters",
+      "text": "Minecraft's monsters, from folios:entities:",
+      "observe": {
+        "source": "folios:entities",
+        "of": "minecraft",
+        "row": "- {$name}",
+        "where": { "field": "category", "is": "monster" },
+        "limit": 10
+      }
+    },
+    {
+      "title": "Your Story",
+      "elements": [
+        {
+          "text": "Done:",
+          "observe": {
+            "source": "folios:advancements",
+            "of": "minecraft:story",
+            "row": "- {$name}",
+            "where": { "field": "done", "is": "true" },
+            "empty": "*Nothing yet.*"
+          }
+        },
+        {
+          "text": "Still to do:",
+          "observe": {
+            "source": "folios:advancements",
+            "of": "minecraft:story",
+            "row": "- {$name}",
+            "where": { "field": "done", "is": "false" }
+          }
+        }
+      ]
+    }
+  ]
+}

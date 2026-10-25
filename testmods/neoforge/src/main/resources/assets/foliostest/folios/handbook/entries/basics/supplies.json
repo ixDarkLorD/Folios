@@ -1,0 +1,14 @@
+{
+  "name": "Supplies",
+  "icon": "minecraft:chest",
+  "sort": 3,
+  "pages": [
+    {
+      "type": "quest",
+      "title": "Supplies",
+      "quest": "foliostest:supplies",
+      "reward": "Diamonds, bread and a gift",
+      "text": "A quest the server keeps: it follows the objectives itself, and gives the reward when you press it."
+    }
+  ]
+}

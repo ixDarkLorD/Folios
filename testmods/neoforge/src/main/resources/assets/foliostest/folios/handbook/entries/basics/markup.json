@@ -4,9 +4,20 @@
   "sort": 1,
   "pages": [
     {
-      "type": "text",
       "title": "guide.foliostest.handbook.entry.basics.markup.page1.title",
       "text": "guide.foliostest.handbook.entry.basics.markup.page1.text"
+    },
+    {
+      "marker": "tags",
+      "title": {
+        "translate": "guide.foliostest.handbook.entry.basics.markup.tags.title"
+      },
+      "text": {
+        "translate": "guide.foliostest.handbook.entry.basics.markup.tags.text",
+        "with": [
+          "**Folios**"
+        ]
+      }
     },
     {
       "type": "spotlight",
@@ -15,12 +26,12 @@
     },
     {
       "type": "image",
-      "images": [
+      "title": "guide.foliostest.handbook.entry.basics.markup.page3.title",
+      "text": "guide.foliostest.handbook.entry.basics.markup.page3.text",
+      "image": [
         "foliostest:textures/gui/guide/valley.png",
         "foliostest:textures/gui/guide/rift.png"
-      ],
-      "title": "guide.foliostest.handbook.entry.basics.markup.page3.title",
-      "text": "guide.foliostest.handbook.entry.basics.markup.page3.text"
+      ]
     }
   ]
 }

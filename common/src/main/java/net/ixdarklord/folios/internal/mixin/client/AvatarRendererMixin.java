@@ -1,6 +1,6 @@
 package net.ixdarklord.folios.internal.mixin.client;
 
-import net.ixdarklord.folios.internal.core.GuideRegistry;
+import net.ixdarklord.folios.internal.core.FoliosRegistry;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
@@ -22,6 +22,6 @@ public abstract class AvatarRendererMixin {
             return;
         }
         ItemStack stack = player.getItemInHand(hand);
-        if (!stack.isEmpty() && stack.has(GuideRegistry.READING.get())) cir.setReturnValue(HumanoidModel.ArmPose.CROSSBOW_HOLD);
+        if (!stack.isEmpty() && stack.has(FoliosRegistry.READING.get())) cir.setReturnValue(HumanoidModel.ArmPose.CROSSBOW_HOLD);
     }
 }

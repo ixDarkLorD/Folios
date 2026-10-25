@@ -4,13 +4,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosText;
-import net.ixdarklord.folios.internal.client.GuideLibrary;
+import net.ixdarklord.folios.internal.client.FoliosLibrary;
 import net.ixdarklord.folios.internal.client.build.BlockChoice;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.core.BlockPos;
@@ -31,18 +30,12 @@ import java.util.Optional;
 // A block can be a tag, as on a multiblock page.
 public record BuildPageElement(List<Showcase.Shown> builds, Optional<String> title, String text, int height, Showcase.Selector selector) implements FoliosPageElement {
     public static final MapCodec<BuildPageElement> CODEC = RecordCodecBuilder.<BuildPageElement>mapCodec(instance -> instance.group(
-            Showcase.Shown.CODEC.listOf().optionalFieldOf("builds", List.of()).forGetter(BuildPageElement::builds),
-            Showcase.Shown.CODEC.optionalFieldOf("build").forGetter(page -> Optional.empty()),
-            Codec.STRING.optionalFieldOf("title").forGetter(BuildPageElement::title),
-            Codec.STRING.optionalFieldOf("text", "").forGetter(BuildPageElement::text),
+            Showcase.Shown.CODEC.fieldOf("build").forGetter(BuildPageElement::builds),
+            FoliosText.CODEC.optionalFieldOf("title").forGetter(BuildPageElement::title),
+            FoliosText.CODEC.optionalFieldOf("text", "").forGetter(BuildPageElement::text),
             Codec.intRange(40, 130).optionalFieldOf("height", 78).forGetter(BuildPageElement::height),
             Showcase.Selector.CODEC.optionalFieldOf("selector", Showcase.Selector.ARROWS).forGetter(BuildPageElement::selector)
-    ).apply(instance, (many, one, title, text, height, selector) -> {
-        List<Showcase.Shown> all = new ArrayList<>();
-        one.ifPresent(all::add);
-        all.addAll(many);
-        return new BuildPageElement(List.copyOf(all), title, text, height, selector);
-    })).validate(page -> page.builds.isEmpty() ? DataResult.error(() -> "a build page needs \"build\" or \"builds\"") : DataResult.success(page));
+    ).apply(instance, BuildPageElement::new));
 
     /** The most blocks a box in a build file may fill, so a slip of a number can't fill the world. */
     private static final int MOST_BLOCKS = 65536;
@@ -62,8 +55,8 @@ public record BuildPageElement(List<Showcase.Shown> builds, Optional<String> tit
         List<Showcase.Item> items = new ArrayList<>();
         for (Showcase.Shown shown : builds) {
             ResourceLocation id = shown.id().contains(":") ? ResourceLocation.tryParse(shown.id()) : book.withPath(book.getPath() + "/builds/" + shown.id());
-            JsonObject json = id == null ? null : GuideLibrary.build(id);
-            Component name = shown.name().map(FoliosText::inline)
+            JsonObject json = id == null ? null : FoliosLibrary.build(id);
+            Component name = shown.label().map(FoliosText::inline)
                     .orElse(json != null && json.has("name") ? FoliosText.inline(json.get("name").getAsString()) : null);
             Showcase.State state;
             if (json == null) {
@@ -142,7 +135,7 @@ public record BuildPageElement(List<Showcase.Shown> builds, Optional<String> tit
     @Override
     public String searchText() {
         StringBuilder words = new StringBuilder(FoliosText.resolve(title.orElse(""))).append(' ').append(FoliosText.resolve(text));
-        builds.forEach(shown -> shown.name().ifPresent(name -> words.append(' ').append(FoliosText.resolve(name))));
+        builds.forEach(shown -> shown.label().ifPresent(name -> words.append(' ').append(FoliosText.resolve(name))));
         return words.toString();
     }
 }
