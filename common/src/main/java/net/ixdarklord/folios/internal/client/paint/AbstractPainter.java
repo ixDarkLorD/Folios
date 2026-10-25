@@ -4,7 +4,7 @@ import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.api.client.FoliosEntry;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
-import net.ixdarklord.folios.internal.client.GuideSession;
+import net.ixdarklord.folios.internal.client.FoliosSession;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -57,7 +57,7 @@ public abstract class AbstractPainter implements FoliosPainter {
 
     protected final Font font = Minecraft.getInstance().font;
     protected final FoliosPalette palette;
-    protected final GuideSession session;
+    protected final FoliosSession session;
     protected final Navigator navigator;
     private final float time;
     private final float pointerX;
@@ -84,7 +84,7 @@ public abstract class AbstractPainter implements FoliosPainter {
         return session.layout().pageHeight();
     }
 
-    protected AbstractPainter(FoliosPalette palette, GuideSession session, Navigator navigator, float time, float pointerX, float pointerY, List<Hit> hits) {
+    protected AbstractPainter(FoliosPalette palette, FoliosSession session, Navigator navigator, float time, float pointerX, float pointerY, List<Hit> hits) {
         this.palette = palette;
         this.session = session;
         this.navigator = navigator;
@@ -107,6 +107,14 @@ public abstract class AbstractPainter implements FoliosPainter {
     @Override
     public float time() {
         return time;
+    }
+
+    // The popup window of the link under the pointer, if it has one.
+    private net.ixdarklord.folios.api.client.page.@Nullable FoliosPopup popupHovered;
+
+    /** The popup window of the link under the pointer; null when there is none. */
+    public net.ixdarklord.folios.api.client.page.@Nullable FoliosPopup popup() {
+        return popupHovered;
     }
 
     public @Nullable List<Component> tooltipLines() {
@@ -181,7 +189,12 @@ public abstract class AbstractPainter implements FoliosPainter {
     @Override
     public boolean link(int x, int y, int width, int height, String target) {
         boolean over = this.hovered(x, y, width, height);
-        if (over) this.tooltip(session.describe(target));
+        if (over) {
+            // A link with a popup window shows it in place of a tooltip.
+            net.ixdarklord.folios.api.client.page.FoliosPopup popup = session.popup(target);
+            if (popup != null) this.popupHovered = popup;
+            else this.tooltip(session.tooltip(target));
+        }
         mark(x, y, width, height, () -> navigator.follow(target));
         return over;
     }

@@ -1,0 +1,9 @@
+{
+  "book": "foliostest:handbook",
+  "requires": { "quest": "foliostest:supplies" },
+  "objectives": [
+    { "obtained": "minecraft:iron_ingot", "label": "Smelt an iron ingot" },
+    { "carried": "minecraft:torch", "goal": 16, "label": "Carry sixteen torches" }
+  ],
+  "rewards": { "items": ["minecraft:emerald*8"] }
+}

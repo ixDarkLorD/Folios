@@ -1,0 +1,10 @@
+{
+  "source": "foliostest:creatures",
+  "rows": [
+    {"id": "zombie", "name": "entity.minecraft.zombie", "danger": 2},
+    {"id": "creeper", "name": "entity.minecraft.creeper", "danger": 4},
+    {"id": "cow", "name": "entity.minecraft.cow", "danger": 0},
+    {"id": "warden", "name": "entity.minecraft.warden", "danger": 10},
+    {"id": "pig", "name": "entity.minecraft.pig", "danger": 0}
+  ]
+}

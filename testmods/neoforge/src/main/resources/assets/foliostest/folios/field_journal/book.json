@@ -1,19 +1,20 @@
 {
-  "name": "guide.foliostest.field_journal.name",
-  "subtitle": "guide.foliostest.field_journal.subtitle",
-  "summary": "guide.foliostest.field_journal.summary",
+  "format_version": "3.0",
   "style": "handheld",
-  "progress": "book",
   "accent": "#C0602A",
-  "cover": "#5A3A22",
   "models": {
-    "gui": "model",
-    "hands": true
+    "gui": "model"
   },
-  "landing": "guide.foliostest.field_journal.landing",
   "reveal": {
     "effect": "folios:runes",
     "seconds": 1.2,
     "unread": true
+  },
+  "cover": {
+    "color": "#5A3A22"
+  },
+  "progress_scope": "copy",
+  "textures": {
+    "spotlight": "foliostest:textures/book/gilded_spotlight.png"
   }
 }

@@ -3,7 +3,7 @@ package net.ixdarklord.folios.internal.client.paint;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
-import net.ixdarklord.folios.internal.client.GuideSession;
+import net.ixdarklord.folios.internal.client.FoliosSession;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -72,12 +72,12 @@ public final class WorldPainter extends AbstractPainter {
     // A normal to light the page by, in view space, in place of its own: a turning leaf is lit as the open pages are.
     private @Nullable Vector3f normal;
 
-    public WorldPainter(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, GuideSession session, Navigator navigator,
+    public WorldPainter(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, FoliosSession session, Navigator navigator,
                         float time, float pointerX, float pointerY, List<Hit> hits) {
         this(pose, collector, light, palette, session, navigator, time, pointerX, pointerY, hits, null);
     }
 
-    public WorldPainter(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, GuideSession session, Navigator navigator,
+    public WorldPainter(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, FoliosSession session, Navigator navigator,
                         float time, float pointerX, float pointerY, List<Hit> hits, @Nullable Surface surface) {
         super(palette, session, navigator, time, pointerX, pointerY, hits);
         this.pose = pose;

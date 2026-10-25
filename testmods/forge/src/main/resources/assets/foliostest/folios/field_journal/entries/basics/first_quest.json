@@ -14,11 +14,11 @@
           "read": "basics/first_steps"
         },
         {
-          "category": "crafting"
+          "read_category": "crafting"
         },
         {
-          "item": "minecraft:oak_log",
-          "count": 8
+          "carried": "minecraft:oak_log",
+          "goal": 8
         },
         {
           "advancement": "minecraft:story/mine_stone",

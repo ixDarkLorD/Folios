@@ -1,9 +1,9 @@
 package net.ixdarklord.folios.api.client;
 
-import net.ixdarklord.folios.internal.client.GuideClient;
-import net.ixdarklord.folios.internal.client.GuideLibrary;
-import net.ixdarklord.folios.internal.client.GuideMemory;
-import net.ixdarklord.folios.internal.client.GuideProgress;
+import net.ixdarklord.folios.internal.client.FoliosClient;
+import net.ixdarklord.folios.internal.client.FoliosLibrary;
+import net.ixdarklord.folios.internal.client.FoliosMemory;
+import net.ixdarklord.folios.internal.client.FoliosProgress;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,30 +38,30 @@ public final class FoliosGuides {
     private FoliosGuides() {}
 
     public static @Nullable FoliosBook book(ResourceLocation id) {
-        return GuideLibrary.book(id);
+        return FoliosLibrary.book(id);
     }
 
     public static Collection<FoliosBook> books() {
-        return GuideLibrary.books().values();
+        return FoliosLibrary.books().values();
     }
 
     /** Opens a book where the player left off (or at its start), in its own style; false when there is no such book. */
     public static boolean open(ResourceLocation book) {
-        return GuideClient.open(book, null, null);
+        return FoliosClient.open(book, null, null);
     }
 
     /**
-     * Opens a book at an entry ({@code "category/entry"}, optionally with {@code "#anchor"}).
+     * Opens a book at an entry ({@code "category/entry"}, optionally with {@code "#marker"}).
      *
      * @return false when there is no such book or entry, or the entry is locked
      */
     public static boolean open(ResourceLocation book, String entry) {
-        return GuideClient.open(book, entry, null);
+        return FoliosClient.open(book, entry, null);
     }
 
     /** Whether an entry of a book has been opened by the player (kept between games). */
     public static boolean isRead(ResourceLocation book, String entry) {
-        return GuideMemory.of(book).isRead(entry);
+        return FoliosMemory.of(book).isRead(entry);
     }
 
     /**
@@ -69,11 +69,11 @@ public final class FoliosGuides {
      * whenever a book is laid out; call {@link #refresh()} when its answer changes while a book may be open.
      */
     public static void setFlag(String flag, BooleanSupplier value) {
-        GuideProgress.setFlag(flag, value);
+        FoliosProgress.setFlag(flag, value);
     }
 
     /** Lays every book out again at its next drawing, for after something its locks depend on changed. */
     public static void refresh() {
-        GuideProgress.changed();
+        FoliosProgress.changed();
     }
 }

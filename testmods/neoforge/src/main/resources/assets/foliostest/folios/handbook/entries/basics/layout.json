@@ -1,0 +1,56 @@
+{
+  "name": "Setting Pages",
+  "icon": "minecraft:writable_book",
+  "sort": 3,
+  "pages": [
+    {
+      "title": "Setting Pages",
+      "alignment": "center",
+      "text": "This page is set down its middle (\"anchor\": \"center\"), its lines centred (\"alignment\": \"center\").\n\n->*A paragraph can centre itself too.*<-\n\n->And one can sit at the right.",
+      "marker": "center"
+    },
+    {
+      "title": "Justified",
+      "alignment": "justify",
+      "text": "With \"alignment\": \"justify\", every line of a paragraph but its last fills the width, the room shared out between its words a pixel at a time, so the edges stay straight on both sides. [Links](entry:basics/first_steps) still work word by word."
+    },
+    {
+      "elements": [
+        {
+          "type": "spotlight",
+          "item": "minecraft:writable_book",
+          "title": "Flip",
+          "overflow": {
+            "mode": "flip",
+            "height": 112
+          },
+          "text": "Pages are set one element under another. When one doesn't fit, its overflow decides: flow runs it on over the next pages, keep moves it whole to the next page, flip keeps it in a box and pages its text in place, and auto keeps it whole when it fits on a page of its own and flips it when even that isn't enough. This text is long on purpose, so it can't fit beside the card above it: use the clasps under it, or the mouse wheel over it, to read on. The recipe after it stays on this spread instead of being pushed away."
+        },
+        {
+          "type": "recipe",
+          "recipe": "minecraft:book"
+        }
+      ]
+    },
+    {
+      "elements": [
+        "This text takes up most of the page, so the card below wouldn't fit under it. With \"overflow\": \"keep\" it moves whole to the next page instead of being split.\n\n- one\n- two\n- three\n- four\n- five\n- six",
+        {
+          "type": "spotlight",
+          "item": "minecraft:compass",
+          "title": "Keep",
+          "overflow": "keep",
+          "text": "Moved whole, card and text together."
+        }
+      ]
+    },
+    {
+      "type": "spotlight",
+      "item": "minecraft:clock",
+      "title": "Left and Right",
+      "alignment": "left",
+      "title_alignment": "right",
+      "text": "This card sits at the left (\"alignment\": \"left\"), its title at the right (\"title_alignment\": \"right\")."
+    }
+  ]
+}
