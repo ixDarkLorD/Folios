@@ -11,19 +11,23 @@ import net.minecraft.resources.Identifier;
 public final class Shapes {
     private Shapes() {}
 
-    /** A panel: its corner pixels left out, so it reads as slightly rounded. */
+    /** A panel (the panel sprite): its corner pixels left out, so it reads as slightly rounded. */
     public static void panel(FoliosPainter painter, int x0, int y0, int x1, int y1) {
         FoliosPalette palette = painter.palette();
-        painter.fill(x0 + 1, y0, x1 - 1, y1, palette.line());
-        painter.fill(x0, y0 + 1, x1, y1 - 1, palette.line());
-        painter.fill(x0 + 1, y0 + 1, x1 - 1, y1 - 1, palette.panel());
+        Sprites.draw(painter, Sprites.PANEL_BORDER, x0, y0, x1 - x0, y1 - y0, palette.line());
+        Sprites.draw(painter, Sprites.PANEL_FACE, x0, y0, x1 - x0, y1 - y0, palette.panel());
     }
 
-    /** An 18-pixel slot for an item drawn at (x + 1, y + 1). */
+    /** An 18-pixel slot (the slot sprite) for an item drawn at (x + 1, y + 1). */
     public static void slot(FoliosPainter painter, int x, int y) {
+        slot(painter, x, y, 18);
+    }
+
+    /** A slot {@code size} pixels square, its edge a pixel wide at any size. */
+    public static void slot(FoliosPainter painter, int x, int y, int size) {
         FoliosPalette palette = painter.palette();
-        painter.fill(x, y, x + 18, y + 18, FoliosPalette.mix(palette.panel(), palette.line(), 0.55F));
-        painter.fill(x + 1, y + 1, x + 17, y + 17, FoliosPalette.mix(palette.panel(), palette.paper(), 0.35F));
+        Sprites.draw(painter, Sprites.SLOT_BORDER, x, y, size, size, FoliosPalette.mix(palette.panel(), palette.line(), 0.55F));
+        Sprites.draw(painter, Sprites.SLOT_WELL, x, y, size, size, FoliosPalette.mix(palette.panel(), palette.paper(), 0.35F));
     }
 
     /**
@@ -260,12 +264,17 @@ public final class Shapes {
             if (((h >>> 9) & (wear > 1 ? 3 : 31)) == 0) {
                 int bite = Math.min(end - y, wear > 1 ? 2 + ((h >>> 13) & 3) + ((h >>> 15) & 1) : 1 + ((h >>> 13) & 1));
                 int depth = wear > 1 ? Math.min(Math.round(wear), 1 + ((h >>> 17) & 3)) : 1;
+                // On a lightly worn page a nick is only a soft dent, the paper's own tone a little shaded, so it never
+                // reads as a speck of dirt; a well-worn page's tears show what is behind it.
+                int gap = wear > 1 ? behind : FoliosPalette.mix(painter.palette().paper() | 0xFF000000, behind, 0.18F);
                 for (int step = 0; step < depth && bite - 2 * step > 0; step++) {
                     int column = outer + inward * step;
-                    painter.fill(column, y + step, column + 1, y + bite - step, behind);
+                    painter.fill(column, y + step, column + 1, y + bite - step, gap);
                 }
-                int rim = outer + inward * depth;
-                painter.fill(rim, y, rim + 1, y + bite, alpha(AGED, Math.round(70 * Math.min(wear, 1.6F))));
+                if (wear > 1) {
+                    int rim = outer + inward * depth;
+                    painter.fill(rim, y, rim + 1, y + bite, alpha(AGED, Math.round(70 * Math.min(wear, 1.6F))));
+                }
             }
             y = end;
         }
@@ -416,21 +425,15 @@ public final class Shapes {
         painter.text(text, x + (width - painter.font().width(text)) / 2 + 1, y + 2, ink);
     }
 
-    // An eight-sided shape `width` wide and BUTTON tall: its corners cut by two pixels. With a face, the rim is a
-    // pixel round it; without one (0), it is all of the rim's colour.
+    // The clasp's sprites, `width` wide and BUTTON tall (their ends kept): its border in the rim's colour, its face
+    // over it. Without a face (0), the border alone: all of the rim's colour, as the shadow it casts.
     private static void octagon(FoliosPainter painter, int x, int y, int width, int rim, int face) {
-        int size = BUTTON;
-        painter.fill(x + 2, y, x + width - 2, y + size, rim);
-        painter.fill(x, y + 2, x + width, y + size - 2, rim);
-        painter.fill(x + 1, y + 1, x + width - 1, y + size - 1, rim);
-        if (face == 0) return;
-        painter.fill(x + 2, y + 1, x + width - 2, y + size - 1, face);
-        painter.fill(x + 1, y + 2, x + width - 1, y + size - 2, face);
+        Sprites.draw(painter, Sprites.CLASP_BORDER, x, y, width, BUTTON, rim);
+        if (face != 0) Sprites.draw(painter, Sprites.CLASP_FACE, x, y, width, BUTTON, face);
     }
 
-    /** A small arrow pointing right, 9 by 7 pixels from (x, y). */
+    /** A small arrow pointing right (the arrow sprite), 9 by 7 pixels from (x, y). */
     public static void arrow(FoliosPainter painter, int x, int y, int color) {
-        painter.fill(x, y + 3, x + 6, y + 4, color);
-        for (int step = 0; step < 4; step++) painter.fill(x + 5 + step, y + step, x + 6 + step, y + 7 - step, color);
+        Sprites.draw(painter, Sprites.ARROW, x, y, color);
     }
 }

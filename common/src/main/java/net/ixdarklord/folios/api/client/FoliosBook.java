@@ -90,8 +90,13 @@ public record FoliosBook(Identifier id, String name, String subtitle, String lan
      * @param tabPlate drawn on a tab under its icon, tinted with the paper's colour, so the icon reads on any ribbon
      * @param backdrop drawn over the whole screen behind a screen book; null for the world, dimmed
      */
-    public record Textures(Identifier page, Identifier frame, Identifier cover, Identifier tab, Identifier tabPlate, @Nullable Identifier backdrop) {
-        public static final Textures DEFAULT = new Textures(rl("page"), rl("page_frame"), rl("cover"), rl("ribbon"), rl("ribbon_plate"), null);
+    public record Textures(Identifier page, Identifier frame, Identifier cover, Identifier tab, Identifier tabPlate, @Nullable Identifier backdrop, Identifier spotlight) {
+        public static final Textures DEFAULT = new Textures(rl("page"), rl("page_frame"), rl("cover"), rl("ribbon"), rl("ribbon_plate"), null, rl("spotlight"));
+
+        /** The book's textures, its spotlight card Folios's own. */
+        public Textures(Identifier page, Identifier frame, Identifier cover, Identifier tab, Identifier tabPlate, @Nullable Identifier backdrop) {
+            this(page, frame, cover, tab, tabPlate, backdrop, DEFAULT.spotlight());
+        }
 
         private static Identifier rl(String name) {
             return Identifier.fromNamespaceAndPath("folios", "textures/book/" + name + ".png");

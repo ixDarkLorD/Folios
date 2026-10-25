@@ -1,7 +1,6 @@
 {
   "name": "guide.foliostest.field_journal.entry.crafting.tools.name",
   "icon": "minecraft:iron_pickaxe",
-  "sort": 0,
   "pages": [
     {
       "type": "spotlight",
@@ -11,12 +10,12 @@
     },
     {
       "type": "recipe",
-      "anchor": "pickaxe",
-      "recipes": [
+      "marker": "pickaxe",
+      "text": "guide.foliostest.field_journal.entry.crafting.tools.page2.text",
+      "recipe": [
         "minecraft:iron_pickaxe",
         "minecraft:wooden_pickaxe"
-      ],
-      "text": "guide.foliostest.field_journal.entry.crafting.tools.page2.text"
+      ]
     },
     {
       "type": "recipe",

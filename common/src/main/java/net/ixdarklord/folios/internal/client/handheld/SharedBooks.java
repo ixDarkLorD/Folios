@@ -4,10 +4,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
-import net.ixdarklord.folios.internal.GuidePayloads;
-import net.ixdarklord.folios.internal.client.GuideLibrary;
-import net.ixdarklord.folios.internal.client.GuideReader;
-import net.ixdarklord.folios.internal.client.GuideSession;
+import net.ixdarklord.folios.internal.FoliosPayloads;
+import net.ixdarklord.folios.internal.client.FoliosLibrary;
+import net.ixdarklord.folios.internal.client.FoliosReader;
+import net.ixdarklord.folios.internal.client.FoliosSession;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -34,13 +34,13 @@ public final class SharedBooks {
 
     // A reader's book: shut or open as they last said, and how far open it is drawn now, easing to that.
     private static final class Shared {
-        final GuideReader reader;
+        final FoliosReader reader;
         long heard;
         boolean shut;
         float open;
         long drawn;
 
-        Shared(GuideReader reader, long heard, boolean shut) {
+        Shared(FoliosReader reader, long heard, boolean shut) {
             this.reader = reader;
             this.heard = heard;
             this.shut = shut;
@@ -61,14 +61,14 @@ public final class SharedBooks {
 
     private SharedBooks() {}
 
-    public static void receive(GuidePayloads.SharedReading payload) {
+    public static void receive(FoliosPayloads.SharedReading payload) {
         Minecraft minecraft = Minecraft.getInstance();
-        GuidePayloads.ReadingAt at = payload.at();
+        FoliosPayloads.ReadingAt at = payload.at();
         if (!at.open() || minecraft.player == null || payload.reader() == minecraft.player.getId()) {
             BOOKS.remove(payload.reader());
             return;
         }
-        GuideReader.Spot spot = new GuideReader.Spot(at.chapter(), at.page());
+        FoliosReader.Spot spot = new FoliosReader.Spot(at.chapter(), at.page());
         Shared shared = BOOKS.get(payload.reader());
         long now = Util.getMillis();
         if (shared != null && shared.reader.book.id().equals(at.book())) {
@@ -85,13 +85,13 @@ public final class SharedBooks {
             return;
         }
         // A book this client has too: read from the spread its reader has open.
-        FoliosBook book = GuideLibrary.book(at.book());
-        GuideSession session = GuideLibrary.session(at.book());
+        FoliosBook book = FoliosLibrary.book(at.book());
+        FoliosSession session = FoliosLibrary.session(at.book());
         if (book == null || session == null) {
             BOOKS.remove(payload.reader());
             return;
         }
-        GuideReader reader = new GuideReader(book, session, null);
+        FoliosReader reader = new FoliosReader(book, session, null);
         reader.spot = spot;
         BOOKS.put(payload.reader(), new Shared(reader, now, at.shut()));
     }
@@ -180,7 +180,7 @@ public final class SharedBooks {
         Shared shared = BOOKS.get(state.id);
         HandheldBook own = ownBook(state.id);
         if (shared == null && own == null || state.isInvisible) return;
-        GuideReader reader = own != null ? own : shared.reader;
+        FoliosReader reader = own != null ? own : shared.reader;
         // Held up shut, then opened, as the reader does.
         float open = own != null ? own.open(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false)) : shared.openNow();
         pose.pushPose();

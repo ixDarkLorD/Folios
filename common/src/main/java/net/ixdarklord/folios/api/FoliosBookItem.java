@@ -1,8 +1,8 @@
 package net.ixdarklord.folios.api;
 
-import net.ixdarklord.folios.internal.GuideHooks;
-import net.ixdarklord.folios.internal.GuideNetwork;
-import net.ixdarklord.folios.internal.core.GuideRegistry;
+import net.ixdarklord.folios.internal.FoliosHooks;
+import net.ixdarklord.folios.internal.FoliosNetwork;
+import net.ixdarklord.folios.internal.core.FoliosRegistry;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -28,8 +28,8 @@ import java.util.function.Consumer;
  * <pre>{@code
  * ITEMS.register("handbook", () -> new FoliosBookItem(properties, MyMod.id("handbook")));
  * }</pre>
- * Its name is the book's own, unless the stack has a custom name or {@code item_name}; under it, who the book is from:
- * its {@code "author"} in book.json, or the mod its namespace belongs to.
+ * Its name is the book's own, unless the stack has a custom name or {@code item_name}; under it, "By:" and who the book
+ * is by, when its book.json names an {@code "author"}.
  */
 public class FoliosBookItem extends Item {
     private final @Nullable Identifier book;
@@ -47,7 +47,7 @@ public class FoliosBookItem extends Item {
 
     /** The book a stack of this item opens: its component's, else this item's own; null when it names none. */
     public @Nullable Identifier book(ItemStack stack) {
-        Identifier named = stack.get(GuideRegistry.GUIDE_BOOK.get());
+        Identifier named = stack.get(FoliosRegistry.GUIDE_BOOK.get());
         return named != null ? named : this.book;
     }
 
@@ -55,7 +55,8 @@ public class FoliosBookItem extends Item {
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         Identifier id = this.book(player.getItemInHand(hand));
         if (id == null) return InteractionResult.PASS;
-        if (level.isClientSide()) GuideHooks.openFromItem(id, hand);
+        if (level.isClientSide()) FoliosHooks.openFromItem(id, hand);
+        else if (player instanceof net.minecraft.server.level.ServerPlayer reader) net.ixdarklord.folios.internal.quest.QuestReading.opened(reader, id);
         return InteractionResult.SUCCESS;
     }
 
@@ -63,19 +64,20 @@ public class FoliosBookItem extends Item {
     public void inventoryTick(ItemStack stack, ServerLevel level, Entity owner, @Nullable EquipmentSlot slot) {
         // A player's book marked as being read but no longer in their reading hand (moved, or they stopped): the mark
         // goes. Anyone else's (a mannequin shown reading) keeps it.
-        if (owner instanceof Player && stack.has(GuideRegistry.READING.get()) && !GuideNetwork.isRead(owner, stack)) stack.remove(GuideRegistry.READING.get());
+        if (owner instanceof Player && stack.has(FoliosRegistry.READING.get()) && !FoliosNetwork.isRead(owner, stack)) stack.remove(FoliosRegistry.READING.get());
     }
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
         Identifier id = this.book(stack);
-        if (id == null) return;
-        builder.accept(Component.translatableWithFallback("folios.guide_book.from", "From %s", GuideHooks.bookAuthor(id)).withStyle(ChatFormatting.GRAY));
+        Component author = id != null ? FoliosHooks.bookAuthor(id) : null;
+        if (author == null) return;
+        builder.accept(Component.translatableWithFallback("folios.guide_book.by", "By: %s", author).withStyle(ChatFormatting.GRAY));
     }
 
     @Override
     public Component getName(ItemStack stack) {
         Identifier id = this.book(stack);
-        return id != null ? GuideHooks.bookName(id) : super.getName(stack);
+        return id != null ? FoliosHooks.bookName(id) : super.getName(stack);
     }
 }

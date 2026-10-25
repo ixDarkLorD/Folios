@@ -1,0 +1,19 @@
+{
+  "name": "Popups",
+  "icon": "minecraft:ender_eye",
+  "sort": 7,
+  "pages": [
+    {
+      "title": "Popups",
+      "text": "Point at a name to see it; press it to pin the window, then drag it round or zoom it.
+
+- {entity:minecraft:blaze}, from the tag {entity:...}
+- [An allay](entity:minecraft:allay), from a link
+- [The igloo](structure:minecraft:igloo/top), a structure
+- [The watchtower](build:watchtower), a build file
+- [The hut](multiblock:world/builds#hut), a multiblock page
+
+A mod's own kind of link: [say hello](say:Hello from the book!)."
+    }
+  ]
+}

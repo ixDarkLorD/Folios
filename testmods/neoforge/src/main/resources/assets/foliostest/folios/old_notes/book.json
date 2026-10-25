@@ -1,0 +1,21 @@
+{
+  "name": "Old Notes",
+  "subtitle": "guide.foliostest.old_notes.subtitle",
+  "author": "The Archivist",
+  "landing": "This book is written in the **2.x** format: it has no `format_version`, so Folios upgrades it as it loads.\n\n[Jump to the marked page](entry:notes/marked#second)",
+  "accent": "#6C8BFF",
+  "cover": 3029592,
+  "icon": "minecraft:paper",
+  "tilt": 10,
+  "progress": "player",
+  "colors": {
+    "tooltip": {
+      "background": "16202E"
+    }
+  },
+  "cover_text": {
+    "title": {
+      "y": 11.0
+    }
+  }
+}

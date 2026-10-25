@@ -35,8 +35,8 @@ public final class FoliosLayout {
     public static final int FOOT = 23;
     /** Under this are the page's number and its turn buttons, with 2 pixels between them and what is on the page. */
     public static final int CONTENT_BOTTOM = PAGE_HEIGHT - FOOT;
-    /** How much room a title takes, its rule under it included. */
-    public static final int TITLE_HEIGHT = 18;
+    /** How much room a title takes: its line, its rule under it, and 4 pixels under that (as a heading in text has). */
+    public static final int TITLE_HEIGHT = 16;
 
     private static final AtomicInteger VIEWPORTS = new AtomicInteger();
 
@@ -44,6 +44,7 @@ public final class FoliosLayout {
     private final Font font;
     private final List<SceneViewport> viewports = new ArrayList<>();
     private @Nullable List<Flow> capturing;
+    private @Nullable FoliosAlign alignment;
     private FoliosIcon titleIcon = FoliosIcon.NONE;
     private final int pageWidth;
     private final int pageHeight;
@@ -99,8 +100,27 @@ public final class FoliosLayout {
     }
 
     /** Text set out to the content's width. */
+    /** How what is laid out now is aligned across the page ({@code "alignment"}); null for each part's own way. */
+    public @Nullable FoliosAlign alignment() {
+        return alignment;
+    }
+
+    /** Sets how what is laid out next is aligned, as a page sets it for each of its elements; null for each part's own way. */
+    public void alignment(@Nullable FoliosAlign alignment) {
+        this.alignment = alignment;
+    }
+
+    /**
+     * Where something {@code width} wide starts across the page's content, for an alignment: centred for null and
+     * {@link FoliosAlign#JUSTIFY}, the way a picture or a card is placed by default.
+     */
+    public static int place(FoliosPainter painter, @Nullable FoliosAlign align, int width) {
+        int room = painter.contentRight() - CONTENT_LEFT;
+        return CONTENT_LEFT + (align == null ? FoliosAlign.CENTER : align).offset(room, width);
+    }
+
     public FoliosText text(String raw) {
-        return FoliosText.of(font, raw, this.contentWidth());
+        return FoliosText.of(font, raw, this.contentWidth(), alignment);
     }
 
     /**
@@ -181,31 +201,46 @@ public final class FoliosLayout {
      * the line does. Without an icon the line runs unbroken.
      */
     public static void title(FoliosPainter painter, Component title, int y, FoliosIcon icon) {
+        title(painter, title, y, icon, null);
+    }
+
+    /** As {@link #title(FoliosPainter, Component, int, FoliosIcon)}, placed across the page by an alignment (left for null or justify). */
+    public static void title(FoliosPainter painter, Component title, int y, FoliosIcon icon, @Nullable FoliosAlign align) {
         FoliosPalette palette = painter.palette();
         Font font = painter.font();
-        int indent = 0;
+        Component bold = title.copy().withStyle(net.minecraft.ChatFormatting.BOLD);
+        int right = painter.contentRight();
+        int indent = icon.isEmpty() ? 0 : 18;
+        // On one line: made smaller to fit, down to three quarters, and past that cut short with an ellipsis.
+        int room = right - CONTENT_LEFT - indent;
+        float fit = Math.max(0.75F, Math.min(1, room / (float) Math.max(1, font.width(bold))));
+        int shown = (int) Math.ceil(Math.min(room, font.width(bold) * fit));
+        // The icon goes with the title wherever it is placed.
+        int across = align == null || align == FoliosAlign.JUSTIFY ? 0 : align.offset(room, shown);
         if (!icon.isEmpty()) {
             painter.push();
-            painter.translate(CONTENT_LEFT + 2, y - 2);
+            painter.translate(CONTENT_LEFT + 2 + across, y - 2);
             painter.scale(0.75F);
             icon.draw(painter, 0, 0);
             painter.pop();
-            indent = 18;
         }
-        Component bold = title.copy().withStyle(net.minecraft.ChatFormatting.BOLD);
-        int right = painter.contentRight();
-        List<net.minecraft.util.FormattedCharSequence> lines = font.split(bold, right - CONTENT_LEFT - indent);
-        int lineY = y;
-        for (net.minecraft.util.FormattedCharSequence line : lines.subList(0, Math.min(1, lines.size()))) {
-            painter.text(line, CONTENT_LEFT + indent, lineY, palette.heading());
-            lineY += 10;
+        net.minecraft.util.FormattedCharSequence line = bold.getVisualOrderText();
+        if (font.width(bold) * fit > room) {
+            net.minecraft.network.chat.FormattedText cut = font.substrByWidth(bold, (int) (room / fit) - font.width("…"));
+            line = net.minecraft.locale.Language.getInstance().getVisualOrder(net.minecraft.network.chat.FormattedText.composite(cut, net.minecraft.network.chat.FormattedText.of("…")));
         }
+        painter.push();
+        painter.translate(CONTENT_LEFT + indent + across, y + (1 - fit) * 4);
+        painter.scale(fit);
+        painter.text(line, 0, 0, palette.heading());
+        painter.pop();
         if (icon.isEmpty()) {
             painter.fill(CONTENT_LEFT, y + 11, right, y + 12, palette.line());
             return;
         }
-        painter.fill(CONTENT_LEFT, y + 11, CONTENT_LEFT + 16, y + 12, palette.accent());
-        painter.fill(CONTENT_LEFT + 18, y + 11, right, y + 12, palette.line());
+        painter.fill(CONTENT_LEFT, y + 11, CONTENT_LEFT + across, y + 12, palette.line());
+        painter.fill(CONTENT_LEFT + across, y + 11, CONTENT_LEFT + across + 16, y + 12, palette.accent());
+        painter.fill(CONTENT_LEFT + across + 18, y + 11, right, y + 12, palette.line());
     }
 
     /**

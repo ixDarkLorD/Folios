@@ -24,26 +24,27 @@ import java.util.Optional;
 public record EntityPageElement(Identifier entity, Optional<String> title, String text, float zoom, float spin, float yaw, int height) implements FoliosPageElement {
     public static final MapCodec<EntityPageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Identifier.CODEC.fieldOf("entity").forGetter(EntityPageElement::entity),
-            Codec.STRING.optionalFieldOf("title").forGetter(EntityPageElement::title),
-            Codec.STRING.optionalFieldOf("text", "").forGetter(EntityPageElement::text),
+            FoliosText.CODEC.optionalFieldOf("title").forGetter(EntityPageElement::title),
+            FoliosText.CODEC.optionalFieldOf("text", "").forGetter(EntityPageElement::text),
             Codec.floatRange(0.25F, 4.0F).optionalFieldOf("zoom", 1.0F).forGetter(EntityPageElement::zoom),
             Codec.FLOAT.optionalFieldOf("spin", 24.0F).forGetter(EntityPageElement::spin),
-            Codec.FLOAT.optionalFieldOf("yaw", 30.0F).forGetter(EntityPageElement::yaw),
+            Codec.FLOAT.optionalFieldOf("yaw", 45.0F).forGetter(EntityPageElement::yaw),
             Codec.intRange(40, 130).optionalFieldOf("height", 74).forGetter(EntityPageElement::height)
     ).apply(instance, EntityPageElement::new));
 
     /** Ids for the entities pages show, counting down from -1 so they meet no entity in the world. */
-    private static final java.util.concurrent.atomic.AtomicInteger SHOWN_IDS = new java.util.concurrent.atomic.AtomicInteger();
+    static final java.util.concurrent.atomic.AtomicInteger SHOWN_IDS = new java.util.concurrent.atomic.AtomicInteger();
 
     @Override
     public List<Laid> lay(FoliosLayout layout) {
         int contentWidth = layout.contentWidth();
         int height = layout.scaled(this.height);
         SceneViewport view = layout.viewport(contentWidth * FoliosLayout.SCENE_DETAIL, height * FoliosLayout.SCENE_DETAIL);
-        view.refreshRate(30);
+        // Drawn every frame: a scene drawn fewer times turns in uneven steps.
+        view.refreshRate(240);
         // Stood on a ground of grid lines, with its shadow under it.
         view.ground(0, 1, 0x30808080, 0x55A0A0A0, true);
-        SceneControl control = new SceneControl(view, yaw, 12, spin);
+        SceneControl control = new SceneControl(view, yaw, 30, spin);
         Entity[] shown = {null};
         boolean named = title.isEmpty();
         return layout.flow(title.orElse(null), height + (named ? 12 : 0), text, (painter, y) -> {
@@ -54,6 +55,7 @@ public record EntityPageElement(Identifier entity, Optional<String> title, Strin
                 if (shown[0] != null) {
                     // Never in the world, but drawn as if it were, which asks its id: one of its own, below any real one.
                     shown[0].setId(SHOWN_IDS.decrementAndGet());
+                    PreviewEntities.track(shown[0]);
                     view.entity(shown[0], 0, 0, 0, 0);
                     // Framed to fit the window whole: wide enough for it turned corner-on, and for all its height at the
                     // window's proportions, with a little room round it; zoom then brings it nearer or further.
@@ -61,7 +63,7 @@ public record EntityPageElement(Identifier entity, Optional<String> title, Strin
                     float tall = shown[0].getBbHeight() * (contentWidth / (float) height);
                     // Small creatures are drawn no larger than a block and a half fills the window: their models (wings,
                     // fins) reach well past their boxes.
-                    view.frame(Math.max(Math.max(width, tall) * 1.5F, 1.9F) / zoom, 0, shown[0].getBbHeight() * 0.52, 0);
+                    view.frame(Math.max(Math.max(width, tall) * 1.75F, 2.2F) / zoom, 0, shown[0].getBbHeight() * 0.52, 0);
                 }
             }
             int left = FoliosLayout.CONTENT_LEFT;
