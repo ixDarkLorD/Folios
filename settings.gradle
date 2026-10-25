@@ -8,4 +8,4 @@ loaders.findAll { testmods && file("testmods/$it").isDirectory() }.each { loader
     project(":testmod-$loader").projectDir = file("testmods/$loader")
 }
 
-apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4/settings.gradle"
+apply from: "${providers.gradleProperty("shared_scripts_url").getOrElse("https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4")}/settings.gradle"
