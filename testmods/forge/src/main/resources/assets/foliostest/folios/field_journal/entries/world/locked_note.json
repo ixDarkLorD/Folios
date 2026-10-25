@@ -2,11 +2,12 @@
   "name": "guide.foliostest.field_journal.entry.world.locked_note.name",
   "icon": "minecraft:diamond",
   "sort": 2,
-  "advancement": "minecraft:story/mine_diamond",
   "pages": [
     {
-      "type": "text",
       "text": "guide.foliostest.field_journal.entry.world.locked_note.page1.text"
     }
-  ]
+  ],
+  "requires": {
+    "advancement": "minecraft:story/mine_diamond"
+  }
 }

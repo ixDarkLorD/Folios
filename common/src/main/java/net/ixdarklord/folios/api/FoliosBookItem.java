@@ -1,8 +1,8 @@
 package net.ixdarklord.folios.api;
 
-import net.ixdarklord.folios.internal.GuideHooks;
-import net.ixdarklord.folios.internal.GuideNetwork;
-import net.ixdarklord.folios.internal.core.GuideRegistry;
+import net.ixdarklord.folios.internal.FoliosHooks;
+import net.ixdarklord.folios.internal.FoliosNetwork;
+import net.ixdarklord.folios.internal.core.FoliosRegistry;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -27,8 +27,8 @@ import java.util.List;
  * <pre>{@code
  * ITEMS.register("handbook", () -> new FoliosBookItem(properties, MyMod.id("handbook")));
  * }</pre>
- * Its name is the book's own, unless the stack has a custom name or {@code item_name}; under it, who the book is from:
- * its {@code "author"} in book.json, or the mod its namespace belongs to.
+ * Its name is the book's own, unless the stack has a custom name or {@code item_name}; under it, "By:" and who the book
+ * is by, when its book.json names an {@code "author"}.
  */
 public class FoliosBookItem extends Item {
     private final @Nullable ResourceLocation book;
@@ -55,7 +55,8 @@ public class FoliosBookItem extends Item {
         ItemStack stack = player.getItemInHand(hand);
         ResourceLocation id = this.book(stack);
         if (id == null) return InteractionResultHolder.pass(stack);
-        if (level.isClientSide()) GuideHooks.openFromItem(id, hand);
+        if (level.isClientSide()) FoliosHooks.openFromItem(id, hand);
+        else if (player instanceof net.minecraft.server.level.ServerPlayer reader) net.ixdarklord.folios.internal.quest.QuestReading.opened(reader, id);
         return InteractionResultHolder.success(stack);
     }
 
@@ -64,19 +65,20 @@ public class FoliosBookItem extends Item {
         if (level.isClientSide()) return;
         // A player's book marked as being read but no longer in their reading hand (moved, or they stopped): the mark
         // goes. Anyone else's keeps it.
-        if (owner instanceof Player && GuideRegistry.isReading(stack) && !GuideNetwork.isRead(owner, stack)) GuideRegistry.setReading(stack, false);
+        if (owner instanceof Player && FoliosRegistry.isReading(stack) && !FoliosNetwork.isRead(owner, stack)) FoliosRegistry.setReading(stack, false);
     }
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         ResourceLocation id = this.book(stack);
-        if (id == null) return;
-        tooltip.add(Component.translatableWithFallback("folios.guide_book.from", "From %s", GuideHooks.bookAuthor(id)).withStyle(ChatFormatting.GRAY));
+        Component author = id != null ? FoliosHooks.bookAuthor(id) : null;
+        if (author == null) return;
+        tooltip.add(Component.translatableWithFallback("folios.guide_book.by", "By: %s", author).withStyle(ChatFormatting.GRAY));
     }
 
     @Override
     public Component getName(ItemStack stack) {
         ResourceLocation id = this.book(stack);
-        return id != null ? GuideHooks.bookName(id) : super.getName(stack);
+        return id != null ? FoliosHooks.bookName(id) : super.getName(stack);
     }
 }

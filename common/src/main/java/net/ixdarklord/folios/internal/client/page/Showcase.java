@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.client.page;
 
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
@@ -41,15 +42,16 @@ final class Showcase {
         }
     }
 
-    /** One of the things a page shows, as written: its id, and the name it is shown by, if any. */
-    record Shown(String id, Optional<String> name) {
+    /** One of the things a page shows, as written: its id, and the label it is shown by, if any. */
+    record Shown(String id, Optional<String> label) {
         private static final Codec<Shown> OBJECT = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.fieldOf("id").forGetter(Shown::id),
-                Codec.STRING.optionalFieldOf("name").forGetter(Shown::name)
+                FoliosText.CODEC.optionalFieldOf("label").forGetter(Shown::label)
         ).apply(instance, Shown::new));
-        /** An id alone, or {"id": ..., "name": ...}. */
-        static final Codec<Shown> CODEC = Codec.either(OBJECT, Codec.STRING.xmap(id -> new Shown(id, Optional.empty()), Shown::id))
-                .xmap(either -> either.map(shown -> shown, shown -> shown), com.mojang.datafixers.util.Either::left);
+        /** An id alone, or {"id": ..., "label": ...}. */
+        static final Codec<Shown> ONE = net.ixdarklord.folios.internal.compat.Compat.withAlternative(OBJECT, Codec.STRING.xmap(id -> new Shown(id, Optional.empty()), Shown::id));
+        /** One, or a list of them. */
+        static final Codec<List<Shown>> CODEC = net.ixdarklord.folios.internal.compat.Compat.withAlternative(net.ixdarklord.folios.internal.compat.Compat.listOf(ONE, 1, 32), ONE.xmap(List::of, list -> list.get(0)));
     }
 
     /** What is known of one thing to show now: its blocks, or, while there are none (yet), what to say instead. */
@@ -83,7 +85,8 @@ final class Showcase {
         int height = layout.scaled(authoredHeight);
         int contentWidth = layout.contentWidth();
         SceneViewport view = layout.viewport(contentWidth * FoliosLayout.SCENE_DETAIL, height * FoliosLayout.SCENE_DETAIL);
-        view.refreshRate(30);
+        // Drawn every frame: a scene drawn fewer times turns in uneven steps.
+        view.refreshRate(240);
         view.ground(0, 1, 0x30808080, 0x55A0A0A0, false);
         Window window = new Window(view, items);
         int selectorHeight = items.size() > 1 ? SELECTOR : 0;

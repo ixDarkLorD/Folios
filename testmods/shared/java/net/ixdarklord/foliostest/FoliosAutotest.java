@@ -1,7 +1,7 @@
 package net.ixdarklord.foliostest;
 
 import net.ixdarklord.coolcatcore.api.event.v2.client.ClientTickEvents;
-import net.ixdarklord.folios.internal.client.GuideClient;
+import net.ixdarklord.folios.internal.client.FoliosClient;
 import net.ixdarklord.folios.internal.client.build.BlockChoice;
 import net.ixdarklord.folios.internal.client.build.BuildGuide;
 import net.minecraft.client.CameraType;
@@ -35,6 +35,7 @@ import java.util.function.Consumer;
 public final class FoliosAutotest {
     private static final ResourceLocation JOURNAL = new ResourceLocation("foliostest", "field_journal");
     private static final ResourceLocation HANDBOOK = new ResourceLocation("foliostest", "handbook");
+    private static final ResourceLocation OLD_NOTES = new ResourceLocation("foliostest", "old_notes");
 
     private record Step(int ticks, Consumer<Minecraft> action) {}
 
@@ -55,7 +56,7 @@ public final class FoliosAutotest {
                 if (minecraft.screen != null) minecraft.screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
             }),
             new Step(70, minecraft -> shot(minecraft, "03_open")),
-            new Step(1, minecraft -> GuideClient.open(JOURNAL, "crafting/tools", InteractionHand.MAIN_HAND)),
+            new Step(1, minecraft -> FoliosClient.open(JOURNAL, "crafting/tools", InteractionHand.MAIN_HAND)),
             new Step(70, minecraft -> shot(minecraft, "04_recipes")),
             // The same spread looked at from another way: the pages, tabs and bar must keep their light.
             new Step(1, minecraft -> {
@@ -67,7 +68,7 @@ public final class FoliosAutotest {
                 minecraft.player.setYRot(0.0F);
                 minecraft.player.setXRot(0.0F);
             }),
-            new Step(1, minecraft -> GuideClient.open(JOURNAL, "world/builds", InteractionHand.MAIN_HAND)),
+            new Step(1, minecraft -> FoliosClient.open(JOURNAL, "world/builds", InteractionHand.MAIN_HAND)),
             new Step(90, minecraft -> shot(minecraft, "05_multiblock")),
             new Step(1, minecraft -> minecraft.options.setCameraType(CameraType.THIRD_PERSON_FRONT)),
             new Step(30, minecraft -> shot(minecraft, "06_third_person")),
@@ -110,27 +111,27 @@ public final class FoliosAutotest {
             new Step(1, minecraft -> minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK)),
             new Step(30, minecraft -> shot(minecraft, "11_actors_behind")),
             // The pages added with tags, structures, builds and elements, on the screen book.
-            new Step(1, minecraft -> GuideClient.open(HANDBOOK, "world/builds#hut", null)),
+            new Step(1, minecraft -> FoliosClient.open(HANDBOOK, "world/builds#hut", null)),
             new Step(90, minecraft -> shot(minecraft, "10_hut_tags")),
             new Step(25, minecraft -> shot(minecraft, "10b_hut_tags_later")),
-            new Step(1, minecraft -> GuideClient.open(HANDBOOK, "world/builds#structures", null)),
+            new Step(1, minecraft -> FoliosClient.open(HANDBOOK, "world/builds#structures", null)),
             new Step(120, minecraft -> shot(minecraft, "11_structures_builds")),
-            new Step(1, minecraft -> GuideClient.open(HANDBOOK, "world/builds#elements", null)),
+            new Step(1, minecraft -> FoliosClient.open(HANDBOOK, "world/builds#elements", null)),
             new Step(100, minecraft -> shot(minecraft, "12_elements")),
             new Step(1, minecraft -> {
                 if (minecraft.screen != null) minecraft.screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
             }),
             new Step(100, minecraft -> shot(minecraft, "13_elements_next")),
             // Pressing them: the hut's blocks list, the second structure, the next build.
-            new Step(1, minecraft -> GuideClient.open(HANDBOOK, "world/builds#hut", null)),
+            new Step(1, minecraft -> FoliosClient.open(HANDBOOK, "world/builds#hut", null)),
             new Step(90, minecraft -> click(minecraft, 334, 144)),
             new Step(10, minecraft -> shot(minecraft, "15_blocks_list")),
-            new Step(1, minecraft -> GuideClient.open(HANDBOOK, "world/builds#structures", null)),
+            new Step(1, minecraft -> FoliosClient.open(HANDBOOK, "world/builds#structures", null)),
             new Step(100, minecraft -> click(minecraft, 142, 161)),
             new Step(40, minecraft -> click(minecraft, 337, 161)),
             new Step(20, minecraft -> shot(minecraft, "16_number_and_arrow")),
             // The requirement list of a build with more kinds than it shows at once, opened and scrolled.
-            new Step(1, minecraft -> GuideClient.open(HANDBOOK, "world/sampler", null)),
+            new Step(1, minecraft -> FoliosClient.open(HANDBOOK, "world/sampler", null)),
             new Step(80, minecraft -> click(minecraft, 192, 144)),
             new Step(10, minecraft -> shot(minecraft, "17_requirement_list")),
             new Step(1, minecraft -> {
@@ -142,7 +143,7 @@ public final class FoliosAutotest {
                 if (minecraft.screen != null) minecraft.screen.onClose();
                 command(minecraft, "item replace entity @s weapon.mainhand with folios:guide_book{folios_book:\"foliostest:field_journal\"}");
             }),
-            new Step(20, minecraft -> GuideClient.open(JOURNAL, null, InteractionHand.MAIN_HAND)),
+            new Step(20, minecraft -> FoliosClient.open(JOURNAL, null, InteractionHand.MAIN_HAND)),
             new Step(50, minecraft -> {
                 if (minecraft.screen != null) minecraft.screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
             }),
@@ -159,17 +160,60 @@ public final class FoliosAutotest {
                 if (minecraft.screen != null) minecraft.screen.onClose();
                 minecraft.player.setXRot(-30.0F);
             }),
-            new Step(5, minecraft -> GuideClient.open(HANDBOOK, "basics/first_steps", null)),
-            new Step(60, minecraft -> GuideClient.open(HANDBOOK, "crafting/tools", null)),
-            new Step(60, minecraft -> GuideClient.open(HANDBOOK, "crafting/torches", null)),
+            new Step(5, minecraft -> FoliosClient.open(HANDBOOK, "basics/first_steps", null)),
+            new Step(60, minecraft -> FoliosClient.open(HANDBOOK, "crafting/tools", null)),
+            new Step(60, minecraft -> FoliosClient.open(HANDBOOK, "crafting/torches", null)),
             new Step(60, minecraft -> {
                 if (minecraft.screen != null) minecraft.screen.onClose();
                 command(minecraft, "give @s minecraft:oak_log 8");
             }),
             new Step(80, minecraft -> command(minecraft, "advancement grant @s only minecraft:story/mine_stone")),
             new Step(30, minecraft -> shot(minecraft, "19_toasts")),
-            new Step(1, minecraft -> GuideClient.open(HANDBOOK, null, null)),
+            new Step(1, minecraft -> FoliosClient.open(HANDBOOK, null, null)),
             new Step(60, minecraft -> shot(minecraft, "20_mastered_front")),
+            // 3.0: pages written from live lists (a client source and a data pack's), set pages, flip boxes, quests in order, and
+            // a 2.x book read through the upgrader.
+            new Step(1, minecraft -> FoliosClient.open(HANDBOOK, "basics/live_lists", null)),
+            new Step(70, minecraft -> shot(minecraft, "21_live_lists")),
+            new Step(1, minecraft -> {
+                if (minecraft.screen != null) minecraft.screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
+            }),
+            new Step(60, minecraft -> shot(minecraft, "22_live_lists_next")),
+            new Step(1, minecraft -> FoliosClient.open(HANDBOOK, "basics/layout", null)),
+            new Step(70, minecraft -> shot(minecraft, "23_layout")),
+            new Step(1, minecraft -> {
+                if (minecraft.screen != null) minecraft.screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
+            }),
+            new Step(60, minecraft -> shot(minecraft, "24_layout_next")),
+            new Step(1, minecraft -> FoliosClient.open(HANDBOOK, "basics/next_steps", null)),
+            new Step(70, minecraft -> shot(minecraft, "25_quest_in_order")),
+            new Step(1, minecraft -> FoliosClient.open(OLD_NOTES, "notes/old_shapes", null)),
+            new Step(70, minecraft -> shot(minecraft, "26_old_book")),
+            // Lists from the game itself: a tag's items, a registry's entities, the reader's advancements.
+            new Step(1, minecraft -> command(minecraft, "advancement grant @s only minecraft:story/root")),
+            new Step(20, minecraft -> FoliosClient.open(HANDBOOK, "basics/game_lists", null)),
+            new Step(70, minecraft -> shot(minecraft, "27_game_lists")),
+            new Step(1, minecraft -> {
+                if (minecraft.screen != null) minecraft.screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
+            }),
+            new Step(60, minecraft -> shot(minecraft, "28_game_lists_next")),
+            // Links with popups (one pinned as a press pins it), headings' dividers, and a page mentioned in chat.
+            new Step(1, minecraft -> FoliosClient.open(HANDBOOK, "basics/popups", null)),
+            new Step(70, minecraft -> {
+                if (minecraft.screen instanceof net.ixdarklord.folios.internal.client.screen.FoliosScreen screen) screen.reader().follow("multiblock:world/builds#hut");
+            }),
+            new Step(30, minecraft -> shot(minecraft, "29_popups")),
+            new Step(1, minecraft -> FoliosClient.open(HANDBOOK, "basics/first_steps", null)),
+            new Step(60, minecraft -> {
+                if (minecraft.screen != null) minecraft.screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
+            }),
+            new Step(60, minecraft -> shot(minecraft, "30_heading")),
+            new Step(1, minecraft -> {
+                if (minecraft.screen != null) minecraft.screen.onClose();
+                minecraft.player.connection.sendChat("See [[foliostest:handbook|basics/first_steps|1]] and [[foliostest:handbook|world/locked_note|0]]");
+            }),
+            new Step(30, minecraft -> minecraft.setScreen(new net.minecraft.client.gui.screens.ChatScreen(""))),
+            new Step(20, minecraft -> shot(minecraft, "31_mention")),
             new Step(40, minecraft -> Runtime.getRuntime().halt(0))
     );
 

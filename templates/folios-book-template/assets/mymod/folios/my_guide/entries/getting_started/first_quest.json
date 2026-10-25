@@ -1,24 +1,23 @@
 {
-  "name": "guide.mymod.my_guide.entry.getting_started.first_quest.name",
   "icon": "minecraft:compass",
   "sort": -1,
   "pages": [
     {
       "type": "quest",
-      "title": "guide.mymod.my_guide.entry.getting_started.first_quest.page1.title",
-      "text": "guide.mymod.my_guide.entry.getting_started.first_quest.page1.text",
-      "reward": "guide.mymod.my_guide.entry.getting_started.first_quest.page1.reward",
+      "title": "folios.mymod.my_guide.entry.getting_started.first_quest.page1.title",
+      "text": "folios.mymod.my_guide.entry.getting_started.first_quest.page1.text",
+      "reward": "folios.mymod.my_guide.entry.getting_started.first_quest.page1.reward",
       "objectives": [
         {
           "read": "getting_started/first_steps"
         },
         {
-          "item": "minecraft:oak_log",
-          "count": 8
+          "carried": "minecraft:oak_log",
+          "goal": 8
         },
         {
           "advancement": "minecraft:story/mine_stone",
-          "label": "guide.mymod.my_guide.entry.getting_started.first_quest.page1.objective3"
+          "label": "folios.mymod.my_guide.entry.getting_started.first_quest.page1.objective3"
         }
       ]
     }

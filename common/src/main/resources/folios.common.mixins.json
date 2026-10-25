@@ -14,6 +14,8 @@
     "client.SharedBookPoseMixin",
     "client.SharedBookRenderMixin",
     "client.ClientAdvancementsAccessor",
+    "client.ClientAdvancementsMixin",
+    "client.ChatComponentMixin",
     "client.EditBoxAccessor",
     "client.GameRendererMixin",
     "client.GuiMixin",

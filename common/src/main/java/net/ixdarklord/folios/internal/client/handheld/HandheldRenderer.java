@@ -10,8 +10,8 @@ import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.api.client.page.FoliosText;
-import net.ixdarklord.folios.internal.client.GuideReader;
-import net.ixdarklord.folios.internal.client.screen.GuideBar;
+import net.ixdarklord.folios.internal.client.FoliosReader;
+import net.ixdarklord.folios.internal.client.screen.FoliosBar;
 import net.ixdarklord.folios.internal.client.page.Shapes;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.paint.WorldPainter;
@@ -103,6 +103,7 @@ public final class HandheldRenderer {
         book.leftHits.clear();
         book.rightHits.clear();
         book.tooltip = null;
+        book.popup = null;
         book.tabs.frame();
 
         pose.pushPose();
@@ -140,7 +141,7 @@ public final class HandheldRenderer {
 
         boolean readable = book.isOpen();
         float turned = book.flipProgress();
-        GuideReader.Flip flip = book.flip;
+        FoliosReader.Flip flip = book.flip;
         // The leaf's angle about the spine: 0 lying on the right, PI on the left.
         float angle = flip == null ? 0 : easeInOut(flip.forward() ? turned : 1 - turned) * Mth.PI;
         FoliosPageElement.Laid staticLeft = flip == null ? book.page(book.spot, 0) : flip.forward() ? flip.oldLeft() : flip.newLeft();
@@ -250,15 +251,15 @@ public final class HandheldRenderer {
      * book is drawn as its reader holds it before its screen, its pages a likeness of pages. In page pixels from the spine at the head, as the
      * reader's own is (the caller places it and flips y).
      */
-    public static void drawShared(PoseStack pose, SubmitNodeCollector collector, int light, GuideReader reader) {
+    public static void drawShared(PoseStack pose, SubmitNodeCollector collector, int light, FoliosReader reader) {
         drawShared(pose, collector, light, reader, 1);
     }
 
     /**
-     * As {@link #drawShared(PoseStack, SubmitNodeCollector, int, GuideReader)}, {@code open} of the way open: 0 held
+     * As {@link #drawShared(PoseStack, SubmitNodeCollector, int, FoliosReader)}, {@code open} of the way open: 0 held
      * up shut (its cover to the reader, its strap on), then unlatched and opened, as the reader's own opens.
      */
-    public static void drawShared(PoseStack pose, SubmitNodeCollector collector, int light, GuideReader reader, float open) {
+    public static void drawShared(PoseStack pose, SubmitNodeCollector collector, int light, FoliosReader reader, float open) {
         leaves = LEAVES_SHUT;
         board = BOARD_SHUT;
         opened = open;
@@ -267,7 +268,7 @@ public final class HandheldRenderer {
         reader.tabs.frame();
         // A screen book's leaves turn too, as its reader turns them on their screen: a likeness of pages on each.
         float turned = reader.flipProgress();
-        GuideReader.Flip flip = reader.flip;
+        FoliosReader.Flip flip = reader.flip;
         float angle = flip == null ? 0 : easeInOut(flip.forward() ? turned : 1 - turned) * Mth.PI;
         FoliosPageElement.Laid staticLeft = flip == null ? reader.page(reader.spot, 0) : flip.forward() ? flip.oldLeft() : flip.newLeft();
         FoliosPageElement.Laid staticRight = flip == null ? reader.page(reader.spot, 1) : flip.forward() ? flip.newRight() : flip.oldRight();
@@ -393,7 +394,7 @@ public final class HandheldRenderer {
     /** How far the bar's foot is over the book's head, in page pixels. */
     private static final int BAR_GAP = 5;
     /** The screen book's cover rim round its pages, which its bar sits that gap over. */
-    private static final int SCREEN_BORDER = net.ixdarklord.folios.internal.client.screen.GuideScreen.BORDER;
+    private static final int SCREEN_BORDER = net.ixdarklord.folios.internal.client.screen.FoliosScreen.BORDER;
 
     // The bar over the open book, as wide as the book, in its frame a little over its head: in the world, so a leaf
     // turning past it goes in front of it. It grows out of its pull once the book is fully open, and is gone as soon
@@ -401,19 +402,19 @@ public final class HandheldRenderer {
     private static void bar(PoseStack pose, SubmitNodeCollector collector, int light, HandheldBook book, Matrix4f toClip) {
         book.barHits.clear();
         book.barPlaced = false;
-        GuideBar bar = book.bar;
+        FoliosBar bar = book.bar;
         if (bar == null || !book.isOpen()) {
             book.openSince = 0;
             return;
         }
-        long now = net.minecraft.Util.getMillis();
+        long now = net.ixdarklord.folios.internal.client.FoliosClock.millis();
         if (book.openSince == 0) book.openSince = now;
         float appear = net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings.transitions() ? easeOut(Math.min(1, (now - book.openSince) / 220.0F)) : 1;
         pose.pushPose();
         // As far over the pages as the screen book's bar is over its own (its cover's rim, then the gap), and as wide,
         // centred on the spine.
-        int wide = net.ixdarklord.folios.internal.client.screen.GuideScreen.BOOK_WIDTH;
-        pose.translate(-wide / 2.0F, -SCREEN_BORDER - BAR_GAP - GuideBar.HEIGHT, 0);
+        int wide = net.ixdarklord.folios.internal.client.screen.FoliosScreen.BOOK_WIDTH;
+        pose.translate(-wide / 2.0F, -SCREEN_BORDER - BAR_GAP - FoliosBar.HEIGHT, 0);
         book.barClip.set(toClip).mul(pose.last().pose());
         WorldPainter painter = new WorldPainter(pose, collector, light, bar.palette(), book.session, book, book.seconds(),
                 book.barPointer[0], book.barPointer[1], book.barHits).lightAs(PAGE_LIGHT);
@@ -464,12 +465,12 @@ public final class HandheldRenderer {
     // are, so it doesn't dim as it turns, and its writing is left out while it stands edge-on, where it could not be
     // read anyway. A flat leaf swings stiffly; a bending one curls, its free edge trailing as it lifts and following
     // as it comes down.
-    private static void leaf(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, GuideReader book, GuideReader.Flip flip, float angle) {
+    private static void leaf(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, FoliosReader book, FoliosReader.Flip flip, float angle) {
         leaf(pose, collector, light, palette, book, flip, angle, false);
     }
 
     // `sketch`: the leaf of a screen book seen in its reader's hands, a likeness of a page on each side.
-    private static void leaf(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, GuideReader book, GuideReader.Flip flip, float angle,
+    private static void leaf(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, FoliosReader book, FoliosReader.Flip flip, float angle,
                              boolean sketch) {
         FoliosPageElement.Laid face = flip.forward() ? flip.oldRight() : flip.newRight();
         FoliosPageElement.Laid back = flip.forward() ? flip.newLeft() : flip.oldLeft();
@@ -599,7 +600,7 @@ public final class HandheldRenderer {
     /** The colour of the leaves' block, edge on. */
     private static final int LEAF_EDGE = 0xFFE3D6B6;
 
-    private static void deckle(WorldPainter painter, GuideReader book, int x0, int x1, boolean right) {
+    private static void deckle(WorldPainter painter, FoliosReader book, int x0, int x1, boolean right) {
         // Its nicks and tears show what is behind the page: the leaves under it, in the shadow of the page over them
         // (warm and dark enough to read as a tear, not the black of a hole).
         int behind = FoliosPalette.mix(LEAF_EDGE, 0xFF5A4028, 0.62F);
@@ -614,7 +615,7 @@ public final class HandheldRenderer {
     // down onto the leaf, so more of it fits on a leaf of the same size. It keeps within the leaf's own margins, clear
     // of its frame as at the default size, as large as fits them; a spread's half spans the whole leaf, to meet its
     // other half at the fold. The painter keeps where the pointer is and what can be pressed in step with the scale.
-    private static void printed(WorldPainter painter, GuideReader book, FoliosPageElement.@Nullable Laid page, Runnable draw) {
+    private static void printed(WorldPainter painter, FoliosReader book, FoliosPageElement.@Nullable Laid page, Runnable draw) {
         FoliosLayout layout = book.session.layout();
         if (layout.pageWidth() <= PW) {
             draw.run();
@@ -636,7 +637,7 @@ public final class HandheldRenderer {
         painter.printing(false);
     }
 
-    private static WorldPainter painter(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, GuideReader book,
+    private static WorldPainter painter(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, FoliosReader book,
                                         float @Nullable [] pointer, List<AbstractPainter.Hit> hits) {
         float x = pointer != null ? pointer[0] : Float.NaN;
         float y = pointer != null ? pointer[1] : Float.NaN;
@@ -645,6 +646,7 @@ public final class HandheldRenderer {
 
     private static void mergeTooltip(HandheldBook book, WorldPainter painter) {
         if (painter.tooltipLines() != null) book.tooltip = painter.tooltipLines();
+        if (painter.popup() != null) book.popup = painter.popup();
     }
 
     // The shadow a rising leaf casts on the page it uncovers, widest when the leaf stands upright.
@@ -688,7 +690,7 @@ public final class HandheldRenderer {
     // the foot. At rest each is small; the open one grows as it opens. They are laid one under the other with the same
     // gap between each, whatever their sizes, so the column stays even as one grows. Under the pointer a tab only swings
     // further out, so nothing moves beneath it.
-    private static void tabs(WorldPainter painter, GuideReader book) {
+    private static void tabs(WorldPainter painter, FoliosReader book) {
         // The fore-edge of the leaves past the right page, the tabs coming out of it.
         Shapes.foreEdge(painter, PW, 1, PH - 1, true, LEAVES_SHOWN);
         int gap = book.book.layout().tabSpacing();
@@ -709,7 +711,7 @@ public final class HandheldRenderer {
         }
     }
 
-    private static boolean isIn(GuideReader book, FoliosCategory category) {
+    private static boolean isIn(FoliosReader book, FoliosCategory category) {
         if (!book.spot.chapter().startsWith("entry:")) return false;
         var entry = book.book.entry(book.spot.chapter().substring(6));
         return entry != null && entry.category().equals(category.id());
@@ -726,10 +728,10 @@ public final class HandheldRenderer {
     // A tab, its top at y (or, `fromFoot`, its foot): pressable (pressed, it is knocked in and springs out again, and its
     // part opens); it swings out under the pointer and further while its part is open, growing as it opens. Returns
     // its other edge.
-    private static int tab(WorldPainter painter, GuideReader book, int x, int y, boolean fromFoot, @Nullable FoliosCategory category, boolean here, String part, int order) {
+    private static int tab(WorldPainter painter, FoliosReader book, int x, int y, boolean fromFoot, @Nullable FoliosCategory category, boolean here, String part, int order) {
         FoliosPalette palette = painter.palette();
         Component name = tabName(category, part);
-        String key = GuideReader.tabKey(category, part);
+        String key = FoliosReader.tabKey(category, part);
         Runnable go = category != null ? () -> book.category(category.id()) : switch (part) {
             case "bookmarks" -> book::bookmarks;
             case "index" -> book::index;
@@ -766,8 +768,8 @@ public final class HandheldRenderer {
         painter.translate(plateX, plateY);
         painter.cutout(book.book.textures().tabPlate(), 0, 0, plate, plate, 0, 0, 1, 1, palette.paper() | 0xFF000000);
         painter.translate(1, 1);
-        if (part.equals("bookmarks")) GuideBar.pixels(painter, GuideBar.STAR, 0, 0, icon, palette.accent() | 0xFF000000);
-        else if (part.equals("index")) GuideBar.pixels(painter, GuideBar.INDEX, 0, 0, icon, palette.accent() | 0xFF000000);
+        if (part.equals("bookmarks")) FoliosBar.pixels(painter, FoliosBar.STAR, 0, 0, icon, palette.accent() | 0xFF000000);
+        else if (part.equals("index")) FoliosBar.pixels(painter, FoliosBar.INDEX, 0, 0, icon, palette.accent() | 0xFF000000);
         else {
             painter.scale(icon / 16.0F);
             if (category != null) category.icon().draw(painter, 0, 0);
@@ -775,7 +777,7 @@ public final class HandheldRenderer {
         }
         painter.pop();
         // After the icon, so an item for an icon doesn't show its own tooltip in place of the tab's.
-        if (over) painter.tooltip(net.ixdarklord.folios.internal.client.GuideTooltips.of(name, book.tabDetail(category, part)));
+        if (over) painter.tooltip(net.ixdarklord.folios.internal.client.FoliosTooltips.of(name, book.tabDetail(category, part)));
         return fromFoot ? top : top + tall;
     }
 
@@ -783,7 +785,7 @@ public final class HandheldRenderer {
     // ---- The book itself ----
 
     // A half of the book: its board and its block of leaves. `left` for the half on the left of the spine.
-    private static void body(PoseStack pose, SubmitNodeCollector collector, int light, GuideReader book, boolean left) {
+    private static void body(PoseStack pose, SubmitNodeCollector collector, int light, FoliosReader book, boolean left) {
         int cover = 0xFF000000 | book.book.cover();
         int edge = LEAF_EDGE;
         float sign = left ? -1 : 1;
@@ -854,7 +856,7 @@ public final class HandheldRenderer {
     // The spine: one band of the item's leather, from the right board's back edge at the spine to the left one's, the
     // halves at those angles about it. Shut, it is the item's spine, a flat back standing a little out past the boards
     // with rounded shoulders; as the cover opens it bends with it, and open it is drawn in to a ridge behind the fold.
-    private static void spine(PoseStack pose, SubmitNodeCollector collector, int light, GuideReader book, float rightAngle, float leftAngle) {
+    private static void spine(PoseStack pose, SubmitNodeCollector collector, int light, FoliosReader book, float rightAngle, float leftAngle) {
         int cover = 0xFF000000 | book.book.cover();
         boolean own = !book.book.textures().cover().equals(FoliosBook.Textures.DEFAULT.cover());
         ResourceLocation leather = own ? book.book.textures().cover() : LEATHER;
@@ -1006,7 +1008,7 @@ public final class HandheldRenderer {
     }
 
     // The cover, on the outside of the left board: seen while the book is shut, with the book's name on it.
-    private static void cover(PoseStack pose, SubmitNodeCollector collector, int light, GuideReader book) {
+    private static void cover(PoseStack pose, SubmitNodeCollector collector, int light, FoliosReader book) {
         pose.pushPose();
         pose.translate(0, 0, -leaves - board - 0.26F);
         pose.mulPose(Axis.YP.rotation(Mth.PI));
@@ -1025,7 +1027,7 @@ public final class HandheldRenderer {
         if (relight != null) relight.transform(facing).normalize();
         WorldPainter painter = new WorldPainter(pose, collector, light, ink, book.session, book, book.seconds(), Float.NaN, Float.NaN, new ArrayList<>())
                 .lightAs(facing);
-        // Laid out as the item's cover is (GuideCoverText), so the book raised out of the hand is the same book: its
+        // Laid out as the item's cover is (FoliosCoverText), so the book raised out of the hand is the same book: its
         // name a quarter of the way down, its subtitle three quarters, each on one line shrunk to the room across,
         // the emblem between them (the cover model's).
         // Where the book says, in the item's units carried onto the board (its cover 3 to 13 across, 1 to 15 up).
@@ -1115,7 +1117,7 @@ public final class HandheldRenderer {
 
     // One line of the cover's, centred across it at height y (its middle), as tall as `size` at most and no wider than
     // `room`.
-    // The soft rule and its stud, as GuideCoverText draws them on the item, carried onto the board (whole page pixels).
+    // The soft rule and its stud, as FoliosCoverText draws them on the item, carried onto the board (whole page pixels).
     private static void coverRule(WorldPainter painter, net.ixdarklord.folios.internal.client.CoverMarkers.Lettering lettering, int gilt) {
         FoliosBook.CoverText.Line line = lettering.line();
         float across = (PW + EDGE) / 10.0F;
@@ -1138,7 +1140,7 @@ public final class HandheldRenderer {
         }
     }
 
-    // A lettering on the board, laid out as GuideCoverText lays it on the item (CoverMarkers.rows), carried onto the board.
+    // A lettering on the board, laid out as FoliosCoverText lays it on the item (CoverMarkers.rows), carried onto the board.
     /**
      * What the cover's plate under a point says (the point in page pixels on the board, as the pointer is while the
      * book is held shut), placed as {@link #coverLines} letters it; nothing off its plates.

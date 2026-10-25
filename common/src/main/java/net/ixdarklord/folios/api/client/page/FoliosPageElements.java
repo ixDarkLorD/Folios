@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * {@code empty} (nothing, to start what follows on a new spread). An element type of a mod's own can be in a page's
  * elements when it lays itself out through {@link FoliosLayout#flow}.
  * Every page may also have {@code "icon"} (shown before its title; an entry's first page shows the entry's icon unless
- * it names its own or {@code "none"}), {@code "anchor"} (a name links can reach it by, {@code entry:id#anchor}) and the fields of
+ * it names its own or {@code "none"}), {@code "marker"} (a name links can reach it by, {@code entry:id#marker}) and the fields of
  * a {@link net.ixdarklord.folios.api.client.FoliosLock}.
  */
 public final class FoliosPageElements {
