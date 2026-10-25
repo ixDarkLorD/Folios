@@ -1,0 +1,27 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "folios-site",
+      "runtimeExecutable": "F:/Programing/Minecraft/Mods/Folios-Site/.venv/Scripts/zensical.exe",
+      "runtimeArgs": [
+        "serve",
+        "-f",
+        "F:/Programing/Minecraft/Mods/Folios-Site/zensical.toml",
+        "-a",
+        "localhost:8765"
+      ],
+      "port": 8765
+    },
+    {
+      "name": "folios-site-static",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "C:/Users/nawaf/AppData/Local/Temp/claude/F--Programing-Minecraft-Mods-Folios-26-1-2/ee619a28-4ae4-4f66-9269-85625945bcb4/scratchpad/serve_site.py",
+        "F:/Programing/Minecraft/Mods/Folios-Site/site",
+        "8770"
+      ],
+      "port": 8770
+    }
+  ]
+}

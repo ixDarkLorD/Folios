@@ -2,7 +2,7 @@ package net.ixdarklord.folios.internal.client.handheld;
 
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyledEditBox;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
-import net.ixdarklord.folios.internal.client.screen.GuideBar;
+import net.ixdarklord.folios.internal.client.screen.FoliosBar;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -21,14 +21,16 @@ import java.util.List;
 // it. The bar's search field is a hidden text box here that takes the keys. As the book allows, the reader looks
 // about while holding the right button and walks with the movement keys.
 public final class HandheldScreen extends Screen {
+    // Links' popup windows: the one under the pointer, and the one pinned over the book.
+    private final net.ixdarklord.folios.internal.client.screen.PopupLayer popups = new net.ixdarklord.folios.internal.client.screen.PopupLayer();
     private final HandheldBook book;
-    private final GuideBar bar;
+    private final FoliosBar bar;
     private @Nullable StyledEditBox search;
 
     HandheldScreen(HandheldBook book) {
         super(book.book.title());
         this.book = book;
-        this.bar = new GuideBar(book, true, book::shut, field -> {
+        this.bar = new FoliosBar(book, true, book::shut, field -> {
             this.setFocused(field);
             field.setFocused(true);
         });
@@ -40,7 +42,7 @@ public final class HandheldScreen extends Screen {
         hintY = Integer.MIN_VALUE;
         // Its pages as large as the GUI scale makes them (PageSize), printed smaller on leaves of the same size.
         float factor = net.ixdarklord.folios.internal.client.PageSize.handheldFactor();
-        net.ixdarklord.folios.internal.client.GuideSession sized = net.ixdarklord.folios.internal.client.GuideLibrary.session(book.book.id(),
+        net.ixdarklord.folios.internal.client.FoliosSession sized = net.ixdarklord.folios.internal.client.FoliosLibrary.session(book.book.id(),
                 net.ixdarklord.folios.internal.client.PageSize.width(factor), net.ixdarklord.folios.internal.client.PageSize.height(factor));
         if (sized != null) book.useSession(sized);
         this.search = this.addRenderableWidget(this.bar.search(this.search));
@@ -85,7 +87,8 @@ public final class HandheldScreen extends Screen {
             lines.add(Component.translatableWithFallback("folios.open", "Click to open"));
             tooltip = lines;
         }
-        if (tooltip != null && !tooltip.isEmpty()) net.ixdarklord.folios.internal.client.GuideTooltips.show(graphics, this.font, tooltip, mouseX, mouseY, book.book, rule);
+        boolean popped = this.popups.draw(graphics, book, HandheldRenderer.palette(book.book), book.popup, mouseX, mouseY, 1, this.width, this.height);
+        if (!popped && tooltip != null && !tooltip.isEmpty()) net.ixdarklord.folios.internal.client.FoliosTooltips.show(graphics, this.font, tooltip, mouseX, mouseY, book.book, rule);
         this.lookHint(graphics);
     }
 
@@ -112,9 +115,9 @@ public final class HandheldScreen extends Screen {
             hintY = Integer.MIN_VALUE;
             return;
         }
-        if (openedAt == 0) openedAt = net.minecraft.util.Util.getMillis();
+        if (openedAt == 0) openedAt = net.ixdarklord.folios.internal.client.FoliosClock.millis();
         if (lookedAbout || looking || !book.placed || !book.book.handling().lookAround()) return;
-        long shown = net.minecraft.util.Util.getMillis() - openedAt;
+        long shown = net.ixdarklord.folios.internal.client.FoliosClock.millis() - openedAt;
         if (shown > HINT_MILLIS + HINT_FADE) return;
         float alpha = shown <= HINT_MILLIS ? 1 : 1 - (shown - HINT_MILLIS) / (float) HINT_FADE;
         int fade = Math.round(alpha * 255);
@@ -124,16 +127,16 @@ public final class HandheldScreen extends Screen {
         int tall = 16;
         // The top of the bar over the book: its rim, the gap and the bar's height above the pages' head (taken from
         // the page, as the bar may still be growing out of its pull).
-        float[] top = this.onScreen(book.rightClip, 0, -(net.ixdarklord.folios.internal.client.screen.GuideScreen.BORDER + 5 + GuideBar.HEIGHT));
+        float[] top = this.onScreen(book.rightClip, 0, -(net.ixdarklord.folios.internal.client.screen.FoliosScreen.BORDER + 5 + FoliosBar.HEIGHT));
         if (top == null) return;
         int x = (this.width - wide) / 2;
         // Placed once, where the book first lies: it stays put as the book bobs with the reader's steps.
         if (hintY == Integer.MIN_VALUE) hintY = Math.max(14, Math.round(top[1]) - tall - 12);
         int y = hintY;
         graphics.nextStratum();
-        net.ixdarklord.folios.internal.client.GuideTooltips.frame(graphics, x, y, wide, tall, book.book, fade);
+        net.ixdarklord.folios.internal.client.FoliosTooltips.frame(graphics, x, y, wide, tall, book.book, fade);
         graphics.blitSprite(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, RIGHT_CLICK, x - 2, y - 2, 20, 20, alpha);
-        int ink = net.ixdarklord.folios.internal.client.GuideTooltips.titleColor(book.book);
+        int ink = net.ixdarklord.folios.internal.client.FoliosTooltips.titleColor(book.book);
         graphics.text(this.font, hint, x + 20, y + 4, (fade << 24) | (ink & 0xFFFFFF), true);
     }
 
@@ -152,6 +155,7 @@ public final class HandheldScreen extends Screen {
     @Override
     public void tick() {
         if (HandheldBook.current() != book) this.minecraft.setScreen(null);
+        else book.keepCurrent();
     }
 
     // ---- Looking about and walking while reading ----
@@ -225,6 +229,8 @@ public final class HandheldScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        // A pinned popup takes the press first: on it, what is under it; off it, it is put away.
+        if (event.button() == 0 && this.popups.click(book, event.x(), event.y())) return true;
         // From outside, the pages can't be pressed; the mouse only turns the view.
         if (outside()) return true;
         if (event.button() == 1 && book.book.handling().lookAround() && !this.bar.typing()) {
@@ -283,6 +289,7 @@ public final class HandheldScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+        if (event.button() == 0 && this.popups.drag(dx, dy)) return true;
         if (looking && event.button() == 1 && !outside()) {
             // Turned as the view is turned in play, at the player's own sensitivity.
             this.turn(dx, dy);
@@ -300,6 +307,7 @@ public final class HandheldScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        if (event.button() == 0) this.popups.release();
         if (event.button() == 1 && looking) {
             this.look(false, 0, 0);
             return true;
@@ -331,6 +339,7 @@ public final class HandheldScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
+        if (this.popups.scroll(book, x, y, scrollY)) return true;
         if (scrollY == 0) return true;
         // Over something on a page that takes the wheel (a scene zooming), it goes there; otherwise it turns the page.
         if (book.isOpen()) {
@@ -348,6 +357,10 @@ public final class HandheldScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
+        // The mention key over a page: a mention of it in a new chat message.
+        if (!this.bar.typing() && book.isOpen() && net.ixdarklord.folios.internal.client.FoliosMentions.KEY.matches(event)
+                && (!Float.isNaN(book.rightPointer[0]) ? book.mention(true) : !Float.isNaN(book.leftPointer[0]) && book.mention(false))) return true;
+        if (event.key() == GLFW.GLFW_KEY_ESCAPE && this.popups.escape(book)) return true;
         // The view cycles as in play; from outside, the mouse turns it freely.
         if (this.minecraft.options.keyTogglePerspective.matches(event) && !this.bar.typing()) {
             var options = this.minecraft.options;

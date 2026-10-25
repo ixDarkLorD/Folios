@@ -1,0 +1,6 @@
+{
+  "source": "foliostest:pickaxes",
+  "rows": [
+    { "id": "minecraft:golden_pickaxe", "remove": true }
+  ]
+}

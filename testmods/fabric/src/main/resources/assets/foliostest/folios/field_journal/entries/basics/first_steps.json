@@ -2,15 +2,12 @@
   "name": "guide.foliostest.field_journal.entry.basics.first_steps.name",
   "icon": "minecraft:wooden_pickaxe",
   "featured": true,
-  "sort": 0,
   "pages": [
     {
-      "type": "text",
       "title": "guide.foliostest.field_journal.entry.basics.first_steps.page1.title",
       "text": "guide.foliostest.field_journal.entry.basics.first_steps.page1.text"
     },
     {
-      "type": "text",
       "text": "guide.foliostest.field_journal.entry.basics.first_steps.page2.text"
     },
     {

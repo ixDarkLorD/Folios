@@ -18,8 +18,8 @@ import java.util.Optional;
 public record SpotlightPageElement(FoliosStack item, Optional<String> title, String text, boolean link) implements FoliosPageElement {
     public static final MapCodec<SpotlightPageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             FoliosStack.CODEC.fieldOf("item").forGetter(SpotlightPageElement::item),
-            Codec.STRING.optionalFieldOf("title").forGetter(SpotlightPageElement::title),
-            Codec.STRING.optionalFieldOf("text", "").forGetter(SpotlightPageElement::text),
+            FoliosText.CODEC.optionalFieldOf("title").forGetter(SpotlightPageElement::title),
+            FoliosText.CODEC.optionalFieldOf("text", "").forGetter(SpotlightPageElement::text),
             Codec.BOOL.optionalFieldOf("link", true).forGetter(SpotlightPageElement::link)
     ).apply(instance, SpotlightPageElement::new));
 
@@ -28,12 +28,14 @@ public record SpotlightPageElement(FoliosStack item, Optional<String> title, Str
     @Override
     public List<Laid> lay(FoliosLayout layout) {
         boolean named = title.isEmpty();
+        net.ixdarklord.folios.api.client.page.FoliosAlign align = layout.alignment();
         return layout.flow(title.orElse(null), CARD + (named ? 12 : 0), text, (painter, y) -> {
-            int middle = painter.pageWidth() / 2;
-            int left = middle - CARD / 2;
-            Shapes.panel(painter, left, y, left + CARD, y + CARD);
-            // A soft wash of the book's colour behind the item.
+            int left = FoliosLayout.place(painter, align, CARD);
+            int middle = left + CARD / 2;
+            // The card: the book's spotlight texture ("textures" › "spotlight"), tinted with the panel colour.
             FoliosPalette palette = painter.palette();
+            painter.texture(layout.book().textures().spotlight(), left, y, CARD, CARD, 0, 0, 1, 1, palette.panel() | 0xFF000000);
+            // A soft wash of the book's colour behind the item.
             painter.fill(left + 5, y + 5, left + CARD - 5, y + CARD - 5, FoliosPalette.alpha(palette.accent(), 0x22));
             ItemStack stack = item.at(painter.time());
             painter.push();

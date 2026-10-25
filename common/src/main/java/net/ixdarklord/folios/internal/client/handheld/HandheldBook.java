@@ -2,11 +2,11 @@ package net.ixdarklord.folios.internal.client.handheld;
 
 import net.ixdarklord.coolcatcore.api.network.Network;
 import net.ixdarklord.folios.api.client.FoliosBook;
-import net.ixdarklord.folios.internal.GuidePayloads;
-import net.ixdarklord.folios.internal.client.GuideReader;
-import net.ixdarklord.folios.internal.client.GuideSession;
+import net.ixdarklord.folios.internal.FoliosPayloads;
+import net.ixdarklord.folios.internal.client.FoliosReader;
+import net.ixdarklord.folios.internal.client.FoliosSession;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
-import net.ixdarklord.folios.internal.client.screen.GuideBar;
+import net.ixdarklord.folios.internal.client.screen.FoliosBar;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -23,7 +23,7 @@ import java.util.List;
 // A book held open in the player's hands: a reader of the book, and how far it has been raised and opened. It is
 // drawn by HandheldRenderer in place of the hands; HandheldScreen frees the pointer to read it. It comes up from
 // below, opens, and is shut and lowered again when put away; it can't be leafed through while it moves.
-public final class HandheldBook extends GuideReader {
+public final class HandheldBook extends FoliosReader {
     static final float RAISE_TICKS = 8;
     // Ticks to open: its latch first, then the cover's swing (10 of them).
     static final float OPEN_TICKS = 14;
@@ -49,13 +49,15 @@ public final class HandheldBook extends GuideReader {
     float[] leftPointer = {Float.NaN, Float.NaN};
     float[] rightPointer = {Float.NaN, Float.NaN};
     @Nullable List<Component> tooltip;
+    // The popup window of the link under the pointer, if it has one.
+    net.ixdarklord.folios.api.client.page.@Nullable FoliosPopup popup;
     // How each page lies on the screen, from the last frame: page pixels to clip space.
     final Matrix4f leftClip = new Matrix4f();
     final Matrix4f rightClip = new Matrix4f();
     boolean placed;
     // Its bar: drawn over it in the world once it lies open (`barPlaced` this frame), pressed through the pointer on
     // its plane; and since when the book has been fully open, for the bar growing out of its pull.
-    @Nullable GuideBar bar;
+    @Nullable FoliosBar bar;
     final List<AbstractPainter.Hit> barHits = new ArrayList<>();
     float[] barPointer = {Float.NaN, Float.NaN};
     final Matrix4f barClip = new Matrix4f();
@@ -65,7 +67,7 @@ public final class HandheldBook extends GuideReader {
     private @Nullable Spot shared;
     private boolean sharedShut;
 
-    private HandheldBook(FoliosBook book, GuideSession session, FoliosBook.@Nullable Location at, @Nullable InteractionHand hand, boolean sketch) {
+    private HandheldBook(FoliosBook book, FoliosSession session, FoliosBook.@Nullable Location at, @Nullable InteractionHand hand, boolean sketch) {
         super(book, session, at, hand);
         this.hand = hand;
         this.sketch = sketch;
@@ -75,10 +77,10 @@ public final class HandheldBook extends GuideReader {
      * Opens a screen book used from a hand: raised and opened in the hands first, its screen coming up once it lies
      * open. With no hand (a command, a link), the screen opens at once.
      */
-    public static void openScreen(FoliosBook book, GuideSession session, FoliosBook.@Nullable Location at, @Nullable InteractionHand hand) {
+    public static void openScreen(FoliosBook book, FoliosSession session, FoliosBook.@Nullable Location at, @Nullable InteractionHand hand) {
         Minecraft minecraft = Minecraft.getInstance();
         if (hand == null || minecraft.player == null || current != null) {
-            minecraft.setScreen(new net.ixdarklord.folios.internal.client.screen.GuideScreen(book, session, at, hand));
+            minecraft.setScreen(new net.ixdarklord.folios.internal.client.screen.FoliosScreen(book, session, at, hand));
             return;
         }
         HandheldBook opened = new HandheldBook(book, session, at, hand, true);
@@ -94,7 +96,7 @@ public final class HandheldBook extends GuideReader {
         return current;
     }
 
-    public static void open(FoliosBook book, GuideSession session, FoliosBook.@Nullable Location at, @Nullable InteractionHand hand) {
+    public static void open(FoliosBook book, FoliosSession session, FoliosBook.@Nullable Location at, @Nullable InteractionHand hand) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null) return;
         HandheldBook previous = current;
@@ -153,13 +155,13 @@ public final class HandheldBook extends GuideReader {
         if (!screenShown) {
             if (open >= 1) {
                 screenShown = true;
-                minecraft.setScreen(new net.ixdarklord.folios.internal.client.screen.GuideScreen(book, session, this.here(), this.hand));
+                minecraft.setScreen(new net.ixdarklord.folios.internal.client.screen.FoliosScreen(book, session, this.here(), this.hand));
             } else if (minecraft.screen != null) {
                 this.close();
             }
             return;
         }
-        if (!(minecraft.screen instanceof net.ixdarklord.folios.internal.client.screen.GuideScreen screen)) {
+        if (!(minecraft.screen instanceof net.ixdarklord.folios.internal.client.screen.FoliosScreen screen)) {
             this.close();
             return;
         }
@@ -180,7 +182,7 @@ public final class HandheldBook extends GuideReader {
         boolean lying = this.isOpen() || sketch && this.open >= 1 && !closing;
         if (lying == marked) return;
         marked = lying;
-        Network.sendToServer(lying ? new GuidePayloads.Reading(true, hand.ordinal()) : new GuidePayloads.Reading(false, -1));
+        Network.sendToServer(lying ? new FoliosPayloads.Reading(true, hand.ordinal()) : new FoliosPayloads.Reading(false, -1));
     }
 
     private void share() {
@@ -193,8 +195,8 @@ public final class HandheldBook extends GuideReader {
         if (java.util.Objects.equals(now, shared) && shut == sharedShut) return;
         shared = now;
         sharedShut = shut;
-        Network.sendToServer(now != null ? new GuidePayloads.ReadingAt(true, book.id(), now.chapter(), now.page(), shut)
-                : new GuidePayloads.ReadingAt(false, GuidePayloads.NO_BOOK, "", 0, false));
+        Network.sendToServer(now != null ? new FoliosPayloads.ReadingAt(true, book.id(), now.chapter(), now.page(), shut)
+                : new FoliosPayloads.ReadingAt(false, FoliosPayloads.NO_BOOK, "", 0, false));
     }
 
     float raise(float partialTick) {
@@ -260,7 +262,7 @@ public final class HandheldBook extends GuideReader {
         if (current != this) return;
         current = null;
         this.save();
-        if (hand != null && marked) Network.sendToServer(new GuidePayloads.Reading(false, -1));
+        if (hand != null && marked) Network.sendToServer(new FoliosPayloads.Reading(false, -1));
         marked = false;
         shared = null;
         Minecraft minecraft = Minecraft.getInstance();
