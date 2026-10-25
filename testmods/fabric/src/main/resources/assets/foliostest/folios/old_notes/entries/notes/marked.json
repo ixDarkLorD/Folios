@@ -1,0 +1,15 @@
+{
+  "name": "A Marked Page",
+  "icon": "minecraft:name_tag",
+  "pages": [
+    {
+      "title": "First Page",
+      "text": "The next page has `\"anchor\": \"second\"`, the 2.x way of naming a page for links."
+    },
+    {
+      "anchor": "second",
+      "title": "Second Page",
+      "text": "A link to `entry:notes/marked#second` lands here."
+    }
+  ]
+}

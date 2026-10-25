@@ -1,7 +1,6 @@
 package net.ixdarklord.folios.internal.client.page;
 
 import net.ixdarklord.folios.api.client.page.FoliosText;
-import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -10,7 +9,7 @@ import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.api.client.page.FoliosStack;
-import net.ixdarklord.folios.internal.client.GuideRecipes;
+import net.ixdarklord.folios.internal.client.FoliosRecipes;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -37,10 +36,10 @@ import java.util.Optional;
 // slot showing in turn every item it takes. Recipes are asked of the server the first time the page is shown.
 public record RecipePageElement(List<Identifier> recipes, Optional<String> title, String text) implements FoliosPageElement {
     public static final MapCodec<RecipePageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Codec.mapEither(Identifier.CODEC.listOf(1, 2).fieldOf("recipes"), Identifier.CODEC.fieldOf("recipe"))
-                    .xmap(either -> either.map(list -> list, List::of), Either::<List<Identifier>, Identifier>left).forGetter(RecipePageElement::recipes),
-            Codec.STRING.optionalFieldOf("title").forGetter(RecipePageElement::title),
-            Codec.STRING.optionalFieldOf("text", "").forGetter(RecipePageElement::text)
+            // One recipe, or a list of up to two.
+            Codec.withAlternative(Identifier.CODEC.listOf(1, 2), Identifier.CODEC.xmap(List::of, List::getFirst)).fieldOf("recipe").forGetter(RecipePageElement::recipes),
+            FoliosText.CODEC.optionalFieldOf("title").forGetter(RecipePageElement::title),
+            FoliosText.CODEC.optionalFieldOf("text", "").forGetter(RecipePageElement::text)
     ).apply(instance, RecipePageElement::new));
 
     private static final int BOX = 62;
@@ -62,7 +61,7 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
         return new Body(room + (named ? FoliosLayout.TITLE_HEIGHT : 0), (painter, y) -> {
             int top = y;
             if (named) {
-                List<RecipeDisplay> first = GuideRecipes.get(recipes.getFirst());
+                List<RecipeDisplay> first = FoliosRecipes.get(recipes.getFirst());
                 if (first != null && !first.isEmpty()) {
                     ItemStack made = stacks(resolved, first.getFirst().result()).stream().findFirst().orElse(ItemStack.EMPTY);
                     if (!made.isEmpty()) FoliosLayout.title(painter, made.getHoverName(), y, icon);
@@ -81,7 +80,7 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
         int left = FoliosLayout.CONTENT_LEFT;
         int right = painter.contentRight();
         Shapes.panel(painter, left, y, right, y + BOX);
-        List<RecipeDisplay> displays = GuideRecipes.get(id);
+        List<RecipeDisplay> displays = FoliosRecipes.get(id);
         if (displays == null || displays.isEmpty()) {
             Component message = displays == null
                     ? Component.translatableWithFallback("folios.recipe.loading", "Loading recipe...")

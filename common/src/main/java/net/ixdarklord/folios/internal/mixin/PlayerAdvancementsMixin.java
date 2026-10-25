@@ -1,6 +1,6 @@
 package net.ixdarklord.folios.internal.mixin;
 
-import net.ixdarklord.folios.internal.GuideNetwork;
+import net.ixdarklord.folios.internal.FoliosNetwork;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,11 +18,11 @@ public abstract class PlayerAdvancementsMixin {
 
     @Inject(method = "award", at = @At("RETURN"))
     private void folios$awarded(AdvancementHolder holder, String criterion, CallbackInfoReturnable<Boolean> cir) {
-        if (cir.getReturnValueZ() && ((PlayerAdvancements) (Object) this).getOrStartProgress(holder).isDone()) GuideNetwork.changed(this.player, holder, true);
+        if (cir.getReturnValueZ() && ((PlayerAdvancements) (Object) this).getOrStartProgress(holder).isDone()) FoliosNetwork.changed(this.player, holder, true);
     }
 
     @Inject(method = "revoke", at = @At("RETURN"))
     private void folios$revoked(AdvancementHolder holder, String criterion, CallbackInfoReturnable<Boolean> cir) {
-        if (cir.getReturnValueZ() && !((PlayerAdvancements) (Object) this).getOrStartProgress(holder).isDone()) GuideNetwork.changed(this.player, holder, false);
+        if (cir.getReturnValueZ() && !((PlayerAdvancements) (Object) this).getOrStartProgress(holder).isDone()) FoliosNetwork.changed(this.player, holder, false);
     }
 }

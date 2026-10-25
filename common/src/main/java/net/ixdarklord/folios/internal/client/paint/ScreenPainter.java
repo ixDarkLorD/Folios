@@ -6,7 +6,7 @@ import com.mojang.renderpearl.api.textures.GpuTextureView;
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
 import net.ixdarklord.coolcatcanvas.internal.client.viewport.SceneViewportManager;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
-import net.ixdarklord.folios.internal.client.GuideSession;
+import net.ixdarklord.folios.internal.client.FoliosSession;
 import net.ixdarklord.folios.internal.mixin.client.GuiGraphicsInvoker;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -21,7 +21,7 @@ public final class ScreenPainter extends AbstractPainter {
     private static final int UV = 1 << 14;
     private final GuiGraphicsExtractor graphics;
 
-    public ScreenPainter(GuiGraphicsExtractor graphics, float x, float y, float scale, FoliosPalette palette, GuideSession session, Navigator navigator,
+    public ScreenPainter(GuiGraphicsExtractor graphics, float x, float y, float scale, FoliosPalette palette, FoliosSession session, Navigator navigator,
                          float time, float pointerX, float pointerY, List<Hit> hits) {
         super(palette, session, navigator, time, pointerX, pointerY, hits);
         this.graphics = graphics;
@@ -65,7 +65,8 @@ public final class ScreenPainter extends AbstractPainter {
 
     @Override
     protected void drawItem(ItemStack stack, int x, int y, int argb) {
-        TintedGuiItems.draw(argb, () -> graphics.fakeItem(stack, x, y));
+        // Drawn at the size it is shown, not stretched from a 16-pixel picture.
+        ScaledGuiItems.sharp(() -> TintedGuiItems.draw(argb, () -> graphics.fakeItem(stack, x, y)));
         // The count and bars can't fade: shown once the item is mostly there.
         if ((argb >>> 24) >= 160) graphics.itemDecorations(font, stack, x, y);
     }

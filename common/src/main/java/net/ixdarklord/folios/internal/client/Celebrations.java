@@ -29,9 +29,9 @@ public final class Celebrations {
     public static void check() {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.level == null) return;
-        for (FoliosBook book : GuideLibrary.books().values()) {
-            GuideMemory memory = GuideMemory.of(book.id());
-            CelebrationSettings settings = GuideLibrary.celebrations(book.id());
+        for (FoliosBook book : FoliosLibrary.books().values()) {
+            FoliosMemory memory = FoliosMemory.of(book.id());
+            CelebrationSettings settings = FoliosLibrary.celebrations(book.id());
             boolean changed = false;
             List<FoliosObjective> all = new ArrayList<>();
             for (FoliosCategory category : book.visibleCategories()) {
@@ -89,7 +89,7 @@ public final class Celebrations {
     private static void play(Minecraft minecraft, FoliosBook book, CelebrationSettings settings, String event, Component heading, Component name,
                              @org.jspecify.annotations.Nullable FoliosIcon icon) {
         boolean mastery = event.equals("mastery");
-        if (settings.on(event, "toast")) GuideToast.show(book, heading, name, icon, mastery);
+        if (settings.on(event, "toast")) FoliosToast.show(book, heading, name, icon, mastery);
         if (settings.on(event, "sound")) {
             SoundEvent sound = mastery ? SoundEvents.UI_TOAST_CHALLENGE_COMPLETE : SoundEvents.PLAYER_LEVELUP;
             float pitch = switch (event) {

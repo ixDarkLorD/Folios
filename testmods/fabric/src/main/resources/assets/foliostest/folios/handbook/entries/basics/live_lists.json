@@ -1,0 +1,36 @@
+{
+  "name": "Live Lists",
+  "icon": "minecraft:spyglass",
+  "sort": 5,
+  "pages": [
+    {
+      "title": "Pickaxes",
+      "text": "This list is written from a source the mod gives on the client, the longest-lasting first:",
+      "observe": {
+        "source": "foliostest:pickaxes",
+        "row": "- {$name}: **{$durability}** uses",
+        "sort": "-durability"
+      }
+    },
+    {
+      "title": "Dangerous Creatures",
+      "text": "A data pack gives this source (data/foliostest/folios/sources/creatures.json); only those with a danger above 0 show:",
+      "observe": {
+        "source": "foliostest:creatures",
+        "row": "- {$name} ({$danger})",
+        "sort": "-danger",
+        "where": {"field": "danger", "above": 0},
+        "limit": 3,
+        "footer": "*The top three.*"
+      }
+    },
+    {
+      "type": "recipe",
+      "recipe": "minecraft:spyglass",
+      "observe": {
+        "source": "foliostest:nothing",
+        "empty": "*An element observing a source no one gives shows its empty text.*"
+      }
+    }
+  ]
+}

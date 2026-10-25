@@ -1,6 +1,6 @@
 package net.ixdarklord.folios.internal.mixin.client;
 
-import net.ixdarklord.folios.internal.core.GuideRegistry;
+import net.ixdarklord.folios.internal.core.FoliosRegistry;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.world.InteractionHand;
@@ -17,6 +17,6 @@ public abstract class AvatarRendererMixin {
     @Inject(method = "getArmPose(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/client/model/HumanoidModel$ArmPose;",
             at = @At("HEAD"), cancellable = true)
     private static void folios$reading(Avatar avatar, ItemStack stack, InteractionHand hand, CallbackInfoReturnable<HumanoidModel.ArmPose> cir) {
-        if (!stack.isEmpty() && stack.has(GuideRegistry.READING.get())) cir.setReturnValue(HumanoidModel.ArmPose.CROSSBOW_HOLD);
+        if (!stack.isEmpty() && stack.has(FoliosRegistry.READING.get())) cir.setReturnValue(HumanoidModel.ArmPose.CROSSBOW_HOLD);
     }
 }

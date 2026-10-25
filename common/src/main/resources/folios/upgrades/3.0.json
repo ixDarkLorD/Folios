@@ -1,0 +1,120 @@
+{
+  "format": "3.0",
+  "from": "2.0",
+  "changes": [
+    {
+      "in": "page",
+      "rename": {"anchor": "marker"},
+      "check": false,
+      "why": "A page's link name is \"marker\" now; \"anchor\" places what is on a page up or down it."
+    },
+    {
+      "in": "book",
+      "run": "legacy_name",
+      "why": "A book without a name took the translation guide.<namespace>.<path>.name in 2.x; in 3.0 it is folios.<namespace>.<path>.name."
+    },
+    {
+      "in": "book",
+      "run": "cover_group",
+      "check": true,
+      "why": "The cover's colour, picture, model and lettering are one group: \"cover\": {\"color\", \"texture\", \"model\", \"text\"}; the boards' texture is \"textures\" › \"boards\"."
+    },
+    {
+      "in": "book",
+      "move": {"from": "tilt", "to": "handheld.tilt"},
+      "why": "How a handheld book is held is in \"handheld\"."
+    },
+    {
+      "in": "book",
+      "move": {"from": "distance", "to": "handheld.distance"},
+      "why": "How a handheld book is held is in \"handheld\"."
+    },
+    {
+      "in": "book",
+      "move": {"from": "page_turn", "to": "handheld.page_turn"},
+      "why": "How a handheld book is held is in \"handheld\"."
+    },
+    {
+      "in": "book",
+      "run": "progress_scope",
+      "check": true,
+      "why": "Whose reading a book keeps is \"progress_scope\": \"player\" or \"copy\"."
+    },
+    {
+      "in": "book",
+      "move": {"from": "item_model", "to": "models.item"},
+      "why": "The book item's model is \"models\" › \"item\"."
+    },
+    {
+      "in": "book",
+      "move": {"from": "colors.tooltip", "to": "panel"},
+      "why": "The colours of a book's tooltips and toasts are \"panel\"."
+    },
+    {
+      "in": "book",
+      "run": "color_strings",
+      "check": true,
+      "why": "Colours are written \"#RRGGBB\" or \"#AARRGGBB\"."
+    },
+    {
+      "in": "category",
+      "run": "color_strings",
+      "check": true,
+      "why": "Colours are written \"#RRGGBB\" or \"#AARRGGBB\"."
+    },
+    {
+      "in": "entry",
+      "run": "entry_text",
+      "check": true,
+      "why": "An entry's text is a page like any other: \"pages\": [\"...\"]."
+    },
+    {
+      "in": "entry",
+      "run": "entry_folder",
+      "check": true,
+      "why": "An entry's category is the folder it is in, entries/<category>/; \"category\" is gone."
+    },
+    {
+      "in": "element",
+      "where": {"type": "recipe"},
+      "rename": {"recipes": "recipe"},
+      "why": "One key per thing shown, taking one or a list: \"recipe\"."
+    },
+    {
+      "in": "element",
+      "where": {"type": "image"},
+      "rename": {"images": "image"},
+      "why": "One key per thing shown, taking one or a list: \"image\"."
+    },
+    {
+      "in": "element",
+      "run": "plural_lists",
+      "check": true,
+      "why": "One key per thing shown, taking one or a list: \"structure\", \"build\"."
+    },
+    {
+      "in": "element",
+      "run": "shown_labels",
+      "check": true,
+      "why": "The words a thing is shown by are its \"label\"."
+    },
+    {
+      "in": "element",
+      "where": {"type": "spread"},
+      "run": "spread_multiblock",
+      "check": true,
+      "why": "A spread's blocks written in place are \"multiblock\"; \"build\" names a build file; a map place's words are its \"label\"."
+    },
+    {
+      "in": "objective",
+      "rename": {"category": "read_category", "book": "read_book", "item": "carried", "count": "goal"},
+      "why": "Conditions say what they follow: read, read_category, read_book, carried, obtained, quest, goal."
+    },
+    {
+      "in": "lockable",
+      "run": "requires",
+      "check": true,
+      "why": "A lock is \"requires\": one condition or a list of them, written as quest objectives are; \"secret\" stays."
+    }
+  ]
+}
