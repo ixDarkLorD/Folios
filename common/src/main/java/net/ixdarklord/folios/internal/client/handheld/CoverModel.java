@@ -32,7 +32,8 @@ import java.util.Optional;
 // colour, 1 the book's accent. A box with "board": "front" sits only on the front board (the cover with the book's name), "back" only on
 // the back one. A box whose name has "#shut" in it holds the book shut (a strap or clasp): as the book opens it
 // unlatches first, swinging out about its board's fore-edge before the cover moves, and is carried off behind the
-// boards as the cover opens, gone once the book lies open. One with "#open" shows only once it lies open. A box with "#spine" in its
+// boards as the cover opens, gone once the book lies open. One with "#open" shows only once it lies open. One with "#icon"
+// is the gem the book's cover icon is set in (CoverEmblem), drawn as it is only for a book without one. A box with "#spine" in its
 // name is wrapped round the spine instead, bending with it as the book opens (a band across it): only its height
 // (y), how far it stands out (its "to" z) and its "west" face's texture are used. Models are read once and kept
 // until resources reload.
@@ -40,7 +41,10 @@ public final class CoverModel {
     private static final Map<Identifier, Optional<CoverModel>> LOADED = new HashMap<>();
 
     // `tint`: -1 for none, 0 the cover's colour, 1 the book's accent.
-    private record Face(Identifier texture, Vector3f[] corners, float[] uvs, int tint, Vector3f normal, int board, @Nullable Turn turn, int state) {}
+    private record Face(Identifier texture, Vector3f[] corners, float[] uvs, int tint, Vector3f normal, int board, @Nullable Turn turn, int state, boolean gem) {}
+
+    /** The "#icon" gem: its middle across and up, its front face's z, its width, and which boards it is on. */
+    private record Gem(float x, float y, float z, float side, int board) {}
 
     /** When a box shows: always, only shut, only open. */
     private static final int ALWAYS = 0;
@@ -84,10 +88,12 @@ public final class CoverModel {
 
     private final Map<Identifier, List<Face>> byTexture;
     private final List<Band> bands;
+    private final @Nullable Gem gem;
 
-    private CoverModel(Map<Identifier, List<Face>> byTexture, List<Band> bands) {
+    private CoverModel(Map<Identifier, List<Face>> byTexture, List<Band> bands, @Nullable Gem gem) {
         this.byTexture = byTexture;
         this.bands = bands;
+        this.gem = gem;
     }
 
     /** The bands round the spine. */
@@ -126,7 +132,8 @@ public final class CoverModel {
         }
         Map<Identifier, List<Face>> faces = new LinkedHashMap<>();
         List<Band> bands = new ArrayList<>();
-        if (!json.has("elements")) return new CoverModel(faces, bands);
+        Gem gem = null;
+        if (!json.has("elements")) return new CoverModel(faces, bands, null);
         for (JsonElement element : json.getAsJsonArray("elements")) {
             JsonObject box = element.getAsJsonObject();
             float[] from = floats(box, "from", 3);
@@ -136,6 +143,8 @@ public final class CoverModel {
             String name = box.has("name") ? box.get("name").getAsString() : "";
             int state = name.contains("#shut") ? SHUT : name.contains("#open") ? OPEN : ALWAYS;
             JsonObject sides = box.getAsJsonObject("faces");
+            boolean isGem = name.contains("#icon");
+            if (isGem) gem = new Gem((from[0] + to[0]) / 2, (from[1] + to[1]) / 2, Math.max(from[2], to[2]), Math.abs(to[0] - from[0]), board);
             if (name.contains("#spine")) {
                 JsonObject face = sides.has("west") ? sides.getAsJsonObject("west") : sides.has("south") ? sides.getAsJsonObject("south") : null;
                 Identifier texture = face != null ? texture(face.get("texture").getAsString(), textures) : null;
@@ -149,11 +158,11 @@ public final class CoverModel {
                 JsonObject face = side.getValue().getAsJsonObject();
                 Identifier texture = texture(face.get("texture").getAsString(), textures);
                 if (texture == null) continue;
-                Face built = face(side.getKey(), from, to, face, texture, turn, board, state);
+                Face built = face(side.getKey(), from, to, face, texture, turn, board, state, isGem);
                 if (built != null) faces.computeIfAbsent(texture, key -> new ArrayList<>()).add(built);
             }
         }
-        return new CoverModel(faces, bands);
+        return new CoverModel(faces, bands, gem);
     }
 
     // A texture reference followed through "#name"s to an id, then to its file.
@@ -181,7 +190,7 @@ public final class CoverModel {
 
     // One face of a box: its corners in the order block models give them, and their uv, from the face's own "uv" or
     // the box's place as block models work it out.
-    private static @Nullable Face face(String side, float[] from, float[] to, JsonObject json, Identifier texture, @Nullable Turn turn, int board, int state) {
+    private static @Nullable Face face(String side, float[] from, float[] to, JsonObject json, Identifier texture, @Nullable Turn turn, int board, int state, boolean gem) {
         float x0 = from[0], y0 = from[1], z0 = from[2], x1 = to[0], y1 = to[1], z1 = to[2];
         float[][] corners;
         float[] uv;
@@ -233,7 +242,7 @@ public final class CoverModel {
             flat[corner * 2 + 1] = at[1] / 16.0F;
             points[corner] = new Vector3f(corners[corner][0], corners[corner][1], corners[corner][2]);
         }
-        return new Face(texture, points, flat, json.has("tintindex") ? json.get("tintindex").getAsInt() : -1, normal, board, turn, state);
+        return new Face(texture, points, flat, json.has("tintindex") ? json.get("tintindex").getAsInt() : -1, normal, board, turn, state, gem);
     }
 
     /**
@@ -243,6 +252,13 @@ public final class CoverModel {
      * is open, 0 shut to 1, for the boxes shown only shut or only open.
      */
     public void draw(PoseStack pose, SubmitNodeCollector collector, int light, boolean left, float width, float top, float bottom, float outside, int cover, int accent, float open, org.joml.@Nullable Matrix3f relight) {
+        this.draw(pose, collector, light, left, width, top, bottom, outside, cover, accent, open, relight, net.ixdarklord.folios.api.client.page.FoliosIcon.NONE);
+    }
+
+    /** As the draw above, with {@code icon} set in its "#icon" gem (the gem itself left out). */
+    public void draw(PoseStack pose, SubmitNodeCollector collector, int light, boolean left, float width, float top, float bottom, float outside, int cover, int accent, float open,
+                     org.joml.@Nullable Matrix3f relight, net.ixdarklord.folios.api.client.page.FoliosIcon icon) {
+        boolean inset = gem != null && !icon.isEmpty();
         boolean opened = open >= 0.999F;
         // The latch: "#shut" boxes swing out about the board's fore-edge (x 16, on its face) as the book starts to open.
         float unlatch = Math.max(0, Math.min(1, open / LATCH));
@@ -265,6 +281,7 @@ public final class CoverModel {
                     // The left board is the front one: shut, it is the cover.
                     if (face.board == FRONT && !left || face.board == BACK && left) continue;
                     if (face.state == SHUT && opened || face.state == OPEN && !opened) continue;
+                    if (face.gem && inset) continue;
                     Matrix4f at = face.state == SHUT && unlatch > 0 ? new Matrix4f(place).mul(latch) : place;
                     if (face.turn != null) at = new Matrix4f(at).mul(face.turn.on(sx, sy, sx));
                     // The face's normal carried as its corners are (a mirror turns it with them), for the light.
@@ -278,6 +295,16 @@ public final class CoverModel {
                     }
                 }
             });
+        }
+        if (inset && !(gem.board == FRONT && !left || gem.board == BACK && left)) {
+            pose.pushPose();
+            pose.translate(0, bottom, outside);
+            pose.scale(sign * width / 16.0F, -(bottom - top) / 16.0F, -width / 16.0F);
+            pose.translate(gem.x, gem.y, gem.z + 0.01F);
+            // Mirrored, as the left board is, the icon would read backwards: turned back the right way round.
+            if (flipped) pose.scale(-1, 1, 1);
+            net.ixdarklord.folios.internal.client.CoverEmblem.draw(pose, collector, light, icon, gem.side, accent);
+            pose.popPose();
         }
     }
 

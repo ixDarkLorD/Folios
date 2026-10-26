@@ -1,6 +1,9 @@
 {
   "format_version": "3.0",
-  "author": "The **Folios** team",
+  "credits": {
+    "authors": ["The **Folios** team", "its testers"],
+    "prefix": "Authored by"
+  },
   "accent": "#8B6CFF",
   "icon": "minecraft:knowledge_book",
   "reveal": {
@@ -18,7 +21,8 @@
     "detail": "#9DB4CC"
   },
   "cover": {
-    "color": "#3A2E58"
+    "color": "#3A2E58",
+    "icon": "minecraft:textures/item/clock_00.png"
   },
   "name": "The Testing Handbook of Everything Folios Can Show"
 }
