@@ -18,7 +18,7 @@ import java.util.Locale;
  *
  * @param minHeight the least room worth setting a box in, below which the element starts on the next page
  */
-public record ElementLayout(@Nullable Overflow overflow, @Nullable Height height, @Nullable Integer minHeight,
+public record ElementLayout(@Nullable Overflow overflow, @Nullable Height height, @Nullable Height minHeight,
                             @Nullable FoliosAlign alignment, @Nullable FoliosAlign titleAlignment, @Nullable Anchor anchor) {
     public static final ElementLayout NONE = new ElementLayout(null, null, null, null, null, null);
     /** The least room a box is set in when nothing says: about three lines of text. */
@@ -32,6 +32,8 @@ public record ElementLayout(@Nullable Overflow overflow, @Nullable Height height
         KEEP,
         /** Stays in a box, its text paged in place. */
         FLIP,
+        /** Stays in a box, its text scrolled in place a line at a time, with a scrollbar beside it. */
+        SCROLL,
         /** Keeps whole when it fits on a page of its own, flips when not even that is enough. */
         AUTO
     }
@@ -41,10 +43,25 @@ public record ElementLayout(@Nullable Overflow overflow, @Nullable Height height
 
     /**
      * How tall an element's box is: {@link Kind#FILL} the rest of the page, {@link Kind#FIT} only as tall as what it
-     * holds (up to the rest of the page), or {@link Kind#FIXED} that many pixels.
+     * holds (up to the rest of the page), {@link Kind#FIXED} that many pixels, or {@link Kind#PERCENT} that share of the
+     * page's content.
      */
-    public record Height(Kind kind, int pixels) {
-        public enum Kind { FILL, FIT, FIXED }
+    public record Height(Kind kind, int pixels, float percent) {
+        public enum Kind { FILL, FIT, FIXED, PERCENT }
+
+        public Height(Kind kind, int pixels) {
+            this(kind, pixels, 0);
+        }
+
+        /** Whether it is a size of its own (pixels, or a share of the page), not the rest of the page or its content's. */
+        public boolean sized() {
+            return kind == Kind.FIXED || kind == Kind.PERCENT;
+        }
+
+        /** How many pixels it is on a page whose content is {@code full} pixels tall. */
+        public int pixels(int full) {
+            return kind == Kind.PERCENT ? Math.max(1, Math.round(full * percent / 100)) : pixels;
+        }
     }
 
     /** What an object of JSON (an element, a page or a book) says, warning of what it says that can't be read. */
@@ -52,7 +69,7 @@ public record ElementLayout(@Nullable Overflow overflow, @Nullable Height height
         if (json == null) return NONE;
         Overflow overflow = null;
         Height height = null;
-        Integer minHeight = null;
+        Height minHeight = null;
         if (json.has("overflow")) {
             JsonElement value = json.get("overflow");
             JsonObject object = value.isJsonObject() ? value.getAsJsonObject() : null;
@@ -62,26 +79,47 @@ public record ElementLayout(@Nullable Overflow overflow, @Nullable Height height
                     case "flow" -> Overflow.FLOW;
                     case "keep" -> Overflow.KEEP;
                     case "flip" -> Overflow.FLIP;
+                    case "scroll" -> Overflow.SCROLL;
                     case "auto" -> Overflow.AUTO;
                     default -> {
-                        Folios.LOGGER.warn("{} has \"overflow\": \"{}\", which is one of flow, keep, flip or auto", where, mode);
+                        Folios.LOGGER.warn("{} has \"overflow\": \"{}\", which is one of flow, keep, flip, scroll or auto", where, mode);
                         yield null;
                     }
                 };
             }
             if (object != null && object.has("height")) height = height(object.get("height"), where);
-            if (object != null && object.has("min_height")) minHeight = Math.max(0, object.get("min_height").getAsInt());
+            if (object != null && object.has("min_height")) minHeight = size(object.get("min_height"), "min_height", where);
         }
         return new ElementLayout(overflow, height, minHeight, align(json, "alignment", where), align(json, "title_alignment", where), anchor(json, where));
     }
 
     private static @Nullable Height height(JsonElement json, String where) {
-        if (json.isJsonPrimitive() && json.getAsJsonPrimitive().isNumber()) return new Height(Height.Kind.FIXED, Math.max(1, json.getAsInt()));
-        String named = json.getAsString().toLowerCase(Locale.ROOT);
-        if (named.equals("fill")) return new Height(Height.Kind.FILL, 0);
-        if (named.equals("fit")) return new Height(Height.Kind.FIT, 0);
-        Folios.LOGGER.warn("{} has an overflow \"height\" of \"{}\", which is a number of pixels, \"fill\" or \"fit\"", where, named);
-        return null;
+        if (json.isJsonPrimitive() && json.getAsJsonPrimitive().isString()) {
+            String named = json.getAsString().strip().toLowerCase(Locale.ROOT);
+            if (named.equals("fill")) return new Height(Height.Kind.FILL, 0);
+            if (named.equals("fit")) return new Height(Height.Kind.FIT, 0);
+        }
+        Height size = size(json, "height", where);
+        if (size == null) Folios.LOGGER.warn("{} has an overflow \"height\" of {}, which is a number of pixels, a share of the page (\"60%\"), \"fill\" or \"fit\"", where, json);
+        return size;
+    }
+
+    // A size: pixels (112), or a share of the page's content ("60%", 1 to 100). Null for what is neither.
+    private static @Nullable Height size(JsonElement json, String key, String where) {
+        if (!json.isJsonPrimitive()) return null;
+        if (json.getAsJsonPrimitive().isNumber()) return new Height(Height.Kind.FIXED, Math.max(0, json.getAsInt()));
+        String written = json.getAsString().strip();
+        if (!written.endsWith("%")) return null;
+        try {
+            float percent = Float.parseFloat(written.substring(0, written.length() - 1).strip());
+            if (percent < 1 || percent > 100) {
+                Folios.LOGGER.warn("{} has an overflow \"{}\" of {}, a share of the page from 1% to 100%", where, key, written);
+                percent = Math.max(1, Math.min(100, percent));
+            }
+            return new Height(Height.Kind.PERCENT, 0, percent);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private static @Nullable FoliosAlign align(JsonObject json, String key, String where) {
@@ -107,6 +145,11 @@ public record ElementLayout(@Nullable Overflow overflow, @Nullable Height height
         return new ElementLayout(overflow != null ? overflow : outer.overflow, height != null ? height : outer.height,
                 minHeight != null ? minHeight : outer.minHeight, alignment != null ? alignment : outer.alignment,
                 titleAlignment != null ? titleAlignment : outer.titleAlignment, anchor != null ? anchor : outer.anchor);
+    }
+
+    /** The least room worth setting a box in, on a page whose content is {@code full} pixels tall. */
+    public int leastHeight(int full) {
+        return minHeight != null ? minHeight.pixels(full) : MIN_HEIGHT;
     }
 
     /** The overflow to use: {@link Overflow#FLOW} when none is said. */
