@@ -50,6 +50,10 @@
 .fu-side { position: sticky; top: 4.2rem; display: grid; gap: 0.8rem; }
 .fu-main { min-width: 0; }
 .fu--empty .fu-layout { grid-template-columns: minmax(0, 1fr); max-width: 34rem; margin-inline: auto; }
+/* (the steps over it keep to the same column, so their edges line up with its cards') */
+.md-typeset .fu--empty ol.fu-track { max-width: 34rem; margin-inline: auto; }
+.md-typeset .fu--empty .fu-track__step { flex: 1 1 auto; }
+.fu--empty .fu-track__name { white-space: nowrap; }
 .fu--empty .fu-side { position: static; }
 @media (max-width: 960px) {
   .fu-layout { grid-template-columns: minmax(0, 1fr); }

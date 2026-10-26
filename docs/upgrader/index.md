@@ -7,16 +7,26 @@ hide:
 ---
 # Book upgrader
 
-Folios 3.0 reads books in a new shape. It still loads a 2.x book, upgrading it as it loads with a warning in the log,
-but a book is better kept in the shape Folios reads. This page does that upgrade for you, with the same rules as the
-mod:
+Upgrades a Folios 2.x book to the 3.0 format, with the same rules as the mod. It all runs in your browser: nothing is
+uploaded.
 
-1. Pick a book's folder or a `.zip` (a whole resource pack, or just the book's folder), or drop either below.
+<div id="folios-upgrader" class="fu" data-assets="../assets/upgrader/">
+<noscript><p>The upgrader needs JavaScript.</p></noscript>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../assets/upgrader/upgrader.js"></script>
+<script src="../assets/upgrader/upgrader-ui.js"></script>
+
+## How it works
+
+Folios 3.0 reads books in a new shape. It still loads a 2.x book, upgrading it as it loads with a warning in the log,
+but a book is better kept in the shape Folios reads. The upgrader does that once, for good:
+
+1. Pick a book's folder or a `.zip` (a whole resource pack, or just the book's folder), or drop either above.
 2. See what will change in each file, and why, with each file before and after.
 3. Download the upgraded book as a `.zip`: everything you gave it, with the upgraded files in place.
 
-It all runs in your browser: nothing is uploaded. For what changed in 3.0 and what to check by hand afterwards, see
-[Migrating to 3.0](../docs/migrating-to-3.0/).
+For what changed in 3.0 and what to check by hand afterwards, see [Migrating to 3.0](../docs/migrating-to-3.0/).
 
 !!! note "Entries that move"
 
@@ -41,10 +51,3 @@ It all runs in your browser: nothing is uploaded. For what changed in 3.0 and wh
 
 A book that already says `"format_version": "3.0"` isn't changed. If parts of it still have a 2.x shape, which
 Folios doesn't upgrade in a 3.0 book, the upgrader lists them so you can fix them.
-
-<div id="folios-upgrader" class="fu" data-assets="../assets/upgrader/">
-<noscript><p>The upgrader needs JavaScript.</p></noscript>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="../assets/upgrader/upgrader.js"></script>
-<script src="../assets/upgrader/upgrader-ui.js"></script>
