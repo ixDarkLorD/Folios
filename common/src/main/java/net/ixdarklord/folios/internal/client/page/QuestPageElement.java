@@ -193,6 +193,8 @@ public record QuestPageElement(List<FoliosObjective> objectives, Optional<String
         int scrollTo = Math.max(0, Math.min(lastFirst, rows.length - 1));
         int allRows = Math.max(1, total);
         int[] first = {0};
+        // How far the scrollbar has been dragged since the objectives last moved, in pixels of their rows.
+        float[] dragged = {0};
         // A server quest shows only a line until the server has sent it, and while it is locked.
         Component shut = this.shut();
         return layout.flow(title.orElse("folios.quest"), shut != null ? HEAD : room, text, (painter, y) -> {
@@ -224,14 +226,27 @@ public record QuestPageElement(List<FoliosObjective> objectives, Optional<String
             int from = scrolls ? first[0] : 0;
             if (scrolls) {
                 painter.scroll(left, top, right - left, window, notches -> first[0] = Math.max(0, Math.min(scrollTo, first[0] - (int) Math.signum(notches))));
-                // The scrollbar: a hairline track, and a thumb as long as the share of the objectives in view.
+                // The scrollbar (the book's scrollbar sprites): its thumb as long as the share of the objectives in
+                // view, and dragged to scroll them, the objective nearest where it is dragged to coming to the top.
                 int trackHeight = window - GAP;
-                int before = 0;
-                for (int index = 0; index < from; index++) before += rows[index];
-                int thumb = Math.max(6, trackHeight * window / allRows);
-                int thumbTop = top + Math.min(trackHeight - thumb, trackHeight * before / allRows);
-                painter.fill(right - 2, top, right - 1, top + trackHeight, palette.line());
-                painter.fill(right - 3, thumbTop, right, thumbTop + thumb, palette.accent());
+                int[] starts = new int[rows.length];
+                for (int index = 1; index < rows.length; index++) starts[index] = starts[index - 1] + rows[index - 1];
+                int barX = right - Shapes.SCROLLBAR;
+                boolean held = painter.drag(barX - 2, top, Shapes.SCROLLBAR + 4, trackHeight, (dx, dy) -> {
+                    dragged[0] += dy * allRows / (float) trackHeight;
+                    int target = starts[first[0]] + Math.round(dragged[0]);
+                    int nearest = first[0];
+                    for (int index = 0; index <= scrollTo; index++) {
+                        if (Math.abs(starts[index] - target) < Math.abs(starts[nearest] - target)) nearest = index;
+                    }
+                    if (nearest != first[0]) {
+                        dragged[0] -= starts[nearest] - starts[first[0]];
+                        first[0] = nearest;
+                    }
+                });
+                int thumb = Math.max(8, trackHeight * window / allRows);
+                int thumbTop = top + Math.min(trackHeight - thumb, trackHeight * starts[from] / allRows);
+                Shapes.scrollbar(painter, barX, top, trackHeight, thumbTop, thumb, held || painter.hovered(barX - 2, top, Shapes.SCROLLBAR + 4, trackHeight));
             }
             // The path: a stop for each objective, joined by a line that is drawn in as far as the player has come,
             // and dotted beyond; it leads down to the reward, the last and largest stop. Scrolled, it runs on in from

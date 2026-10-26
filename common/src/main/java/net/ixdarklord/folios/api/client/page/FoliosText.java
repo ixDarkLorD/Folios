@@ -489,6 +489,25 @@ public final class FoliosText {
 
     // ---- Drawing ----
 
+    /** Where each line starts down the text, top first, each once: where a window of it can start. */
+    public List<Integer> lineTops() {
+        List<Integer> tops = new ArrayList<>();
+        for (Line line : lines) if (tops.isEmpty() || tops.get(tops.size() - 1) != line.y) tops.add(line.y);
+        return tops;
+    }
+
+    /** The lines that lie whole between {@code from} and {@code from + height} down the text, starting again at y 0. */
+    public FoliosText window(int from, int height) {
+        List<Line> inside = new ArrayList<>();
+        for (Line line : lines) if (line.y >= from && line.y + line.height() <= from + height) inside.add(line);
+        if (inside.isEmpty()) return new FoliosText(List.of(), 0, width);
+        int top = inside.get(0).y;
+        List<Line> moved = new ArrayList<>(inside.size());
+        for (Line line : inside) moved.add(new Line(line.text, line.x, line.y - top, line.kind, line.first, line.marker, line.shift, line.stretch, line.scale));
+        Line last = moved.get(moved.size() - 1);
+        return new FoliosText(moved, last.y + last.height() - 1, width);
+    }
+
     /** Draws the text with its top left at (x, y), its links pressable. */
     public void draw(FoliosPainter painter, int x, int y) {
         FoliosPalette palette = painter.palette();

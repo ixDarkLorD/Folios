@@ -119,21 +119,23 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
             page = own;
         } else if (elements.isEmpty()) {
             // A page of text: laid out by flow(), which is also how it is taken in as another page's element. Only a
-            // page set down its middle or foot, or with its title moved, is set here instead.
+            // page set down its middle or foot, with its title moved, or kept in a box (an overflow other than flow, or
+            // a height), is set here instead.
             String full = with(text, observed);
             layout.alignment(page.alignment());
             List<Laid> flowed = layout.flow(title.orElse(null), 0, full, null);
             layout.alignment(null);
-            boolean placed = page.anchor() != null && page.anchor() != ElementLayout.Anchor.TOP || page.titleAlign() != null;
+            boolean boxed = page.overflow() != null && page.overflow() != ElementLayout.Overflow.FLOW || page.height() != null;
+            boolean placed = page.anchor() != null && page.anchor() != ElementLayout.Anchor.TOP || page.titleAlign() != null || boxed;
             if (flowed.isEmpty() || !placed) return flowed;
             layout.alignment(page.alignment());
-            if (!full.isEmpty()) groups.add(new Group(page, List.of(new Words(layout.text(full)))));
+            if (!full.isEmpty()) groups.add(new Group(page, List.of(Words.of(layout, full))));
             layout.alignment(null);
         } else {
             String words = with(text, observed);
             if (!words.isEmpty()) {
                 layout.alignment(page.alignment());
-                groups.add(new Group(page, List.of(new Words(layout.text(words)))));
+                groups.add(new Group(page, List.of(Words.of(layout, words))));
             }
             // The page's icon heads its own title, not its elements'.
             layout.titleIcon(FoliosIcon.NONE);
@@ -161,15 +163,15 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
                 pieces.add(new Fixed(FoliosLayout.TITLE_HEIGHT, (painter, y) -> FoliosLayout.title(painter, FoliosText.inline(heading), y, FoliosIcon.NONE, align), true));
             }
             if (flow.part() != null && flow.reserved() > 0) pieces.add(new Fixed(flow.reserved(), flow.part()));
-            if (flow.text() != null && !flow.text().isEmpty()) pieces.add(new Words(layout.text(flow.text())));
+            if (flow.text() != null && !flow.text().isEmpty()) pieces.add(Words.of(layout, flow.text()));
         }
         String rows = observed != null ? observed.text() : "";
         if (!rows.isEmpty()) {
             // Joined to its text when its last piece is text, so the two run on and flip as one.
             if (!pieces.isEmpty() && pieces.get(pieces.size() - 1) instanceof Words && !flows.isEmpty() && flows.get(flows.size() - 1).text() != null) {
-                pieces.set(pieces.size() - 1, new Words(layout.text(flows.get(flows.size() - 1).text() + "\n\n" + rows)));
+                pieces.set(pieces.size() - 1, Words.of(layout, flows.get(flows.size() - 1).text() + "\n\n" + rows));
             } else {
-                pieces.add(new Words(layout.text(rows)));
+                pieces.add(Words.of(layout, rows));
             }
         }
         return new Group(own, pieces);
@@ -187,7 +189,14 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
         }
     }
 
-    private record Words(FoliosText text) implements Piece {
+    private record Words(FoliosText text, java.util.function.IntFunction<FoliosText> relay) implements Piece {
+        // Its text, and how to set the same text out again at another width.
+        static Words of(FoliosLayout layout, String raw) {
+            net.minecraft.client.gui.Font font = layout.font();
+            FoliosAlign align = layout.alignment();
+            return new Words(layout.text(raw), width -> FoliosText.of(font, raw, width, align));
+        }
+
         @Override
         public int height() {
             return text.height();
@@ -280,7 +289,7 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
                 return;
             }
             // It fits, in a box of its own height: set at the box's top, middle or foot.
-            int box = height.kind() == ElementLayout.Height.Kind.FIXED ? height.pixels() : setter.bottom - at;
+            int box = height.sized() ? height.pixels(full) : setter.bottom - at;
             if (box > setter.bottom - at && !setter.fresh) {
                 setter.newPage();
                 at = setter.y;
@@ -300,6 +309,7 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
                 flow(setter, group.pieces());
             }
             case FLIP -> flip(setter, group);
+            case SCROLL -> scroll(setter, group);
             default -> flow(setter, group.pieces());
         }
     }
@@ -349,9 +359,9 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
         }
     }
 
-    // An element kept in a box: its title and part as they are, its text paged in place under them with clasps
-    // stepping back and on (and the mouse wheel over it). The box runs to the foot of the page (the next element then
-    // starts the next), or is as tall as its "height" says.
+    // An element kept in a box: its title and part as they are, its text paged in place in a frame under them with
+    // clasps stepping back and on (and the mouse wheel over it). The box runs to the foot of the page (the next element
+    // then starts the next), or is as tall as its "height" says.
     private static void flip(Setter setter, Group group) {
         List<Piece> pieces = group.pieces();
         int words = -1;
@@ -372,7 +382,7 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
         ElementLayout settings = group.settings();
         int fixed = 0;
         for (int index = 0; index < words; index++) fixed += pieces.get(index).height() + GAP;
-        int least = settings.minHeight() != null ? settings.minHeight() : ElementLayout.MIN_HEIGHT;
+        int least = settings.leastHeight(setter.bottom - FoliosLayout.CONTENT_TOP);
         int at = setter.next();
         if (!setter.fresh && boxBottom(setter, settings, at) - (at + fixed) - PAGER < least) {
             setter.newPage();
@@ -383,8 +393,9 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
         setter.fresh = at == FoliosLayout.CONTENT_TOP || setter.fresh;
         flow(setter, pieces.subList(0, words));
         int top = setter.next();
-        int room = bottom - top - PAGER;
-        FoliosText text = ((Words) pieces.get(words)).text();
+        int room = bottom - top - PAGER - 2 * FRAME_EDGE;
+        Words piece = (Words) pieces.get(words);
+        FoliosText text = piece.relay().apply(piece.text().width() - 2 * FRAME_SIDE);
         if (room < FoliosText.LINE_HEIGHT) {
             flow(setter, pieces.subList(words, pieces.size()));
             return;
@@ -394,7 +405,7 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
             if (!chunk.isEmpty()) chunks.add(chunk);
         }
         if (chunks.size() <= 1) {
-            flow(setter, pieces.subList(words, pieces.size()));
+            framed(setter, top, text, pieces.subList(words + 1, pieces.size()));
             return;
         }
         int[] shown = {0};
@@ -406,17 +417,151 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
         int tallest = 0;
         for (FoliosText chunk : chunks) tallest = Math.max(tallest, chunk.height());
         int tall = tallest;
-        setter.put(top, room + PAGER, (painter, y) -> {
-            FoliosText chunk = chunks.get(shown[0]);
-            int textY = y + offset(anchor, room - tall);
-            chunk.draw(painter, FoliosLayout.CONTENT_LEFT, textY);
+        int framed = tall + 2 * FRAME_EDGE;
+        setter.put(top, room + 2 * FRAME_EDGE + PAGER, (painter, y) -> {
             int right = painter.contentRight();
-            painter.scroll(FoliosLayout.CONTENT_LEFT, y, right - FoliosLayout.CONTENT_LEFT, room,
+            Shapes.panel(painter, FoliosLayout.CONTENT_LEFT, y, right, y + framed);
+            FoliosText chunk = chunks.get(shown[0]);
+            chunk.draw(painter, FoliosLayout.CONTENT_LEFT + FRAME_SIDE, y + FRAME_EDGE + offset(anchor, tall - chunk.height()));
+            painter.scroll(FoliosLayout.CONTENT_LEFT, y, right - FoliosLayout.CONTENT_LEFT, framed,
                     notches -> shown[0] = net.minecraft.util.Mth.clamp(shown[0] + (notches > 0 ? -1 : 1), 0, count - 1));
-            pager(painter, shown, slide, count, (FoliosLayout.CONTENT_LEFT + right) / 2, textY + tall + 4);
+            pager(painter, shown, slide, count, (FoliosLayout.CONTENT_LEFT + right) / 2, y + framed + 4);
         });
         // A box running to the foot of the page leaves nothing under it there.
-        setter.y = settings.height() != null && settings.height().kind() == ElementLayout.Height.Kind.FIXED ? bottom : setter.bottom;
+        setter.y = settings.height() != null && settings.height().sized() ? bottom : setter.bottom;
+    }
+
+    // An element kept in a box: its title and part as they are, its text in a frame under them laid out beside a
+    // scrollbar and scrolled a line at a time, by the mouse wheel over it or the bar dragged. Only whole lines are shown, so nothing
+    // needs cutting off at the box's edges. The box runs to the foot of the page, or is as tall as its "height" says.
+    private static void scroll(Setter setter, Group group) {
+        List<Piece> pieces = group.pieces();
+        int words = -1;
+        for (int index = 0; index < pieces.size(); index++) {
+            if (!(pieces.get(index) instanceof Words)) continue;
+            if (words >= 0) {
+                // More text than one run: nothing to scroll in one box, so it runs on as usual.
+                flow(setter, pieces);
+                return;
+            }
+            words = index;
+        }
+        if (words < 0) {
+            flow(setter, pieces);
+            return;
+        }
+        ElementLayout settings = group.settings();
+        int fixed = 0;
+        for (int index = 0; index < words; index++) fixed += pieces.get(index).height() + GAP;
+        int least = settings.leastHeight(setter.bottom - FoliosLayout.CONTENT_TOP);
+        int at = setter.next();
+        if (!setter.fresh && boxBottom(setter, settings, at) - (at + fixed) < least) {
+            setter.newPage();
+            at = setter.y;
+        }
+        int bottom = boxBottom(setter, settings, at);
+        setter.y = at;
+        setter.fresh = at == FoliosLayout.CONTENT_TOP || setter.fresh;
+        flow(setter, pieces.subList(0, words));
+        int top = setter.next();
+        int room = bottom - top - 2 * FRAME_EDGE;
+        Words piece = (Words) pieces.get(words);
+        if (room < FoliosText.LINE_HEIGHT) {
+            flow(setter, pieces.subList(words, pieces.size()));
+            return;
+        }
+        FoliosText whole = piece.relay().apply(piece.text().width() - 2 * FRAME_SIDE);
+        if (whole.height() <= room) {
+            framed(setter, top, whole, pieces.subList(words + 1, pieces.size()));
+            return;
+        }
+        FoliosText text = piece.relay().apply(piece.text().width() - 2 * FRAME_SIDE - Shapes.SCROLLBAR - SCROLL_GAP);
+        // Where a window can start: each line's top, up to the first that shows the text's end.
+        List<Integer> tops = text.lineTops();
+        int last = 0;
+        while (last < tops.size() - 1 && text.height() - tops.get(last) > room) last++;
+        int end = last;
+        // Each window's whole lines, and the frame as tall as the tallest of them: whole lines leave less than the
+        // box's room, and the frame doesn't keep the rest empty under them.
+        FoliosText[] windows = new FoliosText[end + 1];
+        int fit = 0;
+        for (int index = 0; index <= end; index++) {
+            windows[index] = text.window(tops.get(index), room);
+            fit = Math.max(fit, windows[index].height());
+        }
+        int inside = fit;
+        int framed = inside + 2 * FRAME_EDGE;
+        int[] first = {0};
+        // How far the bar has been dragged since the window last moved, in pixels of the text.
+        float[] dragged = {0};
+        setter.put(top, framed, (painter, boxY) -> {
+            int right = painter.contentRight();
+            Shapes.panel(painter, FoliosLayout.CONTENT_LEFT, boxY, right, boxY + framed);
+            int y = boxY + FRAME_EDGE;
+            int barX = right - FRAME_SIDE - Shapes.SCROLLBAR;
+            int shown = Math.max(0, Math.min(first[0], end));
+            windows[shown].draw(painter, FoliosLayout.CONTENT_LEFT + FRAME_SIDE, y);
+            // At an edge with more of the text beyond it, the frame's face rises over the text, fading it into the edge.
+            boolean above = shown > 0;
+            boolean below = shown < end;
+            if (above || below) {
+                int face = painter.palette().panel();
+                int left = FoliosLayout.CONTENT_LEFT + 2;
+                int across = barX - SCROLL_GAP / 2;
+                over(painter, () -> {
+                    for (int row = 0; row < SCROLL_FADE; row++) {
+                        // Solid at the edge, smoothly clear by SCROLL_FADE pixels in.
+                        float t = 1 - (row + 0.5F) / SCROLL_FADE;
+                        int color = net.ixdarklord.folios.api.client.page.FoliosPalette.alpha(face, Math.round(255 * t * t * (3 - 2 * t)));
+                        if (above) painter.fill(left, y + row, across, y + row + 1, color);
+                        if (below) painter.fill(left, y + inside - 1 - row, across, y + inside - row, color);
+                    }
+                });
+            }
+            painter.scroll(FoliosLayout.CONTENT_LEFT, boxY, right - FoliosLayout.CONTENT_LEFT, framed,
+                    notches -> first[0] = Math.max(0, Math.min(end, first[0] - (int) Math.signum(notches))));
+            boolean held = painter.drag(barX - 2, y, Shapes.SCROLLBAR + 4, inside, (dx, dy) -> {
+                dragged[0] += dy * text.height() / (float) inside;
+                // On to the window whose top is nearest where the bar has been dragged.
+                int target = tops.get(first[0]) + Math.round(dragged[0]);
+                int nearest = first[0];
+                for (int index = 0; index <= end; index++) {
+                    if (Math.abs(tops.get(index) - target) < Math.abs(tops.get(nearest) - target)) nearest = index;
+                }
+                if (nearest != first[0]) {
+                    dragged[0] -= tops.get(nearest) - tops.get(first[0]);
+                    first[0] = nearest;
+                }
+            });
+            int thumb = Math.max(8, inside * inside / text.height());
+            int thumbY = y + (inside - thumb) * shown / end;
+            Shapes.scrollbar(painter, barX, y, inside, thumbY, thumb, held || painter.hovered(barX - 2, y, Shapes.SCROLLBAR + 4, inside));
+        });
+        // A box of a set height ends at its frame; one running to the foot of the page leaves nothing under it there.
+        setter.y = settings.height() != null && settings.height().sized() ? top + framed : setter.bottom;
+    }
+
+    /** The room between scrolled text and its scrollbar. */
+    private static final int SCROLL_GAP = 3;
+    /** How far in from a scroll box's edge its text fades into the frame, in pixels. */
+    private static final int SCROLL_FADE = 14;
+
+    // Draws over what is already drawn, text and items too, where the painter can (a page's own painters can).
+    private static void over(net.ixdarklord.folios.api.client.page.FoliosPainter painter, Runnable draw) {
+        if (painter instanceof net.ixdarklord.folios.internal.client.paint.AbstractPainter drawing) drawing.above(draw);
+        else draw.run();
+    }
+    /** The room inside a box's frame: at its sides, and above and below its text. */
+    private static final int FRAME_SIDE = 4;
+    private static final int FRAME_EDGE = 3;
+
+    // Text that fits its box whole, in the box's frame as tall as it needs, and then what follows it.
+    private static void framed(Setter setter, int top, FoliosText text, List<Piece> rest) {
+        setter.put(top, text.height() + 2 * FRAME_EDGE, (painter, y) -> {
+            Shapes.panel(painter, FoliosLayout.CONTENT_LEFT, y, painter.contentRight(), y + text.height() + 2 * FRAME_EDGE);
+            text.draw(painter, FoliosLayout.CONTENT_LEFT + FRAME_SIDE, y + FRAME_EDGE);
+        });
+        flow(setter, rest);
     }
 
     /** The most squares a pager shows at once; more parts than this scroll under them. */
@@ -495,7 +640,7 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
 
     private static int boxBottom(Setter setter, ElementLayout settings, int at) {
         ElementLayout.Height height = settings.height();
-        if (height != null && height.kind() == ElementLayout.Height.Kind.FIXED) return Math.min(setter.bottom, at + height.pixels());
+        if (height != null && height.sized()) return Math.min(setter.bottom, at + height.pixels(setter.bottom - FoliosLayout.CONTENT_TOP));
         return setter.bottom;
     }
 

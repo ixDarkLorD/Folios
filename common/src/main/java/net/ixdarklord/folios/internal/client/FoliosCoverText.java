@@ -34,6 +34,17 @@ public record FoliosCoverText(float x, float titleY, float subtitleY, float z, f
             if (lettering.kind() == CoverMarkers.Kind.RULE) this.rule(pose, collector, lettering, gilt, cover, light);
             else this.lines(pose, collector, font, lettering, CoverMarkers.color(lettering.kind(), gilt, cover), light);
         }
+        // The book's icon in the gem the model marks.
+        net.ixdarklord.folios.api.client.page.FoliosIcon icon = FoliosLibrary.coverIcon(id);
+        CoverMarkers.Marked gem = marked.icon();
+        if (gem != null && !icon.isEmpty()) {
+            float unit = 1 / 16.0F;
+            pose.pushPose();
+            pose.translate(gem.line().x() * unit, gem.line().y() * unit, gem.z() * unit);
+            pose.scale(unit, unit, unit);
+            CoverEmblem.draw(pose, collector, light, icon, CoverMarkers.side(gem), book.accent());
+            pose.popPose();
+        }
     }
 
     // A soft rule fading to its ends, a diamond stud at its middle, in gilt.

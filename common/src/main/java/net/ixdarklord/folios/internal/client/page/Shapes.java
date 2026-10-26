@@ -18,6 +18,22 @@ public final class Shapes {
         Sprites.draw(painter, Sprites.PANEL_FACE, x0, y0, x1 - x0, y1 - y0, palette.panel());
     }
 
+    /** How wide a scrollbar is. */
+    public static final int SCROLLBAR = 4;
+
+    /**
+     * A scrollbar (the scrollbar sprites) {@code height} pixels down from (x, y): its groove in the book's panel and
+     * line colours, and its thumb, {@code thumb} pixels tall at {@code thumbY}, in the colour of its clasps' lit rim
+     * (brighter while it is held or under the pointer), with a grip on it when it is tall enough to hold one.
+     */
+    public static void scrollbar(FoliosPainter painter, int x, int y, int height, int thumbY, int thumb, boolean over) {
+        FoliosPalette palette = painter.palette();
+        Sprites.draw(painter, Sprites.SCROLL_TRACK, x, y, SCROLLBAR, height, FoliosPalette.mix(palette.panel(), palette.line(), 0.55F));
+        int lit = FoliosPalette.mix(palette.line(), palette.accent(), over ? 0.85F : 0.6F);
+        Sprites.draw(painter, Sprites.SCROLL_THUMB, x, thumbY, SCROLLBAR, thumb, lit);
+        if (thumb >= 9) Sprites.draw(painter, Sprites.SCROLL_GRIP, x, thumbY + (thumb - 3) / 2, SCROLLBAR, 3, lit);
+    }
+
     /** An 18-pixel slot (the slot sprite) for an item drawn at (x + 1, y + 1). */
     public static void slot(FoliosPainter painter, int x, int y) {
         slot(painter, x, y, 18);
