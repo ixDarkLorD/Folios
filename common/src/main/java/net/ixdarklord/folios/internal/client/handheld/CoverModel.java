@@ -252,12 +252,12 @@ public final class CoverModel {
      * is open, 0 shut to 1, for the boxes shown only shut or only open.
      */
     public void draw(PoseStack pose, SubmitNodeCollector collector, int light, boolean left, float width, float top, float bottom, float outside, int cover, int accent, float open, org.joml.@Nullable Matrix3f relight) {
-        this.draw(pose, collector, light, left, width, top, bottom, outside, cover, accent, open, relight, net.ixdarklord.folios.api.client.page.FoliosIcon.NONE);
+        this.draw(pose, collector, light, left, width, top, bottom, outside, cover, accent, open, relight, net.ixdarklord.folios.api.client.page.FoliosIcon.NONE, 1);
     }
 
-    /** As the draw above, with {@code icon} set in its "#icon" gem (the gem itself left out). */
+    /** As the draw above, with {@code icon} set in its "#icon" gem (the gem itself left out), {@code iconSize} times its usual size. */
     public void draw(PoseStack pose, SubmitNodeCollector collector, int light, boolean left, float width, float top, float bottom, float outside, int cover, int accent, float open,
-                     org.joml.@Nullable Matrix3f relight, net.ixdarklord.folios.api.client.page.FoliosIcon icon) {
+                     org.joml.@Nullable Matrix3f relight, net.ixdarklord.folios.api.client.page.FoliosIcon icon, float iconSize) {
         boolean inset = gem != null && !icon.isEmpty();
         boolean opened = open >= 0.999F;
         // The latch: "#shut" boxes swing out about the board's fore-edge (x 16, on its face) as the book starts to open.
@@ -303,7 +303,7 @@ public final class CoverModel {
             pose.translate(gem.x, gem.y, gem.z + 0.01F);
             // Mirrored, as the left board is, the icon would read backwards: turned back the right way round.
             if (flipped) pose.scale(-1, 1, 1);
-            net.ixdarklord.folios.internal.client.CoverEmblem.draw(pose, collector, light, icon, gem.side, accent);
+            net.ixdarklord.folios.internal.client.CoverEmblem.draw(pose, collector, light, icon, gem.side, iconSize, accent);
             pose.popPose();
         }
     }

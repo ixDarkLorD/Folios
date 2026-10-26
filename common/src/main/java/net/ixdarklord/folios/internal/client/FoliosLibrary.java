@@ -51,6 +51,7 @@ public final class FoliosLibrary {
     private static Map<Identifier, JsonObject> builds = Map.of();
     private static Map<Identifier, Credits> credits = Map.of();
     private static Map<Identifier, FoliosIcon> coverIcons = Map.of();
+    private static Map<Identifier, Float> coverIconSizes = Map.of();
     // How each book sets its elements unless its pages say otherwise ("overflow", "alignment"... in book.json).
     private static Map<Identifier, net.ixdarklord.folios.internal.client.page.ElementLayout> layouts = Map.of();
     private static Map<Identifier, CelebrationSettings> celebrations = Map.of();
@@ -124,6 +125,11 @@ public final class FoliosLibrary {
      */
     public static FoliosIcon coverIcon(Identifier book) {
         return coverIcons.getOrDefault(book, FoliosIcon.NONE);
+    }
+
+    /** How large a book's cover icon is, of its usual size: its {@code "cover"} › {@code "icon_size"}, 1 by default. */
+    public static float coverIconSize(Identifier book) {
+        return coverIconSizes.getOrDefault(book, 1.0F);
     }
 
     /** The translation key of a book's own text: {@code folios.<namespace>.<path>.<what>}, a / in the path as a dot. */
@@ -209,6 +215,7 @@ public final class FoliosLibrary {
         Map<Identifier, JsonObject> buildFiles = new HashMap<>();
         Map<Identifier, Credits> credited = new HashMap<>();
         Map<Identifier, FoliosIcon> emblems = new HashMap<>();
+        Map<Identifier, Float> emblemSizes = new HashMap<>();
         Map<Identifier, net.ixdarklord.folios.internal.client.page.ElementLayout> setting = new HashMap<>();
         Map<Identifier, CelebrationSettings> celebrating = new HashMap<>();
         for (Map.Entry<Identifier, JsonObject> file : bookFiles.entrySet()) {
@@ -220,7 +227,10 @@ public final class FoliosLibrary {
                 files = current(id, files);
                 JsonObject book = files.get("book.json");
                 if (book.has("credits") && book.get("credits").isJsonObject()) credited.put(id, Credits.read(book.getAsJsonObject("credits")));
-                if (book.get("cover") instanceof JsonObject cover && cover.has("icon")) emblems.put(id, coverIcon(cover.get("icon")));
+                if (book.get("cover") instanceof JsonObject cover) {
+                    if (cover.has("icon")) emblems.put(id, coverIcon(cover.get("icon")));
+                    if (cover.has("icon_size")) emblemSizes.put(id, Mth.clamp(cover.get("icon_size").getAsFloat(), 0.25F, 2.0F));
+                }
                 setting.put(id, net.ixdarklord.folios.internal.client.page.ElementLayout.read(book, "The guide " + id));
                 Map<String, JsonObject> categories = new LinkedHashMap<>();
                 Map<String, JsonObject> entries = new LinkedHashMap<>();
@@ -243,6 +253,7 @@ public final class FoliosLibrary {
         builds = Map.copyOf(buildFiles);
         credits = Map.copyOf(credited);
         coverIcons = Map.copyOf(emblems);
+        coverIconSizes = Map.copyOf(emblemSizes);
         layouts = Map.copyOf(setting);
         celebrations = Map.copyOf(celebrating);
         SESSIONS.values().forEach(FoliosSession::close);
