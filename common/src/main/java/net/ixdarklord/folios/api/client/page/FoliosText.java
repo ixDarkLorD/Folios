@@ -84,8 +84,14 @@ public final class FoliosText {
      * @param marker  the bullet's mark or number, drawn at {@code x - INDENT}
      * @param shift   how far right of {@code x} its words start, for centred and right-aligned lines
      * @param stretch the room shared out between its words, for a justified line
+     * @param scale   how large the words after a leading item slot are drawn: under 1 for a line kept whole beside its
+     *                slot ({@code {slot:...}} or {@code {item:...}}) by drawing them smaller
      */
-    public record Line(FormattedCharSequence text, int x, int y, Kind kind, boolean first, String marker, int shift, int stretch) {
+    public record Line(FormattedCharSequence text, int x, int y, Kind kind, boolean first, String marker, int shift, int stretch, float scale) {
+        public Line(FormattedCharSequence text, int x, int y, Kind kind, boolean first, String marker, int shift, int stretch) {
+            this(text, x, y, kind, first, marker, shift, stretch, 1);
+        }
+
         public int height() {
             return kind == Kind.RULE ? 7 : LINE_HEIGHT;
         }
@@ -402,12 +408,17 @@ public final class FoliosText {
             // Text starting with an item's slot ("- {item:...}") runs on beside it: its later lines start under the
             // item's name, not under the slot.
             int hang = hangingIndent(text);
-            List<FormattedCharSequence> split = hang > 0 ? besideSlot(font, text, room, hang) : font.split(text, room);
+            // Words beside a slot that just miss their line are drawn smaller to stay on it, down to three quarters.
+            float scale = 1;
+            int wide = font.width(text);
+            if (hang > 0 && wide > room && (wide - hang) * SMALL_WORDS <= room - hang) scale = (room - hang) / (float) (wide - hang);
+            List<FormattedCharSequence> split = scale < 1 ? List.of(text.getVisualOrderText())
+                    : hang > 0 ? besideSlot(font, text, room, hang) : font.split(text, room);
             if (split.isEmpty()) split = List.of(FormattedCharSequence.EMPTY);
             for (int part = 0; part < split.size(); part++) {
                 FormattedCharSequence line = split.get(part);
                 int lineRoom = part > 0 ? room - hang : room;
-                int spare = Math.max(0, lineRoom - font.width(line));
+                int spare = scale < 1 ? 0 : Math.max(0, lineRoom - font.width(line));
                 int shift = 0;
                 int stretch = 0;
                 if (lineAlign == FoliosAlign.JUSTIFY) {
@@ -419,7 +430,7 @@ public final class FoliosText {
                 // A line with an item's slot keeps room above and below for the slot standing past its text.
                 int pad = slotRoom(line);
                 y += pad;
-                lines.add(new Line(line, part > 0 ? x + hang : x, y, kind, part == 0, part == 0 ? marker : "", shift, stretch));
+                lines.add(new Line(line, part > 0 ? x + hang : x, y, kind, part == 0, part == 0 ? marker : "", shift, stretch, scale));
                 y += LINE_HEIGHT + pad;
             }
             // A heading keeps a little room under its rule.
@@ -471,7 +482,7 @@ public final class FoliosText {
         if (lines.isEmpty()) return new FoliosText(List.of(), 0, width);
         int top = lines.get(0).y;
         List<Line> moved = new ArrayList<>(lines.size());
-        for (Line line : lines) moved.add(new Line(line.text, line.x, line.y - top, line.kind, line.first, line.marker, line.shift, line.stretch));
+        for (Line line : lines) moved.add(new Line(line.text, line.x, line.y - top, line.kind, line.first, line.marker, line.shift, line.stretch, line.scale));
         Line last = moved.get(moved.size() - 1);
         return new FoliosText(moved, last.y + last.height() - 1, width);
     }
@@ -512,6 +523,10 @@ public final class FoliosText {
             };
             FormattedCharSequence text = line.text;
             if (slotRow(painter, text, x + line.x, lineY, width - line.x)) continue;
+            if (line.scale < 1) {
+                smallBesideSlot(painter, text, lineX, lineY, line.scale, color);
+                continue;
+            }
             if (line.stretch > 0 && justify(painter, text, lineX, lineY, line.stretch, color)) continue;
             slots(painter, text, lineX, lineY);
             // Each link is pressed as a whole: its run of characters on this line.
@@ -525,6 +540,37 @@ public final class FoliosText {
                 painter.fill(x, lineY + 10, x + width, lineY + 11, palette.line());
             }
         }
+    }
+
+    // A line kept whole beside its slot: the slot as it is, the words after it drawn smaller, centred on the line.
+    private static void smallBesideSlot(FoliosPainter painter, FormattedCharSequence text, int x, int y, float scale, int color) {
+        int[] first = {-1};
+        text.accept((position, style, codepoint) -> {
+            first[0] = codepoint;
+            return false;
+        });
+        int hang = first[0] - SLOT + 2;
+        slots(painter, text, x, y);
+        FormattedCharSequence words = sink -> {
+            boolean[] skipped = {false};
+            return text.accept((position, style, codepoint) -> {
+                if (!skipped[0]) {
+                    skipped[0] = true;
+                    return true;
+                }
+                return sink.accept(position, style, codepoint);
+            });
+        };
+        FoliosPalette palette = painter.palette();
+        painter.push();
+        painter.translate(x + hang, y + (1 - scale) * 4);
+        painter.scale(scale);
+        String hovered = null;
+        for (LinkRun run : linkRuns(painter.font(), words, 0)) {
+            if (painter.link(run.x0, -1, run.x1 - run.x0, LINE_HEIGHT, run.target)) hovered = run.target;
+        }
+        painter.text(colorLinks(words, palette, hovered), 0, 0, color);
+        painter.pop();
     }
 
     // A justified line: its words drawn one by one, the spare room shared between the gaps (the first gaps take a pixel
@@ -585,6 +631,8 @@ public final class FoliosText {
     private static final int SLOT_MAX = 18;
     private static final ResourceLocation SLOT_FONT = new ResourceLocation("folios", "slot");
     private static final String SLOT_ITEM = "folios$item:";
+    /** The smallest the words beside a slot are drawn to keep them on one line. */
+    private static final float SMALL_WORDS = 0.75F;
 
     // How far a text's later lines start in, under the words after its first slot: 0 unless it starts with a slot
     // and has more than slots after it.
@@ -622,12 +670,13 @@ public final class FoliosText {
         return lines;
     }
 
-    // How far the largest slot on a line stands past it, above and below.
+    // How far the largest slot on a line stands past it, above and below, with a pixel more each way: slots on lines one
+    // under another are 2 pixels apart.
     private static int slotRoom(FormattedCharSequence text) {
         int[] most = {0};
         text.accept((position, style, codepoint) -> {
             int size = codepoint - SLOT;
-            if (size >= SLOT_MIN && size <= SLOT_MAX) most[0] = Math.max(most[0], (size - 9) / 2);
+            if (size >= SLOT_MIN && size <= SLOT_MAX) most[0] = Math.max(most[0], Math.max(0, (size - 7) / 2));
             return true;
         });
         return most[0];
