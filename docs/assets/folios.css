@@ -30,6 +30,16 @@
   --f-muted: #9aa8bd;
   --f-paper: #f6eedb;
   --f-ink: #3a2a1c;
+  /* The frame: panels, lines and four strengths of text, the teal accent and the gold one. */
+  --f-panel: #171c2b;
+  --f-raised: #1f2639;
+  --f-rule: #262e45;
+  --f-soft: #d3d8e2;
+  --f-dim: #9aa8bd;
+  --f-faint: #6d7891;
+  --f-accent: #4fd1c5;
+  --f-accent-2: #f2c14e;
+  --f-accent-soft: rgba(79, 209, 197, 0.12);
 }
 
 [data-md-color-scheme="default"] {
@@ -51,92 +61,304 @@
   --f-muted: #505e83;
   --f-paper: #fffcf5;
   --f-ink: #3a2a1c;
+  --f-panel: #fffdf8;
+  --f-raised: #f0ebdf;
+  --f-rule: #e3dbca;
+  --f-soft: #393f53;
+  --f-dim: #5a6581;
+  --f-faint: #8b91a2;
+  --f-accent: #1a6f66;
+  --f-accent-2: #a77809;
+  --f-accent-soft: rgba(26, 111, 102, 0.1);
 }
 
-/* ---------- The theme around every page ---------- */
-/* Quiet on purpose: the docs are for reading, so the bars are solid, nothing moves on hover but colour, and the colour
-   is kept for what is open. The landing page brings its own motion. */
-.md-header, .md-tabs { background: #171c2b; color: #f6eedb; }
-.md-header { box-shadow: none; }
-.md-header--shadow { box-shadow: 0 8px 24px -16px rgba(0, 0, 0, 0.8); }
-.md-header__inner { padding-block: 0.3rem; }
-/* One gilt hairline under the bars, still. */
-.md-tabs, body:not(:has(.md-tabs)) .md-header { border-bottom: 1px solid rgba(242, 193, 78, 0.18); }
+/* ---------- The frame around every page ---------- */
+/* A bar at the top with the menu's button, the search and the way back to the site; the pages listed at the left in
+   their groups; a column of reading that ends the page itself; what is on the page at the right. The landing page
+   keeps the bar and brings its own sections, motion and footer. */
+:root { --f-barh: 60px; --f-side: 272px; --f-rail: 228px; --f-drawer: min(290px, 86vw); }
+html { scroll-padding-top: calc(var(--f-barh) + 18px); }
+.f-nav, .md-sidebar__scrollwrap, .md-typeset pre, .md-typeset__scrollwrap { scrollbar-width: thin; scrollbar-color: var(--f-rule) transparent; }
 
-.md-header__button.md-logo { display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; margin: 0.2rem 0.4rem 0.2rem 0.2rem; }
+/* A soft light at the top of every docs page, teal and gold. */
+body:not(:has(.fh))::before {
+  content: ""; position: fixed; z-index: -1; inset: 0 0 auto 0; height: 420px; pointer-events: none;
+  background: radial-gradient(60% 100% at 72% 0%, color-mix(in srgb, var(--f-accent-2) 7%, transparent), transparent 70%),
+    radial-gradient(40% 80% at 20% 0%, color-mix(in srgb, var(--f-accent) 8%, transparent), transparent 70%);
+}
+
+/* ----- The bar ----- */
+.md-header.f-bar {
+  height: var(--f-barh); color: var(--f-text); box-shadow: none; border-bottom: 1px solid var(--f-rule);
+  background: color-mix(in srgb, var(--f-bg) 88%, transparent); backdrop-filter: blur(14px) saturate(1.3); -webkit-backdrop-filter: blur(14px) saturate(1.3);
+}
+.f-bar::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; pointer-events: none; opacity: 0.55;
+  background: linear-gradient(to right, transparent, var(--f-accent) 30%, var(--f-accent-2) 70%, transparent);
+}
+.f-bar .md-header__inner { display: flex; align-items: center; gap: 12px; height: 100%; max-width: none; margin: 0; padding: 0 18px; }
+.f-grow { flex: 1; }
+.f-icon {
+  display: grid; place-items: center; flex: none; width: 38px; height: 38px; padding: 0; border-radius: 10px;
+  color: var(--f-soft); cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.f-icon:hover { background: var(--f-raised); color: var(--f-text); }
+.f-icon svg { width: 19px; height: 19px; fill: currentColor; }
+.f-icon svg[stroke] { fill: none; }
+.f-icon:focus-visible, .f-back:focus-visible, .f-find:focus-visible, .f-group__head:focus-visible, .f-nav a:focus-visible { outline: 2px solid var(--f-accent); outline-offset: 1px; }
+
+.f-brand { display: flex; align-items: center; gap: 10px; flex: none; color: var(--f-text); }
+.f-brand:hover { color: var(--f-text); }
 /* The mod logo is pixel art with its own frame: shown whole, its pixels kept sharp. */
-.md-header__button.md-logo img { width: 100%; height: 100%; image-rendering: pixelated; border-radius: 4px; }
-.md-header__title { font-family: var(--f-serif); font-weight: 800; font-size: 1.05rem; letter-spacing: 0.01em; margin-left: 0.3rem; }
-.md-header__topic:first-child .md-ellipsis { color: var(--f-gold); }
-.md-header__button.md-icon { border-radius: 8px; transition: background 0.2s; }
-.md-header__button.md-icon:hover { background: rgba(230, 235, 242, 0.08); opacity: 1; }
+.f-brand img { width: 30px; height: 30px; image-rendering: pixelated; border-radius: 6px; box-shadow: 0 4px 14px color-mix(in srgb, var(--f-accent) 35%, transparent); transition: transform 0.25s var(--f-spring); }
+.f-brand:hover img { transform: rotate(-6deg) scale(1.08); }
+.f-brand b { font-family: var(--f-serif); font-size: 19px; font-weight: 800; letter-spacing: 0.01em; color: var(--f-accent-2); }
+.f-brand span { padding: 2px 9px; border-radius: 20px; background: var(--f-accent-soft); color: var(--f-accent); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
 
-/* The search button sits on the night-blue bar in both schemes, so it keeps light text in both. */
-.md-search__button { border-radius: 8px; color: rgba(246, 238, 219, 0.8) !important; background: rgba(230, 235, 242, 0.06) !important; box-shadow: inset 0 0 0 1px rgba(230, 235, 242, 0.12); transition: background 0.2s; }
-.md-search__button:hover { background: rgba(230, 235, 242, 0.1) !important; }
-.md-search__button::before { background-color: currentColor !important; }
-.md-search__button::after { color: rgba(246, 238, 219, 0.7) !important; background: rgba(230, 235, 242, 0.1) !important; }
-
-/* The tabs: plain words, the open one in gold with a line under it. */
-.md-tabs__list { display: flex; gap: 1.6rem; }
-.md-tabs__item { height: auto; padding: 0; border-bottom: 0 !important; }
-.md-tabs__link {
-  display: block; margin: 0; padding: 0.55rem 0 0.65rem; font-weight: 600; font-size: 0.7rem;
-  color: rgba(246, 238, 219, 0.66); opacity: 1; box-shadow: inset 0 -2px 0 transparent; transition: color 0.2s, box-shadow 0.2s;
+/* The search: a wide field in the middle (it opens Zensical's search). */
+.f-bar .md-search { display: block; position: static; flex: 0 1 380px; min-width: 0; }
+/* Only on the docs' own pages (main.html marks them); the landing page, upgrader, downloads and the rest go without. */
+body:not(:has(.md-content.f-docs)) .f-bar .md-search { display: none; }
+.f-find.md-search__button {
+  display: flex; align-items: center; gap: 10px; width: 100%; height: 38px; margin: 0; padding: 0 8px 0 12px; border-radius: 11px;
+  border: 1px solid var(--f-rule); background: var(--f-panel) !important; color: var(--f-dim) !important; font: inherit; font-size: 14px; text-align: start;
+  cursor: text; box-shadow: none; transition: border-color 0.15s, box-shadow 0.15s;
 }
-.md-tabs__link:hover { color: #f6eedb; }
-.md-tabs__item--active .md-tabs__link { color: var(--f-gold); box-shadow: inset 0 -2px 0 var(--f-gold); }
+.f-find.md-search__button::before, .f-find.md-search__button::after { display: none !important; }
+.f-find:hover { border-color: color-mix(in srgb, var(--f-accent) 60%, var(--f-rule)); box-shadow: 0 0 0 4px var(--f-accent-soft); }
+.f-find svg { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; }
+.f-find span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.f-find kbd {
+  display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--f-rule);
+  background: var(--f-raised); color: var(--f-dim); font: 12px/1 inherit; box-shadow: none;
+}
 
-/* The page keeps at least a screen's height, so the menu beside it always fits above the footer. */
-.md-main__inner { min-height: calc(100vh - 7rem); }
+/* The light and dark switch, as one of the bar's buttons. */
+.f-bar .md-header__option { display: flex; margin: 0; }
+.f-bar .md-header__option > .md-header__button:not([hidden]) {
+  display: grid; place-items: center; width: 38px; height: 38px; margin: 0; padding: 0; border-radius: 10px; color: var(--f-soft); transition: background 0.15s, color 0.15s;
+}
+.f-bar .md-header__option > .md-header__button:hover { background: var(--f-raised); color: var(--f-text); opacity: 1; }
+.f-bar .md-header__option svg { width: 19px; height: 19px; }
+
+.f-back {
+  display: inline-flex; align-items: center; gap: 7px; flex: none; height: 38px; padding: 0 14px; border-radius: 11px;
+  border: 1px solid var(--f-rule); background: var(--f-panel); color: var(--f-soft); font-size: 13.5px; font-weight: 600; white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.f-back:hover { color: var(--f-text); border-color: var(--f-accent); }
+.f-back svg { width: 16px; height: 16px; fill: none; stroke: currentColor; }
+/* On the landing page the bar leads into the docs instead, and has no menu beside it to show or hide. */
+.f-back--docs { display: none; }
+body:has(.fh) .f-back--site, body:has(.fh) .f-brand span { display: none; }
+body:has(.fh) .f-back--docs { display: inline-flex; border: 0; color: #17121f; background: linear-gradient(135deg, var(--f-gold), var(--f-teal-bright)); }
+body:has(.fh) .f-back--docs:hover { color: #17121f; }
+@media screen and (min-width: 76.25em) { body:has(.fh) .f-menu { display: none; } }
+
+/* ----- The three columns ----- */
+body:not(:has(.fh)) .md-main__inner.md-grid { max-width: 1420px; margin: 0 auto; }
+body:not(:has(.fh)) .md-content { min-width: 0; max-width: none; padding: 40px 52px 48px; }
+body:not(:has(.fh)) .md-content__inner { margin: 0; padding: 0; }
+body:not(:has(.fh)) .md-content__inner::before { display: none; }
+
+@media screen and (min-width: 76.25em) {
+  body:not(:has(.fh)) .md-sidebar--primary {
+    position: sticky; top: var(--f-barh) !important; align-self: flex-start; width: var(--f-side); height: calc(100vh - var(--f-barh));
+    padding: 0; border-right: 1px solid var(--f-rule);
+  }
+  body:not(:has(.fh)) .md-sidebar--primary .md-sidebar__scrollwrap { height: 100% !important; margin: 0; overflow: hidden auto; }
+  body:not(:has(.fh)) .md-sidebar--primary .md-sidebar__inner { padding: 16px 12px 40px 14px; }
+  /* The menu's button folds the menu away (folios.js keeps it so). */
+  body.f-closed .md-sidebar--primary { display: none; }
+}
+@media screen and (min-width: 60em) {
+  body:not(:has(.fh)) .md-sidebar--secondary {
+    position: sticky; top: var(--f-barh) !important; align-self: flex-start; width: var(--f-rail); height: auto; padding: 0;
+  }
+  body:not(:has(.fh)) .md-sidebar--secondary .md-sidebar__scrollwrap { height: auto !important; max-height: calc(100vh - var(--f-barh)); margin: 0; overflow: hidden auto; }
+  body:not(:has(.fh)) .md-sidebar--secondary .md-sidebar__inner { padding: 44px 18px 40px 6px; }
+  .md-sidebar--secondary .md-sidebar-button__wrapper { display: none; }
+}
 
 /* ----- The menu ----- */
-.md-sidebar--primary .md-nav__link { margin-top: 0.15rem; }
-@media screen and (min-width: 76.25em) {
-  .md-sidebar--primary .md-nav__link { padding: 0.3rem 0.6rem; border-radius: 6px; transition: background 0.15s, color 0.15s; }
-  .md-sidebar--primary a.md-nav__link:hover { background: var(--f-surface-2); color: var(--f-text); }
-  .md-sidebar--primary .md-nav__link--active,
-  .md-sidebar--primary .md-nav__link--active:hover { color: var(--f-teal); background: color-mix(in srgb, var(--f-teal) 12%, transparent); font-weight: 600; }
-  /* Each section's name: a small label over its pages, not a link-sized heading. */
-  .md-sidebar--primary .md-nav__item--section { margin-top: 1.1rem; }
-  .md-sidebar--primary .md-nav__item--section > .md-nav__link {
-    padding-inline: 0.6rem; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--f-muted);
-  }
-  .md-sidebar--primary .md-nav__item--section > .md-nav > .md-nav__list { margin-left: 0; }
-  /* A group inside a section hangs from a thin line. */
-  .md-sidebar--primary .md-nav[data-md-level="3"] > .md-nav__list { margin-left: 0.6rem; padding-left: 0.4rem; border-left: 1px solid var(--f-line); }
+.f-nav { font-size: 13.5px; line-height: 1.4; }
+.f-nav svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; }
+
+.f-group { margin-bottom: 2px; }
+.f-group__head {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px; border: 0; border-radius: 9px; background: none;
+  color: var(--f-text); font: inherit; font-weight: 650; text-align: start; cursor: pointer; transition: background 0.15s;
+}
+.f-group__head:hover { background: var(--f-raised); }
+.f-group__head > svg { color: var(--f-dim); }
+.f-group.has-on .f-group__head > svg { color: var(--f-accent); }
+.f-group__head > span:not(.f-group__fold) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.f-group__fold { display: grid; color: var(--f-faint); transform: rotate(90deg); transition: transform 0.2s; }
+.f-group__fold svg { width: 14px; height: 14px; }
+.f-group.is-shut .f-group__fold { transform: none; }
+.f-group__folds { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.22s ease; }
+.f-group.is-shut .f-group__folds { grid-template-rows: 0fr; }
+.f-group__links { min-height: 0; overflow: hidden; margin-left: 15px; border-left: 1px solid var(--f-rule); }
+.f-group.is-shut .f-group__links { visibility: hidden; transition: visibility 0s 0.22s; }
+.f-group__links a {
+  display: block; margin: 1px 0 1px -1px; padding: 5px 10px 5px 15px; border-left: 1px solid transparent; border-radius: 0 8px 8px 0;
+  color: var(--f-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.f-group__links a:first-child { margin-top: 3px; }
+.f-group__links a:last-child { margin-bottom: 9px; }
+.f-group__links a:hover { color: var(--f-text); border-left-color: var(--f-faint); }
+.f-group__links a.is-on { color: var(--f-accent); font-weight: 650; border-left-color: var(--f-accent); background: var(--f-accent-soft); }
+
+/* Below 76.25em the menu comes over the reading, from the menu's button. */
+@media screen and (max-width: 76.234375em) {
+  [dir] .md-sidebar--primary { width: var(--f-drawer); left: calc(var(--f-drawer) * -1); background: var(--f-bg); border-right: 1px solid var(--f-rule); }
+  [data-md-toggle="drawer"]:checked ~ .md-container .md-sidebar--primary { transform: translateX(var(--f-drawer)); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45); }
+  .md-sidebar--primary .md-sidebar__inner { padding: 16px 12px 40px 14px; }
+  .f-back--site { width: 38px; padding: 0; justify-content: center; }      /* (just its arrow, where room is short) */
+  .f-back--site span { display: none; }
 }
 
-/* ----- The article ----- */
-.md-typeset h1, .md-typeset h2, .md-typeset h3 { font-family: var(--f-serif); letter-spacing: -0.01em; }
-.md-typeset h1 { font-weight: 800; color: var(--f-text); margin-bottom: 1rem; }
-.md-typeset h2 { font-weight: 700; padding-top: 1.2rem; border-top: 1px solid var(--f-line); }
-.md-typeset h1 + h2, .md-typeset h1 + p + h2 { border-top: 0; padding-top: 0; }
-.md-typeset a { text-underline-offset: 0.2em; }
-.md-typeset a:not(.md-button):not(.fh-btn):hover { text-decoration: underline; }
+/* ----- What is on the page ----- */
+.md-nav--secondary { font-size: 13px; }
+.md-nav--secondary > .md-nav__title {
+  position: static; margin: 0; padding: 0 0 8px 12px; background: none; box-shadow: none; height: auto;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--f-faint);
+}
+.md-nav--secondary > .md-nav__title .md-nav__icon { display: none; }
+.md-nav--secondary .md-nav__item { padding: 0; }
+.md-nav--secondary .md-nav__link {
+  display: block; margin: 0; padding: 4px 12px; border-left: 2px solid var(--f-rule); color: var(--f-dim); line-height: 1.4; transition: color 0.15s, border-color 0.15s;
+}
+.md-nav--secondary .md-nav__link:hover { color: var(--f-text); }
+.md-nav--secondary .md-nav__link--active { border-left-color: var(--f-accent); color: var(--f-accent); font-weight: 600; }
+.md-nav--secondary .md-nav .md-nav__link { padding-left: 24px; }
+.md-nav--secondary .md-nav__link .md-typeset { font-size: inherit; line-height: inherit; }
+.f-totop { display: inline-flex; align-items: center; gap: 6px; margin-top: 16px; padding-left: 12px; color: var(--f-faint); font-size: 12.5px; }
+.f-totop:hover { color: var(--f-accent); }
+.f-totop svg { width: 14px; height: 14px; fill: none; stroke: currentColor; }
 
-.md-typeset .md-button { border-radius: 8px; transition: background 0.2s, color 0.2s; }
-.md-typeset .md-button--primary { background: var(--f-teal-bright); border-color: var(--f-teal-bright); color: #17121f; }
-.md-typeset .md-button--primary:hover { background: var(--f-gold); border-color: var(--f-gold); color: #17121f; }
+/* ----- Reading ----- */
+.md-typeset { font-size: 15.5px; line-height: 1.68; color: var(--f-soft); }
+.md-typeset p, .md-typeset ul, .md-typeset ol { max-width: 76ch; }
+.md-typeset strong { color: var(--f-text); }
+.md-typeset a { color: var(--f-accent); text-underline-offset: 0.2em; }
+.md-typeset a:not(.md-button):not(.fh-btn):not(.f-door):hover { color: var(--f-accent); text-decoration: underline; }
 
-.md-typeset .admonition, .md-typeset details, .md-typeset pre > code { border-radius: 8px; }
-.md-typeset pre > code { box-shadow: inset 0 0 0 1px var(--f-line); }
-.md-typeset :not(pre) > code { border-radius: 4px; }
-.md-typeset table:not([class]) { border-radius: 8px; overflow: hidden; border: 1px solid var(--f-line); box-shadow: none; font-size: 0.72rem; }
-.md-typeset table:not([class]) th { background: var(--f-surface-2); font-weight: 700; }
-.md-typeset table:not([class]) td, .md-typeset table:not([class]) th { border-top-color: var(--f-line); }
+.f-crumbs.md-path { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px; padding: 0; font-size: 13px; font-weight: 600; color: var(--f-dim); }
+.f-crumbs svg { width: 13px; height: 13px; fill: none; stroke: var(--f-faint); }
+.f-crumbs b { color: var(--f-accent); font-weight: 650; }
 
-/* ----- The footer ----- */
-/* Over anything that might reach into it (the menu is a sticky layer of its own), and solid all the way down. */
-.md-footer { position: relative; z-index: 3; background: var(--f-bg); border-top: 1px solid var(--f-line); }
-.md-footer__inner { gap: 1rem; padding-block: 1rem; }
-.md-footer__link { flex: 1 1 0; padding: 0.6rem 0.8rem; border: 1px solid var(--f-line); border-radius: 8px; transition: border-color 0.2s, background 0.2s; }
-.md-footer__link:hover { border-color: color-mix(in srgb, var(--f-teal) 60%, transparent); background: var(--f-surface); opacity: 1; }
-.md-footer__link--next { justify-content: flex-end; text-align: right; }
-.md-footer__direction { color: var(--f-muted); }
-.md-footer-meta.md-footer-meta { background: #0d1018; }
-.md-footer-meta .md-copyright, .md-footer-meta .md-copyright a { color: #9aa8bd; }
-.md-footer-meta .md-copyright a:hover { color: #f6eedb; }
+.md-typeset h1, .md-typeset h2, .md-typeset h3, .md-typeset h4 { font-family: var(--f-serif); color: var(--f-text); }
+.md-typeset h1 { margin: 0 0 12px; font-size: 38px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em; }
+/* The paragraph under the title is its lead. */
+.md-typeset h1 + p { margin-bottom: 30px; font-size: 18px; line-height: 1.6; color: var(--f-soft); }
+.md-typeset h2 { position: relative; margin: 46px 0 12px; font-size: 25px; line-height: 1.25; font-weight: 700; letter-spacing: -0.015em; }
+/* A small gilt diamond before each section's heading. */
+.md-typeset h2::before {
+  content: ""; position: absolute; left: -19px; top: 0.55em; width: 7px; height: 7px; border-radius: 2px; transform: rotate(45deg);
+  background: linear-gradient(135deg, var(--f-accent), var(--f-accent-2));
+}
+.md-typeset .fh h2::before { content: none; }
+.md-typeset h3 { margin: 30px 0 8px; font-size: 18.5px; font-weight: 700; }
+.md-typeset .headerlink { color: var(--f-faint); }
+
+.md-typeset :not(pre) > code { padding: 1px 6px; border-radius: 6px; border: 1px solid var(--f-rule); background: var(--md-code-bg-color); color: var(--f-text); font-size: 0.86em; box-shadow: none; }
+
+/* Code: a rounded panel with a strip naming the file or the language, and Copy in the strip. */
+.md-typeset .highlight { position: relative; margin: 0 0 20px; border: 1px solid var(--f-rule); border-radius: 14px; background: var(--md-code-bg-color); overflow: hidden; transition: border-color 0.2s; }
+.md-typeset .highlight:hover { border-color: color-mix(in srgb, var(--f-accent) 35%, var(--f-rule)); }
+.md-typeset .highlight > .filename,
+.md-typeset .highlight:not(:has(> .filename))::before {
+  display: block; margin: 0; padding: 9px 16px; border-bottom: 1px solid var(--f-rule); background: color-mix(in srgb, var(--f-panel) 60%, transparent);
+  color: var(--f-dim); font: 600 12.5px/1.4 var(--md-text-font-family, inherit);
+}
+.md-typeset .highlight > .filename::before { display: none; }      /* (the theme's own icon before a file's name) */
+.md-typeset .language-json:not(:has(> .filename))::before { content: "JSON"; }
+.md-typeset .language-java:not(:has(> .filename))::before { content: "Java"; }
+.md-typeset .language-groovy:not(:has(> .filename))::before { content: "Gradle"; }
+.md-typeset .language-text:not(:has(> .filename))::before { content: "Text"; }
+.md-typeset .highlight pre { position: static; margin: 0; }
+.md-typeset .highlight pre > code { padding: 16px 18px; border-radius: 0; background: transparent; box-shadow: none; font-size: 13px; line-height: 1.65; }
+.md-typeset .highlight .md-code__nav { top: 5px; right: 8px; }
+.md-typeset .highlight .md-code__button { color: var(--f-dim); }
+.md-typeset .highlight .md-code__button:hover { color: var(--f-accent); }
+
+/* Tabs: their labels are the panel's strip. */
+.md-typeset .tabbed-set { margin: 0 0 20px; border: 1px solid var(--f-rule); border-radius: 14px; background: var(--md-code-bg-color); overflow: hidden; }
+.md-typeset .tabbed-labels { padding: 6px 8px 0; border-bottom: 1px solid var(--f-rule); background: color-mix(in srgb, var(--f-panel) 60%, transparent); box-shadow: none; }
+.md-typeset .tabbed-labels > label { padding: 7px 13px 9px; font-size: 13px; font-weight: 600; color: var(--f-dim); }
+.md-typeset .tabbed-labels > label:hover { color: var(--f-text); }
+.md-typeset .tabbed-labels::before { background: var(--f-accent); }
+.md-typeset .tabbed-set > input:checked + label, .md-typeset .tabbed-alternate > input:nth-child(n):checked ~ .tabbed-labels > label { --md-accent-fg-color: var(--f-accent); }
+.md-typeset .tabbed-content { padding: 0; }
+.md-typeset .tabbed-block > .highlight { margin: 0; border: 0; border-radius: 0; }
+.md-typeset .tabbed-block > .highlight::before { display: none; }
+.md-typeset .tabbed-block:not(:has(> .highlight:only-child)) { padding: 14px 18px 2px; background: var(--f-panel); }
+
+/* Tables: a panel, their heads in small capitals. */
+.md-typeset table:not([class]) { border: 1px solid var(--f-rule); border-radius: 14px; overflow: hidden; background: var(--f-panel); font-size: 14px; box-shadow: none; }
+.md-typeset table:not([class]) th {
+  padding: 10px 14px; background: color-mix(in srgb, var(--f-raised) 55%, transparent); color: var(--f-faint);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.md-typeset table:not([class]) td { padding: 10px 14px; color: var(--f-soft); line-height: 1.55; vertical-align: top; }
+.md-typeset table:not([class]) td, .md-typeset table:not([class]) th { border-top: 1px solid var(--f-rule); }
+.md-typeset table:not([class]) tr:first-child th { border-top: 0; }
+.md-typeset table:not([class]) tbody tr:hover { background: color-mix(in srgb, var(--f-raised) 45%, transparent); }
+
+/* Notes: tinted panels. */
+.md-typeset .admonition, .md-typeset details {
+  margin: 0 0 20px; max-width: 80ch; border: 1px solid color-mix(in srgb, var(--f-accent) 30%, transparent); border-radius: 14px;
+  background: color-mix(in srgb, var(--f-accent-soft) 70%, transparent); box-shadow: none; font-size: 14.5px; color: var(--f-soft);
+}
+.md-typeset .admonition-title, .md-typeset summary { background: transparent !important; color: var(--f-text); font-weight: 650; }
+
+.md-typeset .md-button { border-radius: 11px; transition: background 0.2s, color 0.2s, border-color 0.2s; }
+.md-typeset .md-button--primary { background: linear-gradient(135deg, var(--f-teal-bright), var(--f-gold)); border: 0; color: #17121f; }
+.md-typeset .md-button--primary:hover { color: #17121f; }
+
+/* ----- The page before and after, and the line under them ----- */
+.f-turn { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 64px; padding-top: 28px; }
+.f-turn::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: linear-gradient(to right, transparent, var(--f-rule) 18%, var(--f-rule) 82%, transparent); }
+/* A gold star where the line is cut: the logo's. */
+.f-turn::after {
+  content: ""; position: absolute; left: 50%; top: -6px; width: 12px; height: 12px; margin-left: -6px; background: var(--f-accent-2); box-shadow: 0 0 0 8px var(--f-bg);
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+}
+.f-turn a { display: block; padding: 14px 18px; border-radius: 14px; border: 1px solid var(--f-rule); background: var(--f-panel); color: var(--f-text); transition: transform 0.15s, border-color 0.15s, box-shadow 0.2s; }
+.f-turn a:hover { color: var(--f-text); border-color: var(--f-accent); transform: translateY(-2px); box-shadow: 0 12px 28px -18px color-mix(in srgb, var(--f-accent) 70%, transparent); }
+.f-turn small { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; color: var(--f-dim); font-size: 12px; }
+.f-turn small svg { width: 14px; height: 14px; fill: none; stroke: currentColor; }
+.f-turn strong { font-size: 15px; font-weight: 650; }
+.f-turn__next { grid-column: 2; text-align: right; }
+.f-turn__next small { justify-content: flex-end; }
+.f-end { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px; margin-top: 28px; color: var(--f-faint); font-size: 13px; }
+.f-end nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.f-end a { color: var(--f-dim); font-weight: 600; }
+.f-end a:hover { color: var(--f-accent); }
+
+/* ----- The landing page's footer ----- */
+.md-footer { background: var(--f-bg); border-top: 1px solid var(--f-rule); }
+.md-footer-meta.md-footer-meta { background: color-mix(in srgb, var(--f-panel) 70%, var(--f-bg)); }
+.md-footer-meta .md-copyright, .md-footer-meta .md-copyright a { color: var(--f-dim); }
+.md-footer-meta .md-copyright a:hover { color: var(--f-accent); }
+
+@media screen and (max-width: 60em) {
+  body:not(:has(.fh)) .md-content { padding: 28px 20px 40px; }
+  .md-typeset h1 { font-size: 31px; }
+  .md-typeset h2::before { display: none; }
+  .f-find kbd, .f-brand span { display: none; }
+  .f-turn { grid-template-columns: 1fr; }
+  .f-turn__next { grid-column: 1; }
+}
+@media screen and (max-width: 30em) {
+  .f-bar .md-header__inner { gap: 4px; padding: 0 8px; }
+  .f-bar .f-grow { display: none; }
+  .f-bar .md-search { flex: 1 1 auto; }
+  .f-brand b, .f-repo { display: none; }
+  .f-find { gap: 8px; padding: 0 10px; }
+  .f-find span { font-size: 13px; }
+}
 
 /* ---------- Landing page ---------- */
 .fh-page .md-main__inner { margin-top: 0; max-width: none; }
@@ -626,24 +848,35 @@ body.fh-page::before {
 .f-door__go { font-size: 0.78rem; font-weight: 600; color: var(--f-teal); }
 
 /* ----- The Minecraft version picker (mc-version.js) ----- */
-.mc-picker { display: flex; align-items: center; gap: 0.4rem; margin: 0 0.6rem 0 auto; font-size: 0.7rem; color: rgba(246, 238, 219, 0.75); white-space: nowrap; }
-.mc-picker__name { font-weight: 600; letter-spacing: 0.02em; }
+/* Right before the search and as tall as it: one quiet field with the Minecraft sign, the word, the picked version in
+   the accent and a chevron. The sign and the chevron are drawn here, around the picker the script builds. */
+.mc-picker {
+  display: flex; align-items: center; gap: 6px; flex: none; height: 38px; margin-right: -4px; padding: 0 10px;
+  border: 1px solid var(--f-rule); border-radius: 11px; background: var(--f-panel); color: var(--f-dim);
+  font-size: 12.5px; white-space: nowrap; cursor: pointer; transition: border-color 0.15s;
+}
+.mc-picker:hover, .mc-picker:focus-within { border-color: color-mix(in srgb, var(--f-accent) 50%, transparent); }
+.mc-picker::before, .mc-picker::after { content: ""; flex: none; width: 17px; height: 17px; background: currentColor; -webkit-mask: var(--mc-icon) center / contain no-repeat; mask: var(--mc-icon) center / contain no-repeat; }
+.mc-picker::before {
+  color: var(--f-accent);
+  --mc-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 2h16a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m2 4v4h4v2H8v6h2v-2h4v2h2v-6h-2v-2h4V6h-4v4h-4V6z'/%3E%3C/svg%3E");
+}
+.mc-picker::after {
+  margin-left: -4px;
+  --mc-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7.41 8.58 12 13.17l4.59-4.59L18 10l-6 6-6-6z'/%3E%3C/svg%3E");
+}
+.mc-picker__name { font-weight: 600; }
 .mc-picker select {
-  appearance: none; -webkit-appearance: none; font: inherit; font-weight: 600; color: #f6eedb; cursor: pointer;
-  padding: 0.25rem 1.5rem 0.25rem 0.6rem; border-radius: 8px; border: 0;
-  background: rgba(230, 235, 242, 0.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23f2c14e' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 0.5rem center;
-  box-shadow: inset 0 0 0 1px rgba(230, 235, 242, 0.12); transition: background-color 0.2s;
+  appearance: none; -webkit-appearance: none; padding: 0 2px; border: 0; outline: none; background: transparent;
+  font: inherit; font-weight: 700; color: var(--f-accent); cursor: pointer;
 }
-.mc-picker select:hover { background-color: rgba(230, 235, 242, 0.1); }
-.mc-picker select:focus-visible { outline: 2px solid var(--f-gold); outline-offset: 1px; }
-.mc-picker option { color: #17121f; background: #f6eedb; }
-/* On a phone, the word goes and the picker keeps its place by the search. */
-@media (max-width: 44.9375em) {
-  .mc-picker__name { display: none; }
-  .mc-picker { margin-right: 0; }
-  .mc-picker select { padding: 0.2rem 1.1rem 0.2rem 0.4rem; background-position: right 0.35rem center; font-size: 0.65rem; max-width: 6.2rem; text-overflow: ellipsis; }
-}
-/* The version table's row for the picked version. */
-.md-typeset tr.mc-row td { background: color-mix(in srgb, var(--f-teal) 14%, transparent); font-weight: 600; }
+/* The open list, in the page's own colours so it reads in both schemes. */
+.mc-picker option { color: var(--f-text); background: var(--f-bg); }
+/* Below 76.25em the word goes; on a phone the whole picker does, to leave the room to the search. */
+@media screen and (max-width: 76.234375em) { .mc-picker__name { display: none; } }
+@media screen and (max-width: 59.984375em) { .mc-picker { display: none; } }
+/* The version table's row for the picked version: tinted, with an accent bar at its start. */
+.md-typeset tr.mc-row > td { background: var(--f-accent-soft); font-weight: 600; }
+.md-typeset tr.mc-row > td:first-child { box-shadow: inset 2px 0 var(--f-accent); }
 /* Until the picker has run, only the wording that covers every version shows. */
 html:not([data-mc]) .mc-only { display: none; }

@@ -1,6 +1,12 @@
 {% extends "main.html" %}
 
-{#- The landing page: its own sections in place of the article, the site's header, tabs and footer kept. -#}
+{#- The landing page: its own sections in place of the article, the site's bar kept, and its footer across the bottom
+    in place of the docs' page ending. -#}
+{% block page_end %}{% endblock %}
+{% block footer %}
+  {% include "partials/footer.html" %}
+{% endblock %}
+
 {% block content %}
 <div class="fh">
 

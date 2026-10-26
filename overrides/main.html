@@ -5,5 +5,53 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Cormorant+Garamond:ital,wght@0,700;1,700&display=swap">
-  <meta name="theme-color" content="#171c2b">
+  <meta name="theme-color" content="#11141f">
 {% endblock %}
+
+{#- The reading column ends the page itself: the page before and the page after, then one line of links. There is no
+    footer across the bottom, so nothing at the side can ever reach into one. -#}
+{% block container %}
+  {#- (f-docs marks the docs' own pages: the bar's search shows only on them) -#}
+  <div class="md-content{{ ' f-docs' if page.url[:5] == 'docs/' }}" data-md-component="content">
+    {% if "navigation.path" in features %}
+      {% include "partials/path.html" %}
+    {% endif %}
+    <article class="md-content__inner md-typeset">
+      <a id="__skip" tabindex="-1"></a>
+      {% block content %}
+        {% include "partials/content.html" %}
+      {% endblock %}
+    </article>
+    {% block page_end %}
+      {% if page.previous_page or page.next_page %}
+        <nav class="f-turn" aria-label="{{ lang.t('footer') }}">
+          {% if page.previous_page %}
+            <a class="f-turn__prev" href="{{ page.previous_page.url | url }}" rel="prev">
+              <small>{% include ".icons/lucide/arrow-left.svg" %} Previous</small>
+              <strong>{{ page.previous_page.title }}</strong>
+            </a>
+          {% endif %}
+          {% if page.next_page %}
+            <a class="f-turn__next" href="{{ page.next_page.url | url }}" rel="next">
+              <small>Next {% include ".icons/lucide/arrow-right.svg" %}</small>
+              <strong>{{ page.next_page.title }}</strong>
+            </a>
+          {% endif %}
+        </nav>
+      {% endif %}
+      <footer class="f-end">
+        <span>&copy; 2026 ixDarkLorD &middot; <a href="{{ 'license/' | url }}">Folios License</a></span>
+        <nav aria-label="Elsewhere">
+          <a href="{{ 'downloads/' | url }}">Downloads</a>
+          <a href="{{ 'changelog/' | url }}">Changelog</a>
+          <a href="{{ config.repo_url }}">GitHub</a>
+          <a href="https://modrinth.com/mod/folios">Modrinth</a>
+          <a href="https://www.curseforge.com/minecraft/mc-mods/folios">CurseForge</a>
+        </nav>
+      </footer>
+    {% endblock %}
+  </div>
+{% endblock %}
+
+{#- Only the landing page keeps a footer across the bottom (home.html brings it back). -#}
+{% block footer %}{% endblock %}

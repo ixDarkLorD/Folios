@@ -1,8 +1,87 @@
-// Folios site, on the landing page only (the docs pages stay still): scroll reveals, tilting cards, magnetic buttons, sparkles and typed code. Every page
-// load (including Zensical's instant navigation) runs `setup`; whatever it starts is stopped before the next one.
+// Folios site: the frame around every page (the menu's button, its folding groups, "/" for search), and on the landing
+// page only (the docs pages stay still) scroll reveals, tilting cards, magnetic buttons, sparkles and typed code. Every
+// page load (including Zensical's instant navigation) runs `setup`; whatever it starts is stopped before the next one.
 (function () {
   const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
   let teardown = [];
+  let wired = false;
+  const wide = window.matchMedia("(min-width: 76.25em)");
+  const FOLDED = "folios-menu-folded";
+  const CLOSED = "folios-menu-closed";
+
+  // What the reader chose, kept in their browser (where it can be: a private window may refuse).
+  function stored(key, fallback) {
+    try {
+      const value = localStorage.getItem(key);
+      return value === null ? fallback : JSON.parse(value);
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function store(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      // The choice lasts until the page is left.
+    }
+  }
+
+  // The bar stays through instant navigation, so it is wired once. Its menu button opens the drawer on narrow screens
+  // (it is the drawer's label) and, on wide ones, folds the menu away and back.
+  function bar() {
+    document.body.classList.toggle("f-closed", stored(CLOSED, false));
+    const menu = document.querySelector(".f-menu");
+    if (menu) {
+      menu.addEventListener("click", (event) => {
+        if (!wide.matches) return;
+        event.preventDefault();
+        store(CLOSED, document.body.classList.toggle("f-closed"));
+      });
+      menu.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        menu.click();
+      });
+    }
+    // "/" opens the search on the docs' pages, as the field's hint says (Ctrl+K does too). It opens once this key is
+    // done with, so the search's own keys don't take it as typed into it.
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.target.closest && event.target.closest("input, textarea, select, [contenteditable]")) return;
+      const search = document.querySelector(".md-search__button");
+      if (!search || !document.querySelector(".md-content.f-docs")) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setTimeout(() => search.click());
+    });
+  }
+
+  // The menu is drawn again with each page: its groups are folded as the reader left them (the one being read stays
+  // open), and the page being read is brought into the menu's view.
+  function groups() {
+    const folded = stored(FOLDED, []);
+    document.querySelectorAll(".f-group").forEach((group) => {
+      const head = group.querySelector(".f-group__head");
+      const key = group.dataset.group;
+      const shut = folded.includes(key) && !group.classList.contains("has-on");
+      group.classList.toggle("is-shut", shut);
+      head.setAttribute("aria-expanded", String(!shut));
+      head.addEventListener("click", () => {
+        const now = group.classList.toggle("is-shut");
+        head.setAttribute("aria-expanded", String(!now));
+        const keep = stored(FOLDED, []).filter((name) => name !== key);
+        if (now) keep.push(key);
+        store(FOLDED, keep);
+      });
+    });
+    const on = document.querySelector(".f-group__links a.is-on");
+    const wrap = on && on.closest(".md-sidebar__scrollwrap");
+    if (wrap) {
+      const top = on.getBoundingClientRect().top - wrap.getBoundingClientRect().top;
+      if (top < 0 || top > wrap.clientHeight - 40) wrap.scrollTop += top - wrap.clientHeight / 3;
+    }
+  }
 
   function cleanup() {
     teardown.forEach((stop) => stop());
@@ -11,6 +90,11 @@
 
   function setup() {
     cleanup();
+    if (!wired) {
+      wired = true;
+      bar();
+    }
+    groups();
     const landing = document.querySelector(".fh");
     document.body.classList.toggle("fh-page", !!landing);
     if (!landing) return;

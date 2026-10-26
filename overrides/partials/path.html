@@ -1,0 +1,15 @@
+{#- Where the page is, over its title: the group it is in, then the page, in the accent colour. Pages outside the docs'
+    groups have none. -#}
+{% if page.meta and page.meta.hide %}
+  {% set hidden = "hidden" if "path" in page.meta.hide %}
+{% endif %}
+{% set groups = page.ancestors | reverse | list %}
+{% if groups %}
+  <nav class="md-path f-crumbs" aria-label="Breadcrumb" {{ hidden }}>
+    {% for item in groups %}
+      <span>{{ item.title }}</span>
+      {% include ".icons/lucide/chevron-right.svg" %}
+    {% endfor %}
+    <b>{{ page.title }}</b>
+  </nav>
+{% endif %}

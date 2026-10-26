@@ -1,0 +1,23 @@
+{#- What is on the page, at the right: its sections (Zensical marks the one being read), and the way back to the top. -#}
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  {% set toc = page.toc %}
+  {% set first = toc | first %}
+  {% if first and first.level == 1 %}
+    {% set toc = first.children %}
+  {% endif %}
+  {% if toc %}
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      {% for toc_item in toc %}
+        {% include "partials/toc-item.html" %}
+      {% endfor %}
+    </ul>
+    <a class="f-totop" href="#">
+      {% include ".icons/lucide/arrow-up.svg" %}
+      Back to top
+    </a>
+  {% endif %}
+</nav>

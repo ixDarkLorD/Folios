@@ -1,0 +1,42 @@
+{#- The bar over every page: the menu's button, the name, the search in the middle, the light and dark switch, and the
+    way back to the site (on the landing page, the way into the docs). The header stays put through instant navigation,
+    so what differs between the two is shown or hidden by the stylesheet. -#}
+<header class="md-header f-bar" data-md-component="header">
+  <nav class="md-header__inner" aria-label="{{ lang.t('header') }}">
+    <label class="f-icon f-menu" for="__drawer" aria-label="{{ lang.t('nav') }}" title="Show or hide the menu" tabindex="0">
+      {% include ".icons/lucide/menu.svg" %}
+    </label>
+    <a href="{{ nav.homepage.url | url }}" class="f-brand" aria-label="{{ config.site_name }}" data-md-component="logo">
+      {% include "partials/logo.html" %}
+      <b>{{ config.site_name }}</b>
+      <span>Docs</span>
+    </a>
+    {#- (Zensical's scripts look for the title; it is not shown) -#}
+    <div class="md-header__title" data-md-component="header-title" hidden>
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic"><span class="md-ellipsis">{{ config.site_name }}</span></div>
+        <div class="md-header__topic" data-md-component="header-topic"><span class="md-ellipsis">{{ page.title }}</span></div>
+      </div>
+    </div>
+    <div class="f-grow"></div>
+    {% include "partials/search.html" %}
+    <div class="f-grow"></div>
+    {% if config.theme.palette and not config.theme.palette is mapping %}
+      {% include "partials/palette.html" %}
+      {% include "partials/javascripts/palette.html" %}
+    {% endif %}
+    {% if config.repo_url %}
+      <a class="f-icon f-repo" href="{{ config.repo_url }}" title="Folios on GitHub" aria-label="Folios on GitHub">
+        {% include ".icons/fontawesome/brands/github.svg" %}
+      </a>
+    {% endif %}
+    <a class="f-back f-back--site" href="{{ nav.homepage.url | url }}" title="Back to the site" aria-label="Back to the site">
+      {% include ".icons/lucide/arrow-left.svg" %}
+      <span>Back to the site</span>
+    </a>
+    <a class="f-back f-back--docs" href="{{ 'docs/' | url }}">
+      <span>Read the docs</span>
+      {% include ".icons/lucide/arrow-right.svg" %}
+    </a>
+  </nav>
+</header>

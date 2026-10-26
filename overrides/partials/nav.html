@@ -1,0 +1,61 @@
+{#- The menu: the docs' groups, each under its sign and its name, folding away from its
+    chevron (folios.js keeps which are folded), its pages hanging from a thin line with the one being read filled in.
+    Last, the site's other pages. -#}
+{% macro links(item) %}
+  {% for child in item.children %}
+    {% if child.children %}
+      {{ links(child) }}
+    {% else %}
+      <a href="{{ child.url | url }}" class="{{ 'is-on' if child.active }}" {% if child.active %}aria-current="page"{% endif %}>{{ child.title }}</a>
+    {% endif %}
+  {% endfor %}
+{% endmacro %}
+
+{% macro group(title, key, active) %}
+  {% set icons = {
+    "Start": "rocket",
+    "The book": "book",
+    "Content": "layers",
+    "Elements": "blocks",
+    "Progress": "trophy",
+    "Java API": "code-xml",
+    "The site": "globe",
+  } %}
+  <div class="f-group{{ ' has-on' if active }}" data-group="{{ key }}">
+    <button type="button" class="f-group__head" aria-expanded="true">
+      {% include ".icons/lucide/" ~ (icons[title] if title in icons else "book-open") ~ ".svg" %}
+      <span>{{ title }}</span>
+      <span class="f-group__fold">{% include ".icons/lucide/chevron-right.svg" %}</span>
+    </button>
+    <div class="f-group__folds">
+      <div class="f-group__links">
+        {{ caller() }}
+      </div>
+    </div>
+  </div>
+{% endmacro %}
+
+<nav class="f-nav" aria-label="{{ lang.t('nav') }}">
+  {% set ns = namespace(site = false, active = false) %}
+  {% for top in nav.items %}
+    {% if top.children %}
+      {% for section in top.children %}
+        {% if section.children %}
+          {% call group(section.title, section.title | lower | replace(" ", "-"), section.active) %}{{ links(section) }}{% endcall %}
+        {% endif %}
+      {% endfor %}
+    {% elif not top.is_homepage %}
+      {% set ns.site = true %}
+      {% if top.active %}{% set ns.active = true %}{% endif %}
+    {% endif %}
+  {% endfor %}
+  {% if ns.site %}
+    {% call group("The site", "site", ns.active) %}
+      {% for item in nav.items %}
+        {% if not item.children and not item.is_homepage %}
+          <a href="{{ item.url | url }}" class="{{ 'is-on' if item.active }}" {% if item.active %}aria-current="page"{% endif %}>{{ item.title }}</a>
+        {% endif %}
+      {% endfor %}
+    {% endcall %}
+  {% endif %}
+</nav>

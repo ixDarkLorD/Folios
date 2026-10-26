@@ -20,40 +20,40 @@ extra_javascript = ["assets/folios.js", "assets/mc-version.js"]
 nav = [
   { "Home" = "index.md" },
   { "Docs" = [
-    "docs/index.md",
-    { "Writing books" = [
+    { "Start" = [
+      { "Overview" = "docs/index.md" },
       { "Your first book" = "docs/getting-started.md" },
       { "Migrating to 3.0" = "docs/migrating-to-3.0.md" },
-      { "The book" = [
-        { "book.json" = "docs/book.md" },
-        { "Colours" = "docs/colours.md" },
-        { "Styles and look" = "docs/styles-and-look.md" },
-        { "Celebrations" = "docs/celebrations.md" },
-      ] },
-      { "Content" = [
-        { "Categories and entries" = "docs/categories-and-entries.md" },
-        { "Pages" = "docs/pages.md" },
-        { "Setting pages" = "docs/setting-pages.md" },
-        { "Text formatting" = "docs/text-formatting.md" },
-        { "Live lists" = "docs/live-lists.md" },
-        { "Spread and empty" = "docs/spread-and-empty.md" },
-      ] },
-      { "Elements" = [
-        { "Text" = "docs/elements/text.md" },
-        { "Spotlight" = "docs/elements/spotlight.md" },
-        { "Image" = "docs/elements/image.md" },
-        { "Recipe" = "docs/elements/recipe.md" },
-        { "Entity" = "docs/elements/entity.md" },
-        { "Multiblock" = "docs/elements/multiblock.md" },
-        { "Structure" = "docs/elements/structure.md" },
-        { "Build" = "docs/elements/build.md" },
-        { "Build files" = "docs/elements/build-files.md" },
-        { "Links" = "docs/elements/links.md" },
-        { "Quest" = "docs/elements/quest.md" },
-      ] },
-      { "Progress" = [
-        { "Quests, locks and progress" = "docs/quests.md" },
-      ] },
+    ] },
+    { "The book" = [
+      { "book.json" = "docs/book.md" },
+      { "Colours" = "docs/colours.md" },
+      { "Styles and look" = "docs/styles-and-look.md" },
+      { "Celebrations" = "docs/celebrations.md" },
+    ] },
+    { "Content" = [
+      { "Categories and entries" = "docs/categories-and-entries.md" },
+      { "Pages" = "docs/pages.md" },
+      { "Setting pages" = "docs/setting-pages.md" },
+      { "Text formatting" = "docs/text-formatting.md" },
+      { "Live lists" = "docs/live-lists.md" },
+      { "Spread and empty" = "docs/spread-and-empty.md" },
+    ] },
+    { "Elements" = [
+      { "Text" = "docs/elements/text.md" },
+      { "Spotlight" = "docs/elements/spotlight.md" },
+      { "Image" = "docs/elements/image.md" },
+      { "Recipe" = "docs/elements/recipe.md" },
+      { "Entity" = "docs/elements/entity.md" },
+      { "Multiblock" = "docs/elements/multiblock.md" },
+      { "Structure" = "docs/elements/structure.md" },
+      { "Build" = "docs/elements/build.md" },
+      { "Build files" = "docs/elements/build-files.md" },
+      { "Links" = "docs/elements/links.md" },
+      { "Quest" = "docs/elements/quest.md" },
+    ] },
+    { "Progress" = [
+      { "Quests, locks and progress" = "docs/quests.md" },
     ] },
     { "Java API" = [
       { "Overview and setup" = "docs/api/index.md" },
