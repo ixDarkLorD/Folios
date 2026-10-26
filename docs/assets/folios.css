@@ -117,8 +117,9 @@ body:not(:has(.fh))::before {
 
 /* The search: a wide field in the middle (it opens Zensical's search). */
 .f-bar .md-search { display: block; position: static; flex: 0 1 380px; min-width: 0; }
-/* Only on the docs' own pages (main.html marks them); the landing page, upgrader, downloads and the rest go without. */
-body:not(:has(.md-content.f-docs)) .f-bar .md-search { display: none; }
+/* The search and the version switch only on the docs' own pages (main.html marks them); the landing page, upgrader,
+   downloads and the rest go without. */
+body:not(:has(.md-content.f-docs)) .f-bar :is(.md-search, .mc-picker) { display: none; }
 .f-find.md-search__button {
   display: flex; align-items: center; gap: 10px; width: 100%; height: 38px; margin: 0; padding: 0 8px 0 12px; border-radius: 11px;
   border: 1px solid var(--f-rule); background: var(--f-panel) !important; color: var(--f-dim) !important; font: inherit; font-size: 14px; text-align: start;
