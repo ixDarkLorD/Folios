@@ -22,7 +22,8 @@ import java.util.Optional;
  * Where a book model wants its cover lettering, marked in the model itself: an element whose name has {@code #title}
  * in it is where the book's name goes, one with {@code #subtitle} where its subtitle goes, one with {@code #summary}
  * where its summary goes (a book with a summary has its subtitle under its name instead; one without has its subtitle
- * where the summary would go, if nothing marks a subtitle) (in Blockbench, rename the
+ * where the summary would go, if nothing marks a subtitle), and one with {@code #icon} is the gem the book's cover icon
+ * is set in (CoverEmblem; its middle and size, square, turned 45° as a setting is) (in Blockbench, rename the
  * cube; a plate, or an invisible box, either works). The line is centred on the element's front (+z) face, as wide as
  * most of it, as tall as about half of it, and lies just over it. A model's parents are followed for its elements.
  * Read once per model, until resources reload.
@@ -31,9 +32,9 @@ public final class CoverMarkers {
     /** A marked line: where and how large, and the z of the face it lies on. */
     public record Marked(FoliosBook.CoverText.Line line, float z) {}
 
-    /** What a model marks; either may be null. */
-    public record Markers(@Nullable Marked title, @Nullable Marked subtitle, @Nullable Marked summary) {
-        public static final Markers NONE = new Markers(null, null, null);
+    /** What a model marks; any may be null. */
+    public record Markers(@Nullable Marked title, @Nullable Marked subtitle, @Nullable Marked summary, @Nullable Marked icon) {
+        public static final Markers NONE = new Markers(null, null, null, null);
     }
 
     /** What is lettered where: the book's name, its subtitle, its summary (up to {@code lines} lines), each its own colour. */
@@ -128,6 +129,10 @@ public final class CoverMarkers {
     public static Rows rows(net.minecraft.client.gui.Font font, Lettering lettering) {
         FoliosBook.CoverText.Line line = lettering.line();
         float full = line.size() * 1.6F / 9.0F;
+        if (lettering.kind() == Kind.TITLE) {
+            Rows two = twoLines(font, lettering, full);
+            if (two != null) return two;
+        }
         float shared = lettering.lines() > 1 ? full / lettering.lines() * 0.64F : full;
         // A summary of more than one line is set small enough for the whole of it to fit: it is wrapped narrower and
         // narrower (smaller each time) until it fits its line count.
@@ -140,6 +145,37 @@ public final class CoverMarkers {
         for (net.minecraft.util.FormattedCharSequence row : lines) scale = Math.min(scale, line.width() / Math.max(1, font.width(row)));
         return new Rows(lines, scale, -(lines.size() * 9 - 1) / 2.0F);
     }
+
+    /**
+     * A name too long for its line, set on two lines as even as can be, each half the line's size (the two as tall as
+     * the one), when that sets it larger than one line shrunk to fit; null when one line does as well.
+     */
+    private static @Nullable Rows twoLines(net.minecraft.client.gui.Font font, Lettering lettering, float full) {
+        FoliosBook.CoverText.Line line = lettering.line();
+        int wide = font.width(lettering.text());
+        float one = Math.min(full, line.width() / Math.max(1, wide));
+        float half = full * TITLE_ROWS;
+        if (one >= half * TWO_LINES_GAIN) return null;
+        // The narrowest width that leaves it two lines: the halves as even as the words allow.
+        java.util.List<net.minecraft.util.FormattedCharSequence> rows = null;
+        for (int room = (wide + 1) / 2; room <= wide; room += 2) {
+            java.util.List<net.minecraft.util.FormattedCharSequence> split = font.split(lettering.text(), room);
+            if (split.size() <= 2) {
+                rows = split;
+                break;
+            }
+        }
+        if (rows == null || rows.size() < 2) return null;
+        float scale = half;
+        for (net.minecraft.util.FormattedCharSequence row : rows) scale = Math.min(scale, line.width() / Math.max(1, font.width(row)));
+        if (scale <= one * TWO_LINES_GAIN) return null;
+        return new Rows(rows, scale, -(rows.size() * 9 - 1) / 2.0F);
+    }
+
+    /** How large each line of a name on two lines is, of one line's size. */
+    private static final float TITLE_ROWS = 0.5F;
+    /** How much larger two lines must set a name than one before it is split. */
+    private static final float TWO_LINES_GAIN = 1.15F;
 
     /**
      * A lettering's text as lines no wider than {@code room} at size 1 (font pixels), at most its line count, the last
@@ -232,14 +268,21 @@ public final class CoverMarkers {
         Marked title = null;
         Marked subtitle = null;
         Marked summary = null;
+        Marked icon = null;
         for (JsonElement element : elements) {
             JsonObject box = element.getAsJsonObject();
             String name = box.has("name") ? box.get("name").getAsString() : "";
             if (name.contains("#summary")) summary = marked(box);
             else if (name.contains("#subtitle")) subtitle = marked(box);
             else if (name.contains("#title")) title = marked(box);
+            else if (name.contains("#icon")) icon = marked(box);
         }
-        return new Markers(title, subtitle, summary);
+        return new Markers(title, subtitle, summary, icon);
+    }
+
+    /** How wide a marked gem is, in model units. */
+    public static float side(Marked gem) {
+        return gem.line().size() / UP;
     }
 
     private static Marked marked(JsonObject box) {
