@@ -1,0 +1,30 @@
+{
+  "name": "Scrolling",
+  "icon": "minecraft:paper",
+  "sort": 7,
+  "pages": [
+    {
+      "type": "spotlight",
+      "item": "minecraft:book",
+      "title": "Scroll",
+      "overflow": "scroll",
+      "text": "Scrolled text stays in its box while the rest of the page stays put. Turn the mouse wheel over it, or drag the scrollbar at its side, and it moves a line at a time. Scrolled text stays in its box while the rest of the page stays put. Turn the mouse wheel over it, or drag the scrollbar at its side, and it moves a line at a time. Scrolled text stays in its box while the rest of the page stays put. Turn the mouse wheel over it, or drag the scrollbar at its side, and it moves a line at a time. Scrolled text stays in its box while the rest of the page stays put. Turn the mouse wheel over it, or drag the scrollbar at its side, and it moves a line at a time. Scrolled text stays in its box while the rest of the page stays put. Turn the mouse wheel over it, or drag the scrollbar at its side, and it moves a line at a time. Scrolled text stays in its box while the rest of the page stays put. Turn the mouse wheel over it, or drag the scrollbar at its side, and it moves a line at a time. "
+    },
+    {
+      "title": "Sixty Percent",
+      "overflow": {
+        "mode": "scroll",
+        "height": "60%"
+      },
+      "text": "Scrolled text stays in its box while the rest of the page stays put. Turn the mouse wheel over it, or drag the scrollbar at its side, and it moves a line at a time. Scrolled text stays in its box while the rest of the page stays put. Turn the mouse wheel over it, or drag the scrollbar at its side, and it moves a line at a time. Scrolled text stays in its box while the rest of the page stays put. Turn the mouse wheel over it, or drag the scrollbar at its side, and it moves a line at a time. Scrolled text stays in its box while the rest of the page stays put. Turn the mouse wheel over it, or drag the scrollbar at its side, and it moves a line at a time. Scrolled text stays in its box while the rest of the page stays put. Turn the mouse wheel over it, or drag the scrollbar at its side, and it moves a line at a time. Scrolled text stays in its box while the rest of the page stays put. Turn the mouse wheel over it, or drag the scrollbar at its side, and it moves a line at a time. "
+    },
+    {
+      "title": "Flip",
+      "overflow": {
+        "mode": "flip",
+        "height": "70%"
+      },
+      "text": "Flipped text is paged in its frame, a part at a time, by the arrows under it or the mouse wheel. Flipped text is paged in its frame, a part at a time, by the arrows under it or the mouse wheel. Flipped text is paged in its frame, a part at a time, by the arrows under it or the mouse wheel. Flipped text is paged in its frame, a part at a time, by the arrows under it or the mouse wheel. Flipped text is paged in its frame, a part at a time, by the arrows under it or the mouse wheel. Flipped text is paged in its frame, a part at a time, by the arrows under it or the mouse wheel. "
+    }
+  ]
+}

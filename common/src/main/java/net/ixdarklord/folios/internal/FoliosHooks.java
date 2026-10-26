@@ -14,7 +14,7 @@ import java.util.function.Function;
 public final class FoliosHooks {
     public static BiConsumer<Identifier, InteractionHand> opener = (book, hand) -> {};
     public static Function<Identifier, Component> names = FoliosHooks::defaultName;
-    public static Function<Identifier, @Nullable Component> authors = book -> null;
+    public static Function<Identifier, @Nullable Component> credits = book -> null;
 
     private FoliosHooks() {}
 
@@ -26,9 +26,9 @@ public final class FoliosHooks {
         return names.apply(book);
     }
 
-    /** Who a book says it is by ({@code "author"} in book.json), for its item's tooltip; null when it doesn't say. */
-    public static @Nullable Component bookAuthor(Identifier book) {
-        return authors.apply(book);
+    /** The line under a book item's name saying who the book is by ({@code "credits"} in book.json); null when it doesn't say. */
+    public static @Nullable Component bookCredit(Identifier book) {
+        return credits.apply(book);
     }
 
     /** {@code folios.<namespace>.<path>.name}, with the path in title case as the fallback. */
