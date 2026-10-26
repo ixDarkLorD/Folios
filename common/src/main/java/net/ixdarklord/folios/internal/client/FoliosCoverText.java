@@ -42,7 +42,7 @@ public record FoliosCoverText(float x, float titleY, float subtitleY, float z, f
             pose.pushPose();
             pose.translate(gem.line().x() * unit, gem.line().y() * unit, gem.z() * unit);
             pose.scale(unit, unit, unit);
-            CoverEmblem.draw(pose, collector, light, icon, CoverMarkers.side(gem), book.accent());
+            CoverEmblem.draw(pose, collector, light, icon, CoverMarkers.side(gem), FoliosLibrary.coverIconSize(id), book.accent());
             pose.popPose();
         }
     }

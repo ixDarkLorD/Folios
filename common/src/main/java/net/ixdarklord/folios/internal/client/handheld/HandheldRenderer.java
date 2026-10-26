@@ -845,7 +845,8 @@ public final class HandheldRenderer {
         ResourceLocation ornaments = book.book.models().cover();
         CoverModel model = ornaments != null ? CoverModel.get(ornaments) : null;
         if (model != null) model.draw(pose, collector, light, left, PW + EDGE, -EDGE, PH + EDGE, -leaves - board - 0.26F, cover,
-                0xFF000000 | book.book.accent(), opened, left ? relight : null, net.ixdarklord.folios.internal.client.FoliosLibrary.coverIcon(book.book.id()));
+                0xFF000000 | book.book.accent(), opened, left ? relight : null, net.ixdarklord.folios.internal.client.FoliosLibrary.coverIcon(book.book.id()),
+                net.ixdarklord.folios.internal.client.FoliosLibrary.coverIconSize(book.book.id()));
     }
 
     /** How far the spine stands out past the boards when shut, as the item's does (three quarters of a unit). */
