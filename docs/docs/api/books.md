@@ -46,8 +46,8 @@ import net.ixdarklord.folios.api.FoliosBookItem;
 ITEMS.register("handbook", () -> new FoliosBookItem(properties, MyMod.id("handbook")));
 ```
 
-A `FoliosBookItem` takes the name of its book, unless the stack has a custom name, and its tooltip says "By: ..." with
-the book's [`author`](../book.md#content) when it has one. To put a book on your own item's stack instead, use
+A `FoliosBookItem` takes the name of its book, unless the stack has a custom name, and its tooltip says who the book is
+by ("Written by ...") from the book's [`credits`](../book.md#words) when it has them. To put a book on your own item's stack instead, use
 `FoliosBooks.createStack(item, bookId)`; a book named on the stack wins over the item's own.
 
 `FoliosBooks.bookOf(stack)` says which book a stack is: the one it names, or else, for a `FoliosBookItem` of your own,

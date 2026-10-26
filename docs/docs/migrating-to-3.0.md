@@ -49,10 +49,12 @@ After updating, add `"format_version": "3.0"` to book.json (the upgrader does th
 | `"progress": "book"` | `"progress_scope": "copy"` (and `"player"` stays `"player"`) |
 | `"item_model": "mymod:handbook"` | `"models": {"item": "mymod:handbook"}` |
 | `"colors": {"tooltip": {...}}` | `"panel": {...}` |
+| `"author": "The Pack Team"` | `"credits": {"authors": "The Pack Team"}` (with an optional `"prefix"`, "Written by" by default) |
 | Colours as `"RRGGBB"` or a number | `"#RRGGBB"` or `"#AARRGGBB"` only |
 | `"name": "guide.mymod.my_guide.name"` | Leave it out: the key `folios.mymod.my_guide.name` is used by itself. |
 
-The book's `name`, `subtitle`, `summary`, `landing` and `author`, left out, come from `folios.<namespace>.<book>.<key>`.
+The book's `name`, `subtitle`, `summary` and `landing`, left out, come from `folios.<namespace>.<book>.<key>`, and its
+`credits` from `folios.<namespace>.<book>.credits.authors` and `.credits.prefix`.
 A 2.x book without a `name` used the key `guide.<namespace>.<book>.name`; the upgrade writes that key in as its
 `"name"`, so its lang file keeps working. To move to the new default, rename the key in your lang files to
 `folios.<namespace>.<book>.name` and remove `"name"`.

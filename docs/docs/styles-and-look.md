@@ -121,6 +121,7 @@ set suits every book in light and dark. Each says how it scales in a `.png.mcmet
 | `panel/border`, `panel/face` | line, panel | The panels windows and cards sit in. |
 | `slot/border`, `slot/well` | | An item slot. |
 | `pager/outline`, `pager/face`, `pager/marker`, `pager/square`, `pager/dot` | | The flip pager's pill and its marks. |
+| `scrollbar/track`, `scrollbar/thumb`, `scrollbar/grip` | | The scrollbar of scrolled text and of a quest's objectives: its groove, its thumb, and the grip on a tall thumb. |
 | `arrow` | | The arrow of a recipe. |
 
 ## Layout
@@ -200,6 +201,10 @@ on the outside of each board, mirrored on the left one:
   opens and is gone once it lies open.
 - An element whose `name` contains `#open` shows only once the book lies open.
 - An element whose `name` contains `#spine` wraps round the spine and bends with it as the cover opens.
+- An element whose `name` contains `#icon` is the gem the book's [cover icon](book.md#cover) is set in: while the book
+  has one, the element is left out and the icon is drawn flat over where its front face was, on a dark inset of the
+  element's size turned 45° (as a gem setting is). The book item's model marks its gem the same way, for the item's
+  cover.
 
 ### Item model helpers
 

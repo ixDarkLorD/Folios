@@ -28,7 +28,7 @@ or `{"translate": ...}`.
 {
   "folios.mymod.my_guide.name": "My Guide",
   "folios.mymod.my_guide.subtitle": "Everything about my mod",
-  "folios.mymod.my_guide.author": "The Pack Team",
+  "folios.mymod.my_guide.credits.authors": "The Pack Team",
   "folios.mymod.my_guide.landing": "Welcome to **My Guide**.\n\nPick a category from the tabs, or [start here](entry:getting_started/first_steps)."
 }
 ```
@@ -44,10 +44,23 @@ the book (a `/` in the book's path becomes a `.`):
 | `subtitle` | `folios.<namespace>.<book>.subtitle` | A line under the name, on the cover and front page. |
 | `summary` | `folios.<namespace>.<book>.summary` | A short description on the cover. With a summary, the name and subtitle share the upper plate of the cover, and the summary (up to two lines) takes the lower one. |
 | `landing` | `folios.<namespace>.<book>.landing` | The text of the book's front page. |
-| `author` | `folios.<namespace>.<book>.author` | Who the book is by: the book item's tooltip says "By: ..." under its name. With neither, it says nothing. |
+| `credits` › `authors` | `folios.<namespace>.<book>.credits.authors` | Who the book is by: the book item's tooltip names them under its name. One text, or a list joined the language's way ("A, B and C"). With neither, the tooltip says nothing. |
+| `credits` › `prefix` | `folios.<namespace>.<book>.credits.prefix` | The words before the authors in that tooltip. With neither, "Written by". |
 
 A key that isn't in the language files leaves that text out (the name excepted, as above). Written in book.json, each
 takes text, a translation key or `{"translate": "key", "with": [...]}`.
+
+```json title="book.json: who the book is by"
+"credits": {
+  "authors": ["The Pack Team", "Steve"],
+  "prefix": "Authored by"
+}
+```
+
+The tooltip then reads "Authored by The Pack Team and Steve". The line itself is the translation
+`folios.guide_book.credit` (`"%s %s"`: the prefix, then the names), and the names are joined with `folios.list.comma`
+and `folios.list.and`, so a language can put them in its own order. A book's `"author"`, from before 3.0.0, is read as
+`credits` › `authors`, with a warning.
 
 ## Keys
 
@@ -98,12 +111,14 @@ takes text, a translation key or `{"translate": "key", "with": [...]}`.
 | `texture` | texture path | none | Handheld books: a texture drawn on the outside of the front cover, over its colour. |
 | `model` | identifier or `"none"` | `folios:guide/handheld_cover` | What sits on a handheld book's boards: corner caps, clasps, bands. See [Cover models](styles-and-look.md#cover-models). |
 | `text` | object | the model's own | Where the name, subtitle and summary are lettered on the cover. See [Cover lettering](styles-and-look.md#cover-lettering). |
+| `icon` | item, texture path or `"none"` | `"none"` | What is set in the gem at the middle of the cover, on the book item and a handheld book, lying flat on a dark inset over the gem: an item (`"minecraft:clock"`, a stack object) or a texture (`"mymod:textures/gui/emblem.png"`). `"none"`, or leaving it out, keeps the plain gem. |
 
 ```json
 "cover": {
   "color": "#5A3A22",
   "texture": "mymod:textures/guide/cover_emboss.png",
-  "text": { "title": { "y": 12 } }
+  "text": { "title": { "y": 12 } },
+  "icon": "mymod:textures/gui/emblem.png"
 }
 ```
 

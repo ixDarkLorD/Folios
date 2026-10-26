@@ -5,7 +5,7 @@ next pages. Four keys change that:
 
 | Key | Values | What it sets |
 | --- | --- | --- |
-| [`overflow`](#overflow) | `"flow"`, `"keep"`, `"flip"`, `"auto"`, or an object | What an element does when it doesn't fit in what is left of the page. |
+| [`overflow`](#overflow) | `"flow"`, `"keep"`, `"flip"`, `"scroll"`, `"auto"`, or an object | What an element does when it doesn't fit in what is left of the page. |
 | [`alignment`](#alignment) | `"left"`, `"center"`, `"right"`, `"justify"` | Where text and the element's own part sit across the page. |
 | [`title_alignment`](#alignment) | `"left"`, `"center"`, `"right"` | Where titles sit across the page. |
 | [`anchor`](#anchor) | `"top"`, `"center"`, `"bottom"` | Where content sits down the page, or down an element's box. |
@@ -27,7 +27,8 @@ element's own, else its page's, else the book's, else how pages have always been
 | --- | --- |
 | `"flow"` | The default. Its text runs on over the next pages; its other parts move whole to the next. |
 | `"keep"` | It moves whole to the next page, text and all, rather than being split. |
-| `"flip"` | It stays in a box on this page, and its text is paged in place: a pager under it shows a square for each part (up to 7 at a time, the one shown marked), with clasps to step back and on, and the mouse wheel over the box does the same. Everything after it stays on this spread. |
+| `"flip"` | It stays in a box on this page, and its text is paged in place in a frame: a pager under it shows a square for each part (up to 7 at a time, the one shown marked), with clasps to step back and on, and the mouse wheel over the box does the same. Everything after it stays on this spread. |
+| `"scroll"` | It stays in a box on this page, and its text scrolls in a frame, a line at a time, by the mouse wheel over it or the scrollbar at its side dragged. Where there is more above or below, the text fades into the frame at that edge, as if it went on under it. Everything after it stays on this spread. |
 | `"auto"` | It keeps whole when it fits on a page of its own, and flips when not even that is enough. |
 
 ```json title="A long description kept beside its card"
@@ -45,17 +46,23 @@ Written as an object, `overflow` also sizes the element's box:
 | Key | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `mode` | string | `"flow"` | One of the modes above. |
-| `height` | `"fill"`, `"fit"` or a number | `"fill"` for flip | How tall its box is: `"fill"` the rest of the page, `"fit"` only as tall as what it holds (up to the rest of the page), or that many pixels. |
-| `min_height` | integer | `30` (three lines) | The least room worth flipping text in. With less left on the page, the element starts the next page. |
+| `height` | `"fill"`, `"fit"`, a number or a percentage | `"fill"` for flip and scroll | How tall its box is: `"fill"` the rest of the page, `"fit"` only as tall as what it holds (up to the rest of the page), that many pixels, or a share of the page's content height (`"60%"`, 1 to 100). |
+| `min_height` | a number or a percentage | `30` (three lines) | The least room worth flipping or scrolling text in, in pixels or as a share of the page (`"25%"`). With less left on the page, the element starts the next page. |
 
 ```json
 "overflow": { "mode": "flip", "height": 112 }
 ```
 
+```json
+"overflow": { "mode": "scroll", "height": "60%" }
+```
+
 A box with a `"fill"` or fixed `height` holds its element even when it fits, so the next element starts under the box.
 Set down the box with [`anchor`](#anchor).
 
-An element flips one run of text: an element with no text, or with more than one run, flows instead.
+An element flips or scrolls one run of text: an element with no text, or with more than one run, flows instead. Text
+that fits its box whole is still shown in the frame. A page of plain text can be set the same way, with `overflow` on
+the page.
 
 ## Alignment
 
