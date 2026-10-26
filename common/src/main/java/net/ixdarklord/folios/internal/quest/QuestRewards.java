@@ -89,7 +89,12 @@ public record QuestRewards(List<ItemStack> items, List<Choice> random, int rolls
         RandomSource random = player.getRandom();
         for (int roll = 0; roll < rolls && !this.random.isEmpty(); roll++) given.add(pick(random).stack().copy());
         for (ItemStack stack : given) {
-            if (!player.getInventory().add(stack) && !stack.isEmpty()) player.drop(stack, false);
+            if (player.getInventory().add(stack) || stack.isEmpty()) continue;
+            // A full inventory: at the player's feet, theirs alone to pick up, as /give leaves it.
+            var drop = player.drop(stack, false);
+            if (drop == null) continue;
+            drop.setNoPickUpDelay();
+            drop.setTarget(player.getUUID());
         }
     }
 
