@@ -28,8 +28,8 @@ import java.util.function.Consumer;
  * <pre>{@code
  * ITEMS.register("handbook", () -> new FoliosBookItem(properties, MyMod.id("handbook")));
  * }</pre>
- * Its name is the book's own, unless the stack has a custom name or {@code item_name}; under it, "By:" and who the book
- * is by, when its book.json names an {@code "author"}.
+ * Its name is the book's own, unless the stack has a custom name or {@code item_name}; under it, who the book is by
+ * ("Written by ...", the words and names as its book.json's {@code "credits"} give them), when it says.
  */
 public class FoliosBookItem extends Item {
     private final @Nullable Identifier book;
@@ -70,9 +70,8 @@ public class FoliosBookItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
         Identifier id = this.book(stack);
-        Component author = id != null ? FoliosHooks.bookAuthor(id) : null;
-        if (author == null) return;
-        builder.accept(Component.translatableWithFallback("folios.guide_book.by", "By: %s", author).withStyle(ChatFormatting.GRAY));
+        Component credit = id != null ? FoliosHooks.bookCredit(id) : null;
+        if (credit != null) builder.accept(credit.copy().withStyle(ChatFormatting.GRAY));
     }
 
     @Override

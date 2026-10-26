@@ -74,10 +74,7 @@ public final class FoliosClient {
             FoliosBook book = FoliosLibrary.book(id);
             return book != null ? book.title() : FoliosHooks.defaultName(id);
         };
-        FoliosHooks.authors = id -> {
-            String author = FoliosLibrary.author(id);
-            return author != null ? net.ixdarklord.folios.api.client.page.FoliosText.inline(author) : null;
-        };
+        FoliosHooks.credits = FoliosLibrary::credit;
         ClientTickEvents.END.register(ObtainedItems::tick);
         ClientTickEvents.END.register(minecraft -> {
             if (pending != null) {

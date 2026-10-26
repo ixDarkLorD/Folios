@@ -21,6 +21,7 @@ import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.format.BookUpgrader;
 import net.ixdarklord.folios.internal.client.page.ErrorPage;
 import net.ixdarklord.folios.internal.core.Folios;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
@@ -48,7 +49,8 @@ public final class FoliosLibrary {
 
     private static Map<Identifier, FoliosBook> books = Map.of();
     private static Map<Identifier, JsonObject> builds = Map.of();
-    private static Map<Identifier, String> authors = Map.of();
+    private static Map<Identifier, Credits> credits = Map.of();
+    private static Map<Identifier, FoliosIcon> coverIcons = Map.of();
     // How each book sets its elements unless its pages say otherwise ("overflow", "alignment"... in book.json).
     private static Map<Identifier, net.ixdarklord.folios.internal.client.page.ElementLayout> layouts = Map.of();
     private static Map<Identifier, CelebrationSettings> celebrations = Map.of();
@@ -67,14 +69,61 @@ public final class FoliosLibrary {
     }
 
     /**
-     * Who a book says it is by, as markup: its {@code "author"}, or else its {@code folios.<namespace>.<path>.author}
-     * translation; null when it says neither.
+     * The book item's credit line: the words its {@code "credits"} give before its authors (else its
+     * {@code folios.<namespace>.<path>.credits.prefix} translation, else "Written by"), and its authors, joined the
+     * language's way (else its {@code ...credits.authors} translation); null when it names no authors.
      */
-    public static @Nullable String author(Identifier book) {
-        String written = authors.get(book);
-        if (written != null) return written;
-        String key = textKey(book, "author");
-        return FoliosText.hasTranslation(key) ? key : null;
+    public static @Nullable Component credit(Identifier book) {
+        Credits given = credits.get(book);
+        List<Component> names = new ArrayList<>();
+        if (given != null) for (String author : given.authors()) names.add(FoliosText.inline(author));
+        if (names.isEmpty()) {
+            String key = textKey(book, "credits.authors");
+            // A book's lang file may still say who it is by under the key 3.0 first had.
+            if (!FoliosText.hasTranslation(key)) key = textKey(book, "author");
+            if (!FoliosText.hasTranslation(key)) return null;
+            names.add(FoliosText.inline(key));
+        }
+        Component prefix;
+        if (given != null && given.prefix() != null) prefix = FoliosText.inline(given.prefix());
+        else {
+            String key = textKey(book, "credits.prefix");
+            prefix = FoliosText.hasTranslation(key) ? FoliosText.inline(key) : Component.translatableWithFallback("folios.guide_book.written_by", "Written by");
+        }
+        return Component.translatableWithFallback("folios.guide_book.credit", "%s %s", prefix, joined(names));
+    }
+
+    // A cover's "icon": an item or a texture as any icon is written, or "none" for the plain gem.
+    private static FoliosIcon coverIcon(JsonElement json) {
+        if (json.isJsonPrimitive() && json.getAsString().equals("none")) return FoliosIcon.NONE;
+        return FoliosIcon.read(json);
+    }
+
+    // Names joined the language's way: "A", "A and B", "A, B and C".
+    private static Component joined(List<Component> names) {
+        Component all = names.getFirst();
+        for (int index = 1; index < names.size() - 1; index++) all = Component.translatableWithFallback("folios.list.comma", "%s, %s", all, names.get(index));
+        if (names.size() > 1) all = Component.translatableWithFallback("folios.list.and", "%s and %s", all, names.getLast());
+        return all;
+    }
+
+    // A book's "credits" as written, each text as markup: who it is by (one or a list), and the words before them.
+    private record Credits(List<String> authors, @Nullable String prefix) {
+        static Credits read(JsonObject json) {
+            List<String> authors = new ArrayList<>();
+            JsonElement written = json.get("authors");
+            if (written != null && written.isJsonArray()) for (JsonElement author : written.getAsJsonArray()) authors.add(FoliosText.read(author));
+            else if (written != null && !written.isJsonNull()) authors.add(FoliosText.read(written));
+            return new Credits(authors, json.has("prefix") ? FoliosText.read(json.get("prefix")) : null);
+        }
+    }
+
+    /**
+     * The icon set in the gem of a book's cover: its {@code "cover"} › {@code "icon"} (an item or a texture);
+     * {@link FoliosIcon#NONE}, the plain gem, when it gives none or {@code "none"}.
+     */
+    public static FoliosIcon coverIcon(Identifier book) {
+        return coverIcons.getOrDefault(book, FoliosIcon.NONE);
     }
 
     /** The translation key of a book's own text: {@code folios.<namespace>.<path>.<what>}, a / in the path as a dot. */
@@ -158,7 +207,8 @@ public final class FoliosLibrary {
         }
         Map<Identifier, FoliosBook> loaded = new LinkedHashMap<>();
         Map<Identifier, JsonObject> buildFiles = new HashMap<>();
-        Map<Identifier, String> writtenBy = new HashMap<>();
+        Map<Identifier, Credits> credited = new HashMap<>();
+        Map<Identifier, FoliosIcon> emblems = new HashMap<>();
         Map<Identifier, net.ixdarklord.folios.internal.client.page.ElementLayout> setting = new HashMap<>();
         Map<Identifier, CelebrationSettings> celebrating = new HashMap<>();
         for (Map.Entry<Identifier, JsonObject> file : bookFiles.entrySet()) {
@@ -169,7 +219,8 @@ public final class FoliosLibrary {
                 files.putAll(parts.getOrDefault(id, Map.of()));
                 files = current(id, files);
                 JsonObject book = files.get("book.json");
-                if (book.has("author")) writtenBy.put(id, FoliosText.read(book.get("author")));
+                if (book.has("credits") && book.get("credits").isJsonObject()) credited.put(id, Credits.read(book.getAsJsonObject("credits")));
+                if (book.get("cover") instanceof JsonObject cover && cover.has("icon")) emblems.put(id, coverIcon(cover.get("icon")));
                 setting.put(id, net.ixdarklord.folios.internal.client.page.ElementLayout.read(book, "The guide " + id));
                 Map<String, JsonObject> categories = new LinkedHashMap<>();
                 Map<String, JsonObject> entries = new LinkedHashMap<>();
@@ -190,7 +241,8 @@ public final class FoliosLibrary {
         }
         books = Map.copyOf(loaded);
         builds = Map.copyOf(buildFiles);
-        authors = Map.copyOf(writtenBy);
+        credits = Map.copyOf(credited);
+        coverIcons = Map.copyOf(emblems);
         layouts = Map.copyOf(setting);
         celebrations = Map.copyOf(celebrating);
         SESSIONS.values().forEach(FoliosSession::close);

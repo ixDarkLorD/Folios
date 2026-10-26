@@ -52,6 +52,11 @@
     },
     {
       "in": "book",
+      "move": {"from": "author", "to": "credits.authors"},
+      "why": "Who a book is by is \"credits\" › \"authors\", beside \"prefix\", the words before them in the book item's tooltip."
+    },
+    {
+      "in": "book",
       "run": "color_strings",
       "check": true,
       "why": "Colours are written \"#RRGGBB\" or \"#AARRGGBB\"."

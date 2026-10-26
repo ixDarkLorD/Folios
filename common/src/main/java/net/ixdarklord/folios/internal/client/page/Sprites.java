@@ -51,6 +51,9 @@ public final class Sprites {
     public static final Identifier PAGER_SQUARE = sprite("pager/square");
     public static final Identifier PAGER_DOT = sprite("pager/dot");
     public static final Identifier ARROW = sprite("arrow");
+    public static final Identifier SCROLL_TRACK = sprite("scrollbar/track");
+    public static final Identifier SCROLL_THUMB = sprite("scrollbar/thumb");
+    public static final Identifier SCROLL_GRIP = sprite("scrollbar/grip");
 
     /** Drawn untinted: as the sprite's own colours. */
     public static final int AS_IS = 0xFFFFFFFF;
