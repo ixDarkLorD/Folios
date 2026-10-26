@@ -18,7 +18,7 @@ Books written for 2.x still load: Folios updates them in memory as it reads them
 - `recipe`, `image`, `structure` and `build` take one id or a list under the one key (`"recipes"`, `"images"`, `"structures"` and `"builds"` are gone). A structure or build choice, and a map's node, has a `"label"` (was `"name"`). A spread's `"build"` names a build file; blocks written into it go under `"multiblock"`.
 - Objectives: `category` is `read_category`, `book` is `read_book`, `item` is `carried`, and `count` is `goal`.
 - Locks are `"requires"`: one objective or a list of them, all needed (was `"advancement"` and `"flag"` on the locked thing). `"secret"` stays.
-- The gem at the middle of a book's cover can hold an icon, on the book item and on a handheld book: `"cover": {"icon": ...}`, an item or a texture path. Without it (or with `"none"`), the plain gem. A cover model marks its gem with `#icon` in the element's name.
+- The gem at the middle of a book's cover can hold an icon, on the book item and on a handheld book: `"cover": {"icon": ...}`, an item or a texture path, sized with `"icon_size"`. Without it (or with `"none"`), the plain gem. A cover model marks its gem with `#icon` in the element's name.
 - A long book name on the cover is set on two lines, as even as the words allow, when that makes it larger than one line shrunk to fit.
 - A guide book's tooltip says who it is by from `"credits"` in book.json: `"authors"` (one or a list, joined "A, B and C") and `"prefix"`, the words before them ("Written by" by default; was "By: …" with `"author"`, and before that "From …" and the mod's name). `"author"` is upgraded to `credits` › `authors`. With no authors, it says nothing.
 

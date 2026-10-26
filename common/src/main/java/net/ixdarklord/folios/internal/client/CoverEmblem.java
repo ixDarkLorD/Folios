@@ -26,9 +26,9 @@ public final class CoverEmblem {
 
     /**
      * Draws an icon in a gem {@code side} units square, turned 45°: the pose's origin at the gem's middle on its front
-     * face, one unit a model unit, +z out of the cover, y up.
+     * face, one unit a model unit, +z out of the cover, y up. {@code scale} sizes the icon from its usual size.
      */
-    public static void draw(PoseStack pose, SubmitNodeCollector collector, int light, FoliosIcon icon, float side, int accent) {
+    public static void draw(PoseStack pose, SubmitNodeCollector collector, int light, FoliosIcon icon, float side, float scale, int accent) {
         float corner = side / (float) Math.sqrt(2);
         int inset = FoliosPalette.mix(0xFF000000 | accent, 0xFF000000, 0.55F);
         collector.submitCustomGeometry(pose, RenderTypes.entityCutout(WorldPainter.WHITE), (last, consumer) -> {
@@ -37,7 +37,7 @@ public final class CoverEmblem {
             vertex(consumer, last, 0, corner, 0.005F, 0.5F, 0.5F, inset, light);
             vertex(consumer, last, -corner, 0, 0.005F, 0.5F, 0.5F, inset, light);
         });
-        float size = side * (float) Math.sqrt(2) * ICON_SHARE;
+        float size = side * (float) Math.sqrt(2) * ICON_SHARE * scale;
         if (icon.texture() != null) {
             float half = size / 2;
             collector.submitCustomGeometry(pose, RenderTypes.entityCutout(icon.texture()), (last, consumer) -> {
