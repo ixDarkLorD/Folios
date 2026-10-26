@@ -112,13 +112,15 @@ and `folios.list.and`, so a language can put them in its own order. A book's `"a
 | `model` | identifier or `"none"` | `folios:guide/handheld_cover` | What sits on a handheld book's boards: corner caps, clasps, bands. See [Cover models](styles-and-look.md#cover-models). |
 | `text` | object | the model's own | Where the name, subtitle and summary are lettered on the cover. See [Cover lettering](styles-and-look.md#cover-lettering). |
 | `icon` | item, texture path or `"none"` | `"none"` | What is set in the gem at the middle of the cover, on the book item and a handheld book, lying flat on a dark inset over the gem: an item (`"minecraft:clock"`, a stack object) or a texture (`"mymod:textures/gui/emblem.png"`). `"none"`, or leaving it out, keeps the plain gem. |
+| `icon_size` | number | `1` | How large the cover icon is, of its usual size: `0.8` smaller, `1.3` larger (0.25 to 2). |
 
 ```json
 "cover": {
   "color": "#5A3A22",
   "texture": "mymod:textures/guide/cover_emboss.png",
   "text": { "title": { "y": 12 } },
-  "icon": "mymod:textures/gui/emblem.png"
+  "icon": "mymod:textures/gui/emblem.png",
+  "icon_size": 0.9
 }
 ```
 
