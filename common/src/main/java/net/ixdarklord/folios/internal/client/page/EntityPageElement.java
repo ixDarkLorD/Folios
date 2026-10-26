@@ -31,6 +31,9 @@ public record EntityPageElement(ResourceLocation entity, Optional<String> title,
             Codec.intRange(40, 130).optionalFieldOf("height", 74).forGetter(EntityPageElement::height)
     ).apply(instance, EntityPageElement::new));
 
+    /** Ids for the entities pages show, counting down from -1 so they meet no entity in the world. */
+    static final java.util.concurrent.atomic.AtomicInteger SHOWN_IDS = new java.util.concurrent.atomic.AtomicInteger();
+
     @Override
     public List<Laid> lay(FoliosLayout layout) {
         int contentWidth = layout.contentWidth();
@@ -49,6 +52,8 @@ public record EntityPageElement(ResourceLocation entity, Optional<String> title,
             if (shown[0] == null && type != null && Minecraft.getInstance().level != null) {
                 shown[0] = type.create(Minecraft.getInstance().level);
                 if (shown[0] != null) {
+                    // Never in the world, but drawn as if it were, which asks its id: one of its own, below any real one.
+                    shown[0].setId(SHOWN_IDS.decrementAndGet());
                     PreviewEntities.track(shown[0]);
                     view.entity(shown[0], 0, 0, 0, 0);
                     // Framed to fit the window whole: wide enough for it turned corner-on, and for all its height at the

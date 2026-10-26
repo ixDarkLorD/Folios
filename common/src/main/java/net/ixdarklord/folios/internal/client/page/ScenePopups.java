@@ -91,6 +91,8 @@ public final class ScenePopups {
             if (shown[0] == null && Minecraft.getInstance().level != null) {
                 shown[0] = type.create(Minecraft.getInstance().level);
                 if (shown[0] != null) {
+                    // Never in the world, but drawn as if it were: an id of its own, as an entity page's.
+                    shown[0].setId(EntityPageElement.SHOWN_IDS.decrementAndGet());
                     PreviewEntities.track(shown[0]);
                     // Framed as the entity element frames it: whole, turned corner-on, with a little room round it.
                     view.entity(shown[0], 0, 0, 0, 0);
