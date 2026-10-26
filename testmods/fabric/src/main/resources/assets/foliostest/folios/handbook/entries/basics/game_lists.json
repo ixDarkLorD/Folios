@@ -6,7 +6,7 @@
     {
       "title": "Logs",
       "text": "Every item in the tag #minecraft:logs, from the source folios:items:",
-      "observe": { "source": "folios:items", "of": "#minecraft:logs", "row": "- {item:{$id}}", "limit": 8 }
+      "observe": { "source": "folios:items", "of": "#minecraft:logs", "row": "{slot:{$id}} {$name}", "limit": 8 }
     },
     {
       "title": "Saplings",
