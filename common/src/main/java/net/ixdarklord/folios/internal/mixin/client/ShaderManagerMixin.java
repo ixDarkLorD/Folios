@@ -15,10 +15,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-// Guide books are read again with every resource reload, at the same point as Canvas's own files.
 @Mixin(ShaderManager.class)
 public abstract class ShaderManagerMixin {
-    // The resources being reloaded, kept from the reload's start: applying the shaders is no longer handed them.
     @Unique
     private @Nullable ResourceManager folios$manager;
 

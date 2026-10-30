@@ -26,17 +26,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-// One thing over both pages of the open book, a window across the fold: a wide picture ("image"), a build turning in
-// the world's light ("build", a build file as a build page names one, or "multiblock", blocks written in place as a
-// multiblock page's pattern and mapping), or a map of the book's entries ("map": nodes
-// placed in the window, each a link to an entry, joined by dotted paths). The title is centred over it across the fold,
-// and the text under it, in centred lines. It runs unbroken over the fold: on a screen book, whose pages have the
-// spine between them, each page draws on into the spine to meet the other. In the window's own pixels a node at x 0 is at its left edge, at the window's
-// width (the spread's, less the margins) its right.
 public record SpreadPage(Optional<String> title, String text, Optional<Identifier> image, Optional<String> build, Optional<Build> multiblock,
                          Optional<MapLayout> map, int height)
         implements FoliosPageElement {
-    /** A build in the window: a multiblock page's pattern and mapping. */
     public record Build(List<List<String>> pattern, Map<String, String> mapping) {
         static final Codec<Build> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.listOf().listOf().fieldOf("pattern").forGetter(Build::pattern),
@@ -44,7 +36,6 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
         ).apply(instance, Build::new));
     }
 
-    /** A place on the map: where it is in the window, what it shows, the entry it opens, and its label. */
     public record Node(String id, int x, int y, JsonElement icon, Optional<String> entry, Optional<String> label) {
         static final Codec<Node> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.fieldOf("id").forGetter(Node::id),
@@ -56,7 +47,6 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
         ).apply(instance, Node::new));
     }
 
-    /** The map: its places, the paths between them (pairs of ids), and a picture under them. */
     public record MapLayout(List<Node> nodes, List<List<String>> paths, Optional<Identifier> background) {
         static final Codec<MapLayout> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Node.CODEC.listOf().fieldOf("nodes").forGetter(MapLayout::nodes),
@@ -75,11 +65,8 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
             Codec.intRange(40, 150).optionalFieldOf("height", 104).forGetter(SpreadPage::height)
     ).apply(instance, SpreadPage::new));
 
-    /** The window's left edge, in the spread's pixels (0 at the left page's left edge). */
     private static final int LEFT = FoliosLayout.CONTENT_LEFT;
 
-    // The size of the pages it is laid out to (larger on a screen at a small GUI scale): each page's width and height,
-    // the window's width across both, and where content ends at the foot.
     private record G(int pw, int ph) {
         static G of(FoliosLayout layout) {
             return new G(layout.pageWidth(), layout.pageHeight());
@@ -94,11 +81,8 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
         }
     }
     private static final int NODE = 20;
-    /** How far the window's content sits inside its frame. */
     private static final int INNER = 2;
 
-    // How tall the window is: as the page asks, but a build's leaves room under it for the blocks it needs and a line
-    // of its text above the page number.
     private int windowHeight(G g) {
         if (build.isEmpty() && multiblock.isEmpty()) return height;
         int top = FoliosLayout.CONTENT_TOP + (title.isPresent() && !title.get().isEmpty() ? FoliosLayout.TITLE_HEIGHT : 0);
@@ -116,12 +100,10 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
         G g = G.of(layout);
         Component heading = title.isPresent() && !title.get().isEmpty() ? FoliosText.inline(title.get()) : null;
         int top = FoliosLayout.CONTENT_TOP + (heading != null ? FoliosLayout.TITLE_HEIGHT : 0);
-        // A build's blocks, a row under its window, the text under them.
         Map<BlockPos, BlockChoice> blocks = this.blocks(layout);
         Requirements needs = blocks == null || blocks.isEmpty() ? null : new Requirements(blocks.values());
         int listTop = top + this.windowHeight(g) + 5;
         int textTop = needs != null ? listTop + Requirements.HEADING + Requirements.SLOT + 5 : top + this.windowHeight(g) + 6;
-        // The text under the window, in centred lines across the spread, as many as there is room for.
         List<FormattedCharSequence> caption = text.isEmpty() ? List.of() : Minecraft.getInstance().font.split(FoliosText.inline(text), g.width() - 24);
         List<FormattedCharSequence> under = caption.subList(0, Math.min(caption.size(), Math.max(0, (g.contentBottom() - textTop) / 10)));
         Window window = this.window(layout, top, g, blocks);
@@ -132,20 +114,14 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
                 new Half(painter -> this.half(new Part(painter, 1, g), window, plate, needs, heading != null, top, listTop)));
     }
 
-    // One page's half: the rule under the title, the window, its half of the blocks needed, and of the text plate.
     private void half(Part part, Window window, @Nullable TextPlate plate, @Nullable Requirements needs, boolean titled, int top, int listTop) {
         this.window(window, part, titled, top);
         if (needs != null) part.requirements(needs, listTop + Requirements.HEADING);
         if (plate != null) plate.draw(part);
     }
 
-    /** How many kinds of block a build spread shows under its window at once. */
     private static final int NEEDS_SHOWN = 12;
 
-    // The spread's words, its title and the text under its window, laid on one picture across both pages (a scene
-    // viewport of nothing but text) that each page shows its half of. So the words are cut exactly at the fold, as the
-    // window is, and bend and turn with their page as a picture does, rather than letters being sorted to a side.
-    // The picture is made again only when the paper's colours change (light or dark).
     private static final class TextPlate {
         private final SceneViewport view;
         private final G g;
@@ -193,7 +169,6 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
         }
     }
 
-    // The rule under the title, then the window on one page: its frame and what is in it.
     private void window(Window window, Part part, boolean titled, int top) {
         G g = part.g();
         if (titled) part.rule(FoliosLayout.CONTENT_TOP);
@@ -201,7 +176,6 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
         window.draw(part);
     }
 
-    // One page of the spread.
     private record Half(Laid content) implements SpreadHalf {
         @Override
         public void draw(FoliosPainter painter) {
@@ -209,8 +183,6 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
         }
     }
 
-    // Its build's blocks: a build file's, or those written in place; null for a spread without one. A build file that
-    // can't be found or read shows nothing, with what went wrong in the log.
     private @Nullable Map<BlockPos, BlockChoice> blocks(FoliosLayout layout) {
         if (multiblock.isPresent()) return MultiblockPageElement.blocks(multiblock.get().pattern(), multiblock.get().mapping());
         if (build.isEmpty()) return null;
@@ -241,7 +213,6 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
 
     private Window buildWindow(FoliosLayout layout, int top, Map<BlockPos, BlockChoice> blocks, G g) {
         SceneViewport view = layout.viewport(g.width() * FoliosLayout.SCENE_DETAIL, this.windowHeight(g) * FoliosLayout.SCENE_DETAIL);
-        // Drawn every frame: a scene drawn fewer times turns in uneven steps.
         view.refreshRate(240);
         BuildScene scene = new BuildScene(view);
         scene.show(blocks);
@@ -267,8 +238,6 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
     private Window mapWindow(int top, MapLayout map, G g) {
         Map<String, Node> byId = new HashMap<>();
         Map<String, FoliosIcon> icons = new HashMap<>();
-        // Where each place sits, in the spread's pixels: kept inside the frame, its plate and shadow too, and off the
-        // fold, so neither page cuts it.
         Map<String, int[]> at = new HashMap<>();
         for (Node node : map.nodes()) {
             byId.put(node.id(), node);
@@ -281,7 +250,6 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
         return part -> {
             FoliosPalette palette = part.painter.palette();
             map.background().ifPresent(background -> part.texture(background, LEFT + INNER, top + INNER, g.width() - INNER * 2, this.windowHeight(g) - INNER * 2));
-            // The paths first, dotted, under the places they join.
             int ink = FoliosPalette.mix(palette.line(), palette.accent(), 0.5F);
             for (List<String> path : map.paths()) {
                 Node from = byId.get(path.get(0));
@@ -297,11 +265,9 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
                     part.fill(x - 1, y - 1, x + 1, y + 1, ink);
                 }
             }
-            // Each place: a framed slot, its icon, a link to its entry, on the page its middle is over.
             for (Node node : map.nodes()) {
                 int x = at.get(node.id())[0] - NODE / 2;
                 int y = at.get(node.id())[1] - NODE / 2;
-                // A plate standing a little off the map: its shadow under it, a rim, a pale line inside the rim.
                 part.fill(x + 1, y + 2, x + NODE + 1, y + NODE + 2, FoliosPalette.mix(palette.panel(), palette.text(), 0.22F));
                 part.fill(x, y, x + NODE, y + NODE, FoliosPalette.mix(palette.line(), palette.accent(), 0.35F));
                 part.fill(x + 1, y + 1, x + NODE - 1, y + NODE - 1, FoliosPalette.mix(palette.panel(), 0xFFFFFFFF, 0.45F));
@@ -323,7 +289,6 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
 
     @Override
     public String searchText() {
-        // Each piece in its words: any of them can be a translation key.
         StringBuilder words = new StringBuilder(FoliosText.resolve(title.orElse(""))).append(' ').append(FoliosText.resolve(text));
         map.ifPresent(layout -> layout.nodes().forEach(node -> node.label().ifPresent(name -> words.append(' ').append(FoliosText.resolve(name)))));
         return words.toString();
@@ -334,15 +299,11 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
         void draw(Part part);
     }
 
-    // One page's share of the spread: what lies over it is drawn, cut at the fold, moved onto it. `side` 0 is the
-    // left page (spread x from 0 to the fold at its width), 1 the right. On a screen book the pages have the spine
-    // between them, so the spread is moved half the spine's width in on each and each page draws on half of it.
     private record Part(FoliosPainter painter, int side, G g) {
         private int gap() {
             return painter.flat() ? Shapes.SCREEN_SPINE : 0;
         }
 
-        // Where spread x 0 is on this page, less: the page's x is the spread's less this.
         int offset() {
             return side == 0 ? -this.gap() / 2 : g.pw() + this.gap() / 2;
         }
@@ -351,22 +312,18 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
             return side == 0 ? x < g.pw() : x >= g.pw();
         }
 
-        // The part of a span on this page's side of the fold, in the spread's pixels; null when none of it is.
         int @Nullable [] clip(int x0, int x1) {
             int from = side == 0 ? x0 : Math.max(x0, g.pw());
             int to = side == 0 ? Math.min(x1, g.pw()) : x1;
             return from < to ? new int[]{from, to} : null;
         }
 
-        // The rule under the title, across the window, with a mark of the book's colour at the fold.
         void rule(int y) {
             FoliosPalette palette = painter.palette();
             this.fill(LEFT, y + 11, LEFT + g.width(), y + 12, palette.line());
             this.fill(g.pw() - 12, y + 11, g.pw() + 12, y + 12, palette.accent());
         }
 
-        // The row of blocks a build needs, split either side of the fold so no slot is cut, a clasp at each end to
-        // page through them when there are more than fit.
         void requirements(Requirements needs, int y) {
             List<Requirements.Need> shown = needs.shown(NEEDS_SHOWN);
             int onLeft = (shown.size() + 1) / 2;
@@ -382,7 +339,6 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
             else needs.stepper(painter, LEFT + g.width() - Shapes.BUTTON - 2 - this.offset(), arrowY, true);
         }
 
-        // This page's half of a picture as wide as the spread and as tall as a page.
         void plate(SceneViewport view) {
             int[] range = this.clip(0, g.pw() * 2);
             if (range == null) return;
@@ -394,8 +350,6 @@ public record SpreadPage(Optional<String> title, String text, Optional<Identifie
             if (range != null) painter.fill(range[0] - offset(), y0, range[1] - offset(), y1, argb);
         }
 
-        // The window's frame, as a print laid on the page: a soft shadow under it and to its right, a dark rim, a pale
-        // line inside it, and the ground. At the fold it has no side: rim and ground run on to the page's edge.
         void frame(int x0, int y0, int x1, int y1) {
             FoliosPalette palette = painter.palette();
             this.fill(x0 + 2, y1, x1 + 2, y1 + 2, 0x30000000);

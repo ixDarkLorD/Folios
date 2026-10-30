@@ -36,10 +36,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// Reads every book from resources (assets/<namespace>/folios/<book>/...) when they reload, and keeps what was laid
-// out from them until the next reload or a change of language. A book's builds (<book>/builds/<name>.json) are kept as
-// they are written, for its build pages to read. A book in an older format (its "format_version", 2.0 when it has
-// none) is upgraded to the current one as it is read (BookUpgrader), so everything after reads one format only.
 public final class FoliosLibrary {
     private static final FileToIdConverter FILES = FileToIdConverter.json("folios");
     private static final int DEFAULT_ACCENT = 0x8B6CFF;
@@ -52,11 +48,9 @@ public final class FoliosLibrary {
     private static Map<Identifier, Credits> credits = Map.of();
     private static Map<Identifier, FoliosIcon> coverIcons = Map.of();
     private static Map<Identifier, Float> coverIconSizes = Map.of();
-    // How each book sets its elements unless its pages say otherwise ("overflow", "alignment"... in book.json).
     private static Map<Identifier, net.ixdarklord.folios.internal.client.page.ElementLayout> layouts = Map.of();
     private static Map<Identifier, CelebrationSettings> celebrations = Map.of();
     private static final Map<Identifier, FoliosSession> SESSIONS = new HashMap<>();
-    // A book laid out to larger pages (a screen book at a small GUI scale): one size a book at a time, the last asked for.
     private static final Map<Identifier, FoliosSession> LARGER = new HashMap<>();
 
     private FoliosLibrary() {}
@@ -69,18 +63,12 @@ public final class FoliosLibrary {
         return books;
     }
 
-    /**
-     * The book item's credit line: the words its {@code "credits"} give before its authors (else its
-     * {@code folios.<namespace>.<path>.credits.prefix} translation, else "Written by"), and its authors, joined the
-     * language's way (else its {@code ...credits.authors} translation); null when it names no authors.
-     */
     public static @Nullable Component credit(Identifier book) {
         Credits given = credits.get(book);
         List<Component> names = new ArrayList<>();
         if (given != null) for (String author : given.authors()) names.add(FoliosText.inline(author));
         if (names.isEmpty()) {
             String key = textKey(book, "credits.authors");
-            // A book's lang file may still say who it is by under the key 3.0 first had.
             if (!FoliosText.hasTranslation(key)) key = textKey(book, "author");
             if (!FoliosText.hasTranslation(key)) return null;
             names.add(FoliosText.inline(key));
@@ -94,13 +82,11 @@ public final class FoliosLibrary {
         return Component.translatableWithFallback("folios.guide_book.credit", "%s %s", prefix, joined(names));
     }
 
-    // A cover's "icon": an item or a texture as any icon is written, or "none" for the plain gem.
     private static FoliosIcon coverIcon(JsonElement json) {
         if (json.isJsonPrimitive() && json.getAsString().equals("none")) return FoliosIcon.NONE;
         return FoliosIcon.read(json);
     }
 
-    // Names joined the language's way: "A", "A and B", "A, B and C".
     private static Component joined(List<Component> names) {
         Component all = names.getFirst();
         for (int index = 1; index < names.size() - 1; index++) all = Component.translatableWithFallback("folios.list.comma", "%s, %s", all, names.get(index));
@@ -108,7 +94,6 @@ public final class FoliosLibrary {
         return all;
     }
 
-    // A book's "credits" as written, each text as markup: who it is by (one or a list), and the words before them.
     private record Credits(List<String> authors, @Nullable String prefix) {
         static Credits read(JsonObject json) {
             List<String> authors = new ArrayList<>();
@@ -119,35 +104,26 @@ public final class FoliosLibrary {
         }
     }
 
-    /**
-     * The icon set in the gem of a book's cover: its {@code "cover"} › {@code "icon"} (an item or a texture);
-     * {@link FoliosIcon#NONE}, the plain gem, when it gives none or {@code "none"}.
-     */
     public static FoliosIcon coverIcon(Identifier book) {
         return coverIcons.getOrDefault(book, FoliosIcon.NONE);
     }
 
-    /** How large a book's cover icon is, of its usual size: its {@code "cover"} › {@code "icon_size"}, 1 by default. */
     public static float coverIconSize(Identifier book) {
         return coverIconSizes.getOrDefault(book, 1.0F);
     }
 
-    /** The translation key of a book's own text: {@code folios.<namespace>.<path>.<what>}, a / in the path as a dot. */
     public static String textKey(Identifier book, String what) {
         return "folios." + book.getNamespace() + "." + book.getPath().replace('/', '.') + "." + what;
     }
 
-    /** How a book celebrates the player finishing part of it ({@code "celebrations"} in book.json); off unless it says. */
     public static CelebrationSettings celebrations(Identifier book) {
         return celebrations.getOrDefault(book, CelebrationSettings.OFF);
     }
 
-    /** A build file as written, by its path under folios/ without ".json" ({@code mymod:my_guide/builds/tower}); null for none. */
     public static @Nullable JsonObject build(Identifier id) {
         return builds.get(id);
     }
 
-    /** A book's laid-out pages, kept between openings; null when there is no such book. */
     public static @Nullable FoliosSession session(Identifier id) {
         FoliosBook book = books.get(id);
         if (book == null) return null;
@@ -160,7 +136,6 @@ public final class FoliosLibrary {
         return session;
     }
 
-    /** A book's laid-out pages for pages {@code width} by {@code height}; the default session for the default page size. */
     public static @Nullable FoliosSession session(Identifier id, int width, int height) {
         if (width <= FoliosLayout.PAGE_WIDTH && height <= FoliosLayout.PAGE_HEIGHT) return session(id);
         FoliosBook book = books.get(id);
@@ -174,16 +149,12 @@ public final class FoliosLibrary {
         return session;
     }
 
-    // ---- Reading ----
-
     public static void reload(ResourceManager manager) {
-        // The widgets' sprites are read again (a resource pack may have changed them).
         net.ixdarklord.folios.internal.client.page.Sprites.clear();
         net.ixdarklord.folios.internal.client.handheld.CoverModel.clear();
         CoverMarkers.clear();
         ObtainedItems.clear();
         Map<Identifier, JsonObject> bookFiles = new LinkedHashMap<>();
-        // Each book's other files, by their path in its folder: "categories/basics.json", "entries/basics/first_steps.json".
         Map<Identifier, Map<String, JsonObject>> parts = new HashMap<>();
         for (Map.Entry<Identifier, Resource> file : FILES.listMatchingResources(manager).entrySet()) {
             Identifier id = FILES.fileToId(file.getKey());
@@ -263,7 +234,6 @@ public final class FoliosLibrary {
         if (!loaded.isEmpty()) Folios.LOGGER.info("Loaded {} guide book(s)", loaded.size());
     }
 
-    // A book's files in the current format: upgraded from the one it says it is written in (2.0 when it doesn't say).
     private static Map<String, JsonObject> current(Identifier id, Map<String, JsonObject> files) {
         JsonObject book = files.get("book.json");
         String format = FoliosFormat.LEGACY;
@@ -284,7 +254,6 @@ public final class FoliosLibrary {
         if (FoliosFormat.compare(format, FoliosFormat.CURRENT) < 0) {
             return BookUpgrader.upgrade(id.toString(), files, format, FoliosFormat.CURRENT).files();
         }
-        // Keys of an older format left in it are named, and not read (the current format has no aliases).
         Map<String, List<String>> old = BookUpgrader.check(id.toString(), files, FoliosFormat.CURRENT);
         if (!old.isEmpty()) {
             StringBuilder list = new StringBuilder();
@@ -296,22 +265,16 @@ public final class FoliosLibrary {
         return files;
     }
 
-    // A book's own text (its name, subtitle, summary or landing): as book.json writes it (markup, a translation key or
-    // {"translate": ...}), or, left out, the translation folios.<namespace>.<path>.<key>, shown as the fallback when the
-    // language has no such key either.
     private static String bookText(Identifier id, JsonObject json, String key, String fallback) {
         if (json.has(key) && !json.get(key).isJsonNull()) return FoliosText.read(json.get(key));
         return FoliosText.translation(textKey(id, key), List.of(), fallback);
     }
 
-    /** How a book sets its elements where its pages don't say ("overflow", "alignment"... in its book.json). */
     public static net.ixdarklord.folios.internal.client.page.ElementLayout layoutOf(Identifier book) {
         return layouts.getOrDefault(book, net.ixdarklord.folios.internal.client.page.ElementLayout.NONE);
     }
 
-    /** Where the docs say how to move a book to the current format. */
     public static final String MIGRATION = "https://ixdarklord.github.io/Folios/docs/migrating-to-3.0/";
-    /** The docs site's tool that updates a book's files to the current format. */
     public static final String UPGRADER = "https://ixdarklord.github.io/Folios/upgrader/";
 
     private static FoliosBook readBook(Identifier id, JsonObject json, Map<String, JsonObject> categoryFiles, Map<String, JsonObject> entryFiles) {
@@ -342,7 +305,6 @@ public final class FoliosLibrary {
                 Folios.LOGGER.error("Couldn't load the entry {} of the guide {}: {}", file.getKey(), id, e.getMessage());
             }
         }
-        // The cover's colour, picture, model and lettering, and how a handheld book is held, each in a group of its own.
         JsonObject cover = json.has("cover") ? json.getAsJsonObject("cover") : new JsonObject();
         JsonObject handheld = json.has("handheld") ? json.getAsJsonObject("handheld") : new JsonObject();
         return new FoliosBook(id, name, bookText(id, json, "subtitle", ""), bookText(id, json, "landing", ""), style,
@@ -357,12 +319,11 @@ public final class FoliosLibrary {
                 json.has("reveal") ? reveal(json.get("reveal")) : FoliosReveals.DEFAULT,
                 textures(json.has("textures") ? json.getAsJsonObject("textures") : new JsonObject()),
                 layout(json.has("layout") ? json.getAsJsonObject("layout") : new JsonObject()),
-                // A handheld book is put away by a click off it unless it says otherwise; a screen book stays.
                 json.has("close_on_click_outside") ? json.get("close_on_click_outside").getAsBoolean() : style.equals(FoliosStyles.HANDHELD),
                 handling(handheld),
                 colors(json.has("colors") ? json.getAsJsonObject("colors") : new JsonObject(), json.get("panel")),
                 coverText(cover.has("text") ? cover.getAsJsonObject("text") : new JsonObject(), bookText(id, json, "summary", "")),
-                // Whose reading the book keeps: the player's, or each copy its own.
+                categoryView(id, json.has("categories") ? json.getAsJsonObject("categories") : new JsonObject()),
                 json.has("progress_scope") && json.get("progress_scope").getAsString().equals("copy") ? FoliosBook.Progress.BOOK : FoliosBook.Progress.PLAYER,
                 categories, entries);
     }
@@ -371,13 +332,11 @@ public final class FoliosLibrary {
 
     private static final java.util.Set<String> PANEL_COLORS = java.util.Set.of("background", "frame", "title", "detail");
 
-    // The page colours, and the panel scheme ("panel" in book.json).
     private static FoliosBook.Colors colors(JsonObject json, @Nullable JsonElement panel) {
         Map<String, Integer> panelColors = panel != null && panel.isJsonObject() ? named(panel.getAsJsonObject(), PANEL_COLORS) : Map.of();
         return new FoliosBook.Colors(named(json, PAGE_COLORS), json.has("dark") ? named(json.getAsJsonObject("dark"), PAGE_COLORS) : Map.of(), panelColors);
     }
 
-    // The colours of a block of a book's scheme, opaque unless given with their alpha.
     private static Map<String, Integer> named(JsonObject json, java.util.Set<String> names) {
         Map<String, Integer> colors = new HashMap<>();
         for (String name : names) {
@@ -392,7 +351,6 @@ public final class FoliosLibrary {
                 line(json, "summary", FoliosBook.CoverText.SUBTITLE), summary);
     }
 
-    // A line of a cover's lettering, its values left out taken from its default; null when the book says nothing of it.
     private static FoliosBook.CoverText.@Nullable Line line(JsonObject json, String key, FoliosBook.CoverText.Line fallback) {
         if (!json.has(key)) return null;
         JsonObject line = json.getAsJsonObject(key);
@@ -408,36 +366,104 @@ public final class FoliosLibrary {
                 !json.has("walk") || json.get("walk").getAsBoolean());
     }
 
+    private static FoliosBook.CategoryView categoryView(Identifier id, JsonObject json) {
+        String view = json.has("view") ? json.get("view").getAsString() : "list";
+        String overflow = json.has("overflow") ? json.get("overflow").getAsString() : "pages";
+        if (!view.equals("list") && !view.equals("grid")) Folios.LOGGER.warn("The guide {} has categories \"view\": \"{}\", which is list or grid", id, view);
+        if (!overflow.equals("pages") && !overflow.equals("scroll")) Folios.LOGGER.warn("The guide {} has categories \"overflow\": \"{}\", which is pages or scroll", id, overflow);
+        return new FoliosBook.CategoryView(view.equals("grid"), overflow.equals("scroll"));
+    }
+
+    private static final ThreadLocal<Identifier> READING = new ThreadLocal<>();
+
+    public static @Nullable Identifier reading() {
+        return READING.get();
+    }
+
     private static FoliosEntry readEntry(Identifier book, String id, JsonObject json) {
-        // Its category is the folder it is in: entries/<category>/<name>.json.
+        READING.set(book);
+        try {
+            return readEntryIn(book, id, json);
+        } finally {
+            READING.remove();
+        }
+    }
+
+    private static FoliosEntry readEntryIn(Identifier book, String id, JsonObject json) {
         String category = id.contains("/") ? id.substring(0, id.indexOf('/')) : "";
         List<FoliosEntry.Page> pages = new ArrayList<>();
+        List<FoliosEntry.Listing> listings = new ArrayList<>();
+        boolean listAll = json.has("index") && json.get("index").isJsonPrimitive() && json.get("index").getAsString().equals("elements");
+        if (json.has("index") && !listAll) {
+            Folios.LOGGER.warn("The entry {} of the guide {} has \"index\": {}; an entry takes \"index\": \"elements\", to list its elements", id, book, json.get("index"));
+        }
         if (json.has("pages")) {
             int index = pages.size();
             for (JsonElement page : json.getAsJsonArray("pages")) {
                 JsonObject object = page.isJsonObject() ? page.getAsJsonObject() : null;
                 if (object != null && object.has("anchor") && !ANCHORS.contains(object.get("anchor").getAsString())) {
-                    // A 2.x page name in a book of the current format: told, and left out, so the page still loads.
                     Folios.LOGGER.error("Page {} of the entry {} of the guide {} has \"anchor\": \"{}\", which places a page's content (top, center or bottom); "
                             + "to name the page for links, use \"marker\": \"{}\"", index + 1, id, book, object.get("anchor").getAsString(), object.get("anchor").getAsString());
                     object = object.deepCopy();
                     object.remove("anchor");
                     page = object;
                 }
-                pages.add(new FoliosEntry.Page(readPage(book, id, index++, page),
+                FoliosEntry.Page read = new FoliosEntry.Page(readPage(book, id, index, page),
                         object != null && object.has("marker") ? object.get("marker").getAsString() : null,
-                        object != null ? FoliosLock.read(object, book) : FoliosLock.NONE, object != null ? pageIcon(object.get("icon")) : null));
+                        object != null ? FoliosLock.read(object, book) : FoliosLock.NONE, object != null ? pageIcon(object.get("icon")) : null);
+                pages.add(read);
+                if (object != null) listings.addAll(listings(book, id, index, object, read, listAll));
+                index++;
             }
         }
         return new FoliosEntry(id, category, text(json, "name", textKey(book, "entry." + id.replace('/', '.')) + ".name", id), FoliosIcon.read(json.get("icon")),
                 integer(json, "sort", 0), json.has("featured") && json.get("featured").getAsBoolean(), FoliosLock.read(json, book), pages,
-                json.has("reveal") ? reveal(json.get("reveal")) : null);
+                json.has("reveal") ? reveal(json.get("reveal")) : null, listings);
     }
 
-    // What "anchor" may be on a page: where its content sits down it.
+    private static List<FoliosEntry.Listing> listings(Identifier book, String entry, int index, JsonObject page, FoliosEntry.Page read, boolean all) {
+        List<FoliosEntry.Listing> found = new ArrayList<>();
+        String where = "page " + (index + 1) + " of the entry " + entry + " of the guide " + book;
+        boolean ofElements = page.has("elements") && page.get("elements").isJsonArray()
+                && read.page() instanceof net.ixdarklord.folios.internal.client.page.TextPage;
+        FoliosEntry.Listing own = listing(page, index, -1, read.page(), List.of(read.lock()), all && !ofElements, "P" + where.substring(1));
+        if (own != null) found.add(own);
+        if (ofElements && read.page() instanceof net.ixdarklord.folios.internal.client.page.TextPage text) {
+            var elements = page.getAsJsonArray("elements");
+            for (int at = 0; at < elements.size() && at < text.elements().size(); at++) {
+                if (!elements.get(at).isJsonObject()) continue;
+                var item = text.elements().get(at);
+                FoliosEntry.Listing listing = listing(elements.get(at).getAsJsonObject(), index, at, item.element(), List.of(read.lock(), item.lock()), all,
+                        "Element " + (at + 1) + " of " + where);
+                if (listing != null) found.add(listing);
+            }
+        }
+        return found;
+    }
+
+    private static FoliosEntry.@Nullable Listing listing(JsonObject json, int page, int element, FoliosPageElement shown, List<FoliosLock> locks,
+                                                         boolean byDefault, String where) {
+        String title = json.has("title") && json.get("title").isJsonPrimitive() ? json.get("title").getAsString() : null;
+        if (!json.has("index")) {
+            boolean worth = title != null && !title.isEmpty() || !shown.items().isEmpty();
+            return byDefault && worth ? new FoliosEntry.Listing(null, null, page, element, title, shown, locks) : null;
+        }
+        JsonElement index = json.get("index");
+        if (index.isJsonPrimitive() && index.getAsJsonPrimitive().isBoolean()) {
+            return index.getAsBoolean() ? new FoliosEntry.Listing(null, null, page, element, title, shown, locks) : null;
+        }
+        if (!index.isJsonObject()) {
+            Folios.LOGGER.warn("{} has \"index\": {}, which is true, false or {{\"name\": ..., \"icon\": ...}}", where, index);
+            return null;
+        }
+        JsonObject named = index.getAsJsonObject();
+        String name = named.has("name") ? named.get("name").getAsString() : null;
+        FoliosIcon icon = named.has("icon") ? pageIcon(named.get("icon")) : null;
+        return new FoliosEntry.Listing(name, icon, page, element, title, shown, locks);
+    }
+
     private static final java.util.Set<String> ANCHORS = java.util.Set.of("top", "center", "bottom");
 
-    // The icon a page shows before its title: null to take its entry's, none for "none".
     private static @Nullable FoliosIcon pageIcon(@Nullable JsonElement json) {
         if (json == null || json.isJsonNull()) return null;
         if (json.isJsonPrimitive() && json.getAsString().equals("none")) return FoliosIcon.NONE;
@@ -449,7 +475,6 @@ public final class FoliosLibrary {
         }
     }
 
-    // A page that can't be read is shown as what went wrong, where it would have been, for the book's writer to see.
     private static FoliosPageElement readPage(Identifier book, String entry, int index, JsonElement json) {
         try {
             JsonObject object;
@@ -463,7 +488,6 @@ public final class FoliosLibrary {
             MapCodec<? extends FoliosPageElement> codec = FoliosPageElements.get(type);
             if (codec == null) throw new IllegalArgumentException("no page type " + type);
             FoliosPageElement page = codec.codec().parse(JsonOps.INSTANCE, object).getOrThrow(IllegalArgumentException::new);
-            // How it is set: a page of elements as it says; a page of one element made one, so it is set the same way.
             var settings = net.ixdarklord.folios.internal.client.page.ElementLayout.read(object, "Page " + (index + 1) + " of the entry " + entry + " of the guide " + book);
             var observed = net.ixdarklord.folios.internal.client.page.Observed.read(object);
             if (page instanceof net.ixdarklord.folios.internal.client.page.TextPage text) return text.with(settings, observed);
@@ -474,7 +498,6 @@ public final class FoliosLibrary {
         }
     }
 
-    // The models the book names ("models", and the cover group's "model"), the default for the rest.
     private static FoliosBook.Models models(JsonObject book, JsonObject coverGroup) {
         JsonObject json = book.has("models") ? book.getAsJsonObject("models") : new JsonObject();
         FoliosBook.Models fallback = FoliosBook.Models.DEFAULT;
@@ -489,8 +512,6 @@ public final class FoliosLibrary {
         return new FoliosBook.Models(item, open, cover, !json.has("hands") || json.get("hands").getAsBoolean(), guiModel);
     }
 
-    // A reveal: "none", an effect's id (for its default length), or {"effect": id, "seconds": n, "once": true, "unread": true}. An effect no mod has
-    // registered is warned of and shows the content at once.
     private static FoliosReveal.Use reveal(JsonElement json) {
         String effect;
         float seconds = FoliosReveals.DEFAULT_SECONDS;
@@ -514,7 +535,6 @@ public final class FoliosLibrary {
         return new FoliosReveal.Use(id, seconds, once, unread);
     }
 
-    // A book's icon when it names none: its own guide book item, as the book's item is drawn.
     private static FoliosIcon ownItem(Identifier book) {
         JsonObject stack = new JsonObject();
         stack.addProperty("id", "folios:guide_book");
@@ -524,7 +544,6 @@ public final class FoliosLibrary {
         return FoliosIcon.read(stack);
     }
 
-    // Each layer the book names, the default for the rest.
     private static FoliosBook.Textures textures(JsonObject json) {
         FoliosBook.Textures fallback = FoliosBook.Textures.DEFAULT;
         return new FoliosBook.Textures(texture(json, "page", fallback.page()), texture(json, "frame", fallback.frame()),
@@ -532,7 +551,6 @@ public final class FoliosLibrary {
                 json.has("backdrop") ? Identifier.parse(json.get("backdrop").getAsString()) : fallback.backdrop(), texture(json, "spotlight", fallback.spotlight()));
     }
 
-    // Each position the book sets, the default for the rest; kept within reach of the page.
     private static FoliosBook.Layout layout(JsonObject json) {
         FoliosBook.Layout fallback = FoliosBook.Layout.DEFAULT;
         JsonObject tabs = json.has("tabs") ? json.getAsJsonObject("tabs") : new JsonObject();
@@ -554,12 +572,10 @@ public final class FoliosLibrary {
         return json.has(key) ? Identifier.parse(json.get(key).getAsString()) : fallback;
     }
 
-    // Text a book writes: markup, or {"translate": ...}.
     private static String text(JsonObject json, String key, String fallback) {
         return json.has(key) && !json.get(key).isJsonNull() ? FoliosText.read(json.get(key)) : fallback;
     }
 
-    // As text(), left out taking a translation key's text (the fallback when the language hasn't it either).
     private static String text(JsonObject json, String key, String translation, String fallback) {
         return json.has(key) && !json.get(key).isJsonNull() ? FoliosText.read(json.get(key)) : FoliosText.translation(translation, List.of(), fallback);
     }
@@ -572,7 +588,6 @@ public final class FoliosLibrary {
         return json.has(key) ? json.get(key).getAsInt() : fallback;
     }
 
-    // A colour as a book writes it, "#RRGGBB" (opaque) or "#AARRGGBB"; null when it isn't there, logged when it can't be read.
     private static @Nullable Integer argb(JsonObject json, String key) {
         if (!json.has(key) || json.get(key).isJsonNull()) return null;
         JsonElement value = json.get(key);
@@ -582,14 +597,12 @@ public final class FoliosLibrary {
                 int read = (int) Long.parseLong(text.substring(1), 16);
                 return text.length() == 7 ? 0xFF000000 | read : read;
             } catch (NumberFormatException ignored) {
-                // Told below.
             }
         }
         Folios.LOGGER.error("\"{}\": {} isn't a colour; colours are written \"#RRGGBB\" or \"#AARRGGBB\"", key, value);
         return null;
     }
 
-    /** A colour without its alpha, as "accent", the cover's and a category's are kept. */
     private static int color(JsonObject json, String key, int fallback) {
         Integer value = argb(json, key);
         return value != null ? value & 0xFFFFFF : fallback;

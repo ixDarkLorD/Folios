@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-// While a handheld guide book is open, it is drawn in the reader's hands in place of what they hold.
 @Mixin(value = FirstPersonHandsAndItemsRenderer.class, priority = 900)
 public abstract class ItemInHandRendererMixin {
     @Inject(method = "submitHandsWithItems", at = @At("HEAD"), cancellable = true)

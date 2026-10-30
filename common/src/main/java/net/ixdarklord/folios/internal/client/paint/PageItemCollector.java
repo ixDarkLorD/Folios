@@ -36,15 +36,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// An item on a page in the world. Passes everything on as it is but the item's own faces, which it draws itself: lit
-// as they would be on a page facing the viewer (turned with the page, as the paper's light is, so the item's top
-// is lit as its top, not bright or dark as the book tilts), and tinted by a colour, see-through when it fades in
-// with the rest of the page. (Items drawn by a renderer of their own, a chest's say, are passed on as they are.)
 final class PageItemCollector implements SubmitNodeCollector {
     private final SubmitNodeCollector root;
     private final OrderedSubmitNodeCollector target;
     private final int argb;
-    // Turns a face's normal as the pose has it into the one to light it by; null to light it as it lies.
     private final @Nullable Matrix3f relight;
 
     PageItemCollector(SubmitNodeCollector collector, int argb, @Nullable Matrix3f relight) {
@@ -66,8 +61,6 @@ final class PageItemCollector implements SubmitNodeCollector {
     @Override
     public void submitItem(PoseStack poseStack, ItemDisplayContext displayContext, int lightCoords, int overlayCoords, int outlineColor, int[] tintLayers,
                            ItemQuads quads, ItemStackRenderState.FoilType foilType) {
-        // The faces on each sheet together: see-through ones while fading, else as the item draws them (with the
-        // shimmer of an enchanted item in its own sheet).
         boolean fading = argb != -1;
         Map<RenderType, List<BakedQuad>> byType = new LinkedHashMap<>();
         for (BakedQuad quad : quads.all()) {
@@ -102,8 +95,6 @@ final class PageItemCollector implements SubmitNodeCollector {
             }
         }
     }
-
-    // ---- The rest passed on ----
 
     @Override
     public void submitShadow(PoseStack poseStack, float radius, List<EntityRenderState.ShadowPiece> pieces) {

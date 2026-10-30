@@ -16,7 +16,6 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
-// A page drawn on a screen: page pixels are GUI pixels, from the page's top left at (x, y), scaled by `scale`.
 public final class ScreenPainter extends AbstractPainter {
     private static final int UV = 1 << 14;
     private final GuiGraphicsExtractor graphics;
@@ -30,7 +29,6 @@ public final class ScreenPainter extends AbstractPainter {
         graphics.pose().scale(scale, scale);
     }
 
-    /** Ends the page: undoes the painter's place on the screen. */
     public void end() {
         graphics.pose().popMatrix();
     }
@@ -56,7 +54,6 @@ public final class ScreenPainter extends AbstractPainter {
                 Math.round((u1 - u0) * UV), Math.round((v1 - v0) * UV), UV, UV, argb);
     }
 
-    // Items go in a pass of their own over the flat things of their layer; a new layer is over both.
     @Override
     public void above(Runnable draw) {
         graphics.nextStratum();
@@ -65,9 +62,7 @@ public final class ScreenPainter extends AbstractPainter {
 
     @Override
     protected void drawItem(ItemStack stack, int x, int y, int argb) {
-        // Drawn at the size it is shown, not stretched from a 16-pixel picture.
         ScaledGuiItems.sharp(() -> TintedGuiItems.draw(argb, () -> graphics.fakeItem(stack, x, y)));
-        // The count and bars can't fade: shown once the item is mostly there.
         if ((argb >>> 24) >= 160) graphics.itemDecorations(font, stack, x, y);
     }
 
@@ -75,7 +70,6 @@ public final class ScreenPainter extends AbstractPainter {
     public void scene(SceneViewport viewport, int x, int y, int width, int height) {
         viewport.use();
         GpuTextureView view = SceneViewportManager.view(viewport);
-        // Drawn to at the start of the next frame the first time; and upside down, as every texture drawn to is.
         if (view != null) {
             graphics.blit(view, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR), x, y, x + width, y + height, 0.0F, 1.0F, 1.0F, 0.0F);
         }
@@ -108,6 +102,16 @@ public final class ScreenPainter extends AbstractPainter {
     @Override
     protected void popped() {
         graphics.pose().popMatrix();
+    }
+
+    @Override
+    public void clip(int x, int y, int width, int height, Runnable draw) {
+        graphics.enableScissor(x, y, x + width, y + height);
+        try {
+            draw.run();
+        } finally {
+            graphics.disableScissor();
+        }
     }
 
     @Override
