@@ -40,11 +40,12 @@ import java.util.Map;
  * @param handling  what a reader can do while holding a handheld book open ({@code "handheld"})
  * @param colors    its colour scheme over the style's own: the page's colours and its tooltips' ({@code "colors"})
  * @param coverText where its name and subtitle are lettered on its cover, and how large ({@code "cover_text"})
- * @param progress  where what is read in it is kept: with each player, or on each copy of the book ({@code "progress"})
+ * @param categoryView how the front of the book lists its categories ({@code "categories"})
+ * @param progress where what is read in it is kept: with each player, or on each copy of the book ({@code "progress"})
  */
 public record FoliosBook(ResourceLocation id, String name, String subtitle, String landing, ResourceLocation style, int accent, int cover,
                         @Nullable ResourceLocation coverTexture, FoliosIcon icon, Models models, boolean showProgress, float tilt, float distance, PageTurn pageTurn, FoliosReveal.Use reveal, Textures textures, Layout layout, boolean clickOutsideCloses, Handling handling, Colors colors, CoverText coverText,
-                        Progress progress, List<FoliosCategory> categories, Map<String, FoliosEntry> entries, Map<Item, Location> itemIndex) {
+                        CategoryView categoryView, Progress progress, List<FoliosCategory> categories, Map<String, FoliosEntry> entries, Map<Item, Location> itemIndex) {
     /** The item model the {@code folios:guide_book} item takes for this book; null for its own. */
     public @Nullable ResourceLocation itemModel() {
         return models.item();
@@ -130,6 +131,19 @@ public record FoliosBook(ResourceLocation id, String name, String subtitle, Stri
      */
     public record Handling(boolean lookAround, boolean walk) {
         public static final Handling DEFAULT = new Handling(true, true);
+    }
+
+    /**
+     * How the front of the book lists its categories: {@code "categories"} in book.json.
+     * <pre>{@code
+     * "categories": {
+     *   "view": "grid",       // "list" (default): a row each; "grid": a tile each, its icon over its name
+     *   "overflow": "scroll"  // "pages" (default): more pages when they don't fit; "scroll": one page that scrolls
+     * }
+     * }</pre>
+     */
+    public record CategoryView(boolean grid, boolean scroll) {
+        public static final CategoryView DEFAULT = new CategoryView(false, false);
     }
 
     /**
@@ -236,14 +250,22 @@ public record FoliosBook(ResourceLocation id, String name, String subtitle, Stri
         BEND
     }
 
-    /** A place in a book: an entry, and a page of it (0 for its first). */
-    public record Location(String entry, int page) {}
+    /**
+     * A place in a book: an entry, a page of it (0 for its first), and an element of that page (0 for its first; -1 for
+     * the page as a whole).
+     */
+    public record Location(String entry, int page, int element) {
+        /** A page as a whole. */
+        public Location(String entry, int page) {
+            this(entry, page, -1);
+        }
+    }
 
     public FoliosBook(ResourceLocation id, String name, String subtitle, String landing, ResourceLocation style, int accent, int cover,
                      @Nullable ResourceLocation coverTexture, FoliosIcon icon, Models models, boolean showProgress, float tilt, float distance, PageTurn pageTurn, FoliosReveal.Use reveal, Textures textures, Layout layout, boolean clickOutsideCloses, Handling handling, Colors colors, CoverText coverText,
-                     Progress progress, List<FoliosCategory> categories, List<FoliosEntry> entries) {
+                     CategoryView categoryView, Progress progress, List<FoliosCategory> categories, List<FoliosEntry> entries) {
         this(id, name, subtitle, landing, style, accent, cover, coverTexture, icon, models, showProgress, tilt, distance, pageTurn, reveal, textures, layout, clickOutsideCloses, handling, colors, coverText,
-                progress, sortCategories(categories), sortEntries(entries), new HashMap<>());
+                categoryView, progress, sortCategories(categories), sortEntries(entries), new HashMap<>());
     }
 
     private static List<FoliosCategory> sortCategories(List<FoliosCategory> categories) {
@@ -296,8 +318,18 @@ public record FoliosBook(ResourceLocation id, String name, String subtitle, Stri
         }
     }
 
-    // The index is built the first time it's needed in a world, when items can be resolved.
+    // The index is built the first time it's needed in a world, when items can be resolved. An item a page or element
+    // listed on its own shows ("index") leads there first; then the first page showing it.
     private void index() {
+        for (FoliosEntry entry : entries.values()) {
+            for (FoliosEntry.Listing listing : entry.listings()) {
+                for (FoliosStack stack : listing.shown().items()) {
+                    for (ItemStack item : stack.stacks()) {
+                        if (!item.isEmpty()) itemIndex.putIfAbsent(item.getItem(), new Location(entry.id(), listing.page(), listing.element()));
+                    }
+                }
+            }
+        }
         for (FoliosEntry entry : entries.values()) {
             for (int page = 0; page < entry.pages().size(); page++) {
                 for (FoliosStack stack : entry.pages().get(page).page().items()) {

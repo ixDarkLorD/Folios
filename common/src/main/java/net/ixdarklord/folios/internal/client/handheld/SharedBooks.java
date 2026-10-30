@@ -21,17 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-// The handheld books others near the player are reading, drawn open in their hands for the player to read along:
-// each a reader of the same book on this client, kept at the spread its reader has open and turning its leaves as
-// theirs turn. The server tells of them while they are near, about once a second; one not heard of for a while is
-// let go, as when its reader walks off.
 public final class SharedBooks {
-    /** How long (ms) a book is kept without word of it. */
     private static final long FORGET_MILLIS = 3000;
-    /** How big the book is drawn in its reader's hands, of the size it is read at. */
     private static final float SIZE = 0.95F;
 
-    // A reader's book: shut or open as they last said, and how far open it is drawn now, easing to that.
     private static final class Shared {
         final FoliosReader reader;
         long heard;
@@ -46,7 +39,6 @@ public final class SharedBooks {
             this.open = shut ? 0 : 1;
         }
 
-        // How far open it is now, moved on towards shut or open at the pace the reader's own opens.
         float openNow() {
             long now = Util.getMillis();
             float step = drawn == 0 ? 0 : (now - drawn) / (HandheldBook.OPEN_TICKS * 50.0F);
@@ -74,7 +66,6 @@ public final class SharedBooks {
             shared.shut = at.shut();
             if (!spot.equals(shared.reader.spot)) {
                 shared.reader.moveAlong(spot);
-                // Their page turning, heard where they stand.
                 Entity reader = minecraft.level != null ? minecraft.level.getEntity(payload.reader()) : null;
                 if (reader != null && minecraft.level != null) {
                     minecraft.level.playLocalSound(reader.getX(), reader.getEyeY(), reader.getZ(), SoundEvents.BOOK_PAGE_TURN, SoundSource.PLAYERS, 0.7F, 1.0F, false);
@@ -83,7 +74,6 @@ public final class SharedBooks {
             shared.heard = now;
             return;
         }
-        // A book this client has too: read from the spread its reader has open.
         FoliosBook book = FoliosLibrary.book(at.book());
         FoliosSession session = FoliosLibrary.session(at.book());
         if (book == null || session == null) {
@@ -95,7 +85,6 @@ public final class SharedBooks {
         BOOKS.put(payload.reader(), new Shared(reader, now, at.shut()));
     }
 
-    /** Whether someone is shown reading along with: their held book is then drawn here, not as their item. */
     public static boolean isShown(Entity holder) {
         return isShown(holder.getId());
     }
@@ -104,7 +93,6 @@ public final class SharedBooks {
         return BOOKS.containsKey(holder) || ownBook(holder) != null;
     }
 
-    // The player's own book held up in their hands, shut or open, while they look at themselves from outside.
     private static @Nullable HandheldBook ownBook(int holder) {
         Minecraft minecraft = Minecraft.getInstance();
         HandheldBook book = HandheldBook.current();
@@ -113,22 +101,14 @@ public final class SharedBooks {
         return book;
     }
 
-    /** Where the book is held, in the reader's frame (blocks: up from their feet, ahead of them). */
     private static final float HELD_UP = 1.2F;
     private static final float HELD_AHEAD = 0.7F;
     private static final float CROUCHED = 0.2F;
-    /** How far back the book leans, towards the reader's eyes, in degrees from upright. */
     private static final float LEAN = 50.0F;
 
-    /**
-     * How far each arm turns in, in radians, to hold a book held up shut by its lower corners: the shut book is half
-     * as wide as the open one and sits in the middle, so each hand reaches in by half a board's width (in model
-     * pixels) over the arm's 10.
-     */
     private static final float SHUT_IN = (float) Math.atan((FoliosLayout.PAGE_WIDTH + HandheldRenderer.EDGE) / 2.0F
             * HandheldRenderer.SCALE * SIZE * 16 / 10.0F);
 
-    /** How far open the book someone holds up is drawn now, 0 shut to 1 open; 1 for none. */
     public static float openness(int holder) {
         HandheldBook own = ownBook(holder);
         if (own != null) return own.open(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
@@ -136,11 +116,6 @@ public final class SharedBooks {
         return shared != null ? shared.open : 1;
     }
 
-    /** Puts the arms of someone shown reading along with low and forward, angled in under the book's lower edge. */
-    // Each arm straight from its shoulder to a lower corner of the book: the corners are as far apart as the shoulders,
-    // so the arms reach straight ahead, raised so the hands (an arm's length, 10 of its 12 pixels, from the shoulder)
-    // meet the corners where the book is held (HELD_UP, HELD_AHEAD, leaning back by LEAN).
-    // Held up shut, the book is narrower and the arms turn in to its corners, easing out as it opens.
     public static void holdArms(net.minecraft.client.model.geom.ModelPart right, net.minecraft.client.model.geom.ModelPart left, boolean crouching, float open) {
         float pitch = crouching ? -0.88F : -1.05F;
         float swing = CoverModel.swing(open);
@@ -157,14 +132,12 @@ public final class SharedBooks {
         BOOKS.clear();
     }
 
-    /** Lets go of books not heard of for a while, or whose reader is gone. */
     public static void tick() {
         Minecraft minecraft = Minecraft.getInstance();
         if (BOOKS.isEmpty()) return;
         long now = Util.getMillis();
         BOOKS.entrySet().removeIf(entry -> now - entry.getValue().heard > FORGET_MILLIS || minecraft.level == null
                 || !(minecraft.level.getEntity(entry.getKey()) instanceof AbstractClientPlayer player) || player.isRemoved());
-        // A reader faces their book: their body turns with their head, so the book held before it is where they look.
         for (int id : BOOKS.keySet()) {
             if (minecraft.level.getEntity(id) instanceof AbstractClientPlayer player) {
                 player.setYBodyRot(net.minecraft.util.Mth.rotLerp(0.5F, player.yBodyRot, player.getYHeadRot()));
@@ -172,18 +145,13 @@ public final class SharedBooks {
         }
     }
 
-    // Drawn with its reader, from where they stand (`pose` is at their feet, the world's way up): in front of them,
-    // between their hands at their chest, leaning back towards their eyes, its pages to anyone looking over their
-    // shoulder or standing by.
     public static void submit(AbstractClientPlayer player, float partialTicks, PoseStack pose, SubmitNodeCollector collector, int light) {
         Shared shared = BOOKS.get(player.getId());
         HandheldBook own = ownBook(player.getId());
         if (shared == null && own == null || player.isInvisible()) return;
         FoliosReader reader = own != null ? own : shared.reader;
-        // Held up shut, then opened, as the reader does.
         float open = own != null ? own.open(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) : shared.openNow();
         pose.pushPose();
-        // In the reader's frame, z ahead of them; the book faces back at them, leaning back towards their eyes.
         pose.mulPose(Axis.YP.rotationDegrees(-net.minecraft.util.Mth.rotLerp(partialTicks, player.yBodyRotO, player.yBodyRot)));
         pose.scale(player.getScale(), player.getScale(), player.getScale());
         pose.translate(0.0F, HELD_UP - (player.isCrouching() ? CROUCHED : 0), HELD_AHEAD);
@@ -191,7 +159,6 @@ public final class SharedBooks {
         pose.mulPose(Axis.XP.rotationDegrees(-LEAN));
         pose.scale(HandheldRenderer.SCALE * SIZE, -HandheldRenderer.SCALE * SIZE, HandheldRenderer.SCALE * SIZE);
         pose.translate(0.0F, -FoliosLayout.PAGE_HEIGHT / 2.0F, 0.0F);
-        // Lit as its reader is, by the world round them.
         HandheldRenderer.drawShared(pose, collector, light, reader, open);
         pose.popPose();
     }

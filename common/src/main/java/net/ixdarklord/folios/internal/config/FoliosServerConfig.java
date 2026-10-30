@@ -6,7 +6,6 @@ import net.ixdarklord.coolcatcore.api.config.ConfigScope;
 import net.ixdarklord.coolcatcore.api.config.ConfigValue;
 import net.ixdarklord.folios.internal.core.Folios;
 
-/** The server's rules for its quests: how reading is checked, and how strictly rewarded quests are held. */
 public final class FoliosServerConfig {
     private static final ConfigBuilder BUILDER = Config.builder(Folios.MOD_ID, ConfigScope.SERVER)
             .comment("Folios server settings.");
@@ -31,8 +30,6 @@ public final class FoliosServerConfig {
 
     private FoliosServerConfig() {}
 
-    /** Loads the settings, as the mod starts. */
     public static void init() {
-        // Building CONFIG registers it; this only makes sure the class is loaded.
     }
 }

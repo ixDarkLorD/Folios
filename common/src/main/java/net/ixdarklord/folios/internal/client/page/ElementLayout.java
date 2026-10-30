@@ -9,43 +9,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 
-/**
- * How an element is set on its page, beside what it shows: what happens when it doesn't fit ({@code "overflow"}),
- * where its parts sit across the page ({@code "alignment"}, {@code "title_alignment"}) and down a box taller than they
- * are ({@code "anchor"}). Written on an element, on a page (for its elements) or in book.json (for the whole book): the
- * nearest that says wins, and what none says keeps how pages have always been set. Each field is null where the JSON
- * doesn't say.
- *
- * @param minHeight the least room worth setting a box in, below which the element starts on the next page
- */
 public record ElementLayout(@Nullable Overflow overflow, @Nullable Height height, @Nullable Height minHeight,
                             @Nullable FoliosAlign alignment, @Nullable FoliosAlign titleAlignment, @Nullable Anchor anchor) {
     public static final ElementLayout NONE = new ElementLayout(null, null, null, null, null, null);
-    /** The least room a box is set in when nothing says: about three lines of text. */
     public static final int MIN_HEIGHT = 3 * FoliosText.LINE_HEIGHT;
 
-    /** What an element does when it doesn't fit in what is left of its page. */
     public enum Overflow {
-        /** Runs on: its text onto the next pages, its other parts whole onto the next. */
         FLOW,
-        /** Moves whole to the next page rather than split. */
         KEEP,
-        /** Stays in a box, its text paged in place. */
         FLIP,
-        /** Stays in a box, its text scrolled in place a line at a time, with a scrollbar beside it. */
         SCROLL,
-        /** Keeps whole when it fits on a page of its own, flips when not even that is enough. */
         AUTO
     }
 
-    /** Where an element's parts sit down a box taller than they are. */
     public enum Anchor { TOP, CENTER, BOTTOM }
 
-    /**
-     * How tall an element's box is: {@link Kind#FILL} the rest of the page, {@link Kind#FIT} only as tall as what it
-     * holds (up to the rest of the page), {@link Kind#FIXED} that many pixels, or {@link Kind#PERCENT} that share of the
-     * page's content.
-     */
     public record Height(Kind kind, int pixels, float percent) {
         public enum Kind { FILL, FIT, FIXED, PERCENT }
 
@@ -53,18 +31,15 @@ public record ElementLayout(@Nullable Overflow overflow, @Nullable Height height
             this(kind, pixels, 0);
         }
 
-        /** Whether it is a size of its own (pixels, or a share of the page), not the rest of the page or its content's. */
         public boolean sized() {
             return kind == Kind.FIXED || kind == Kind.PERCENT;
         }
 
-        /** How many pixels it is on a page whose content is {@code full} pixels tall. */
         public int pixels(int full) {
             return kind == Kind.PERCENT ? Math.max(1, Math.round(full * percent / 100)) : pixels;
         }
     }
 
-    /** What an object of JSON (an element, a page or a book) says, warning of what it says that can't be read. */
     public static ElementLayout read(@Nullable JsonObject json, String where) {
         if (json == null) return NONE;
         Overflow overflow = null;
@@ -104,7 +79,6 @@ public record ElementLayout(@Nullable Overflow overflow, @Nullable Height height
         return size;
     }
 
-    // A size: pixels (112), or a share of the page's content ("60%", 1 to 100). Null for what is neither.
     private static @Nullable Height size(JsonElement json, String key, String where) {
         if (!json.isJsonPrimitive()) return null;
         if (json.getAsJsonPrimitive().isNumber()) return new Height(Height.Kind.FIXED, Math.max(0, json.getAsInt()));
@@ -129,7 +103,6 @@ public record ElementLayout(@Nullable Overflow overflow, @Nullable Height height
         return align;
     }
 
-    // "anchor" also named a page for links before 3.0; that is reported where pages are read, and isn't a place here.
     private static @Nullable Anchor anchor(JsonObject json, String where) {
         if (!json.has("anchor") || !json.get("anchor").isJsonPrimitive()) return null;
         return switch (json.get("anchor").getAsString().toLowerCase(Locale.ROOT)) {
@@ -140,24 +113,20 @@ public record ElementLayout(@Nullable Overflow overflow, @Nullable Height height
         };
     }
 
-    /** This, with what it leaves unsaid taken from {@code outer} (the page's for an element, the book's for a page). */
     public ElementLayout or(ElementLayout outer) {
         return new ElementLayout(overflow != null ? overflow : outer.overflow, height != null ? height : outer.height,
                 minHeight != null ? minHeight : outer.minHeight, alignment != null ? alignment : outer.alignment,
                 titleAlignment != null ? titleAlignment : outer.titleAlignment, anchor != null ? anchor : outer.anchor);
     }
 
-    /** The least room worth setting a box in, on a page whose content is {@code full} pixels tall. */
     public int leastHeight(int full) {
         return minHeight != null ? minHeight.pixels(full) : MIN_HEIGHT;
     }
 
-    /** The overflow to use: {@link Overflow#FLOW} when none is said. */
     public Overflow overflowOrFlow() {
         return overflow != null ? overflow : Overflow.FLOW;
     }
 
-    /** How the title is aligned: its own, else the body's (justified text keeps a left title). */
     public @Nullable FoliosAlign titleAlign() {
         if (titleAlignment != null) return titleAlignment;
         return alignment == FoliosAlign.JUSTIFY ? null : alignment;

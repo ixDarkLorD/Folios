@@ -18,16 +18,6 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Collection;
 
-/**
- * {@code /folios quest} for operators: what a player has of a server quest, and finishing, taking back or flagging it.
- * <pre>
- * /folios quest list
- * /folios quest status &lt;players&gt; &lt;quest&gt;
- * /folios quest complete &lt;players&gt; &lt;quest&gt;
- * /folios quest reset &lt;players&gt; &lt;quest&gt;
- * /folios quest flag &lt;players&gt; &lt;flag&gt; &lt;true|false&gt;
- * </pre>
- */
 final class QuestCommands {
     private static final SuggestionProvider<CommandSourceStack> QUESTS = (context, builder) ->
             SharedSuggestionProvider.suggestResource(QuestTracker.quests(), builder);

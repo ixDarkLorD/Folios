@@ -9,8 +9,6 @@ import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-// What common code (the book item) asks of the client: set by the client's constructor. On a dedicated server
-// nothing is set, and a book's name falls back to its translation key.
 public final class FoliosHooks {
     public static BiConsumer<ResourceLocation, InteractionHand> opener = (book, hand) -> {};
     public static Function<ResourceLocation, Component> names = FoliosHooks::defaultName;
@@ -26,12 +24,10 @@ public final class FoliosHooks {
         return names.apply(book);
     }
 
-    /** The line under a book item's name saying who the book is by ({@code "credits"} in book.json); null when it doesn't say. */
     public static @Nullable Component bookCredit(ResourceLocation book) {
         return credits.apply(book);
     }
 
-    /** {@code folios.<namespace>.<path>.name}, with the path in title case as the fallback. */
     public static Component defaultName(ResourceLocation book) {
         String path = book.getPath();
         String last = path.substring(path.lastIndexOf('/') + 1).replace('_', ' ');

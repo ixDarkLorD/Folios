@@ -15,11 +15,15 @@
     "client.SharedBookRenderMixin",
     "client.ClientAdvancementsAccessor",
     "client.ClientAdvancementsMixin",
+    "client.ContainerLookupMixin",
     "client.ChatComponentMixin",
     "client.GameRendererMixin",
     "client.GuiMixin",
+    "client.GuiGraphicsLookupMixin",
     "client.ItemInHandRendererMixin",
+    "client.KeyboardLookupMixin",
     "client.LevelRenderHookMixin",
+    "client.MouseLookupMixin",
     "client.ShaderManagerMixin"
   ],
   "injectors": {

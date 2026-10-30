@@ -17,10 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-// Structures' blocks, asked of the server the first time a page shows one (structures are data packs', which clients
-// don't have) and kept for the rest of the visit. Requests made in one frame go together at the next tick.
 public final class FoliosStructures {
-    /** A structure as the server told of it: its blocks by place, or why there are none. */
     public record Known(int status, Map<BlockPos, BlockChoice> blocks) {}
 
     private static final Map<ResourceLocation, Known> KNOWN = new HashMap<>();
@@ -30,7 +27,6 @@ public final class FoliosStructures {
 
     private FoliosStructures() {}
 
-    /** A structure's blocks; null until the server answers. */
     public static synchronized @Nullable Known get(ResourceLocation structure) {
         Known known = KNOWN.get(structure);
         if (known == null && ASKED.add(structure)) TO_ASK.add(structure);
@@ -54,8 +50,6 @@ public final class FoliosStructures {
         if (Minecraft.getInstance().getConnection() == null) return;
         connectedTicks++;
         if (TO_ASK.isEmpty()) return;
-        // A server without the mod says nothing of advancements as the player joins, and has no structures to tell of
-        // either: after five seconds without word, what was asked is taken as missing.
         if (!FoliosProgress.serverHasGuides()) {
             if (connectedTicks < 100) return;
             TO_ASK.forEach(id -> KNOWN.put(id, new Known(FoliosPayloads.Structure.MISSING, Map.of())));

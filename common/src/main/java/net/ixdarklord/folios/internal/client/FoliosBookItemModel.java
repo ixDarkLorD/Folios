@@ -27,12 +27,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-// The guide book item, drawn in code (its item model is "builtin/entity"): the model a stack's book asks for in its
-// book.json ("models"/"item", a model id like "mymod:handbook" for assets/mymod/models/item/handbook.json), or Folios's
-// own; and while its holder reads it in their hands, as others see them, the book's open model ("models"/"open"), if
-// it names one. In inventory slots it is the flat icon, unless the book asks for its model there ("models"/"gui": "model").
-// Each model is drawn with its own display transform, its tinted faces in the book's colours (tint 0 the cover, 1 the
-// book's own colour), and Folios's own 3D model with the book's name lettered on its cover.
 public final class FoliosBookItemModel {
     private static final ResourceLocation MODEL = Folios.rl("item/guide_book_3d");
     private static final ResourceLocation FLAT = Folios.rl("item/guide_book_flat");
@@ -42,12 +36,10 @@ public final class FoliosBookItemModel {
 
     private FoliosBookItemModel() {}
 
-    /** Folios's models, and those books name, to bake with the game's. */
     public static void registerModels() {
         ExtraModels.register(FoliosBookItemModel::models);
     }
 
-    // The models books name, read from their book.json files as the resources load.
     private static Collection<ResourceLocation> models(ResourceManager resources) {
         Set<ResourceLocation> models = new LinkedHashSet<>(List.of(MODEL, FLAT));
         resources.listResources("folios", id -> id.getPath().endsWith("/book.json")).forEach((file, resource) -> {
@@ -65,7 +57,6 @@ public final class FoliosBookItemModel {
         return models;
     }
 
-    // A book's item model is named as on later versions ("mymod:handbook"): here it is the model "mymod:item/handbook".
     private static ResourceLocation itemModel(ResourceLocation id) {
         return id.getPath().startsWith("item/") ? id : id.withPrefix("item/");
     }
@@ -75,7 +66,6 @@ public final class FoliosBookItemModel {
         FoliosBook book = id != null ? FoliosLibrary.book(id) : null;
         boolean thirdPerson = context == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
         ResourceLocation model = book != null && book.itemModel() != null ? itemModel(book.itemModel()) : null;
-        // Held up open by someone reading it, seen from outside them: the book's open model.
         if (stack.has(FoliosRegistry.READING.get()) && thirdPerson && book != null && book.models().open() != null) model = itemModel(book.models().open());
         boolean lettered = false;
         if (model == null) {
@@ -88,7 +78,6 @@ public final class FoliosBookItemModel {
             }
         }
         int cover = tint(stack, false);
-        // The flat icon's second layer is its trim, left untinted.
         int accent = model == FLAT ? -1 : tint(stack, true);
         BakedModel baked = ExtraModels.get(model);
         boolean leftHand = context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
@@ -110,7 +99,6 @@ public final class FoliosBookItemModel {
         }
     }
 
-    /** A colour of the book a stack names: its cover's, or its own (for a gem or inlay). */
     public static int tint(ItemStack stack, boolean accentPart) {
         ResourceLocation id = FoliosBooks.bookOf(stack);
         FoliosBook book = id != null ? FoliosLibrary.book(id) : null;

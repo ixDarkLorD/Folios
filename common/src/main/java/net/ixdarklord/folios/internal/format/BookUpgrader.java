@@ -23,42 +23,13 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
-/**
- * Rewrites a book written in an older format into a newer one, a format at a time, as it loads: Folios then only ever
- * reads the current format. Each format's changes are data ({@code /folios/upgrades/<format>.json}), the same files the
- * docs site's upgrader tool reads, so the two can't drift apart. A change is one of:
- * <ul>
- *     <li>{@code "rename": {"old": "new"}}: a key takes a new name;</li>
- *     <li>{@code "remove": ["key"]}: a key goes;</li>
- *     <li>{@code "move": {"from": "a.b", "to": "c.d"}}: a value moves, dots stepping into objects;</li>
- *     <li>{@code "run": "name"}: one of the few changes that need code, written the same in Java and JavaScript.</li>
- * </ul>
- * with {@code "in"} naming which files and objects it applies to: {@code book}, {@code category}, {@code entry},
- * {@code page} (each object of an entry's {@code "pages"}), {@code element} (each page written as one element, and each
- * object of a page's {@code "elements"}), {@code objective} (each of a quest's {@code "objectives"}), {@code lockable}
- * (each category, entry and page, which can be locked) or {@code build}, and an optional
- * {@code "where": {"type": "recipe"}} to only change objects with those values.
- * <p>
- * A book already in a format can still hold keys of an older one; {@link #check} names them, from the same changes
- * (those marked {@code "check": false} aside, and of the ones that need code only those marked {@code "check": true}).
- * <p>
- * Books are files by their path in the book's folder: {@code book.json}, {@code categories/basics.json},
- * {@code entries/basics/first_steps.json}, {@code builds/tower.json}. Gson only: it also runs outside the game, to check
- * it against the web tool.
- */
 public final class BookUpgrader {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
-    /** What an upgrade made: the files, rewritten; translations to add to the book's lang file (en_us); and what changed, by file. */
     public record Result(Map<String, JsonObject> files, Map<String, String> lang, Map<String, List<String>> changes) {}
 
     private BookUpgrader() {}
 
-    /**
-     * Upgrades a book's files from format {@code from} to {@code to}; the files given are left as they are.
-     *
-     * @param book the book's id, {@code namespace:path}
-     */
     public static Result upgrade(String book, Map<String, JsonObject> files, String from, String to) {
         Map<String, JsonObject> out = new LinkedHashMap<>();
         files.forEach((path, json) -> out.put(path, json.deepCopy()));
@@ -75,10 +46,6 @@ public final class BookUpgrader {
         return new Result(out, lang, changes);
     }
 
-    /**
-     * What in a book written in {@code format} still has the shape of an older format: each change upgrading to it
-     * would make, by file. Empty when the book is clean. The files given are left as they are.
-     */
     public static Map<String, List<String>> check(String book, Map<String, JsonObject> files, String format) {
         Map<String, JsonObject> copy = new LinkedHashMap<>();
         files.forEach((path, json) -> copy.put(path, json.deepCopy()));
@@ -88,7 +55,6 @@ public final class BookUpgrader {
         return changes;
     }
 
-    /** A format's changes, as the mod carries them. */
     public static JsonObject step(String format) {
         try (InputStream stream = BookUpgrader.class.getResourceAsStream("/folios/upgrades/" + format + ".json")) {
             if (stream == null) throw new IllegalStateException("Folios has no upgrade to format " + format);
@@ -106,7 +72,6 @@ public final class BookUpgrader {
         if (checking && change.has("run") && !(change.has("check") && change.get("check").getAsBoolean())) return;
         String in = change.get("in").getAsString();
         JsonObject where = change.has("where") ? change.getAsJsonObject("where") : null;
-        // An entry's file moves to its category's folder: the one change of a file's path.
         if (change.has("run") && change.get("run").getAsString().equals("entry_folder")) {
             entryFolders(files, changes);
             return;
@@ -142,12 +107,10 @@ public final class BookUpgrader {
         });
     }
 
-    // The changes that need code. Each is written the same way in the web tool (upgrader.js), under the same name.
     private static List<String> run(String name, String book, JsonObject change, JsonObject json, Map<String, String> lang) {
         List<String> done = new ArrayList<>();
         switch (name) {
             case "legacy_name" -> {
-                // A 2.x book that named no name took guide.<namespace>.<path>.name; 3.0's default is folios.<...>.name.
                 if (!json.has("name")) {
                     String key = "guide." + book.replace(':', '.').replace('/', '.') + ".name";
                     json.addProperty("name", key);
@@ -186,7 +149,6 @@ public final class BookUpgrader {
                     JsonElement text = json.remove("text");
                     JsonArray pages = new JsonArray();
                     pages.add(text);
-                    // What "pages" held after it, a list or one page.
                     JsonElement had = json.get("pages");
                     if (had != null && had.isJsonArray()) pages.addAll(had.getAsJsonArray());
                     else if (present(had)) pages.add(had);
@@ -198,7 +160,6 @@ public final class BookUpgrader {
                 for (String[] keys : new String[][]{{"structures", "structure"}, {"builds", "build"}}) {
                     if (!json.has(keys[0])) continue;
                     JsonArray all = new JsonArray();
-                    // One flat list, whether each was one value or a list.
                     for (JsonElement part : new JsonElement[]{json.remove(keys[1]), json.remove(keys[0])}) {
                         if (part == null) continue;
                         if (part.isJsonArray()) all.addAll(part.getAsJsonArray());
@@ -268,8 +229,6 @@ public final class BookUpgrader {
         return done;
     }
 
-    // A colour written as a number (its alpha kept), or as hex without its "#" or with spaces about it, written
-    // "#RRGGBB" or "#AARRGGBB". What can't be a colour is left as it is, and said.
     private static void colorString(JsonObject json, String path, List<String> done) {
         JsonElement value = get(json, path);
         if (value == null || !value.isJsonPrimitive()) return;
@@ -278,13 +237,11 @@ public final class BookUpgrader {
         if (primitive.isNumber()) {
             try {
                 long whole = primitive.getAsBigDecimal().longValueExact();
-                // An ARGB colour, as an int (alpha making it negative) or as the unsigned number.
                 if (whole >= Integer.MIN_VALUE && whole <= 0xFFFFFFFFL) {
                     long argb = whole & 0xFFFFFFFFL;
                     written = argb > 0xFFFFFF ? String.format("#%08X", argb) : String.format("#%06X", argb);
                 }
             } catch (ArithmeticException e) {
-                // A fraction, or too large: not a colour.
             }
         } else if (primitive.isString()) {
             String text = primitive.getAsString().strip();
@@ -304,9 +261,6 @@ public final class BookUpgrader {
         done.add(path + " written as \"" + written + "\"");
     }
 
-    // Entries whose "category" isn't the folder they are in: moved into their category's folder, keeping the folders
-    // under it (which changes their id, so links to them by the old one need updating by hand), and the key dropped.
-    // One that would land on another entry stays where it is, its key kept, for whoever updates the book to settle.
     private static void entryFolders(Map<String, JsonObject> files, Map<String, List<String>> changes) {
         for (String path : List.copyOf(files.keySet())) {
             if (!path.startsWith("entries/")) continue;
@@ -342,7 +296,6 @@ public final class BookUpgrader {
 
     private record Target(JsonObject json, String where) {}
 
-    // The objects of a file a change of a kind applies to, with where they are in it.
     private static List<Target> targets(String in, String path, JsonObject json) {
         List<Target> found = new ArrayList<>();
         String kind = path.equals("book.json") ? "book" : path.startsWith("categories/") ? "category" : path.startsWith("entries/") ? "entry"
@@ -359,7 +312,6 @@ public final class BookUpgrader {
                 found.add(new Target(page, where));
                 continue;
             }
-            // A page written as one element is that element; a page of elements, each of them.
             List<Target> elements = new ArrayList<>();
             if (!page.has("elements")) elements.add(new Target(page, where));
             else if (page.get("elements").isJsonArray()) {
@@ -386,7 +338,6 @@ public final class BookUpgrader {
     private static boolean matches(JsonObject json, JsonObject where) {
         for (Map.Entry<String, JsonElement> value : where.entrySet()) {
             JsonElement has = json.get(value.getKey());
-            // A page or element with no type is text.
             if (has == null && value.getKey().equals("type")) has = new com.google.gson.JsonPrimitive("text");
             if (!value.getValue().equals(has)) return false;
         }
@@ -403,7 +354,6 @@ public final class BookUpgrader {
         return at;
     }
 
-    // A value at a dotted path, taken out; objects it leaves empty on the way are taken out too.
     private static JsonElement take(JsonObject json, String path) {
         String[] keys = path.split("\\.");
         List<JsonObject> chain = new ArrayList<>();
@@ -422,7 +372,6 @@ public final class BookUpgrader {
         return value;
     }
 
-    // A value moved from one dotted path to another; left where it is, and said, when the other is taken.
     private static void move(JsonObject json, String from, String to, List<String> done) {
         if (get(json, from) == null) return;
         if (present(get(json, to))) {
@@ -433,7 +382,6 @@ public final class BookUpgrader {
         done.add(from + " moved to " + to);
     }
 
-    // Whether there is a value: something other than nothing or null.
     private static boolean present(JsonElement value) {
         return value != null && !value.isJsonNull();
     }
@@ -456,9 +404,6 @@ public final class BookUpgrader {
         changes.computeIfAbsent(path, file -> new ArrayList<>()).add(line);
     }
 
-    // ---- Outside the game ----
-
-    // The "folios" folder a book.json is under, or null.
     private static Path folios(Path bookJson) {
         for (Path at = bookJson.getParent(); at != null && at.getParent() != null; at = at.getParent()) {
             if (at.getFileName().toString().equals("folios") && at != bookJson.getParent()) return at;
@@ -466,7 +411,6 @@ public final class BookUpgrader {
         return null;
     }
 
-    // Names what in each book under a folder written in the current format still has an older shape.
     private static void check(Path in) throws IOException {
         List<Path> books;
         try (Stream<Path> walk = Files.walk(in)) {
@@ -488,11 +432,6 @@ public final class BookUpgrader {
         }
     }
 
-    /**
-     * Upgrades every book under a folder to the current format and writes the results to another, as the web tool
-     * would: {@code <in> <out>}; {@code --check <in>} names what in books already in the current format still has an
-     * older shape. Used to check the mod and the web tool agree (tools/check-upgrader).
-     */
     public static void main(String[] args) throws IOException {
         if (args[0].equals("--check")) {
             check(Path.of(args[1]));
@@ -507,7 +446,6 @@ public final class BookUpgrader {
         Map<Path, Map<String, String>> langs = new LinkedHashMap<>();
         for (Path bookJson : books) {
             Path folder = bookJson.getParent();
-            // assets/<namespace>/folios/<path>/book.json
             Path folios = folios(bookJson);
             Path assets = folios.getParent();
             String id = assets.getFileName() + ":" + folios.relativize(folder).toString().replace(java.io.File.separatorChar, '/');

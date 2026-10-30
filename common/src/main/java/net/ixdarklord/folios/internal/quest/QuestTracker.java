@@ -31,21 +31,13 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 
-/**
- * The server's quests: loaded from data packs, followed for each player and rewarded. Each player's quests are checked
- * about once a second (players spread over the second's ticks), and straight away after what could finish one (an
- * advancement, a flag, an entry read); what is found is kept with the player and sent to them only when it changes.
- */
 public final class QuestTracker extends SimpleJsonResourceReloadListener {
     private static final QuestTracker INSTANCE = new QuestTracker();
-    /** Ticks between one check of a player's quests and the next. */
     private static final int EVERY = 20;
 
     private static Map<ResourceLocation, ServerQuest> quests = Map.of();
-    // Every item some quest's "obtained" asks for: the only items the server notes a player having had.
     private static Set<ItemMatch> watched = Set.of();
     private static volatile boolean reloaded;
-    // Players to check at the end of this tick, whatever their turn.
     private static final Set<UUID> DUE = new HashSet<>();
 
     private QuestTracker() {
@@ -76,8 +68,6 @@ public final class QuestTracker extends SimpleJsonResourceReloadListener {
         FoliosServerConfig.init();
     }
 
-    // ---- Loading ----
-
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> files, ResourceManager manager, ProfilerFiller profiler) {
         Map<ResourceLocation, ServerQuest> read = new LinkedHashMap<>();
@@ -104,8 +94,6 @@ public final class QuestTracker extends SimpleJsonResourceReloadListener {
         return List.copyOf(quests.keySet());
     }
 
-    // ---- Sending ----
-
     private static void send(ServerPlayer player) {
         if (!Network.canPlayerReceive(player, FoliosPayloads.Quests.TYPE)) return;
         Map<ResourceLocation, String> written = new HashMap<>();
@@ -113,9 +101,6 @@ public final class QuestTracker extends SimpleJsonResourceReloadListener {
         Network.sendToPlayer(player, new FoliosPayloads.Quests(written));
     }
 
-    // ---- Checking ----
-
-    /** Has a player's quests checked at the end of this tick. */
     public static void due(ServerPlayer player) {
         DUE.add(player.getUUID());
     }
@@ -144,7 +129,6 @@ public final class QuestTracker extends SimpleJsonResourceReloadListener {
         for (ServerQuest quest : quests.values()) {
             PlayerQuests.Progress was = state.progress(quest.id());
             if (was.done()) continue;
-            // Locked, nothing counts yet; once open, it stays open.
             boolean unlocked = was.unlocked() || quest.unlocked(context);
             List<Float> each = unlocked ? quest.progress(context) : List.of();
             boolean done = unlocked && each.stream().allMatch(value -> value >= 1);
@@ -158,7 +142,6 @@ public final class QuestTracker extends SimpleJsonResourceReloadListener {
         for (ResourceLocation quest : finished) FoliosQuests.completed(player, quest);
     }
 
-    // The watched items in the player's inventory now that they haven't had before.
     private static PlayerQuests noteObtained(ServerPlayer player, PlayerQuests state) {
         if (watched.isEmpty()) return state;
         Set<ResourceLocation> found = new LinkedHashSet<>();
@@ -176,7 +159,6 @@ public final class QuestTracker extends SimpleJsonResourceReloadListener {
         return found.isEmpty() ? state : state.withObtained(found);
     }
 
-    /** How far along a player is with a quest, 0 to 1: its objectives' average, or 1 once done. */
     public static float progress(ServerPlayer player, ResourceLocation quest) {
         PlayerQuests.Progress progress = state(player).progress(quest);
         if (progress.done()) return 1;
@@ -186,8 +168,6 @@ public final class QuestTracker extends SimpleJsonResourceReloadListener {
         return sum / progress.objectives().size();
     }
 
-    // ---- Changes ----
-
     public static void setFlag(ServerPlayer player, String flag, boolean on) {
         PlayerQuests state = state(player);
         PlayerQuests next = state.withFlag(flag, on);
@@ -196,7 +176,6 @@ public final class QuestTracker extends SimpleJsonResourceReloadListener {
         due(player);
     }
 
-    /** Notes an entry the server counted read, and checks the player's quests. */
     static void read(ServerPlayer player, ResourceLocation book, String entry) {
         PlayerQuests state = state(player);
         PlayerQuests next = state.withRead(book, entry);
@@ -222,10 +201,6 @@ public final class QuestTracker extends SimpleJsonResourceReloadListener {
         due(player);
     }
 
-    /**
-     * A player claiming a quest's reward: given once, if the quest is one the server has found them finishing. The
-     * claim is noted before the items are given, so a claim sent twice gives them once.
-     */
     static void claim(ServerPlayer player, ResourceLocation id) {
         ServerQuest quest = quests.get(id);
         PlayerQuests.Progress progress = state(player).progress(id);

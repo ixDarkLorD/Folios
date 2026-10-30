@@ -3,7 +3,6 @@ package net.ixdarklord.folios.internal.compat;
 import net.minecraft.client.gui.Font;
 import net.minecraft.util.FormattedCharSequence;
 
-// Where a line of text stands from its anchor (Minecraft 26.1's).
 public enum TextAlignment {
     LEFT,
     CENTER,

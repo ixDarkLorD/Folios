@@ -15,9 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// Structures from data packs (data/<namespace>/structure/<path>.nbt, as structure blocks save them and villages are
-// built from), turning in a window: "structure" names one, "structures" several, picked between under the window.
-// Clients don't have data packs, so their blocks are asked of the server the first time the page is shown.
 public record StructurePageElement(List<Showcase.Shown> structures, Optional<String> title, String text, int height, Showcase.Selector selector) implements FoliosPageElement {
     public static final MapCodec<StructurePageElement> CODEC = RecordCodecBuilder.<StructurePageElement>mapCodec(instance -> instance.group(
             Showcase.Shown.CODEC.fieldOf("structure").forGetter(StructurePageElement::structures),
@@ -32,7 +29,6 @@ public record StructurePageElement(List<Showcase.Shown> structures, Optional<Str
         return Showcase.lay(layout, title, text, height, selector, this.items(layout));
     }
 
-    /** What it shows between its title and its text. */
     Body body(FoliosLayout layout) {
         return Showcase.body(layout, height, selector, this.items(layout));
     }

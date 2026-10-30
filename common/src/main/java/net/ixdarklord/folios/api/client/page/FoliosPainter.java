@@ -76,6 +76,13 @@ public interface FoliosPainter {
         if ((argb >>> 24) >= 128) this.item(stack, x, y);
     }
 
+    /**
+     * An item's shape tinted by {@code argb} (dark, for a silhouette), with nothing of what it is: no count, no
+     * tooltip, no link. What a locked page or element shows of the items it holds. A painter that can't tint items
+     * draws nothing.
+     */
+    default void silhouette(ItemStack stack, int x, int y, int argb) {}
+
     /** A scene's picture; the painter keeps it in use while it is drawn. */
     void scene(SceneViewport viewport, int x, int y, int width, int height);
 
@@ -90,6 +97,14 @@ public interface FoliosPainter {
      */
     default void scene(SceneViewport viewport, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
         if ((argb >>> 24) >= 128 && v0 <= 0 && v1 >= 1) this.scene(viewport, x, y, width, height, u0, u1);
+    }
+
+    /**
+     * Draws with what is drawn kept inside a box, (x, y) {@code width} by {@code height} in the painter's pixels. A
+     * painter that can't clip draws it all.
+     */
+    default void clip(int x, int y, int width, int height, Runnable draw) {
+        draw.run();
     }
 
     void push();

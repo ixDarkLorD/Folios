@@ -27,31 +27,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-// The bar over a book, a ribbon banner: a band of cloth in the cover's colour across the book, its swallowtail ends
-// folded back behind it at either side, stitched in gilt along both edges; its buttons small brass plates pinned to
-// it. On it: where the reader is, a bookmark star, search, paper mode (for books drawn in it), fold and close.
-// Folded, it is a little pull of the same leather at the middle of its foot, which opens it again. Shared by both kinds
-// of book and drawn as their pages are, through a painter: flat over a screen book, and in the world over a handheld
-// one, where a leaf turning past it goes in front of it. It draws in its own pixels, (0, 0) its top left, its foot at
-// HEIGHT. The search field is a hidden text box that takes the keys; the bar draws what is typed in it.
 public final class FoliosBar {
     public static final int HEIGHT = 24;
-    /** Where its content starts, below its top gilt line. */
     public static final int INSET = 4;
-    /** How tall the bar is folded away: room for its arrow with the leather's edges clear above and below. */
     private static final int PULL = 13;
     private static final int SEARCH_WIDTH = 92;
-    /** From one button on the bar to the next: its 16 pixels and a little gap. */
     private static final int STEP = 18;
     private static final float MILLIS = 160;
 
-    /** Gives the search field the keyboard: the screen's focus and the field's own. */
     @FunctionalInterface
     public interface Focus {
         void focus(StyledEditBox field);
     }
 
-    // Folded or not, for the rest of the game, whichever book.
     private static boolean folded;
 
     private final FoliosReader reader;
@@ -63,15 +51,9 @@ public final class FoliosBar {
     private long movedAt;
     private @Nullable StyledEditBox search;
     private int width;
-    // The search field folds to a glass while it is not being typed in: whether it is wanted open, and since when.
     private boolean searchWanted;
     private long searchMovedAt;
 
-    /**
-     * @param modeToggle whether it has the light/dark paper button (a book whose paper follows the mode)
-     * @param close      what its close button does, or null for none
-     * @param focus      how the screen gives the search field the keyboard
-     */
     public FoliosBar(FoliosReader reader, boolean modeToggle, @Nullable Runnable close, Focus focus) {
         this.reader = reader;
         this.book = reader.book;
@@ -81,12 +63,6 @@ public final class FoliosBar {
         this.focus = focus;
     }
 
-    // ---- The search field ----
-
-    /**
-     * Makes the search field, carrying over what an earlier one held; the screen adds it as a widget. It is kept off
-     * the screen: it only takes the keys, and the bar shows what is in it.
-     */
     public StyledEditBox search(@Nullable StyledEditBox before) {
         StyledEditBox box = new StyledEditBox(font, SEARCH_WIDTH, 16, Component.translatableWithFallback("folios.search", "Search"));
         box.setPosition(-10000, -10000);
@@ -98,9 +74,7 @@ public final class FoliosBar {
         return box;
     }
 
-    // Where the search field's right edge is, before paper mode and fold.
     private int searchRight() {
-        // The buttons from the right, each a step from the last; the search field the same step past the last of them.
         int buttons = (modeToggle ? 1 : 0) + (close != null ? 1 : 0);
         return width - 2 - buttons * STEP;
     }
@@ -109,7 +83,6 @@ public final class FoliosBar {
         return this.searchRight() - SEARCH_WIDTH;
     }
 
-    // How open the search field is, 0 a glass to 1 the field, eased; it opens while it is typed in.
     private float searchOpenness() {
         boolean wanted = this.typing();
         if (wanted != searchWanted) {
@@ -138,9 +111,6 @@ public final class FoliosBar {
         }
     }
 
-    // ---- Folding ----
-
-    /** How open it is, 0 folded to 1 open, eased. */
     public float shown() {
         float t = Math.min(1, (net.ixdarklord.folios.internal.client.FoliosClock.millis() - movedAt) / MILLIS);
         if (!StyleSettings.transitions()) t = 1;
@@ -154,9 +124,6 @@ public final class FoliosBar {
         if (search != null && fold) search.setFocused(false);
     }
 
-    // ---- Drawing ----
-
-    /** The colours its painter is given: the cover's, so what is drawn see-through lies over the leather. */
     public FoliosPalette palette() {
         int cover = 0xFF000000 | book.cover();
         int text = 0xFFF2EEE6;
@@ -167,10 +134,6 @@ public final class FoliosBar {
         return FoliosPalette.mix(FoliosPalette.mix(0xFF000000 | book.accent(), 0xFFE8C66A, 0.5F), 0xFF000000 | book.cover(), 0.15F);
     }
 
-    /**
-     * Draws it in its own pixels, the given width across. {@code appear}, 0 to 1, grows it out of its pull as it
-     * comes (a handheld book's, once the book is open); 1 when it is simply there.
-     */
     public void draw(FoliosPainter painter, int width, float appear) {
         this.width = width;
         if (appear < 0.03F) {
@@ -182,7 +145,6 @@ public final class FoliosBar {
         float shown = Math.min(this.shown(), appear);
         int bottom = HEIGHT;
         if (shown < 0.999F) {
-            // The pull, and the bar growing out of it as it opens.
             int wide = Math.round(Mth.lerp(shown, 44, width));
             int tall = Math.round(Mth.lerp(shown, PULL, HEIGHT));
             int x0 = (width - wide) / 2;
@@ -199,9 +161,7 @@ public final class FoliosBar {
         int text = 0xFFF2EEE6;
         int dim = FoliosPalette.mix(cover, text, 0.62F);
         int x = 8;
-        // Folding it away: a pocket in the middle of its foot, where its pull is once it is folded.
         this.foldPocket(painter, cover, gilt, text);
-        // Close and paper mode, from the right.
         int right = width - 18;
         if (close != null) {
             this.button(painter, right, CLOSE, text, Component.translatableWithFallback("folios.shut", "Close the book"), Component.translatableWithFallback("folios.tip.shut", "Esc puts it away"), close);
@@ -213,7 +173,6 @@ public final class FoliosBar {
                     dark ? Component.translatableWithFallback("coolcatlib.style.mode.light", "Light mode")
                             : Component.translatableWithFallback("coolcatlib.style.mode.dark", "Dark mode"), StyleSettings::toggleThemeMode);
         }
-        // Search: a glass that opens into the field when pressed, and folds back once the field lets the keyboard go.
         float searchOpen = this.searchOpenness();
         int searchRight = this.searchRight();
         int searchLeft = Math.round(Mth.lerp(searchOpen, searchRight - 16, this.searchX()));
@@ -225,11 +184,7 @@ public final class FoliosBar {
         } else {
             this.field(painter, searchLeft, searchRight, searchOpen, field);
         }
-        // Where the reader is, in the room it has: on one line, shrunk to no less than four fifths; past that on two
-        // smaller lines, the book or category over the rest; cut short only if it still doesn't fit. The bookmark star
-        // right after it, on an entry.
         FoliosBook.Location here = reader.here();
-        // Up to the fold pocket in the middle (or the search field, if that is nearer), its star after it.
         int end = Math.min(searchLeft - 6, (width - POCKET_WIDTH) / 2 - 4);
         int room = end - x - (here != null ? 18 : 0);
         Fitted where = this.fit(room);
@@ -250,14 +205,11 @@ public final class FoliosBar {
             boolean hovered = painter.action(star, INSET, 16, 16, starName, () -> reader.memory.toggleBookmark(here));
             if (hovered && !marked) painter.tooltip(net.ixdarklord.folios.internal.client.FoliosTooltips.of(starName, Component.translatableWithFallback("folios.tip.bookmark", "Find it again under the star tab")));
             if (hovered) rounded(painter, star, INSET, star + 16, INSET + 16, 0x30FFFFFF);
-            // A marked page's star shines: the gilt lifted toward pale gold, so it stands out on dark leather.
             int shine = FoliosPalette.mix(gilt, 0xFFFFE680, 0.65F);
             pixels(painter, marked ? STAR : STAR_OUTLINE, star, INSET, 16, marked ? (hovered ? 0xFFFFF4C0 : shine) : hovered ? text : dim);
         }
     }
 
-    // The search field, opening out of the glass: pale paper with what is typed in it (its end, if it is too long) and
-    // a blinking caret, or the hint while it is empty. Pressed, it takes the keyboard.
     private void field(FoliosPainter painter, int x0, int x1, float open, @Nullable StyledEditBox field) {
         int paper = 0xFFF4F1EA;
         rounded(painter, x0, INSET, x1, INSET + 16, FoliosPalette.mix(paper, 0xFF000000, 0.35F));
@@ -266,7 +218,6 @@ public final class FoliosBar {
         String value = field.getValue();
         int ink = 0xFF2E241B;
         boolean clearable = open >= 0.995F && !value.isEmpty();
-        // Pressed anywhere but its clear button, it takes the keyboard; the button empties it and keeps the keyboard.
         painter.action(x0, INSET, x1 - x0 - (clearable ? 14 : 0), 16, null, () -> focus.focus(field));
         if (open < 0.995F) return;
         if (clearable) {
@@ -280,7 +231,6 @@ public final class FoliosBar {
         }
         int room = x1 - x0 - 8 - (clearable ? 12 : 0);
         if (value.isEmpty()) {
-            // Waiting for keys, the hint steps aside for the caret before it.
             int hintX = x0 + 4 + (field.isFocused() ? 4 : 0);
             painter.text(Component.translatableWithFallback("folios.search.hint", "Search...").withStyle(ChatFormatting.ITALIC).getVisualOrderText(),
                     hintX, INSET + 4, FoliosPalette.mix(paper, ink, 0.45F));
@@ -294,13 +244,9 @@ public final class FoliosBar {
         }
     }
 
-    /** The fold pocket's size, in bar pixels. */
     private static final int POCKET_WIDTH = 24;
     private static final int POCKET_HEIGHT = 8;
 
-    // The pocket the bar folds away from: sunk into the middle of its foot, its top corners rounded off smoothly, a
-    // shade along its top inside edge and a gilt rim following its shape where the bar's lower gilt line meets it;
-    // an arrow up in it. Pressed, the bar folds away into its pull.
     private void foldPocket(FoliosPainter painter, int cover, int gilt, int text) {
         int x0 = (width - POCKET_WIDTH) / 2;
         int x1 = x0 + POCKET_WIDTH;
@@ -309,7 +255,6 @@ public final class FoliosBar {
         boolean hovered = painter.action(x0, y0, POCKET_WIDTH, POCKET_HEIGHT, Component.translatableWithFallback("folios.bar.hide", "Hide the bar"), () -> this.fold(true));
         int rim = FoliosPalette.mix(cover, gilt, 0.56F);
         int well = FoliosPalette.mix(cover, 0xFF000000, hovered ? 0.2F : 0.38F);
-        // The rim: the bar's lower gilt line runs up around the pocket, its corners eased by a step of two.
         painter.fill(x0 - 1, y1 - 3, x0, y1 - 2, cover);
         painter.fill(x1, y1 - 3, x1 + 1, y1 - 2, cover);
         painter.fill(x0 - 1, y0 + 3, x0, y1 - 2, rim);
@@ -319,7 +264,6 @@ public final class FoliosBar {
         painter.fill(x0 + 1, y0, x0 + 3, y0 + 1, rim);
         painter.fill(x1 - 3, y0, x1 - 1, y0 + 1, rim);
         painter.fill(x0 + 3, y0 - 1, x1 - 3, y0, rim);
-        // The well, its top corners rounded to match, open at the foot.
         painter.fill(x0 + 3, y0, x1 - 3, y1, well);
         painter.fill(x0 + 1, y0 + 1, x1 - 1, y1, well);
         painter.fill(x0, y0 + 3, x1, y1, well);
@@ -328,13 +272,9 @@ public final class FoliosBar {
         pixels(painter, FOLD, x0 + (POCKET_WIDTH - 9) / 2, y0 + (POCKET_HEIGHT - 9) / 2, 9, ink);
     }
 
-    /** How far a ribbon's tails reach out past its ends, and how far down they hang. */
     private static final int TAIL = 9;
     private static final int TAIL_DROP = 3;
 
-    // A ribbon from x0 to x1: its two swallowtail tails behind its ends, hanging a little lower, a fold where each
-    // turns back; then the band over them, its cloth woven faintly, lit along its top and shaded along its foot, a
-    // stitched gilt seam a pixel inside each edge.
     private void ribbon(FoliosPainter painter, int x0, int y0, int x1, int y1, int cover, int gilt) {
         int tall = y1 - y0;
         int back = FoliosPalette.mix(cover, 0xFF000000, 0.32F);
@@ -348,7 +288,6 @@ public final class FoliosBar {
             int bottom = y1 + TAIL_DROP;
             int rows = bottom - top;
             for (int row = 0; row < rows; row++) {
-                // The swallowtail: cut in at its middle row by `notch`, out to its full length at its top and foot.
                 float fromMiddle = Math.abs(row + 0.5F - rows / 2.0F) / (rows / 2.0F);
                 int cut = Math.round(notch * (1 - fromMiddle));
                 int reach = TAIL - cut;
@@ -356,7 +295,6 @@ public final class FoliosBar {
                 int b = left ? end + 4 : end + reach;
                 painter.fill(a, top + row, b, top + row + 1, row == rows - 1 ? FoliosPalette.mix(back, 0xFF000000, 0.25F) : back);
             }
-            // The fold where the tail turns back under the band: a small dark triangle under the band's corner.
             for (int row = 0; row < TAIL_DROP; row++) {
                 int span = TAIL_DROP - row;
                 int a = left ? end : end - span;
@@ -364,15 +302,12 @@ public final class FoliosBar {
                 painter.fill(a, y1 + row, b, y1 + row + 1, fold);
             }
         }
-        // The band.
         painter.fill(x0, y0, x1, y1, cover);
-        // A faint weave: every other row a shade darker.
         int weave = FoliosPalette.alpha(0xFF000000, 0x09);
         for (int y = y0 + 1; y < y1 - 1; y += 2) painter.fill(x0, y, x1, y + 1, weave);
         painter.fill(x0, y0, x1, y0 + 1, FoliosPalette.mix(cover, 0xFFFFFFFF, 0.2F));
         painter.fill(x0, y1 - 1, x1, y1, FoliosPalette.mix(cover, 0xFF000000, 0.35F));
         if (tall >= 10) {
-            // The seams: stitches of three pixels with gaps of two, a pixel in from each edge and the ends.
             int stitch = FoliosPalette.mix(cover, gilt, 0.7F);
             for (int x = x0 + 3; x < x1 - 3; x += 5) {
                 int e = Math.min(x + 3, x1 - 3);
@@ -382,8 +317,6 @@ public final class FoliosBar {
         }
     }
 
-    // A brass plate pinned to the ribbon for a button: bevelled, lit along its top, a rivet's glint at each upper
-    // corner; brighter under the pointer.
     private static void plate(FoliosPainter painter, int x, int y, int gilt, int cover, boolean hovered) {
         int brass = FoliosPalette.mix(cover, gilt, hovered ? 0.62F : 0.42F);
         rounded(painter, x, y, x + 16, y + 16, FoliosPalette.mix(brass, 0xFF000000, 0.35F));
@@ -396,7 +329,6 @@ public final class FoliosBar {
         this.button(painter, x, icon, color, name, null, action);
     }
 
-    // A button, its tooltip a name and a line saying more (a key for it).
     private void button(FoliosPainter painter, int x, PixelIcon icon, int color, Component name, @Nullable Component detail, Runnable action) {
         boolean hovered = painter.action(x, INSET, 16, 16, name, action);
         if (hovered && detail != null) painter.tooltip(net.ixdarklord.folios.internal.client.FoliosTooltips.of(name, detail));
@@ -404,15 +336,11 @@ public final class FoliosBar {
         pixels(painter, icon, x, INSET, 16, hovered ? 0xFFFFFFFF : color);
     }
 
-    // Book › Category › Entry, or what the reader is looking at.
-    /** Where the reader is as drawn: its lines, how large, and how wide they come to on the bar. */
     private record Fitted(List<FormattedCharSequence> lines, float scale, int width) {}
 
     private Fitted fit(int room) {
         Component where = this.where();
         int wide = font.width(where);
-        // On two lines: split where the trail steps on, else wherever the words wrap; as large as lets the longer fit.
-        // Only when that is larger than one line would be.
         List<Component> parts = this.whereParts();
         float oneLine = room / (float) wide;
         float twoLines = parts.size() == 2
@@ -450,7 +378,6 @@ public final class FoliosBar {
         return new Fitted(shown, scale, Math.round(widest * scale));
     }
 
-    // The trail's first step and the rest, for setting it on two lines; one part when it has no steps.
     private List<Component> whereParts() {
         List<Component> steps = this.trail();
         if (steps.size() < 2) return List.of(this.where());
@@ -461,7 +388,6 @@ public final class FoliosBar {
         return join(this.trail());
     }
 
-    // Steps of the trail, one after another with an arrow between them.
     private static Component join(List<Component> steps) {
         MutableComponent line = Component.empty();
         for (int index = 0; index < steps.size(); index++) {
@@ -471,8 +397,6 @@ public final class FoliosBar {
         return line;
     }
 
-    // Where the reader is, step by step: the book (or, inside an entry, its category: the icon beside it already names
-    // the book) in bold, then the category, entry, search, bookmarks or index.
     private List<Component> trail() {
         String chapter = reader.spot.chapter();
         FoliosEntry open = reader.entry();
@@ -499,31 +423,16 @@ public final class FoliosBar {
         return text.copy().withStyle(style -> style.withBold(false));
     }
 
-    // ---- Pixel icons ----
-
-    // The bar's icons, white images tinted when drawn (assets/folios/textures/gui/icons/), 9 pixels square at most;
-    // a resource pack can redraw them.
     public static final PixelIcon STAR = PixelIcon.of("star", 9, 9);
-    /** The star, its edge only: a page not yet bookmarked. */
     public static final PixelIcon STAR_OUTLINE = PixelIcon.of("star_outline", 9, 9);
     private static final PixelIcon SUN = PixelIcon.of("sun", 9, 9);
     private static final PixelIcon MOON = PixelIcon.of("moon", 9, 9);
     private static final PixelIcon GLASS = PixelIcon.of("search", 9, 9);
     private static final PixelIcon CLOSE = PixelIcon.of("close", 7, 7);
-    /**
-     * A four-pointed sparkle, marking what hasn't been read yet, as the frames of its blink: from a point of light
-     * through a small star to its resting shape and a flare with its points drawn out.
-     */
     public static final PixelIcon SPARKLE = PixelIcon.of("sparkle", 7, 7, 5);
-    /** How long a blink takes, and how often one comes (seconds). */
     private static final float BLINK_TIME = 0.75F;
     private static final float BLINK_EVERY = 2.6F;
 
-    /**
-     * Draws the unread sparkle, 7 pixels square from (x, y), blinking now and then; {@code phase} (seconds) staggers
-     * sparkles so they don't all blink together. Brighter on its flare. The blink is smooth: the sparkle eases from
-     * rest out to its flare, down to a point and back, each pixel fading between the frames on either side.
-     */
     public static void sparkle(FoliosPainter painter, int x, int y, float phase, int color) {
         float t = (painter.time() + phase) % BLINK_EVERY;
         float frame = t < BLINK_TIME ? blink(t / BLINK_TIME) : 3;
@@ -535,8 +444,6 @@ public final class FoliosBar {
         if (between > 0.02F) SPARKLE.draw(painter, x, y, low + 1, FoliosPalette.alpha(ink, Math.round(alpha * between)));
     }
 
-    // Where the blink is at, as a frame between 0 (a point) and 4 (the flare), 3 at rest: out to the flare, down to a
-    // point, and back to rest, each leg eased.
     private static float blink(float t) {
         if (t < 0.2F) return 3 + smooth(t / 0.2F);
         if (t < 0.55F) return 4 - 4 * smooth((t - 0.2F) / 0.35F);
@@ -548,17 +455,14 @@ public final class FoliosBar {
         return t * t * (3 - 2 * t);
     }
 
-    /** Lines of a list, for the index tab. */
     public static final PixelIcon INDEX = PixelIcon.of("index", 9, 7);
     private static final PixelIcon FOLD = PixelIcon.of("fold", 9, 5);
     private static final PixelIcon UNFOLD = PixelIcon.of("unfold", 9, 5);
 
-    /** An icon centred in a box. */
     static void pixels(GuiGraphicsExtractor graphics, PixelIcon icon, int boxX, int boxY, int boxSize, int color) {
         icon.draw(graphics, boxX + (boxSize - icon.width()) / 2, boxY + (boxSize - icon.height()) / 2, color);
     }
 
-    /** The same, through a painter (a page, a handheld book's tab, the bar). */
     public static void pixels(FoliosPainter painter, PixelIcon icon, int boxX, int boxY, int boxSize, int color) {
         icon.draw(painter, boxX + (boxSize - icon.width()) / 2, boxY + (boxSize - icon.height()) / 2, color);
     }
