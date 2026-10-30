@@ -5,17 +5,12 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-// A screen written against Minecraft 26.1's screen calls.
 public abstract class CompatScreen extends Screen {
     protected CompatScreen(Component title) {
         super(title);
-        // Minecraft 26.1's screens know the game and its font from the start; 1.21.1's only once they're laid out, which
-        // is after they're told they were opened.
         this.minecraft = Minecraft.getInstance();
         this.font = this.minecraft.font;
     }
-
-    // --- Drawing: 26.1 draws the background and the rest in separate calls; 1.21.1's render does both ---
 
     private boolean skipBackground;
 
@@ -31,7 +26,6 @@ public abstract class CompatScreen extends Screen {
         }
     }
 
-    /** Draws the widgets (not the background). */
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         this.skipBackground = true;
         try {
@@ -54,8 +48,6 @@ public abstract class CompatScreen extends Screen {
         this.renderPanorama(graphics.raw(), a);
     }
 
-    // --- Layout ---
-
     public void init(int width, int height) {
         this.init(Minecraft.getInstance(), width, height);
     }
@@ -68,8 +60,6 @@ public abstract class CompatScreen extends Screen {
     public void resize(int width, int height) {
         super.resize(Minecraft.getInstance(), width, height);
     }
-
-    // --- Input ---
 
     @Override
     public final boolean mouseClicked(double mouseX, double mouseY, int button) {

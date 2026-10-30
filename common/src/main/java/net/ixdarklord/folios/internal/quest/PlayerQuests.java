@@ -10,22 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * What the server knows of a player's quests: kept with the player, sent only to them. Immutable: a change is a new
- * record, and one equal to the last isn't sent again.
- *
- * @param quests   each server quest's progress, by id
- * @param obtained the items the player has had that some quest's "obtained" asks for, by id, whatever became of them
- * @param read     the entries the server counted the player reading, by book
- * @param flags    the player's own flags, set by commands and mods
- */
 public record PlayerQuests(Map<ResourceLocation, Progress> quests, List<ResourceLocation> obtained, Map<ResourceLocation, List<String>> read, List<String> flags) {
     public static final PlayerQuests EMPTY = new PlayerQuests(Map.of(), List.of(), Map.of(), List.of());
 
-    /**
-     * One quest's progress: each objective's, 0 to 1; whether it is open (its {@code "requires"} met once, and open
-     * from then on); whether it is done (and stays so, whatever happens after); and whether its reward has been claimed.
-     */
     public record Progress(List<Float> objectives, boolean unlocked, boolean done, boolean claimed) {
         public static final Progress NONE = new Progress(List.of(), false, false, false);
         public static final Codec<Progress> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -39,7 +26,6 @@ public record PlayerQuests(Map<ResourceLocation, Progress> quests, List<Resource
             objectives = List.copyOf(objectives);
         }
 
-        /** Whether the player can work on it: open, or done. */
         public boolean isOpen() {
             return unlocked || done;
         }

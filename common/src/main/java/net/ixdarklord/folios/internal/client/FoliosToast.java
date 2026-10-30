@@ -14,16 +14,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
 
-// A toast in a book's own look, for part of a book finished (an objective, an entry, a category, a quest) and for the
-// book mastered: the book's tooltip ground and gilt frame,
-// at the left the quest's icon (or, for mastery, a gold trophy that glints), a small gilt heading over the quest's or
-// book's name, and along its foot a thin gilt line that runs down while it shows.
 public final class FoliosToast implements Toast {
-    /** The clear margin round the tooltip frame's images, as BuildGuide's panel takes it off. */
     private static final int MARGIN = 8;
     private static final int INSET = 12;
     private static final PixelIcon TROPHY = PixelIcon.of("trophy", 9, 9);
-    /** A band of light sweeping across the trophy, over it: a flipbook of its frames. */
     private static final PixelIcon TROPHY_SHEEN = PixelIcon.of("trophy_sheen", 9, 9, 10);
 
     private final FoliosBook book;
@@ -42,25 +36,21 @@ public final class FoliosToast implements Toast {
         this.duration = duration;
     }
 
-    /** Shows a toast: a heading over a name, with an icon (none for null), or the trophy for mastery. */
     public static void show(FoliosBook book, Component heading, Component name, @Nullable FoliosIcon icon, boolean mastery) {
         Minecraft.getInstance().getToasts().addToast(new FoliosToast(book, heading, name, icon != null ? icon : FoliosIcon.NONE, mastery, mastery ? 7000 : 5000));
     }
 
-    // 1.21.1 draws a toast and asks whether it still shows in the one call.
     @Override
     public Toast.Visibility render(GuiGraphics raw, ToastComponent toasts, long timeSinceVisible) {
         GuiGraphicsExtractor graphics = GuiGraphicsExtractor.of(raw);
         Font font = toasts.getMinecraft().font;
         int width = this.width();
         int height = this.height();
-        // The frame's visible edge on the toast's own: its images' clear margin taken off.
         int edge = INSET - MARGIN;
         FoliosTooltips.frame(graphics, edge, edge, width - edge * 2, height - edge * 2, book, 255, INSET);
         int gilt = FoliosTooltips.titleColor(book);
         int quiet = FoliosTooltips.detailColor(book);
         float seconds = timeSinceVisible / 1000.0F;
-        // The icon, in a slot sunk into the ground.
         int slotX = 7;
         int slotY = (height - 20) / 2;
         int frame = FoliosTooltips.frameColor(book) | 0xFF000000;
@@ -72,7 +62,6 @@ public final class FoliosToast implements Toast {
         } else if (!icon.isEmpty()) {
             icon.draw(graphics, slotX + 2, slotY + 2, 16, seconds);
         }
-        // The heading, small and gilt, over the name, cut short if it must be.
         int textX = slotX + 26;
         int room = width - textX - 8;
         graphics.pose().pushMatrix();
@@ -81,7 +70,6 @@ public final class FoliosToast implements Toast {
         graphics.text(font, heading, 0, 0, quiet, true);
         graphics.pose().popMatrix();
         graphics.text(font, fit(font, name, room), textX, 16, gilt, true);
-        // How long it has left: a thin line along its foot, running down from full.
         double shown = duration * toasts.getNotificationDisplayTimeMultiplier();
         float left = 1 - (float) Math.min(1, timeSinceVisible / shown);
         int lineLeft = textX;
@@ -92,8 +80,6 @@ public final class FoliosToast implements Toast {
         return timeSinceVisible < shown ? Toast.Visibility.SHOW : Toast.Visibility.HIDE;
     }
 
-    // The trophy at its own size, centred in the slot's 18-pixel face, in a rainbow, and its sheen sweeping across it
-    // every couple of seconds.
     private void trophy(GuiGraphicsExtractor graphics, int x, int y, float seconds) {
         int left = x - 1 + (18 - 9) / 2;
         int top = y + 1 + (18 - 9) / 2;
@@ -102,7 +88,6 @@ public final class FoliosToast implements Toast {
         if (frame >= 0) TROPHY_SHEEN.draw(graphics, left, top, frame, 0xFFFFFFFF);
     }
 
-    // A line cut short with an ellipsis to fit the room, if it must be.
     private static FormattedCharSequence fit(Font font, Component text, int room) {
         if (font.width(text) <= room) return text.getVisualOrderText();
         net.minecraft.network.chat.FormattedText head = font.substrByWidth(text, Math.max(0, room - font.width("…")));

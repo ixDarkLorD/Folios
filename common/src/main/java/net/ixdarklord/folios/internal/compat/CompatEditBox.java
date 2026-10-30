@@ -5,7 +5,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 
-// A text field written against Minecraft 26.1's widget calls.
 public class CompatEditBox extends EditBox {
     public CompatEditBox(Font font, int width, int height, Component narration) {
         super(font, width, height, narration);
@@ -15,10 +14,7 @@ public class CompatEditBox extends EditBox {
         super.renderWidget(graphics.raw(), mouseX, mouseY, a);
     }
 
-    /** 1.21.1's field always draws its text with a shadow; fields that draw their own text ignore this. */
     public void setTextShadow(boolean shadow) {}
-
-    // --- 1.21.1's calls, passed on as Minecraft 26.1's ---
 
     @Override
     public final void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float a) {
@@ -79,7 +75,6 @@ public class CompatEditBox extends EditBox {
         return super.keyPressed(event.key(), event.scancode(), event.modifiers());
     }
 
-    /** The text cursor over it, as Minecraft 26.1's text fields ask for. */
     protected void handleCursor(GuiGraphicsExtractor graphics) {
         if (this.isHovered()) graphics.requestCursor(CursorTypes.IBEAM);
     }

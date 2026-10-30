@@ -22,14 +22,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
-// Minecraft 26.1's recipe displays, made on 1.21.1 from the recipes the client already has: what a recipe page shows
-// of each kind of recipe, every slot as the stacks it takes in turn.
 public sealed interface RecipeDisplay {
     SlotDisplay result();
 
     SlotDisplay craftingStation();
 
-    /** A recipe's display, or null for a kind of recipe pages don't show. */
     static @Nullable RecipeDisplay of(Recipe<?> recipe, RegistryAccess registries) {
         SlotDisplay result = SlotDisplay.of(recipe.getResultItem(registries));
         return switch (recipe) {
@@ -57,7 +54,6 @@ public sealed interface RecipeDisplay {
         return Blocks.FURNACE.asItem();
     }
 
-    /** A slot: the stacks it shows in turn. */
     record SlotDisplay(List<ItemStack> stacks) {
         public static final SlotDisplay EMPTY = new SlotDisplay(List.of());
 
@@ -73,12 +69,10 @@ public sealed interface RecipeDisplay {
             return ingredient.isEmpty() ? EMPTY : new SlotDisplay(Arrays.asList(ingredient.getItems()));
         }
 
-        // Every item that burns, as a furnace's fuel slot takes.
         static SlotDisplay fuel() {
             return new SlotDisplay(AbstractFurnaceBlockEntity.getFuel().keySet().stream().map(ItemStack::new).toList());
         }
 
-        // Every item a test takes (smithing recipes only answer whether a stack fits).
         static SlotDisplay matching(Predicate<ItemStack> test) {
             List<ItemStack> stacks = new ArrayList<>();
             for (Item item : BuiltInRegistries.ITEM) {

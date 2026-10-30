@@ -20,36 +20,23 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-// What the player has done with a book (a FoliosRecord): the entries read, the spreads shown, quests done and what has
-// been celebrated, bookmarks, and where they left off. The server keeps it, with the player, or on the copy of a book
-// that keeps its own; this is the client's working copy of it, sent back when it changes (save, as a book is closed).
-// The player's copies follow what the server syncs while they hold no unsent changes; a copy's is read from its stack
-// each time the book is opened.
 public final class FoliosMemory {
     private static final Map<ResourceLocation, FoliosMemory> PLAYER = new HashMap<>();
     public static final int MAX_BOOKMARKS = FoliosRecord.MAX_BOOKMARKS;
 
     private final ResourceLocation book;
-    // The hand the copy it is kept on is in, or null for the player's own.
     private final @Nullable InteractionHand hand;
-    // For a copy's: the player's, which hears of what is read too (for quests and celebrations).
     private final @Nullable FoliosMemory player;
     private final Set<String> read = new LinkedHashSet<>();
     private final Set<String> seen = new LinkedHashSet<>();
     private final Set<String> questsDone = new LinkedHashSet<>();
-    // What has been celebrated: "category:<id>", "mastery".
     private final Set<String> celebrated = new LinkedHashSet<>();
-    // The items had that the book's "obtained" locks and objectives ask for (ObtainedItems), by id.
     private final Set<String> obtained = new LinkedHashSet<>();
     private final List<FoliosBook.Location> bookmarks = new ArrayList<>();
     private FoliosBook.@Nullable Location last;
-    // Whether a handheld book was put away lying open: it then opens again by itself, where it was left.
     private boolean leftOpen;
-    // The spread last open when it wasn't an entry's (the front, a category, the index, the bookmarks): its chapter
-    // key and page, or null.
     private @Nullable String lastChapter;
     private int lastPage;
-    // What was last read from the server or sent to it; and whether there are changes since.
     private FoliosRecord loaded = FoliosRecord.EMPTY;
     private boolean dirty;
 
@@ -59,7 +46,6 @@ public final class FoliosMemory {
         this.player = player;
     }
 
-    /** The player's own memory of a book. */
     public static synchronized FoliosMemory of(ResourceLocation book) {
         return PLAYER.computeIfAbsent(book, id -> {
             FoliosMemory memory = new FoliosMemory(id, null, null);
@@ -68,10 +54,6 @@ public final class FoliosMemory {
         });
     }
 
-    /**
-     * The memory a reader of a book uses: for a book that keeps its own ({@code "progress": "book"}) opened from a copy
-     * in a hand, that copy's; otherwise the player's.
-     */
     public static FoliosMemory forReading(FoliosBook book, @Nullable InteractionHand hand) {
         FoliosMemory own = of(book.id());
         Player player = Minecraft.getInstance().player;
@@ -83,7 +65,6 @@ public final class FoliosMemory {
         return copy;
     }
 
-    /** The server has synced the player's records: each memory without unsent changes takes its book's. */
     public static synchronized void synced(Map<ResourceLocation, FoliosRecord> records) {
         for (FoliosMemory memory : PLAYER.values()) {
             FoliosRecord record = records.getOrDefault(memory.book, FoliosRecord.EMPTY);
@@ -91,7 +72,6 @@ public final class FoliosMemory {
         }
     }
 
-    /** Forgets every memory, as the player leaves a world or server: the next one has its own. */
     public static synchronized void forget() {
         PLAYER.clear();
     }
@@ -128,7 +108,6 @@ public final class FoliosMemory {
                 leftOpen, Optional.ofNullable(lastChapter), lastPage);
     }
 
-    /** Sends what changed to the server to keep (and, for a copy's, the player's too). */
     public void save() {
         if (player != null) player.save();
         FoliosRecord record;
@@ -153,7 +132,6 @@ public final class FoliosMemory {
         }
     }
 
-    /** Whether a spread ({@code "<chapter>|<page>"}) has been shown in full. */
     public synchronized boolean isSeen(String spread) {
         return seen.contains(spread);
     }
@@ -162,26 +140,22 @@ public final class FoliosMemory {
         if (seen.add(spread)) dirty = true;
     }
 
-    /** Notes a quest as done; returns whether it wasn't already. */
     public synchronized boolean markQuestDone(String entry) {
         if (!questsDone.add(entry)) return false;
         dirty = true;
         return true;
     }
 
-    /** The items had that the book asks about, by id. */
     public synchronized Set<String> obtained() {
         return Set.copyOf(obtained);
     }
 
-    /** Notes an item as had; returns whether it wasn't already. */
     public synchronized boolean markObtained(String item) {
         if (!obtained.add(item)) return false;
         dirty = true;
         return true;
     }
 
-    /** Marks something celebrated; false if it already was. */
     public synchronized boolean markCelebrated(String what) {
         if (!celebrated.add(what)) return false;
         dirty = true;
@@ -200,7 +174,6 @@ public final class FoliosMemory {
         return bookmarks.stream().anyMatch(location -> location.entry().equals(entry));
     }
 
-    /** Adds a bookmark at a place, or removes the entry's if it has one; returns whether it is bookmarked now. */
     public synchronized boolean toggleBookmark(FoliosBook.Location location) {
         dirty = true;
         if (bookmarks.removeIf(mark -> mark.entry().equals(location.entry()))) return false;
@@ -219,7 +192,6 @@ public final class FoliosMemory {
         dirty = true;
     }
 
-    /** The chapter key of the spread last open when it wasn't an entry's, or null; see {@link #lastPage()}. */
     public synchronized @Nullable String lastChapter() {
         return lastChapter;
     }
@@ -235,7 +207,6 @@ public final class FoliosMemory {
         dirty = true;
     }
 
-    /** Whether the book was put away lying open (a handheld book), to open by itself next time. */
     public synchronized boolean leftOpen() {
         return leftOpen;
     }
@@ -246,7 +217,6 @@ public final class FoliosMemory {
         dirty = true;
     }
 
-    /** Forgets everything read and shown, for the "start over" button. */
     public synchronized void clear() {
         read.clear();
         seen.clear();

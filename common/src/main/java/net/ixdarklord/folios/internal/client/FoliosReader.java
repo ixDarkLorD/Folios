@@ -15,6 +15,7 @@ import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.page.QuestPageElement;
 import net.ixdarklord.folios.internal.client.page.Shapes;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
+import net.ixdarklord.folios.internal.client.paint.EdgeFadePainter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
@@ -36,15 +37,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
+import java.util.function.IntFunction;
 
-// Reading a book a spread at a time, as both kinds of book do: what it is open at, where the reader has been, and
-// the leaves in the air while a spread changes. Its pages are the book's own (entries, laid out once per session) and
-// pages it makes for itself: a title page with the contents, each category's list of entries, search results and
-// bookmarks. Each part of the book starts on a fresh spread.
 public class FoliosReader implements AbstractPainter.Navigator {
     public static final float FLIP_MILLIS = 420;
     private static final int ROW = 23;
-    /** A row with a progress bar: 2 pixels of room over its name, and its line along the foot 6 pixels under the bar. */
     private static final int BAR_ROW = 27;
 
     public final FoliosBook book;
@@ -54,13 +51,10 @@ public class FoliosReader implements AbstractPainter.Navigator {
     private final Map<String, List<FoliosPageElement.Laid>> chapters = new HashMap<>();
     private final Deque<Spot> history = new ArrayDeque<>();
 
-    /** A place in the book: a part of it ("home", "category:<id>", "entry:<id>", "search:<words>", "bookmarks", "index") and the left page of a spread. */
     public record Spot(String chapter, int page) {}
 
-    /** Leaves in the air: what was open and what is opening (their pages and spreads), and which way they turn. */
     public record Flip(FoliosPageElement.@Nullable Laid oldLeft, FoliosPageElement.@Nullable Laid oldRight, FoliosPageElement.@Nullable Laid newLeft,
                        FoliosPageElement.@Nullable Laid newRight, boolean forward, long start, Spot from, Spot to) {
-        /** The spread whose left page lies to the left while the leaf turns, and whose right page lies to the right. */
         public Spot staticLeft() {
             return forward ? from : to;
         }
@@ -69,7 +63,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
             return forward ? to : from;
         }
 
-        /** The spread the leaf's face (a right page) belongs to, and its back's (a left page). */
         public Spot face() {
             return forward ? from : to;
         }
@@ -80,7 +73,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
     }
 
     public Spot spot;
-    /** How the book's ribbon tabs move. */
     public final TabMotion tabs = new TabMotion();
     public @Nullable Flip flip;
 
@@ -88,10 +80,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
         this(book, session, at, null);
     }
 
-    /**
-     * A reader of a book opened from a copy in {@code hand} (null for none: a command, a link, from code): a book that
-     * keeps its own progress reads and keeps that copy's.
-     */
     public FoliosReader(FoliosBook book, FoliosSession session, FoliosBook.@Nullable Location at, net.minecraft.world.@Nullable InteractionHand hand) {
         this.book = book;
         this.session = session;
@@ -108,8 +96,8 @@ public class FoliosReader implements AbstractPainter.Navigator {
             history.push(spot);
             this.spot = new Spot("entry:" + entry.id(), even(session.pageOf(start)));
             memory.markRead(entry.id());
+            if (at != null && at.element() >= 0) this.flash(entry.id(), FoliosSession.elementMarker(at));
         } else if (at == null && this.resumable(memory.lastChapter())) {
-            // Left on a spread that isn't an entry's: back there, if it is still in the book.
             String chapter = memory.lastChapter();
             int page = even(Math.max(0, memory.lastPage()));
             if (page >= this.chapter(chapter).size()) page = 0;
@@ -118,20 +106,12 @@ public class FoliosReader implements AbstractPainter.Navigator {
         }
     }
 
-    /**
-     * Reads on from pages laid out again when what they were laid out from changed (a live list a page observes, the
-     * reader's progress, the language), at the same place; not while a leaf is turning.
-     */
     public void keepCurrent() {
         if (flip != null || session.isCurrent()) return;
         FoliosSession fresh = FoliosLibrary.session(book.id(), session.layout().pageWidth(), session.layout().pageHeight());
         if (fresh != null) this.useSession(fresh);
     }
 
-    /**
-     * Reads on from pages laid out to another size (the screen's GUI scale or window changed): at the same place, an
-     * entry's page found again by the page of its JSON it came from, any other part at the same page as far as it goes.
-     */
     public void useSession(FoliosSession next) {
         if (next == session) return;
         FoliosBook.Location here = this.here();
@@ -142,8 +122,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
         spot = new Spot(spot.chapter, Math.max(0, Math.min(even(page), even(Math.max(0, this.chapter(spot.chapter).size() - 1)))));
     }
 
-    // Whether a spread the reader left on can be gone back to: the front, the index, the bookmarks, or a category the
-    // book still has open to them (not a search, made from what was typed).
     private boolean resumable(@Nullable String chapter) {
         if (chapter == null) return false;
         if (chapter.equals("home") || chapter.equals("index") || chapter.equals("bookmarks")) return true;
@@ -160,22 +138,16 @@ public class FoliosReader implements AbstractPainter.Navigator {
         return (net.ixdarklord.folios.internal.client.FoliosClock.millis() - openedAt) / 1000.0F;
     }
 
-    // ---- Revealing a spread's content ----
-
-    // When the spread now open started showing its content.
     private long revealAt = net.ixdarklord.folios.internal.client.FoliosClock.millis();
 
-    /** Whether the open spread's reveal waits to start: its pages aren't shown yet. */
     protected boolean revealHeld() {
         return false;
     }
 
-    /** Starts the open spread's reveal again from the beginning (as a handheld book comes open). */
     public void reveal() {
         revealAt = net.ixdarklord.folios.internal.client.FoliosClock.millis();
     }
 
-    /** The reveal a spread's pages use: its entry's own, or the book's. */
     public FoliosReveal.Use revealOf(Spot at) {
         if (at.chapter.startsWith("entry:")) {
             FoliosEntry entry = book.entry(at.chapter.substring(6));
@@ -184,11 +156,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
         return book.reveal();
     }
 
-    /**
-     * The painter to draw a page's content through, for a page of the spread at {@code at}: while a leaf turns, the
-     * spread it brings is hidden (its effect at the start), and once it is down its content shows as the effect has
-     * it. The page's own painter when there is nothing to reveal.
-     */
     public FoliosPainter revealing(FoliosPainter painter, Spot at, boolean right) {
         FoliosPageElement.Laid page = this.page(at, right ? 1 : 0);
         float progress = this.revealProgress(at, page, right);
@@ -196,39 +163,128 @@ public class FoliosReader implements AbstractPainter.Navigator {
                 progress, this.revealX(page, right));
     }
 
-    // Where a page is across what is revealed together: a spread's halves across the spread, a plain page on its own.
     private float revealX(FoliosPageElement.@Nullable Laid page, boolean right) {
         return right && page instanceof FoliosPageElement.SpreadHalf ? session.layout().pageWidth() : 0;
     }
 
-    /**
-     * Draws a page of the spread at {@code at} (its right page, or its left) as its reveal has it now, with what its
-     * effect draws over it.
-     */
     public void drawRevealed(FoliosPainter painter, FoliosPageElement.Laid page, Spot at, boolean right) {
         float progress = this.revealProgress(at, page, right);
-        if (progress >= 1) page.draw(painter);
-        else net.ixdarklord.folios.internal.client.paint.RevealPainter.draw(painter, page, FoliosReveals.get(this.revealOf(at).effect()), progress,
-                this.revealX(page, right));
+        if (progress >= 1) {
+            float lit = this.flashed(at, right);
+            if (lit > 0) this.drawFlash(painter, lit, false);
+            page.draw(painter);
+            if (lit > 0) this.drawFlash(painter, lit, true);
+        } else {
+            net.ixdarklord.folios.internal.client.paint.RevealPainter.draw(painter, page, FoliosReveals.get(this.revealOf(at).effect()), progress,
+                    this.revealX(page, right));
+        }
     }
 
-    // How far the reveal of a page of a spread has gone: 1 when there is nothing (more) to reveal. A spread page's
-    // halves reveal together; plain pages one after the other, the left then the right, each over the effect's length.
+    private record Flash(String chapter, FoliosLayout.Mark place, long[] since) {}
+
+    private static final long FLASH_MILLIS = 1800;
+    private @Nullable Flash flash;
+
+    private void flash(String entry, @Nullable String marker) {
+        FoliosLayout.Mark place = marker == null ? null : session.place(entry, marker);
+        flash = place == null ? null : new Flash("entry:" + entry, place, new long[] {-1});
+    }
+
+    private float flashed(Spot at, boolean right) {
+        Flash lit = flash;
+        if (lit == null || !lit.chapter().equals(at.chapter) || lit.place().page() != at.page + (right ? 1 : 0)) return 0;
+        long now = FoliosClock.millis();
+        if (lit.since()[0] < 0) {
+            if (this.flipProgress() < 1) return 0;
+            lit.since()[0] = now;
+            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.AMETHYST_BLOCK_CHIME, 1.6F, 0.7F));
+        }
+        float t = (now - lit.since()[0]) / (float) FLASH_MILLIS;
+        if (t >= 1) {
+            flash = null;
+            return 0;
+        }
+        if (t < 0.12F) {
+            float rise = t / 0.12F;
+            return rise * rise * (3 - 2 * rise);
+        }
+        float fall = (t - 0.12F) / 0.88F;
+        return 1 - fall * fall;
+    }
+
+    private static final int FLASH_RADIUS = 6;
+
+    private void drawFlash(FoliosPainter painter, float strength, boolean over) {
+        Flash lit = flash;
+        if (lit == null) return;
+        FoliosPalette palette = painter.palette();
+        int x0 = FoliosLayout.CONTENT_LEFT - 3;
+        int x1 = painter.contentRight() + 3;
+        int y0 = lit.place().top() - 3;
+        int y1 = lit.place().bottom() + 3;
+        int accent = palette.accent();
+        if (!over) {
+            rounded(painter, x0 - 2, y0 - 2, x1 + 2, y1 + 2, FLASH_RADIUS + 2, FoliosPalette.alpha(accent, Math.round(0x24 * strength)));
+            rounded(painter, x0, y0, x1, y1, FLASH_RADIUS, FoliosPalette.alpha(accent, Math.round(0x34 * strength)));
+            return;
+        }
+        rim(painter, x0, y0, x1, y1, FLASH_RADIUS, FoliosPalette.alpha(accent, Math.round(0xC8 * strength)));
+        float t = (FoliosClock.millis() - lit.since()[0]) / (float) FLASH_MILLIS;
+        float sweep = t / 0.4F;
+        if (sweep <= 0 || sweep >= 1) return;
+        int light = FoliosPalette.mix(accent, 0xFFFFFFFF, 0.65F);
+        float centre = x0 + (x1 - x0 + 24) * sweep - 12;
+        for (int x = Math.max(x0 + 1, (int) centre - 12); x < Math.min(x1 - 1, (int) centre + 12); x++) {
+            float near = 1 - Math.abs(x + 0.5F - centre) / 12;
+            int inset = Math.max(inset(FLASH_RADIUS, x - x0), inset(FLASH_RADIUS, x1 - 1 - x));
+            painter.fill(x, y0 + 1 + inset, x + 1, y1 - 1 - inset, FoliosPalette.alpha(light, Math.round(0x40 * near * near * strength)));
+        }
+    }
+
+    private static int inset(int r, int along) {
+        if (along >= r) return 0;
+        float dy = r - along - 0.5F;
+        return Math.round(r - (float) Math.sqrt(r * r - dy * dy));
+    }
+
+    private static void rounded(FoliosPainter painter, int x0, int y0, int x1, int y1, int r, int argb) {
+        r = Math.min(r, Math.min(x1 - x0, y1 - y0) / 2);
+        for (int row = 0; row < r; row++) {
+            int in = inset(r, row);
+            painter.fill(x0 + in, y0 + row, x1 - in, y0 + row + 1, argb);
+            painter.fill(x0 + in, y1 - row - 1, x1 - in, y1 - row, argb);
+        }
+        painter.fill(x0, y0 + r, x1, y1 - r, argb);
+    }
+
+    private static void rim(FoliosPainter painter, int x0, int y0, int x1, int y1, int r, int argb) {
+        r = Math.min(r, Math.min(x1 - x0, y1 - y0) / 2);
+        painter.fill(x0 + inset(r, 0), y0, x1 - inset(r, 0), y0 + 1, argb);
+        painter.fill(x0 + inset(r, 0), y1 - 1, x1 - inset(r, 0), y1, argb);
+        painter.fill(x0, y0 + r, x0 + 1, y1 - r, argb);
+        painter.fill(x1 - 1, y0 + r, x1, y1 - r, argb);
+        for (int row = 1; row < r; row++) {
+            int in = inset(r, row);
+            int width = Math.max(1, inset(r, row - 1) - in);
+            painter.fill(x0 + in, y0 + row, x0 + in + width, y0 + row + 1, argb);
+            painter.fill(x1 - in - width, y0 + row, x1 - in, y0 + row + 1, argb);
+            painter.fill(x0 + in, y1 - row - 1, x0 + in + width, y1 - row, argb);
+            painter.fill(x1 - in - width, y1 - row - 1, x1 - in, y1 - row, argb);
+        }
+    }
+
     private float revealProgress(Spot at, FoliosPageElement.@Nullable Laid page, boolean right) {
         FoliosReveal.Use use = this.revealOf(at);
         if (use.seconds() <= 0 || !net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings.transitions()
                 || use.once() && this.seen(at) || use.unread() && memory.isSeen(this.spreadKey(at))) {
-            // Nothing to reveal: the spread open now shows in full at once.
             if (at.equals(spot) && flip == null && !this.revealHeld()) this.shown(at);
             return 1;
         }
         if (flip != null) return at.equals(flip.to()) ? 0 : 1;
-        // Not yet shown (a handheld book's cover still opening): its reveal is still to come.
         if (this.revealHeld() && at.equals(spot)) return 0;
         if (!at.equals(spot)) return 1;
         float elapsed = (net.ixdarklord.folios.internal.client.FoliosClock.millis() - revealAt) / (use.seconds() * 1000.0F);
         boolean together = page instanceof FoliosPageElement.SpreadHalf;
-        // Shown in full, the whole spread: it has been seen, for reveals that play once (this game) or on unread pages.
         if (elapsed >= (together ? 1 : 2)) {
             SEEN.add(this.seenKey(at));
             this.shown(at);
@@ -236,17 +292,13 @@ public class FoliosReader implements AbstractPainter.Navigator {
         return Math.max(0, Math.min(1, together || !right ? elapsed : elapsed - 1));
     }
 
-    // The spreads seen this game, by book, part and page; and for each book, the entries read before it was first
-    // opened this game (their pages count as seen).
     private static final java.util.Set<String> SEEN = new java.util.HashSet<>();
     private static final java.util.Map<net.minecraft.resources.ResourceLocation, java.util.Set<String>> READ_BEFORE = new java.util.HashMap<>();
 
-    // A spread as the reader's memory knows it (for reveals that play only on unread pages): "<chapter>|<page>".
     private String spreadKey(Spot at) {
         return at.chapter + "|" + at.page;
     }
 
-    // A spread shown in full: kept as read, unless it is made from what was typed (a search), which can't come again.
     private void shown(Spot at) {
         if (at.chapter.equals("home") || at.chapter.equals("index") || at.chapter.equals("bookmarks")
                 || at.chapter.startsWith("category:") || at.chapter.startsWith("entry:")) memory.markSeen(this.spreadKey(at));
@@ -263,12 +315,9 @@ public class FoliosReader implements AbstractPainter.Navigator {
         return before != null && before.contains(at.chapter.substring(6));
     }
 
-    /** Whether the reader can move about now (a handheld book can't while it is being raised or shut). */
     protected boolean canMove() {
         return true;
     }
-
-    // ---- The parts of the book ----
 
     public List<FoliosPageElement.Laid> chapter(String key) {
         List<FoliosPageElement.Laid> pages = chapters.get(key);
@@ -281,7 +330,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
         else if (key.equals("index")) pages = this.indexPages();
         else pages = List.of();
         if (pages.isEmpty()) pages = List.of(painter -> {});
-        // What changes as the reader reads is made again each time it is opened.
         if (!key.startsWith("search:") && !key.equals("bookmarks") && !key.equals("index")) chapters.put(key, pages);
         return pages;
     }
@@ -295,13 +343,11 @@ public class FoliosReader implements AbstractPainter.Navigator {
     private List<FoliosPageElement.Laid> homePages() {
         List<FoliosPageElement.Laid> pages = new ArrayList<>();
         FoliosLayout layout = session.layout();
-        // Mastery, when the book has quests: how many of all their objectives are done, under its name.
         List<FoliosObjective> all = new ArrayList<>();
         for (FoliosCategory category : book.visibleCategories()) {
             for (FoliosEntry entry : book.entries(category.id())) all.addAll(entry.objectives());
         }
         boolean mastery = !all.isEmpty();
-        // The book's name, smaller or over two lines when it is long; what is under it moves down as far as it takes.
         Component bookTitle = book.title().copy().withStyle(ChatFormatting.BOLD);
         Name title = fit(layout.font(), bookTitle, layout.contentWidth());
         int titleBottom = (mastery ? 134 : 96) + title.extra();
@@ -331,7 +377,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
             if (title.cut() && painter.hovered(FoliosLayout.CONTENT_LEFT, y, contentWidth, title.height())) painter.tooltip(bookTitle);
             y += 10 + title.extra();
             if (!FoliosText.isBlank(book.subtitle())) {
-                // On one line, whole: made smaller as far as it must be to fit.
                 FormattedCharSequence subtitle = FoliosText.inline(book.subtitle()).copy().withStyle(ChatFormatting.ITALIC).getVisualOrderText();
                 int wide = painter.font().width(subtitle);
                 float fit = Math.min(1, contentWidth / (float) Math.max(1, wide));
@@ -354,13 +399,13 @@ public class FoliosReader implements AbstractPainter.Navigator {
             rows.add(new Row(category.isOpen() ? category.title() : Component.literal("???"), category.isOpen() ? category.icon() : FoliosIcon.NONE,
                     category.isOpen() ? "category:" + category.id() : null, () -> category.isOpen() && this.unread(category.id()), category.id()));
         }
-        pages.addAll(this.rows(Component.translatableWithFallback("folios.categories", "Categories"), null, rows));
+        Component heading = Component.translatableWithFallback("folios.categories", "Categories");
+        FoliosBook.CategoryView view = book.categoryView();
+        IntFunction<List<Line>> lines = width -> view.grid() ? this.gridLines(rows, width) : this.listLines(rows, width);
+        pages.addAll(view.scroll() ? this.scrolled(heading, lines) : this.paged(heading, null, lines.apply(layout.contentWidth())));
         return pages;
     }
 
-    // A framed slot for the book's icon on its first page: a rounded rim, a ring of the book's colour just inside it,
-    // and the face, each with the same soft corners so the rings run evenly round them; a faint shade along the face's
-    // top inside, as if it were sunk a little.
     private static void medallion(FoliosPainter painter, int x, int y, int size) {
         FoliosPalette palette = painter.palette();
         int rim = FoliosPalette.mix(palette.line(), palette.text(), 0.2F);
@@ -373,15 +418,12 @@ public class FoliosReader implements AbstractPainter.Navigator {
         painter.fill(x + 6, y + 4, x + size - 6, y + 5, FoliosPalette.mix(face, palette.line(), 0.35F));
     }
 
-    // A rectangle with its corners rounded off by three pixels.
     private static void rounded(FoliosPainter painter, int x0, int y0, int x1, int y1, int color) {
         painter.fill(x0 + 3, y0, x1 - 3, y1, color);
         painter.fill(x0 + 1, y0 + 1, x1 - 1, y1 - 1, color);
         painter.fill(x0, y0 + 3, x1, y1 - 3, color);
     }
 
-    // The mastery bar: a trophy and "Mastery" over it, under them "Progression:" with how far along it is in percent (a
-    // tick once all is done), then the bar of all the book's objectives, centred under the book's name.
     private void mastery(FoliosPainter painter, int middle, int y, List<FoliosObjective> all) {
         FoliosPalette palette = painter.palette();
         int done = 0;
@@ -392,7 +434,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
         int titleWidth = 9 + 3 + painter.font().width(title);
         int left = middle - titleWidth / 2;
         int cup = complete ? 0xFFE0B23A : FoliosPalette.mix(palette.muted(), palette.accent(), 0.5F);
-        // Mastered, the trophy cycles through a rainbow; until then it is quiet, a highlight down its cup's left.
         if (complete) {
             TROPHY.rainbow(painter, left, y - 1, painter.time(), 0xFFE0B23A);
         } else {
@@ -418,7 +459,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
         }
     }
 
-    // The mastery bar's tooltip: how far along overall, how many quests are done, and each quest with its own count.
     private List<Component> masteryTooltip(int done, List<FoliosObjective> all) {
         List<Component> lines = new ArrayList<>();
         lines.add(Component.translatableWithFallback("folios.mastery.title", "Mastery").withStyle(ChatFormatting.BOLD));
@@ -453,12 +493,9 @@ public class FoliosReader implements AbstractPainter.Navigator {
         return lines;
     }
 
-    // A small trophy, every pixel solid: a cup with a rim, loop handles, a stem and a foot.
     private static final net.ixdarklord.folios.internal.client.paint.PixelIcon TROPHY = net.ixdarklord.folios.internal.client.paint.PixelIcon.of("trophy", 9, 9);
-    /** A band of light sweeping across the trophy once the book is mastered: a flipbook over it. */
     private static final net.ixdarklord.folios.internal.client.paint.PixelIcon TROPHY_SHEEN = net.ixdarklord.folios.internal.client.paint.PixelIcon.of("trophy_sheen", 9, 9, 10);
 
-    // A divider under the book's name: two rules running out from a diamond, each ending in a dot.
     private static void flourish(FoliosPainter painter, int middle, int y) {
         FoliosPalette palette = painter.palette();
         int line = FoliosPalette.mix(palette.line(), palette.accent(), 0.35F);
@@ -482,7 +519,9 @@ public class FoliosReader implements AbstractPainter.Navigator {
 
     private List<FoliosPageElement.Laid> searchPages(String query) {
         List<Row> rows = new ArrayList<>();
-        for (FoliosEntry entry : session.search(query)) rows.add(this.entryRow(entry));
+        for (FoliosSession.Found found : session.search(query)) {
+            rows.add(found.listing() != null ? this.listingRow(found.entry(), found.listing()) : this.entryRow(found.entry()));
+        }
         String heading = rows.isEmpty() ? "Nothing matches \"" + query + "\"." : null;
         return this.rows(Component.translatableWithFallback("folios.search.results", "Search"), heading, rows);
     }
@@ -498,22 +537,36 @@ public class FoliosReader implements AbstractPainter.Navigator {
                 rows.isEmpty() ? "Nothing bookmarked yet." : null, rows);
     }
 
-    // Every entry of the book, A to Z, wherever it is: those not yet open as "???" at the end.
     private List<FoliosPageElement.Laid> indexPages() {
-        List<FoliosEntry> entries = new ArrayList<>();
+        record Listed(Row row, boolean open, String name) {}
+        List<Listed> listed = new ArrayList<>();
         for (FoliosCategory category : book.visibleCategories()) {
-            if (category.isOpen()) entries.addAll(book.entries(category.id()));
+            if (!category.isOpen()) continue;
+            for (FoliosEntry entry : book.entries(category.id())) {
+                listed.add(new Listed(this.entryRow(entry), entry.isOpen(), entry.title().getString()));
+                for (FoliosEntry.Listing listing : entry.listings()) {
+                    if (!listing.isVisible(entry)) continue;
+                    boolean open = listing.isOpen(entry);
+                    listed.add(new Listed(this.listingRow(entry, listing), open, open ? listing.title(entry).getString() : ""));
+                }
+            }
         }
-        entries.sort(java.util.Comparator.comparing((FoliosEntry entry) -> !entry.isOpen()).thenComparing(entry -> entry.title().getString().toLowerCase(java.util.Locale.ROOT)));
+        listed.sort(java.util.Comparator.comparing((Listed one) -> !one.open()).thenComparing(one -> one.name().toLowerCase(java.util.Locale.ROOT)));
         List<Row> rows = new ArrayList<>();
-        for (FoliosEntry entry : entries) rows.add(this.entryRow(entry));
+        for (Listed one : listed) rows.add(one.row());
         return this.rows(Component.translatableWithFallback("folios.index", "Index"), rows.isEmpty() ? "Nothing to list yet." : null, rows);
+    }
+
+    private Row listingRow(FoliosEntry entry, FoliosEntry.Listing listing) {
+        boolean open = listing.isOpen(entry);
+        Component title = open ? listing.title(entry) : Component.literal("???");
+        Row row = new Row(title, open ? listing.icon(entry) : FoliosIcon.NONE, open ? listing.link(entry) : null, () -> false, null);
+        return open && entry.isOpen() && !title.getString().equals(entry.title().getString()) ? row.withNote(entry.title()) : row;
     }
 
     private Row entryRow(FoliosEntry entry) {
         Row row = new Row(entry.isOpen() ? entry.title() : Component.literal("???"), entry.isOpen() ? entry.icon() : FoliosIcon.NONE,
                 entry.isOpen() ? "entry:" + entry.id() : null, () -> entry.isOpen() && !memory.isRead(entry.id()), null);
-        // A quest shows how far along it is.
         return entry.isOpen() && entry.isQuest() ? row.withQuest(entry.objectives()) : row;
     }
 
@@ -521,23 +574,41 @@ public class FoliosReader implements AbstractPainter.Navigator {
         return book.entries(category).stream().anyMatch(entry -> entry.isOpen() && !memory.isRead(entry.id()));
     }
 
-    /**
-     * A row of a list: what it says, its icon, where it goes (null for locked), whether to mark it as new, the
-     * category it opens (its read progress is shown), and the objectives of the quest it opens.
-     */
     private record Row(Component label, FoliosIcon icon, @Nullable String link, BooleanSupplier fresh, @Nullable String category,
-                       List<FoliosObjective> quest) {
+                       List<FoliosObjective> quest, @Nullable Component note) {
         Row(Component label, FoliosIcon icon, @Nullable String link, BooleanSupplier fresh, @Nullable String category) {
-            this(label, icon, link, fresh, category, List.of());
+            this(label, icon, link, fresh, category, List.of(), null);
         }
 
         Row withQuest(List<FoliosObjective> objectives) {
-            return new Row(label, icon, link, fresh, category, objectives);
+            return new Row(label, icon, link, fresh, category, objectives, note);
+        }
+
+        Row withNote(Component note) {
+            return new Row(label, icon, link, fresh, category, quest, note);
         }
     }
 
-    // A titled list, with text over it, as many pages as it takes.
+    private static final int NOTE_WIDTH = 46;
+
+    @FunctionalInterface
+    private interface LineDraw {
+        void draw(FoliosPainter painter, int y, int right);
+    }
+
+    private record Line(int height, LineDraw draw) {}
+
     private List<FoliosPageElement.Laid> rows(Component title, @Nullable String text, List<Row> rows) {
+        return this.paged(title, text, this.listLines(rows, session.layout().contentWidth()));
+    }
+
+    private List<Line> listLines(List<Row> rows, int width) {
+        List<Line> lines = new ArrayList<>();
+        for (Row row : rows) lines.add(new Line(this.height(row, width), (painter, y, right) -> this.row(painter, row, y, right)));
+        return lines;
+    }
+
+    private List<FoliosPageElement.Laid> paged(Component title, @Nullable String text, List<Line> lines) {
         FoliosLayout layout = session.layout();
         List<FoliosPageElement.Laid> pages = new ArrayList<>();
         FoliosText description = text == null ? null : layout.text(text);
@@ -546,13 +617,12 @@ public class FoliosReader implements AbstractPainter.Navigator {
         boolean firstPage = true;
         do {
             int y = firstPage ? top : FoliosLayout.CONTENT_TOP;
-            // As many rows as fit, each its own height; at least one.
             int fits = 0;
-            for (int at = y; index + fits < rows.size(); fits++) {
-                at += this.height(rows.get(index + fits));
+            for (int at = y; index + fits < lines.size(); fits++) {
+                at += lines.get(index + fits).height();
                 if (at > layout.contentBottom() && fits > 0) break;
             }
-            List<Row> on = rows.subList(index, Math.min(rows.size(), index + Math.max(1, fits)));
+            List<Line> on = lines.subList(index, Math.min(lines.size(), index + Math.max(1, fits)));
             index += on.size();
             boolean titled = firstPage;
             pages.add(painter -> {
@@ -560,52 +630,168 @@ public class FoliosReader implements AbstractPainter.Navigator {
                     FoliosLayout.title(painter, title, FoliosLayout.CONTENT_TOP);
                     if (description != null) description.draw(painter, FoliosLayout.CONTENT_LEFT, FoliosLayout.CONTENT_TOP + FoliosLayout.TITLE_HEIGHT);
                 }
-                int rowY = titled ? top : FoliosLayout.CONTENT_TOP;
-                for (Row row : on) {
-                    this.row(painter, row, rowY);
-                    rowY += this.height(row);
+                int lineY = titled ? top : FoliosLayout.CONTENT_TOP;
+                for (Line line : on) {
+                    line.draw().draw(painter, lineY, painter.contentRight());
+                    lineY += line.height();
                 }
             });
             firstPage = false;
-        } while (index < rows.size());
+        } while (index < lines.size());
         return pages;
     }
 
-    // Whether a row shows a bar: a category's reading (when the book shows it) or a quest's.
+    private static final int SCROLL_GAP = 3;
+    private static final int SCROLL_FADE = 12;
+    private static final int SCROLL_PAD = 2;
+
+    private List<FoliosPageElement.Laid> scrolled(Component title, IntFunction<List<Line>> laying) {
+        FoliosLayout layout = session.layout();
+        int top = FoliosLayout.CONTENT_TOP + FoliosLayout.TITLE_HEIGHT;
+        int room = layout.contentBottom() - top;
+        List<Line> whole = laying.apply(layout.contentWidth());
+        if (whole.stream().mapToInt(Line::height).sum() <= room) return this.paged(title, null, whole);
+        List<Line> lines = laying.apply(layout.contentWidth() - Shapes.SCROLLBAR - SCROLL_GAP);
+        int[] offsets = new int[lines.size() + 1];
+        for (int index = 0; index < lines.size(); index++) offsets[index + 1] = offsets[index] + lines.get(index).height();
+        int total = offsets[lines.size()];
+        int furthest = total - room;
+        float[] target = {0};
+        float[] eased = {-1, 0};
+        return List.of(painter -> {
+            FoliosLayout.title(painter, title, FoliosLayout.CONTENT_TOP);
+            int right = painter.contentRight();
+            int barX = right - Shapes.SCROLLBAR;
+            float now = painter.time();
+            if (eased[0] < 0 || now < eased[1]) eased[0] = target[0];
+            else eased[0] += (target[0] - eased[0]) * Math.min(1, (now - eased[1]) * 14);
+            if (Math.abs(target[0] - eased[0]) < 0.05F) eased[0] = target[0];
+            eased[1] = now;
+            float offset = eased[0];
+            int windowTop = top - SCROLL_PAD;
+            int windowBottom = top + room + SCROLL_PAD;
+            int left = FoliosLayout.CONTENT_LEFT - SCROLL_PAD;
+            painter.clip(left, windowTop, barX - 1 - left, windowBottom - windowTop, () -> {
+                FoliosPainter masked = EdgeFadePainter.window(painter, windowTop, windowBottom,
+                        Math.min(SCROLL_FADE, offset), Math.min(SCROLL_FADE, furthest - offset));
+                masked.push();
+                masked.translate(0, -offset);
+                for (int index = 0; index < lines.size(); index++) {
+                    int y = top + offsets[index];
+                    if (y + lines.get(index).height() - offset > windowTop && y - offset < windowBottom) {
+                        lines.get(index).draw().draw(masked, y, barX - SCROLL_GAP);
+                    }
+                }
+                masked.pop();
+            });
+            painter.scroll(FoliosLayout.CONTENT_LEFT, top, right - FoliosLayout.CONTENT_LEFT, room, notches -> {
+                int at = 0;
+                while (at < lines.size() && offsets[at] < target[0] - 0.5F) at++;
+                int next = notches > 0 ? Math.max(0, at - 1) : Math.min(lines.size(), offsets[at] > target[0] + 0.5F ? at : at + 1);
+                target[0] = Math.max(0, Math.min(furthest, offsets[next]));
+            });
+            int thumb = Math.max(8, room * room / total);
+            int travel = Math.max(1, room - thumb);
+            boolean held = painter.drag(barX - 2, top, Shapes.SCROLLBAR + 4, room,
+                    (dx, dy) -> target[0] = Math.max(0, Math.min(furthest, target[0] + dy * furthest / (float) travel)));
+            Shapes.scrollbar(painter, barX, top, room, top + Math.round(travel * offset / furthest), thumb, held);
+        });
+    }
+
+    private static final int TILE_WIDTH = 34;
+    private static final int TILE_GAP = 4;
+    private static final int TILE_CARD = 30;
+    private static final int TILE_NAME = 2 * Name.STEP;
+
+    private List<Line> gridLines(List<Row> rows, int width) {
+        int across = Math.max(1, (width + TILE_GAP) / (TILE_WIDTH + TILE_GAP));
+        int tile = (width - (across - 1) * TILE_GAP) / across;
+        int inset = (width - across * tile - (across - 1) * TILE_GAP) / 2;
+        boolean bars = rows.stream().anyMatch(this::barred);
+        int tall = TILE_CARD + 3 + TILE_NAME + (bars ? 7 : 0);
+        List<Line> lines = new ArrayList<>();
+        for (int start = 0; start < rows.size(); start += across) {
+            List<Row> on = rows.subList(start, Math.min(rows.size(), start + across));
+            lines.add(new Line(tall + TILE_GAP, (painter, y, right) -> {
+                for (int index = 0; index < on.size(); index++) {
+                    this.tile(painter, on.get(index), FoliosLayout.CONTENT_LEFT + inset + index * (tile + TILE_GAP), y, tile, tall);
+                }
+            }));
+        }
+        return lines;
+    }
+
+    private void tile(FoliosPainter painter, Row row, int x, int y, int width, int height) {
+        FoliosPalette palette = painter.palette();
+        boolean over = row.link != null && painter.action(x - 1, y - 1, width + 2, height + 2, null, () -> this.follow(row.link));
+        if (over) {
+            highlight(painter, x - 2, y - 2, x + width + 2, y + height + 2, FoliosPalette.alpha(palette.accent(), 0x2A));
+            FoliosCategory category = row.category == null ? null : book.category(row.category);
+            painter.tooltip(FoliosTooltips.of(row.label, category == null ? null : this.tabDetail(category, "")));
+        }
+        Shapes.panel(painter, x, y, x + width, y + TILE_CARD);
+        int middle = x + width / 2;
+        if (!row.icon.isEmpty()) {
+            painter.push();
+            painter.translate(middle - 12, y + 3);
+            painter.scale(1.5F);
+            row.icon.draw(EdgeFadePainter.quiet(painter), 0, 0);
+            painter.pop();
+        } else {
+            painter.push();
+            painter.translate(middle - 5, y + TILE_CARD / 2 - 7);
+            painter.scale(2);
+            painter.text(Component.literal("?"), 0, 0, palette.muted());
+            painter.pop();
+        }
+        if (row.fresh.getAsBoolean()) {
+            net.ixdarklord.folios.internal.client.screen.FoliosBar.sparkle(painter, x + width - 9, y + 2, x * 0.037F, palette.accent() | 0xFF000000);
+        }
+        Name name = fit(painter.font(), row.label, width - 2);
+        int nameColor = row.link == null ? palette.muted() : over ? palette.heading() : palette.text();
+        int nameY = y + TILE_CARD + 3 + (TILE_NAME - name.height()) / 2;
+        for (int line = 0; line < name.lines().size(); line++) {
+            FormattedCharSequence shown = name.lines().get(line);
+            float wide = painter.font().width(shown) * name.scale();
+            painter.push();
+            painter.translate(middle - wide / 2, nameY + (name.lines().size() == 1 ? (1 - name.scale()) * 4 : line * Name.STEP));
+            painter.scale(name.scale());
+            painter.text(shown, 0, 0, nameColor);
+            painter.pop();
+        }
+        if (row.category != null && book.showProgress() && row.link != null) {
+            int[] read = this.progress(row.category);
+            float progress = read[1] == 0 ? 0 : read[0] / (float) read[1];
+            if (read[1] > 1) QuestPageElement.stepped(painter, x + 2, y + height - 5, width - 4, progress, read[1], progress >= 1 ? 0xFF4CAF50 : palette.accent());
+        }
+    }
+
     private boolean barred(Row row) {
         return row.category != null && book.showProgress() && row.link != null || !row.quest.isEmpty();
     }
 
-    private int height(Row row) {
-        return (this.barred(row) ? BAR_ROW : ROW) + this.name(row, session.layout().font(), session.layout().contentWidth()).extra();
+    private int height(Row row, int width) {
+        return (this.barred(row) ? BAR_ROW : ROW) + this.name(row, session.layout().font(), width).extra();
     }
 
-    /** A row's name as drawn: its lines, the scale they are drawn at, and whether it was cut short. */
     private record Name(List<FormattedCharSequence> lines, float scale, boolean cut) {
-        /** The most lines a name takes, and the smallest it is drawn. */
         static final int MOST = 2;
         static final float SMALL = 0.75F;
-        /** From one line of a name drawn small to the next. */
         static final int STEP = 8;
 
-        /** How much taller than a name of one line it is. */
         int extra() {
             return (lines.size() - 1) * STEP;
         }
 
-        /** How tall its text is, from its top. */
         int height() {
             return lines.size() == 1 ? 8 : lines.size() * STEP;
         }
     }
 
-    // A row's name in the room it has (see fit).
     private Name name(Row row, Font font, int contentWidth) {
         return fit(font, row.label, Math.max(10, contentWidth - 20 - FRESH - this.countWidth(row, font)));
     }
 
-    // Text in the room it has: as it is if it fits; else smaller, down to three quarters; else over two lines at that,
-    // the last cut short with an ellipsis if even they aren't enough.
     private static Name fit(Font font, Component text, int room) {
         int width = font.width(text);
         if (width <= room) return new Name(List.of(text.getVisualOrderText()), 1, false);
@@ -624,18 +810,19 @@ public class FoliosReader implements AbstractPainter.Navigator {
         return new Name(lines, Name.SMALL, parts.size() > Name.MOST);
     }
 
-    /** The room kept at a row's end for the sparkle of one unread, whether or not it shows now. */
     private static final int FRESH = 10;
 
-    // How wide a row's count is, with the room after it; 0 for a row without one.
     private int countWidth(Row row, Font font) {
         Component count = this.count(row);
         return count == null ? 0 : font.width(count) + 4;
     }
 
-    // A row's count: a category's entries read of all its entries (when the book shows it), or a quest's objectives
-    // done of all of them ("✔" once all are).
     private @Nullable Component count(Row row) {
+        if (row.note != null) {
+            Font font = session.layout().font();
+            if (font.width(row.note) <= NOTE_WIDTH) return row.note;
+            return Component.literal(font.plainSubstrByWidth(row.note.getString(), NOTE_WIDTH - font.width("…")) + "…");
+        }
         if (row.category != null && book.showProgress() && row.link != null) {
             int[] read = this.progress(row.category);
             return Component.literal(read[0] + "/" + read[1]);
@@ -646,8 +833,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
         return done == row.quest.size() ? Component.literal("✔") : Component.literal(done + "/" + row.quest.size());
     }
 
-    // A row's highlight under the pointer: a box with its corners rounded by 2 pixels, in rows that don't overlap so
-    // its see-through colour stays even.
     private static void highlight(FoliosPainter painter, int x0, int y0, int x1, int y1, int argb) {
         painter.fill(x0 + 2, y0, x1 - 2, y0 + 1, argb);
         painter.fill(x0 + 1, y0 + 1, x1 - 1, y0 + 2, argb);
@@ -656,31 +841,26 @@ public class FoliosReader implements AbstractPainter.Navigator {
         painter.fill(x0 + 2, y1 - 1, x1 - 2, y1, argb);
     }
 
-    private void row(FoliosPainter painter, Row row, int y) {
+    private void row(FoliosPainter painter, Row row, int y, int right) {
         FoliosPalette palette = painter.palette();
         int left = FoliosLayout.CONTENT_LEFT;
-        int right = painter.contentRight();
-        int height = this.height(row);
+        int height = this.height(row, right - left);
         boolean over = row.link != null && painter.action(left - 2, y, right - left + 4, height - 1, null, () -> this.follow(row.link));
         if (over) highlight(painter, left - 2, y, right + 2, y + height - 1, FoliosPalette.alpha(palette.accent(), 0x2A));
         boolean barred = this.barred(row);
         Name name = this.name(row, painter.font(), right - left);
-        // Without a bar: the icon with 3 pixels of paper over it and under it before the lines, the name centred on it.
-        // With one: the name 2 pixels further down than the row before's line, the bar under it, the icon centred
-        // between the name's top and the line along the foot.
         int iconY = barred ? (y + 3 + y + height - 2) / 2 - 8 : y + 2 + name.extra() / 2;
         int textY = barred ? y + 3 : iconY + 8 - name.height() / 2;
         if (!row.icon.isEmpty()) {
             painter.push();
             painter.translate(left, iconY);
-            row.icon.draw(painter, 0, 0);
+            row.icon.draw(row.category != null ? EdgeFadePainter.quiet(painter) : painter, 0, 0);
             painter.pop();
         } else {
             painter.centeredText(Component.literal("?"), left + 8, iconY + 4, palette.muted());
         }
         boolean fresh = row.fresh.getAsBoolean();
         int textRight = right - (fresh ? FRESH : 0);
-        // How far along it is: a count at the right and a bar along its foot, for a category's reading or a quest.
         float progress = -1;
         int steps = 1;
         Component count = null;
@@ -693,6 +873,8 @@ public class FoliosReader implements AbstractPainter.Navigator {
             progress = FoliosObjective.progress(book, row.quest);
             steps = row.quest.size();
             count = this.count(row);
+        } else if (row.note != null) {
+            count = this.count(row);
         }
         boolean complete = progress >= 1;
         if (count != null) {
@@ -700,7 +882,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
             painter.text(count, textRight - width, textY, complete ? 0xFF3E8E41 : palette.muted());
             textRight -= width + 4;
         }
-        // Its name: smaller, or over two lines, when it is too long for its line; one cut short is shown whole when hovered.
         int nameColor = row.link == null ? palette.muted() : over ? palette.heading() : palette.text();
         for (int line = 0; line < name.lines().size(); line++) {
             painter.push();
@@ -710,30 +891,19 @@ public class FoliosReader implements AbstractPainter.Navigator {
             painter.pop();
         }
         if (name.cut() && painter.hovered(left + 20, textY, textRight - left - 20, name.height())) painter.tooltip(row.label);
-        // Unread: a little four-pointed sparkle at the row's end, blinking now and then (each row at its own moment).
         if (fresh) net.ixdarklord.folios.internal.client.screen.FoliosBar.sparkle(painter, right - 7, textY, y * 0.037F,
                 palette.accent() | 0xFF000000);
         if (progress >= 0) {
             QuestPageElement.stepped(painter, left + 20, textY + 11 + name.extra(), right - left - 21, progress, steps, complete ? 0xFF4CAF50 : palette.accent());
         }
-        // The line along the row's foot, as every row has; under a bar it falls 6 pixels below the bar's edge.
         painter.fill(left + 20, y + height - 2, right, y + height - 1, FoliosPalette.alpha(palette.line(), 0x60));
     }
 
-    /**
-     * What is printed round a page's content: its number, the clasp in its lower outer corner that turns back (on a
-     * left page) or on (on a right page), and on a right page of a book that can be shut, the clasp at its head that
-     * shuts it. They belong to the page, so they turn with it; they are pressable only on a settled spread. Where the
-     * book's layout puts them ({@link FoliosBook.Layout}).
-     *
-     * @param shut what the shut clasp does; null for a book with none
-     */
     public void chrome(FoliosPainter painter, Spot spot, boolean right, boolean pressable, @Nullable Runnable shut) {
         FoliosPalette palette = painter.palette();
         FoliosBook.Layout layout = book.layout();
         int width = painter.pageWidth();
         int size = Shapes.BUTTON;
-        // The shut clasp is the book's, there whether or not the spread has a right-hand page.
         if (right && shut != null) {
             int x = width - layout.closeX() - size;
             int top = layout.closeY();
@@ -744,11 +914,8 @@ public class FoliosReader implements AbstractPainter.Navigator {
         if (laid == null) return;
         int bottom = painter.pageHeight();
         if (laid instanceof FoliosPageElement.SpreadHalf) {
-            // One number for the spread, at the fold, each page printing its own part of it.
             Shapes.acrossFold(painter, Component.literal(String.valueOf(spot.page + 1)).getVisualOrderText(), bottom - layout.numberY(), palette.muted(), right);
         } else {
-            // Centred on the frame's stud at the foot of the page (on its middle pixel) by the pixels it draws: a glyph's
-            // width counts the gap after it, which would leave the number a pixel short of the stud's middle.
             Component number = Component.literal(String.valueOf(spot.page + (right ? 2 : 1)));
             painter.text(number, width / 2 + layout.numberX() - (painter.font().width(number) - 1) / 2, bottom - layout.numberY(), palette.muted());
         }
@@ -770,24 +937,17 @@ public class FoliosReader implements AbstractPainter.Navigator {
         }
     }
 
-    /**
-     * A tab's colour: its category's own (or the book's accent, for the front, bookmarks and categories without one),
-     * full where the reader is, a little deeper under the pointer, and deeper still towards the cover otherwise.
-     */
     public int tabColor(@Nullable FoliosCategory category, FoliosPalette palette, boolean here, boolean hovered) {
         return this.tabColor(category, palette, here ? 1 : hovered ? 0.55F : 0);
     }
 
-    /** A tab's colour as it moves: from its resting colour at 0 to its full one at 1 ({@link TabMotion#out}). */
     public int tabColor(@Nullable FoliosCategory category, FoliosPalette palette, float out) {
         int base = category != null && category.color() >= 0 ? 0xFF000000 | category.color() : palette.accent() | 0xFF000000;
-        // Past 1 as it overshoots it glows a little brighter; knocked in below 0 it stays at its resting colour.
         float t = Math.max(0, out);
         if (t > 1) return FoliosPalette.mix(base, 0xFFFFFFFF, 0.3F * (t - 1));
         return FoliosPalette.mix(base, 0xFF000000 | book.cover(), 0.4F * (1 - t));
     }
 
-    /** What a tab's tooltip says under its name: how much of a category has been read, what the others hold. */
     public @Nullable Component tabDetail(@Nullable FoliosCategory category, String part) {
         if (category != null) {
             int[] read = this.progress(category.id());
@@ -801,12 +961,10 @@ public class FoliosReader implements AbstractPainter.Navigator {
         };
     }
 
-    /** The key a tab moves by: its category, or the part of the book it opens ("home", "bookmarks", "index"). */
     public static String tabKey(@Nullable FoliosCategory category, String part) {
         return category != null ? "category:" + category.id() : part;
     }
 
-    /** Entries read and entries open, in a category or (for null) the whole book. */
     public int[] progress(@Nullable String category) {
         int read = 0;
         int total = 0;
@@ -819,8 +977,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
         }
         return new int[]{read, total};
     }
-
-    // ---- Moving about ----
 
     public boolean canTurn(int direction) {
         if (direction < 0) return spot.page > 0 || !history.isEmpty();
@@ -838,7 +994,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
         this.moveTo(new Spot(spot.chapter, page), direction > 0);
     }
 
-    /** Goes to a spread of the open part, by its left page. */
     public void turnTo(int page) {
         if (!this.canMove() || page == spot.page || page < 0 || page >= this.chapter(spot.chapter).size()) return;
         this.moveTo(new Spot(spot.chapter, even(page)), page > spot.page);
@@ -851,7 +1006,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
 
     public void go(Spot next) {
         if (next.equals(spot) || !this.canMove()) return;
-        // A new search replaces the last rather than piling up.
         if (!(spot.chapter.startsWith("search:") && next.chapter.startsWith("search:"))) history.push(spot);
         if (history.size() > 64) history.removeLast();
         this.moveTo(next, true);
@@ -869,21 +1023,15 @@ public class FoliosReader implements AbstractPainter.Navigator {
         flip = new Flip(this.page(from, 0), this.page(from, 1), this.page(next, 0), this.page(next, 1), forward, net.ixdarklord.folios.internal.client.FoliosClock.millis(), from, next);
     }
 
-    /**
-     * Goes where someone this book is read along with has gone, turning a leaf the way theirs turned: onwards through
-     * the part they are in, back within it, onwards to another. Quiet: the sound is theirs, heard where they are.
-     */
     public void moveAlong(Spot next) {
         if (next.equals(spot)) return;
         this.leaf(next, !next.chapter.equals(spot.chapter) || next.page > spot.page);
     }
 
-    /** How far the leaf in the air has turned, 0 to 1; 1 when none is. */
     public float flipProgress() {
         if (flip == null) return 1;
         float progress = (net.ixdarklord.folios.internal.client.FoliosClock.millis() - flip.start()) / FLIP_MILLIS;
         if (progress >= 1) {
-            // The leaf is down: the spread it brought starts showing its content.
             revealAt = flip.start() + (long) FLIP_MILLIS;
             flip = null;
             return 1;
@@ -899,10 +1047,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
         this.go(new Spot("category:" + id, 0));
     }
 
-    /**
-     * Shows what a search finds. The leaf turns once, as the results first open; while they are open, a changed
-     * search changes them where they lie.
-     */
     public void search(String query) {
         Spot next = new Spot("search:" + query.strip(), 0);
         if (spot.chapter.startsWith("search:")) {
@@ -927,7 +1071,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
         return !history.isEmpty();
     }
 
-    // The popup window pressing a link pinned over the book, until it is put away.
     private net.ixdarklord.folios.api.client.page.@Nullable FoliosPopup pinned;
 
     public net.ixdarklord.folios.api.client.page.@Nullable FoliosPopup pinned() {
@@ -938,10 +1081,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
         pinned = null;
     }
 
-    /**
-     * Mentions a page of the open spread in chat (FoliosMentions): the right one, or the left; the book's front from
-     * its front spread. False where there is no page to mention (a list of entries, a search).
-     */
     public boolean mention(boolean right) {
         if (spot.chapter.equals("home")) {
             FoliosMentions.mention(book.id(), null);
@@ -956,7 +1095,6 @@ public class FoliosReader implements AbstractPainter.Navigator {
 
     @Override
     public void follow(String link) {
-        // A kind of a mod's own (FoliosLinks): what it does when pressed, else its popup pinned.
         net.ixdarklord.folios.api.client.FoliosLinks.Found found = net.ixdarklord.folios.api.client.FoliosLinks.find(link);
         if (found != null) {
             if (!found.kind().isOpen(book, found.target()) || found.kind().press(book, found.target())) return;
@@ -977,12 +1115,14 @@ public class FoliosReader implements AbstractPainter.Navigator {
             this.category(target.category());
         } else if (target.entry() != null) {
             this.go(new Spot("entry:" + target.entry(), even(target.page())));
+            this.flash(target.entry(), target.marker());
         }
     }
 
     @Override
     public void open(FoliosBook.Location location) {
         this.go(new Spot("entry:" + location.entry(), even(session.pageOf(location))));
+        if (location.element() >= 0) this.flash(location.entry(), FoliosSession.elementMarker(location));
     }
 
     @Override
@@ -990,22 +1130,18 @@ public class FoliosReader implements AbstractPainter.Navigator {
         return spot.chapter.startsWith("entry:") ? session.location(spot.chapter.substring(6), spot.page) : null;
     }
 
-    /** The entry open, if an entry is. */
     public @Nullable FoliosEntry entry() {
         return spot.chapter.startsWith("entry:") ? book.entry(spot.chapter.substring(6)) : null;
     }
 
-    /** The category the reader is in: open, or the one of the entry open. */
     public @Nullable FoliosCategory category() {
         if (spot.chapter.startsWith("category:")) return book.category(spot.chapter.substring(9));
         FoliosEntry entry = this.entry();
         return entry != null ? book.category(entry.category()) : null;
     }
 
-    /** Remembers where the reader left off. */
     public void save() {
         FoliosBook.Location here = this.here();
-        // An entry is remembered as where in it the reader was; any other spread (but a search) by its chapter.
         if (here != null) memory.setLast(here);
         boolean other = here == null && !spot.chapter.startsWith("search:");
         memory.setLastSpread(other ? spot.chapter : null, other ? spot.page : 0);

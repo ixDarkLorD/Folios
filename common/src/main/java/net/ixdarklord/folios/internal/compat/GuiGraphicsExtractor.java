@@ -23,8 +23,6 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
-// Minecraft 26.1's GUI drawing calls, on 1.21.1's GuiGraphics, so the screens read the same on every version. 1.21.1
-// draws as it's called, so a "stratum" is just what's drawn after the last flush.
 public final class GuiGraphicsExtractor {
     private static @Nullable GuiGraphicsExtractor last;
 
@@ -36,7 +34,6 @@ public final class GuiGraphicsExtractor {
         this.pose = new Pose(raw.pose());
     }
 
-    /** The 26.1-style view of a GuiGraphics (one per frame's graphics, reused). */
     public static GuiGraphicsExtractor of(GuiGraphics raw) {
         GuiGraphicsExtractor cached = last;
         if (cached != null && cached.raw == raw) return cached;
@@ -59,8 +56,6 @@ public final class GuiGraphicsExtractor {
         return this.raw.guiHeight();
     }
 
-    // --- Shapes ---
-
     public void fill(int x0, int y0, int x1, int y1, int color) {
         this.raw.fill(x0, y0, x1, y1, color);
     }
@@ -69,12 +64,9 @@ public final class GuiGraphicsExtractor {
         this.raw.fillGradient(x0, y0, x1, y1, top, bottom);
     }
 
-    /** A text selection's inverted box. */
     public void textHighlight(int x0, int y0, int x1, int y1, boolean focused) {
         this.raw.fill(RenderType.guiTextHighlight(), x0, y0, x1, y1, 0xFF0000FF);
     }
-
-    // --- Text: 1.21.1 draws a nearly transparent color opaque, so those are skipped ---
 
     public void text(Font font, @Nullable String text, int x, int y, int color, boolean shadow) {
         if (text != null && visible(color)) this.raw.drawString(font, text, x, y, color, shadow);
@@ -104,7 +96,6 @@ public final class GuiGraphicsExtractor {
         return (color & 0xFC000000) != 0;
     }
 
-    /** A collector that draws the lines handed to it, with the hover of what's under the mouse. */
     public ActiveTextCollector textRenderer() {
         return this.textRenderer(HoveredTextEffects.TOOLTIP_ONLY);
     }
@@ -113,7 +104,6 @@ public final class GuiGraphicsExtractor {
         return new RenderingTextCollector(effects);
     }
 
-    /** What text shows of the part under the mouse (1.21.1 has no mouse cursor shapes, so only its tooltip). */
     public enum HoveredTextEffects {
         NONE(false),
         TOOLTIP_ONLY(true),
@@ -146,7 +136,6 @@ public final class GuiGraphicsExtractor {
             int left = alignment.calculateLeft(anchorX, font, text);
             GuiGraphicsExtractor.this.text(font, text, left, y, Math.round(0xFF * Math.clamp(parameters.opacity(), 0, 1)) << 24 | 0xFFFFFF, true);
             if (!this.effects.allowTooltip || minecraft.screen == null) return;
-            // The mouse, through the current transform: the text may be drawn moved.
             double mouseX = minecraft.mouseHandler.xpos() * minecraft.getWindow().getGuiScaledWidth() / minecraft.getWindow().getScreenWidth();
             double mouseY = minecraft.mouseHandler.ypos() * minecraft.getWindow().getGuiScaledHeight() / minecraft.getWindow().getScreenHeight();
             Vector3f local = new Matrix4f(GuiGraphicsExtractor.this.raw.pose().last().pose()).invert().transformPosition(new Vector3f((float) mouseX, (float) mouseY, 0));
@@ -158,7 +147,6 @@ public final class GuiGraphicsExtractor {
         }
     }
 
-    // A hover event's text, as the game's own tooltip of it has it (an entity's, or plain text); an item's is its own tooltip.
     private static @Nullable List<FormattedCharSequence> hoverLines(Font font, Style style) {
         HoverEvent hover = style.getHoverEvent();
         if (hover == null) return null;
@@ -173,23 +161,16 @@ public final class GuiGraphicsExtractor {
         return text == null ? null : font.split(text, Math.max(minecraft.getWindow().getGuiScaledWidth() / 2, 200));
     }
 
-    // --- Items ---
-
-    /** An item as an icon, without what a stack in a slot shows over it. */
     public void fakeItem(ItemStack stack, int x, int y) {
         this.raw.renderFakeItem(stack, x, y);
-        // 1.21.1 draws an item in depth, well in front of the screen: the depth is cleared, so what's drawn after goes
-        // over it, as it does on 26.1.
         this.raw.flush();
         RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
     }
 
-    /** The count and durability bar of a stack in a slot, over its icon. */
     public void itemDecorations(Font font, ItemStack stack, int x, int y) {
         this.raw.renderItemDecorations(font, stack, x, y);
     }
 
-    /** A GL texture (a render target's) over a box, with a colour: 26.1's blit of a texture view. */
     public void texture(int textureId, int x0, int y0, int x1, int y1, float u0, float u1, float v0, float v1, int color) {
         if ((color >>> 24) == 0) return;
         this.raw.flush();
@@ -207,8 +188,6 @@ public final class GuiGraphicsExtractor {
         com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(builder.buildOrThrow());
         RenderSystem.disableBlend();
     }
-
-    // --- Textures (the pipeline is 26.1's; 1.21.1 blends them all alike) ---
 
     public void blit(Object pipeline, ResourceLocation texture, int x, int y, float u, float v, int width, int height,
                      int regionWidth, int regionHeight, int textureWidth, int textureHeight, int color) {
@@ -258,9 +237,6 @@ public final class GuiGraphicsExtractor {
         RenderSystem.disableBlend();
     }
 
-    // --- Clipping and layers ---
-
-    /** Clips to a box given in the current transform (1.21.1's scissor ignores the transform, 26.1's doesn't). */
     public void enableScissor(int x0, int y0, int x1, int y1) {
         Matrix4f matrix = this.raw.pose().last().pose();
         Vector3f a = matrix.transformPosition(new Vector3f(x0, y0, 0));
@@ -272,12 +248,10 @@ public final class GuiGraphicsExtractor {
         this.raw.disableScissor();
     }
 
-    /** What's drawn next goes over what came before. */
     public void nextStratum() {
         this.raw.flush();
     }
 
-    /** Blurs what's drawn so far (the panorama or the world), as vanilla's menu background does. */
     public void blurBeforeThisStratum() {
         this.raw.flush();
         Minecraft minecraft = Minecraft.getInstance();
@@ -285,12 +259,9 @@ public final class GuiGraphicsExtractor {
         minecraft.getMainRenderTarget().bindWrite(false);
     }
 
-    /** Asks for a mouse cursor shape for this frame (1.21.1 has none of its own: Cursors sets it on the window). */
     public void requestCursor(CursorTypes cursor) {
         Cursors.request(cursor);
     }
-
-    // --- Tooltips, drawn by the screen after everything else ---
 
     public void setTooltipForNextFrame(Font font, List<FormattedCharSequence> lines, int x, int y) {
         this.setTooltipForNextFrame(font, lines, DefaultTooltipPositioner.INSTANCE, x, y, false);
@@ -307,7 +278,6 @@ public final class GuiGraphicsExtractor {
                 positioner.positionTooltip(screenWidth, screenHeight, x, y, width, height), true);
     }
 
-    /** 26.1's 2D transform stack, on 1.21.1's PoseStack. */
     public static final class Pose {
         private final PoseStack stack;
 

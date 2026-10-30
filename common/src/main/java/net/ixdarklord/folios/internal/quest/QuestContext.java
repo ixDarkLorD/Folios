@@ -12,13 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * What one check of a player's quests reads, gathered once for all of them: the player, what the server already knows of
- * their quests, and their inventory as it is now.
- */
 final class QuestContext {
     final ServerPlayer player;
-    // Kept up to date through a check, so later quests see earlier ones it finished.
     PlayerQuests state;
     private final List<ItemStack> inventory = new ArrayList<>();
 
@@ -32,7 +27,6 @@ final class QuestContext {
         }
     }
 
-    /** The stacks the player carries now. */
     List<ItemStack> inventory() {
         return inventory;
     }
@@ -51,7 +45,6 @@ final class QuestContext {
         return state.progress(quest).done();
     }
 
-    /** A flag: the player's own, or one a mod works out ({@link FoliosQuests#registerFlag}); a leading ! reverses it. */
     boolean flag(String flag) {
         boolean not = flag.startsWith("!");
         String name = not ? flag.substring(1) : flag;

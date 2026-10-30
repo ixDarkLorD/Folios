@@ -15,18 +15,11 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
-/**
- * What a reveal effect draws over a page, faded out towards the page's edges and its fold, so sparks, smoke, light and
- * runes melt into the paper instead of stopping short at its border. Each thing drawn takes the fade of where its
- * middle is on the page; past the page it isn't drawn.
- */
 public final class EdgeFadePainter implements FoliosPainter {
-    /** How far in from each edge (page pixels) the fade reaches. */
     private static final float MARGIN = 14;
 
     private final FoliosPainter painter;
 
-    // The page's size is the painter's it wraps.
     @Override
     public int pageWidth() {
         return painter.pageWidth();
@@ -41,7 +34,6 @@ public final class EdgeFadePainter implements FoliosPainter {
     private float scale;
     private final Deque<float[]> stack = new ArrayDeque<>();
 
-    /** Wraps a page's painter; (x, y) and {@code scale} are where its own pixels are on the page now. */
     public EdgeFadePainter(FoliosPainter painter, float x, float y, float scale) {
         this.painter = painter;
         this.offsetX = x;
@@ -49,13 +41,50 @@ public final class EdgeFadePainter implements FoliosPainter {
         this.scale = scale;
     }
 
-    // How much shows at a point of the painter's pixels: 1 well inside, falling smoothly to 0 at the edges.
+    private float windowTop = Float.NaN;
+    private float windowBottom;
+    private float fadeTop;
+    private float fadeBottom;
+    private boolean quiet;
+
+    public static EdgeFadePainter window(FoliosPainter painter, float top, float bottom, float fadeTop, float fadeBottom) {
+        EdgeFadePainter faded = new EdgeFadePainter(painter, 0, 0, 1);
+        faded.windowTop = top;
+        faded.windowBottom = bottom;
+        faded.fadeTop = fadeTop;
+        faded.fadeBottom = fadeBottom;
+        return faded;
+    }
+
+    public static EdgeFadePainter quiet(FoliosPainter painter) {
+        return window(painter, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, 0, 0).quiet();
+    }
+
+    public EdgeFadePainter quiet() {
+        this.quiet = true;
+        return this;
+    }
+
     private float fade(float x, float y) {
         float px = offsetX + x * scale;
         float py = offsetY + y * scale;
+        if (!Float.isNaN(windowTop)) return Math.min(ramp(py - windowTop, fadeTop), ramp(windowBottom - py, fadeBottom));
         float inside = Math.min(Math.min(px, this.pageWidth() - px), Math.min(py, this.pageHeight() - py));
-        float t = Math.max(0, Math.min(1, inside / MARGIN));
+        return ramp(inside, MARGIN);
+    }
+
+    private static float ramp(float inside, float margin) {
+        if (margin <= 0) return inside >= 0 ? 1 : 0;
+        float t = Math.max(0, Math.min(1, inside / margin));
         return t * t * (3 - 2 * t);
+    }
+
+    public void quietItem(ItemStack stack, int x, int y, int argb) {
+        float fade = this.fade(x + 8, y + 8);
+        if (fade <= 0.01F) return;
+        if (painter instanceof EdgeFadePainter edge) edge.quietItem(stack, x, y, faded(argb, fade));
+        else if (painter instanceof AbstractPainter drawing) drawing.quietItem(stack, x, y, faded(argb, fade));
+        else painter.item(stack, x, y, faded(argb, fade));
     }
 
     private static int faded(int argb, float fade) {
@@ -92,8 +121,18 @@ public final class EdgeFadePainter implements FoliosPainter {
 
     @Override
     public void item(ItemStack stack, int x, int y, int argb) {
+        if (quiet) {
+            this.quietItem(stack, x, y, argb);
+            return;
+        }
         float fade = this.fade(x + 8, y + 8);
         if (fade > 0.01F) painter.item(stack, x, y, faded(argb, fade));
+    }
+
+    @Override
+    public void silhouette(ItemStack stack, int x, int y, int argb) {
+        float fade = this.fade(x + 8, y + 8);
+        if (fade > 0.01F) painter.silhouette(stack, x, y, faded(argb, fade));
     }
 
     @Override
@@ -110,6 +149,11 @@ public final class EdgeFadePainter implements FoliosPainter {
     public void scene(SceneViewport viewport, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
         float fade = this.fade(x + width / 2.0F, y + height / 2.0F);
         if (fade > 0.01F) painter.scene(viewport, x, y, width, height, u0, v0, u1, v1, faded(argb, fade));
+    }
+
+    @Override
+    public void clip(int x, int y, int width, int height, Runnable draw) {
+        painter.clip(x, y, width, height, draw);
     }
 
     @Override
@@ -160,19 +204,26 @@ public final class EdgeFadePainter implements FoliosPainter {
         return painter.flat();
     }
 
+    private boolean pointerInWindow() {
+        if (Float.isNaN(windowTop) || Float.isInfinite(windowTop)) return true;
+        float top = (windowTop - offsetY) / scale;
+        float bottom = (windowBottom - offsetY) / scale;
+        return painter.hovered(-100000, (int) Math.ceil(top), 200000, (int) Math.floor(bottom - top));
+    }
+
     @Override
     public boolean hovered(int x, int y, int width, int height) {
-        return painter.hovered(x, y, width, height);
+        return this.pointerInWindow() && painter.hovered(x, y, width, height);
     }
 
     @Override
     public boolean link(int x, int y, int width, int height, String target) {
-        return painter.link(x, y, width, height, target);
+        return this.pointerInWindow() && painter.link(x, y, width, height, target);
     }
 
     @Override
     public boolean action(int x, int y, int width, int height, @Nullable Component tooltip, Runnable onPress) {
-        return painter.action(x, y, width, height, tooltip, onPress);
+        return this.pointerInWindow() && painter.action(x, y, width, height, tooltip, onPress);
     }
 
     @Override

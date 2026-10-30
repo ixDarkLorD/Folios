@@ -4,11 +4,7 @@ import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.minecraft.network.chat.Component;
 
-// A scene's window on a page that the reader can turn: dragged with the left button it stops turning by itself and
-// follows the pointer (round it, and up and down), and the mouse wheel zooms it in and out; a clasp in its corner then
-// puts it back as it was.
 final class SceneControl {
-    /** A clasp a page adds to the window: what it says, and what it does. */
     record Extra(Component tooltip, Runnable run) {}
 
     private final SceneViewport view;
@@ -17,7 +13,6 @@ final class SceneControl {
     private final float spin;
     private final float zoom;
     private boolean held;
-    /** How far the wheel zooms a scene in or out, at the most and the least; and by how much a notch. */
     private static final float ZOOM_MIN = 0.5F;
     private static final float ZOOM_MAX = 4.0F;
     private static final float ZOOM_STEP = 1.15F;
@@ -31,33 +26,25 @@ final class SceneControl {
         view.camera(yaw, pitch).spin(spin);
     }
 
-    // A scene turning by itself stands still while the game is paused.
     private void pause() {
         if (!held) view.spin(net.ixdarklord.folios.internal.client.FoliosClock.paused() ? 0 : spin);
     }
 
-    // The wheel: in or out by a step a notch, within reach of its first size; the reset clasp then shows.
     private void zoomed(double notches) {
         float factor = (float) Math.pow(ZOOM_STEP, notches);
         view.zoom(Math.max(zoom * ZOOM_MIN, Math.min(zoom * ZOOM_MAX, view.zoom() * factor)));
         held = true;
     }
 
-    /** Draws the scene in its window only to be looked at: turning by itself, with nothing to drag, zoom or reset. */
     void look(FoliosPainter painter, int x, int y, int width, int height) {
         this.pause();
         painter.scene(view, x, y, width, height);
     }
 
-    /** Draws the scene in its window, draggable, with the clasp that resets it once it has been turned. */
     void draw(FoliosPainter painter, int x, int y, int width, int height) {
         this.draw(painter, x, y, width, height, null, null);
     }
 
-    /**
-     * A part of a window over two pages, drawn on one of them: the part of the scene from {@code u0} to {@code u1}
-     * across, draggable; the page's clasp in the window's first part, the reset clasp in its last.
-     */
     void drawPart(FoliosPainter painter, int x, int y, int width, int height, float u0, float u1, boolean first, boolean last,
                   Shapes.@org.jetbrains.annotations.Nullable Icon extra, @org.jetbrains.annotations.Nullable Extra action) {
         painter.scroll(x, y, width, height, this::zoomed);
@@ -82,7 +69,6 @@ final class SceneControl {
         Shapes.button(painter, bx, y + 2, Shapes.Icon.RESET, over);
     }
 
-    /** As {@link #draw(FoliosPainter, int, int, int, int)}, with a clasp of the page's own in the window's other corner. */
     void draw(FoliosPainter painter, int x, int y, int width, int height, Shapes.@org.jetbrains.annotations.Nullable Icon extra,
               @org.jetbrains.annotations.Nullable Extra action) {
         painter.scroll(x, y, width, height, this::zoomed);

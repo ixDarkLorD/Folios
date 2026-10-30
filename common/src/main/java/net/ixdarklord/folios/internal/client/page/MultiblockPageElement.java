@@ -18,9 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-// A build, turning in a window, with what it takes listed under it. `pattern` is its layers from the top down, each a
-// list of rows; `mapping` names the block each character stands for (a space is air): a block state, or a tag of
-// blocks any of which will do ("#minecraft:logs"), shown in turn.
 public record MultiblockPageElement(List<List<String>> pattern, Map<String, String> mapping, Optional<String> title, String text, int height) implements FoliosPageElement {
     public static final MapCodec<MultiblockPageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Codec.STRING.listOf().listOf().fieldOf("pattern").forGetter(MultiblockPageElement::pattern),
@@ -36,7 +33,6 @@ public record MultiblockPageElement(List<List<String>> pattern, Map<String, Stri
         return layout.flow(title.orElse(null), body.height(), text, body.part());
     }
 
-    /** The blocks a pattern and its mapping make, by place: layers from the top down, rows, characters. */
     public static Map<BlockPos, BlockChoice> blocks(List<List<String>> pattern, Map<String, String> mapping) {
         Map<Character, BlockChoice> choices = new HashMap<>();
         for (Map.Entry<String, String> entry : mapping.entrySet()) {
@@ -58,27 +54,22 @@ public record MultiblockPageElement(List<List<String>> pattern, Map<String, Stri
         return blocks;
     }
 
-    /** What it shows between its title and its text. */
     Body body(FoliosLayout layout) {
         Map<BlockPos, BlockChoice> blocks = blocks(pattern, mapping);
         int contentWidth = layout.contentWidth();
         int height = layout.scaled(this.height);
         SceneViewport view = layout.viewport(contentWidth * FoliosLayout.SCENE_DETAIL, height * FoliosLayout.SCENE_DETAIL);
-        // Drawn every frame: a scene drawn fewer times turns in uneven steps.
         view.refreshRate(240);
         BuildScene scene = new BuildScene(view);
         scene.show(blocks);
-        // Set on a ground of grid lines a block wider than it every way.
         view.ground(0, 1, 0x30808080, 0x55A0A0A0, false);
         SceneControl control = new SceneControl(view, 35, 28, 18);
-        // The eye shows the build in the world, to be built: the book is put away and the guide takes over.
         Component buildName = title.isPresent() ? FoliosText.inline(title.get()) : Component.translatableWithFallback("folios.build", "Build");
         SceneControl.Extra build = new SceneControl.Extra(Component.translatableWithFallback("folios.build.show", "Show in the world"), () -> {
             BuildGuide.start(buildName, blocks);
             net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
             if (minecraft.screen != null) minecraft.screen.onClose();
         });
-        // What it takes, behind the clasp in the window's corner, laid over the window when pressed.
         Requirements needs = new Requirements(blocks.values());
         return new Body(height, (painter, y) -> {
             int left = FoliosLayout.CONTENT_LEFT;
@@ -87,10 +78,6 @@ public record MultiblockPageElement(List<List<String>> pattern, Map<String, Stri
         });
     }
 
-    /**
-     * A build's window: the scene, draggable, with the page's clasp in one corner and the blocks-needed clasp in the
-     * bottom left; or, while that is pressed, the list of blocks laid over it.
-     */
     static void sceneWindow(net.ixdarklord.folios.api.client.page.FoliosPainter painter, BuildScene scene, SceneControl control,
                             @org.jetbrains.annotations.Nullable Requirements needs, int x, int y, int width, int height,
                             Shapes.@org.jetbrains.annotations.Nullable Icon extra, SceneControl.@org.jetbrains.annotations.Nullable Extra action) {

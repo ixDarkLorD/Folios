@@ -10,13 +10,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// How recipes look, made from the recipes the server sent as the player joined, and kept for the rest of the visit.
 public final class FoliosRecipes {
     private static final Map<ResourceLocation, List<RecipeDisplay>> KNOWN = new HashMap<>();
 
     private FoliosRecipes() {}
 
-    /** A recipe's displays: empty when there is no such recipe; null while not in a world. */
     public static synchronized @Nullable List<RecipeDisplay> get(ResourceLocation recipe) {
         List<RecipeDisplay> displays = KNOWN.get(recipe);
         if (displays != null) return displays;
