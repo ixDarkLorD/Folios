@@ -12,8 +12,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-// While a handheld book is held up: no outline of the block looked at behind it, and the book stays steady in the
-// hands as the reader walks (the view bobs as ever; the book only a little).
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
     @Unique
@@ -34,11 +32,9 @@ public abstract class GameRendererMixin {
         folios$drawingHands = false;
     }
 
-    /** How much of vanilla's walking bob a held-up book keeps. */
     @Unique
     private static final float FOLIOS$BOB = 0.3F;
 
-    // Vanilla's bob, a fraction of it: the book sways gently in step as the reader walks.
     @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
     private void folios$steadyBook(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
         if (!folios$drawingHands || HandheldBook.current() == null) return;

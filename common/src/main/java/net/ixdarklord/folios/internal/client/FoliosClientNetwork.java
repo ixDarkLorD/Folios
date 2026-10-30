@@ -3,7 +3,6 @@ package net.ixdarklord.folios.internal.client;
 import net.ixdarklord.folios.internal.FoliosPayloads;
 import net.minecraft.client.Minecraft;
 
-// The client's side of the guide's packets, run on the main thread.
 public final class FoliosClientNetwork {
     private FoliosClientNetwork() {}
 

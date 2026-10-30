@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-// An item's picture drawn with the colour it was handed to the screen with: white, unless a page fades it in.
 @Mixin(GuiRenderer.class)
 public class GuiRendererItemTintMixin {
     @ModifyArg(method = "submitBlitFromItemAtlas", index = 11, at = @At(value = "INVOKE",

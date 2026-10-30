@@ -190,6 +190,36 @@ public final class FoliosLayout {
         return titleIcon;
     }
 
+    /**
+     * A named place on the pages a page lays out: the {@code page}th of them (from 0), from {@code top} down to
+     * {@code bottom} on it.
+     */
+    public record Mark(int page, int top, int bottom) {}
+
+    // The names marked on the pages of the page being laid out, and where.
+    private final java.util.Map<String, Mark> marks = new java.util.HashMap<>();
+
+    /**
+     * Marks a place on the pages the page being laid out lays out with a name, for links to reach and to be shown when
+     * they do: where a part of it is, as a page of elements marks each of its elements. Ignored while a page is only
+     * {@linkplain #capture captured}; the first mark of a name holds.
+     */
+    public void mark(String name, Mark mark) {
+        if (capturing == null) marks.putIfAbsent(name, mark);
+    }
+
+    /** Marks the whole of the {@code laid}th page laid out (from 0) with a name. */
+    public void mark(String name, int laid) {
+        this.mark(name, new Mark(laid, CONTENT_TOP, this.contentBottom()));
+    }
+
+    /** The names marked since this was last asked, each with its place; and forgets them. */
+    public java.util.Map<String, Mark> takeMarks() {
+        java.util.Map<String, Mark> taken = java.util.Map.copyOf(marks);
+        marks.clear();
+        return taken;
+    }
+
     /** A page's title: bold, with a line under it. */
     public static void title(FoliosPainter painter, Component title, int y) {
         title(painter, title, y, FoliosIcon.NONE);

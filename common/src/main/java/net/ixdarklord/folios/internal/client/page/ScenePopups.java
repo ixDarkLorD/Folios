@@ -28,25 +28,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/**
- * Folios's own popup links: a window over the book showing what the link names, turning, as the page elements of the
- * same kind show it.
- * <ul>
- *     <li>{@code [Blaze](entity:minecraft:blaze)}, or the tag {@code {entity:minecraft:blaze}}: an entity;</li>
- *     <li>{@code [the igloo](structure:minecraft:igloo/top)}: a structure, asked of the server;</li>
- *     <li>{@code [the tower](build:tower)}: a build file of the book's (or {@code build:mymod:my_guide/builds/tower});</li>
- *     <li>{@code [the shrine](multiblock:world/builds#shrine)}: the multiblock on an entry's page with that marker (the
- *     entry's first multiblock without one).</li>
- * </ul>
- */
 public final class ScenePopups {
-    /** The body of a scene's window, in page pixels. */
     private static final int WIDTH = 124;
     private static final int HEIGHT = 84;
 
     private ScenePopups() {}
 
-    /** Registers the four kinds (once, as the client starts). */
     public static void register() {
         FoliosLinks.register("entity", new FoliosLinks.Kind() {
             @Override
@@ -92,10 +79,8 @@ public final class ScenePopups {
             if (shown[0] == null && Minecraft.getInstance().level != null) {
                 shown[0] = type.create(Minecraft.getInstance().level, EntitySpawnReason.LOAD);
                 if (shown[0] != null) {
-                    // Never in the world, but drawn as if it were: an id of its own, as an entity page's.
                     shown[0].setId(EntityPageElement.SHOWN_IDS.decrementAndGet());
                     PreviewEntities.track(shown[0]);
-                    // Framed as the entity element frames it: whole, turned corner-on, with a little room round it.
                     view.entity(shown[0], 0, 0, 0, 0);
                     float width = shown[0].getBbWidth() * 1.45F;
                     float tall = shown[0].getBbHeight() * (WIDTH / (float) HEIGHT);
@@ -137,7 +122,6 @@ public final class ScenePopups {
         return blocks(layout, name, () -> known);
     }
 
-    // The multiblock on an entry's page: the one with the marker, else the entry's first.
     private static @Nullable FoliosPopup multiblock(FoliosLayout layout, String target) {
         int hash = target.indexOf('#');
         FoliosEntry entry = layout.book().entry(hash >= 0 ? target.substring(0, hash) : target);
@@ -162,7 +146,6 @@ public final class ScenePopups {
         return null;
     }
 
-    // A window of blocks: a structure's, a build's or a multiblock's.
     private static FoliosPopup blocks(FoliosLayout layout, Component title, Supplier<Showcase.State> state) {
         SceneViewport view = viewport(layout);
         view.ground(0, 1, 0x30808080, 0x55A0A0A0, false);
@@ -193,19 +176,16 @@ public final class ScenePopups {
 
     private static SceneViewport viewport(FoliosLayout layout) {
         SceneViewport view = layout.viewport(WIDTH * FoliosLayout.SCENE_DETAIL, HEIGHT * FoliosLayout.SCENE_DETAIL);
-        // Drawn every frame: a scene drawn fewer times turns in uneven steps.
         view.refreshRate(240);
         return view;
     }
 
-    // The scene's framed window; turned and zoomed by the reader only while pinned.
     private static void window(FoliosPainter painter, SceneControl control, boolean pinned) {
         Shapes.panel(painter, 0, 0, WIDTH, HEIGHT);
         if (pinned) control.draw(painter, 1, 1, WIDTH - 2, HEIGHT - 2);
         else control.look(painter, 1, 1, WIDTH - 2, HEIGHT - 2);
     }
 
-    // "igloo/top" as "Igloo Top": a name for what has none of its own.
     private static String prettyName(String path) {
         StringBuilder out = new StringBuilder();
         for (String word : path.replace('/', ' ').replace('_', ' ').split(" ")) {

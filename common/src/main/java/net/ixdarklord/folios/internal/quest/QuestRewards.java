@@ -14,29 +14,15 @@ import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A quest's {@code "rewards"}: items it always gives, and random gifts, each drawn from a list:
- * <pre>{@code
- * "rewards": {
- *   "items": ["minecraft:diamond*3", {"id": "minecraft:potion", "components": {...}}],
- *   "random": [{"item": "minecraft:emerald*4", "weight": 3}, "minecraft:gold_ingot*8"],
- *   "random_rolls": 1
- * }
- * }</pre>
- * Read the same way on the server, which gives them, and on the client, which shows them.
- */
 public record QuestRewards(List<ItemStack> items, List<Choice> random, int rolls) {
-    /** The most items, and random choices, a reward lists. */
     private static final int MOST = 32;
 
-    /** A random gift's choice, picked {@code weight} times as often as one of weight 1. */
     public record Choice(ItemStack stack, int weight) {}
 
     public boolean isEmpty() {
         return items.isEmpty() && random.isEmpty();
     }
 
-    /** Rewards as written, their items made with the registries given (the server's, or the client's world's). */
     public static QuestRewards read(JsonObject json, HolderLookup.Provider registries) {
         List<ItemStack> items = new ArrayList<>();
         if (json.has("items")) {
@@ -58,7 +44,6 @@ public record QuestRewards(List<ItemStack> items, List<Choice> random, int rolls
         return new QuestRewards(List.copyOf(items), List.copyOf(random), rolls);
     }
 
-    // An item stack as written: "minecraft:diamond", "minecraft:diamond*4", or a stack object; empty if it can't be read.
     private static ItemStack stack(JsonElement json, HolderLookup.Provider registries) {
         if (json.isJsonPrimitive()) {
             String text = json.getAsString().strip();
@@ -69,7 +54,6 @@ public record QuestRewards(List<ItemStack> items, List<Choice> random, int rolls
                     count = Integer.parseInt(text.substring(star + 1).strip());
                     text = text.substring(0, star).strip();
                 } catch (NumberFormatException ignored) {
-                    // Not a count after all.
                 }
             }
             Identifier id = Identifier.tryParse(text);
@@ -82,7 +66,6 @@ public record QuestRewards(List<ItemStack> items, List<Choice> random, int rolls
         return ItemStack.EMPTY;
     }
 
-    /** Gives them to a player: into their inventory, or at their feet where it is full; the random gifts drawn now. */
     public void give(ServerPlayer player) {
         List<ItemStack> given = new ArrayList<>();
         for (ItemStack stack : items) given.add(stack.copy());
@@ -90,7 +73,6 @@ public record QuestRewards(List<ItemStack> items, List<Choice> random, int rolls
         for (int roll = 0; roll < rolls && !this.random.isEmpty(); roll++) given.add(pick(random).stack().copy());
         for (ItemStack stack : given) {
             if (player.getInventory().add(stack) || stack.isEmpty()) continue;
-            // A full inventory: at the player's feet, theirs alone to pick up, as /give leaves it.
             var drop = player.drop(stack, false);
             if (drop == null) continue;
             drop.setNoPickUpDelay();
@@ -98,7 +80,6 @@ public record QuestRewards(List<ItemStack> items, List<Choice> random, int rolls
         }
     }
 
-    // One of the random choices, each as likely as its weight.
     private Choice pick(RandomSource source) {
         int total = 0;
         for (Choice choice : random) total += choice.weight();
