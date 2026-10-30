@@ -84,7 +84,12 @@ public final class ObtainedItems {
             for (FoliosCategory category : book.visibleCategories()) add(items, category.lock());
             for (FoliosEntry entry : book.entries().values()) {
                 add(items, entry.lock());
-                for (FoliosEntry.Page page : entry.pages()) add(items, page.lock());
+                for (FoliosEntry.Page page : entry.pages()) {
+                    add(items, page.lock());
+                    if (page.page() instanceof net.ixdarklord.folios.internal.client.page.TextPage text) {
+                        for (net.ixdarklord.folios.internal.client.page.TextPage.Item item : text.elements()) add(items, item.lock());
+                    }
+                }
                 for (FoliosObjective objective : entry.objectives()) items.addAll(objective.obtained());
             }
             if (!items.isEmpty()) found.put(book.id(), List.copyOf(items));
