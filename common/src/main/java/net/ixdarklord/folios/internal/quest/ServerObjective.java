@@ -10,10 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * An objective of a server quest, read from the same JSON a book's quest takes and checked by the server alone. Those
- * the server can't check (how much of a category or a book is read: it doesn't have the books) are refused as read.
- */
 public final class ServerObjective {
     enum Kind { ADVANCEMENT, READ, QUEST, FLAG, CARRIED, OBTAINED, SOURCE, ANY }
 
@@ -22,7 +18,6 @@ public final class ServerObjective {
     private final int goal;
     private final @Nullable ItemMatch items;
     private final List<ServerObjective> any;
-    // For a "read": the book it is read in.
     private final @Nullable ResourceLocation book;
 
     private ServerObjective(Kind kind, String target, int goal, @Nullable ItemMatch items,
@@ -43,9 +38,6 @@ public final class ServerObjective {
         return new ServerObjective(kind, "", goal, ItemMatch.read(items), List.of(), null);
     }
 
-    // ---- Reading ----
-
-    /** An objective as JSON writes it; {@code book} is the quest's, for its {@code "read"} objectives. */
     public static ServerObjective read(JsonObject json, @Nullable ResourceLocation book) {
         int goal = json.has("goal") ? json.get("goal").getAsInt() : 1;
         if (json.has("advancement")) return named(Kind.ADVANCEMENT, id(json, "advancement"));
@@ -64,7 +56,6 @@ public final class ServerObjective {
                 + "obtained, source or any: " + json);
     }
 
-    // "basics/first_steps" in the quest's book, or "mymod:handbook|basics/first_steps" in its own.
     private static ServerObjective readEntry(String written, @Nullable ResourceLocation book) {
         int bar = written.indexOf('|');
         ResourceLocation in = bar > 0 ? new ResourceLocation(written.substring(0, bar)) : book;
@@ -87,9 +78,6 @@ public final class ServerObjective {
         return new ResourceLocation(json.get(key).getAsString()).toString();
     }
 
-    // ---- Checking ----
-
-    /** How far along it is for a player, 0 to 1. */
     float progress(QuestContext context) {
         return switch (kind) {
             case ADVANCEMENT -> done(context.advancement(new ResourceLocation(target)));
@@ -117,14 +105,12 @@ public final class ServerObjective {
         return best;
     }
 
-    /** Whether it asks for reading anywhere in it: the one thing the server takes the client's word for. */
     boolean readsEntries() {
         if (kind == Kind.READ) return true;
         for (ServerObjective one : any) if (one.readsEntries()) return true;
         return false;
     }
 
-    /** The items its "obtained" conditions ask for, so the server watches for them. */
     void obtained(Set<ItemMatch> into) {
         if (kind == Kind.OBTAINED && items != null) into.add(items);
         for (ServerObjective one : any) one.obtained(into);

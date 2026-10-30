@@ -7,7 +7,6 @@ import net.ixdarklord.folios.internal.core.client.FoliosClientConstructor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
-// Folios's Forge entry point: its common and client setup, through CoolCatLib's.
 @Mod(Folios.MOD_ID)
 public final class FoliosForge extends ForgeModEntrypoint {
     public FoliosForge(FMLJavaModLoadingContext context) {

@@ -1,5 +1,33 @@
 # Changelog
 
+## v3.1.0 Release | Oct 30, 2026
+Locks on single pages and elements, index and search listings for pages and elements, an item look-up key, and a grid view for categories. Books written for 3.0 load unchanged: every new key is optional.
+
+### ✨ New Features
+- Page and element locks: `"requires"` (one objective or a list, all needed) and `"secret"` are now read on a page and on an element, as on entries and categories. A locked one is drawn as a locked panel in its place; its links, actions and tooltips are off until it opens.
+- New lock keys:
+  - `"show_unlock"` (default `true`): `false` leaves out the list of objectives and their progress.
+  - `"peek"` (a float, default `1.0`): the opacity of the obscured preview of the page or element behind the panel, as a multiplier; `0.0` leaves it out, `0.5` makes it fainter, values above `1.0` make it plainer.
+- `"index"` on a page or an element: `true`, or `{"name": ..., "icon": ...}`. It is listed in the book's index and search as its own entry, named after its title or the item it shows unless given a name, and opens the entry at that page or element. Links: `entry:<id>#@<page>` and `entry:<id>#@<page>.<element>` (both 0-based). Items it shows join the book's item index, so recipe and item links reach it.
+- Item look-up: a key mapping, `key.folios.lookup` (default `B`, Inventory category). Hovering an item in a container screen while carrying a guide book that indexes it adds the book and "Hold B to learn more" to the tooltip; holding the key for 0.65 s opens the book at that page.
+- `"categories"` in book.json: `"view"`: `"list"` (default) or `"grid"` (tiles, about 34 px wide, three across on a 136 px page; no progress bar for a category with fewer than two entries), and `"overflow"`: `"pages"` (default) or `"scroll"`.
+- API:
+  - `FoliosLock` gains `showUnlock` and `peek`; the 3-argument constructor is kept.
+  - `FoliosEntry.listings()` and `FoliosEntry.Listing`.
+  - `FoliosBook.Location` gains `element` (−1 for a whole page); the 2-argument constructor is kept.
+  - `FoliosBook.categoryView()` and `FoliosBook.CategoryView`.
+  - `FoliosLayout.mark(...)` and `takeMarks()` for named places within a page.
+  - `FoliosPainter.silhouette(...)` and `clip(...)`, with default implementations.
+  - `FoliosObjective.goal()`.
+
+### 🎨 Changes
+- Category tab paging: the buttons under the tabs move by a whole group (the number of tabs that fit), with a "page/pages" label and "Back"/"Next" tooltips. The mouse wheel over the tabs moves by a group too, and opening a category in another group jumps to it. The group size no longer depends on which tab is open.
+- Scrollbars in scroll boxes, quests and the unlock list can be dragged; the thumb maps to the track's travel (track height minus thumb height).
+
+### 🐛 Fixes
+- Entities shown in previews get their own negative ids, so they no longer clash with entities in the world.
+- A quest reward that doesn't fit in the inventory is dropped at the player's feet with no pickup delay and only that player able to take it, as `/give` does.
+
 ## v3.0.0 Release | Oct 25, 2026
 A breaking release: book JSON gets one clear shape for everything, with `"format_version"` to say which, and older books are updated as they load. Pages can be set and paged in place, show live lists from mods and data packs, and lock on items obtained; the API's classes are all `Folios*`.
 

@@ -9,14 +9,9 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Vector3f;
 
-// An item on a page in the world: the buffers the item renderer draws it into. Its faces come out lit as they would be
-// on a page facing the viewer (turned with the page, as the paper's light is, so the item's top is lit as its top, not
-// bright or dark as the book tilts), and tinted by a colour, see-through on the translucent sheet while it fades in
-// with the rest of the page. (Items drawn by a renderer of their own, a chest's say, keep their own render types.)
 final class PageItemCollector implements MultiBufferSource {
     private final MultiBufferSource buffers;
     private final int argb;
-    // Turns a face's normal as the pose has it into the one to light it by; null to light it as it lies.
     private final @Nullable Matrix3f relight;
 
     PageItemCollector(MultiBufferSource buffers, int argb, @Nullable Matrix3f relight) {
@@ -27,12 +22,10 @@ final class PageItemCollector implements MultiBufferSource {
 
     @Override
     public VertexConsumer getBuffer(RenderType type) {
-        // While fading, the item's sheet faces are drawn see-through; its shimmer (and anything else) as it is.
         if (this.argb != -1 && isSheet(type)) type = Sheets.translucentCullBlockSheet();
         return new Tinted(this.buffers.getBuffer(type));
     }
 
-    // The block atlas's own item types (items share it on 1.21.1): solid, cutout and translucent sheets.
     private static boolean isSheet(RenderType type) {
         return type == Sheets.solidBlockSheet() || type == Sheets.cutoutBlockSheet() || type == Sheets.translucentCullBlockSheet()
                 || type == Sheets.translucentItemSheet() || type == RenderType.solid() || type == RenderType.cutout()

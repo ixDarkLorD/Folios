@@ -22,12 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-// Builds designed in the book's own files, turning in a window: "build" names one, "builds" several, picked between
-// under the window. A bare name is a file of this book's (<book>/builds/<name>.json); "namespace:path" any book's file
-// under folios/ ("mymod:my_guide/builds/tower"). A build file has a "name" to show it by, and its blocks: a "pattern"
-// and "mapping" as a multiblock page's, then "blocks", each {"block": ..., "pos": [x, y, z]} or a box of them
-// {"block": ..., "from": [x, y, z], "to": [x, y, z], "hollow": true}, in order, each over what came before (air clears).
-// A block can be a tag, as on a multiblock page.
 public record BuildPageElement(List<Showcase.Shown> builds, Optional<String> title, String text, int height, Showcase.Selector selector) implements FoliosPageElement {
     public static final MapCodec<BuildPageElement> CODEC = RecordCodecBuilder.<BuildPageElement>mapCodec(instance -> instance.group(
             Showcase.Shown.CODEC.fieldOf("build").forGetter(BuildPageElement::builds),
@@ -37,7 +31,6 @@ public record BuildPageElement(List<Showcase.Shown> builds, Optional<String> tit
             Showcase.Selector.CODEC.optionalFieldOf("selector", Showcase.Selector.ARROWS).forGetter(BuildPageElement::selector)
     ).apply(instance, BuildPageElement::new));
 
-    /** The most blocks a box in a build file may fill, so a slip of a number can't fill the world. */
     private static final int MOST_BLOCKS = 65536;
 
     @Override
@@ -45,7 +38,6 @@ public record BuildPageElement(List<Showcase.Shown> builds, Optional<String> tit
         return Showcase.lay(layout, title, text, height, selector, this.items(layout));
     }
 
-    /** What it shows between its title and its text. */
     Body body(FoliosLayout layout) {
         return Showcase.body(layout, height, selector, this.items(layout));
     }
@@ -75,7 +67,6 @@ public record BuildPageElement(List<Showcase.Shown> builds, Optional<String> tit
         return items;
     }
 
-    /** A build file's blocks, by place, its lowest corner at 0. */
     static Map<BlockPos, BlockChoice> read(JsonObject json) {
         Map<BlockPos, BlockChoice> blocks = new LinkedHashMap<>();
         if (json.has("pattern")) {
@@ -93,7 +84,6 @@ public record BuildPageElement(List<Showcase.Shown> builds, Optional<String> tit
             for (JsonElement element : json.getAsJsonArray("blocks")) {
                 JsonObject placed = element.getAsJsonObject();
                 BlockChoice block = BlockChoice.of(placed.get("block").getAsString());
-                // Air, or a block that can't be read, clears what it covers.
                 boolean clears = !block.isTag() && block.options().isEmpty();
                 BlockPos from = pos(placed.has("pos") ? placed.get("pos") : placed.get("from"));
                 BlockPos to = placed.has("to") ? pos(placed.get("to")) : from;
@@ -113,7 +103,6 @@ public record BuildPageElement(List<Showcase.Shown> builds, Optional<String> tit
             }
         }
         if (blocks.isEmpty()) return blocks;
-        // Moved so its lowest corner is at 0, as a pattern's is: wherever its file put it.
         int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
         for (BlockPos pos : blocks.keySet()) {
             minX = Math.min(minX, pos.getX());

@@ -15,28 +15,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * An element's {@code "observe"}: text written from a live list ({@link FoliosSources}), a line of markup for each of its
- * rows, put after the element's own text and written again whenever the list changes.
- * <pre>{@code
- * "observe": {
- *   "source": "whycantisleep:sleep_modifiers", "of": "...",
- *   "row": "- **{$name}** ({$points}): {$description}",
- *   "sort": "name", "where": {"field": "points", "below": 0}, "limit": 10,
- *   "header": "...", "footer": "...", "separator": "\n", "empty": "*None yet.*"
- * }
- * }</pre>
- * {@code "of"} narrows a source Folios gives itself ({@code folios:items} of a tag, say: see FoliosBuiltinSources).
- * {@code {$field}} is a row's field (its {@code id} too); a field holding a translation key is translated. {@code sort}
- * names a field ({@code "-name"} for the other way; numbers sort as numbers); {@code where} keeps rows whose field
- * {@code is}, is {@code not}, is {@code above} or {@code below} a value.
- */
 public record Observed(ResourceLocation source, @Nullable String of, String row, String header, String footer, String separator,
                        @Nullable String sort, @Nullable JsonObject where, int limit, String empty) {
     private static final Pattern FIELD = Pattern.compile("\\{\\$([a-zA-Z0-9_]+)}");
     private static final Set<ResourceLocation> MISSING = ConcurrentHashMap.newKeySet();
 
-    /** What a page's or an element's JSON observes; null for one that observes nothing. */
     public static @Nullable Observed read(JsonObject json) {
         if (!json.has("observe")) return null;
         JsonObject observe = json.getAsJsonObject("observe");
@@ -51,7 +34,6 @@ public record Observed(ResourceLocation source, @Nullable String of, String row,
         return json.has(key) ? FoliosText.read(json.get(key)) : fallback;
     }
 
-    /** The text as the list is now. */
     public String text() {
         if (!FoliosSources.exists(source) && MISSING.add(source)) {
             Folios.LOGGER.warn("A book observes the source {}, which nothing has given (yet)", source);
@@ -76,7 +58,6 @@ public record Observed(ResourceLocation source, @Nullable String of, String row,
         return out.toString();
     }
 
-    // The row's template, each {$field} its value (a translation key's text through {lang:...}).
     private String fill(FoliosSources.Row one) {
         Matcher matcher = FIELD.matcher(row);
         StringBuilder out = new StringBuilder();
@@ -99,7 +80,6 @@ public record Observed(ResourceLocation source, @Nullable String of, String row,
         return true;
     }
 
-    // Numbers as numbers, the rest as text.
     private static int compare(String a, String b) {
         try {
             return Double.compare(Double.parseDouble(a), Double.parseDouble(b));

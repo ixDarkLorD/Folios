@@ -9,15 +9,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-// How a book celebrates the player finishing part of it, from "celebrations" in book.json; nothing unless it says so.
-// true turns all of it on. An object turns it on but for what it says: the parts of a celebration ("toast", "sound",
-// "particles", and "fireworks", which mastery alone has) for every event, and each event ("objective", "entry",
-// "category", "quest", "mastery") false, true, or an object of its own parts. A part or event left out of an object
-// is on.
 public final class CelebrationSettings {
     public static final Set<String> EVENTS = Set.of("objective", "entry", "category", "quest", "mastery");
     public static final Set<String> PARTS = Set.of("toast", "sound", "particles", "fireworks");
-    /** None of it: a book that says nothing of celebrations. */
     public static final CelebrationSettings OFF = new CelebrationSettings(false, Map.of(), Map.of());
 
     private final boolean enabled;
@@ -30,7 +24,6 @@ public final class CelebrationSettings {
         this.events = events;
     }
 
-    /** Whether a part of an event's celebration plays: {@code on("mastery", "fireworks")}. */
     public boolean on(String event, String part) {
         if (!enabled) return false;
         Map<String, Boolean> own = events.get(event);
@@ -38,13 +31,11 @@ public final class CelebrationSettings {
         return parts.getOrDefault(part, true);
     }
 
-    /** Whether any part of an event's celebration plays. */
     public boolean any(String event) {
         for (String part : PARTS) if (this.on(event, part)) return true;
         return false;
     }
 
-    /** Reads "celebrations"; {@link #OFF} for none, false, or what can't be read. */
     public static CelebrationSettings read(@Nullable JsonElement json) {
         if (json == null || json.isJsonNull()) return OFF;
         if (json.isJsonPrimitive()) return json.getAsBoolean() ? new CelebrationSettings(true, Map.of(), Map.of()) : OFF;
@@ -60,7 +51,6 @@ public final class CelebrationSettings {
             } else if (EVENTS.contains(key)) {
                 Map<String, Boolean> own = new HashMap<>();
                 if (value.isJsonPrimitive()) {
-                    // An event on or off as a whole.
                     for (String part : PARTS) if (!value.getAsBoolean()) own.put(part, false);
                 } else if (value.isJsonObject()) {
                     for (Map.Entry<String, JsonElement> part : value.getAsJsonObject().entrySet()) {

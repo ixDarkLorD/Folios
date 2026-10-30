@@ -20,25 +20,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-// The items the player has had, for "obtained" locks and objectives, which open once an item has been in the
-// inventory, whatever becomes of it after. Books are client resources, so the client keeps watch: only for the items
-// some book's locks and objectives name, and only when the inventory has changed. What it finds is kept with each such
-// book's reading (FoliosMemory, which the server keeps), so it lasts across games and computers.
 public final class ObtainedItems {
-    // Each book's "obtained" items, worked out once a world is joined (tags need its registries); null until then.
     private static @Nullable Map<ResourceLocation, List<FoliosStack>> watched;
     private static @Nullable Inventory inventory;
     private static int changes = -1;
 
     private ObtainedItems() {}
 
-    /** Forgets what is watched, for after books reload. */
     public static void clear() {
         watched = null;
         changes = -1;
     }
 
-    /** Whether any of these items has been had, by the record of any book that asks about them. */
     public static boolean has(FoliosStack items) {
         Set<String> had = new HashSet<>();
         for (ResourceLocation book : FoliosLibrary.books().keySet()) had.addAll(FoliosMemory.of(book).obtained());
@@ -49,7 +42,6 @@ public final class ObtainedItems {
         return false;
     }
 
-    /** Looks at the inventory when it has changed since last time, noting the items books ask about that are in it. */
     public static void tick(Minecraft minecraft) {
         if (minecraft.player == null || minecraft.level == null) {
             inventory = null;
@@ -81,7 +73,6 @@ public final class ObtainedItems {
                 found = true;
             }
         }
-        // Locks and objectives that just opened are laid out again.
         if (found) FoliosProgress.changed();
     }
 

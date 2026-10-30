@@ -20,11 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-// Celebrates the player finishing part of a book, once each ever (kept with what else was read of it): an objective of
-// a quest done, an entry read, every entry of a category read, a quest done, and mastery, every objective of every
-// quest done. A toast in the book's look, a sound and sparkles round the player; fireworks in the book's colours for
-// mastery alone. Each part plays only as the book's "celebrations" allow, none unless it says so; what is finished is
-// marked all the same, so turning them on later plays nothing old. Checked once a second while they play.
 public final class Celebrations {
     private Celebrations() {}
 
@@ -86,8 +81,6 @@ public final class Celebrations {
         }
     }
 
-    // One event's celebration, each part as the book allows: the toast (the trophy for mastery, for which there is no
-    // icon), a sound, sparkles round the player, and for mastery fireworks.
     private static void play(Minecraft minecraft, FoliosBook book, CelebrationSettings settings, String event, Component heading, Component name,
                              @Nullable FoliosIcon icon) {
         boolean mastery = event.equals("mastery");
@@ -134,7 +127,6 @@ public final class Celebrations {
             }
             return;
         }
-        // Sparkles rising round the player: a full ring for a category or quest, a few for an objective or entry.
         int count = event.equals("category") || event.equals("quest") ? 40 : 14;
         for (int index = 0; index < count; index++) {
             double angle = index / (double) count * Math.PI * 2;

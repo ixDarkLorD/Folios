@@ -5,13 +5,11 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 
-// A text field written against Minecraft 26.1's widget calls.
 public class CompatEditBox extends EditBox {
     public CompatEditBox(Font font, int width, int height, Component narration) {
         super(font, 0, 0, width, height, narration);
     }
 
-    // 1.20.1 keeps whether the field draws its border private.
     private boolean bordered = true;
 
     @Override
@@ -24,7 +22,6 @@ public class CompatEditBox extends EditBox {
         return this.bordered;
     }
 
-    /** Moves the cursor, extending the selection when {@code select} (1.20.1 decides that by Shift alone). */
     public void moveCursorTo(int position, boolean select) {
         int anchor = ((net.ixdarklord.folios.internal.mixin.client.EditBoxAccessor) this).folios$highlightPos();
         this.moveCursorTo(position);
@@ -35,10 +32,7 @@ public class CompatEditBox extends EditBox {
         super.renderWidget(graphics.raw(), mouseX, mouseY, a);
     }
 
-    /** 1.20.1's field always draws its text with a shadow; fields that draw their own text ignore this. */
     public void setTextShadow(boolean shadow) {}
-
-    // --- 1.20.1's calls, passed on as Minecraft 26.1's ---
 
     @Override
     public final void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float a) {
@@ -104,7 +98,6 @@ public class CompatEditBox extends EditBox {
         return this.mouseScrolled(mouseX, mouseY, 0, delta);
     }
 
-    /** Minecraft 26.1's scroll, with a horizontal amount (1.20.1 has none). */
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         return super.mouseScrolled(mouseX, mouseY, scrollY);
     }
@@ -121,6 +114,5 @@ public class CompatEditBox extends EditBox {
         this.height = height;
     }
 
-    /** 1.20.1 has no mouse cursor shapes. */
     protected void handleCursor(GuiGraphicsExtractor graphics) {}
 }

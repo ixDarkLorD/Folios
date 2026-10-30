@@ -19,8 +19,6 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
-// Minecraft 26.1's GUI drawing calls, on 1.20.1's GuiGraphics, so the screens read the same on every version. 1.20.1
-// draws as it's called, so a "stratum" is just what's drawn after the last flush.
 public final class GuiGraphicsExtractor {
     private static @Nullable GuiGraphicsExtractor last;
 
@@ -32,7 +30,6 @@ public final class GuiGraphicsExtractor {
         this.pose = new Pose(raw.pose());
     }
 
-    /** The 26.1-style view of a GuiGraphics (one per frame's graphics, reused). */
     public static GuiGraphicsExtractor of(GuiGraphics raw) {
         GuiGraphicsExtractor cached = last;
         if (cached != null && cached.raw == raw) return cached;
@@ -55,8 +52,6 @@ public final class GuiGraphicsExtractor {
         return this.raw.guiHeight();
     }
 
-    // --- Shapes ---
-
     public void fill(int x0, int y0, int x1, int y1, int color) {
         this.raw.fill(x0, y0, x1, y1, color);
     }
@@ -65,12 +60,9 @@ public final class GuiGraphicsExtractor {
         this.raw.fillGradient(x0, y0, x1, y1, top, bottom);
     }
 
-    /** A text selection's inverted box. */
     public void textHighlight(int x0, int y0, int x1, int y1, boolean focused) {
         this.raw.fill(RenderType.guiTextHighlight(), x0, y0, x1, y1, 0xFF0000FF);
     }
-
-    // --- Text: 1.20.1 draws a nearly transparent color opaque, so those are skipped ---
 
     public void text(Font font, @Nullable String text, int x, int y, int color, boolean shadow) {
         if (text != null && visible(color)) this.raw.drawString(font, text, x, y, color, shadow);
@@ -100,8 +92,6 @@ public final class GuiGraphicsExtractor {
         return (color & 0xFC000000) != 0;
     }
 
-    // --- Textures (the pipeline is 26.1's; 1.20.1 blends them all alike) ---
-
     public void blit(Object pipeline, ResourceLocation texture, int x, int y, float u, float v, int width, int height,
                      int regionWidth, int regionHeight, int textureWidth, int textureHeight, int color) {
         if ((color >>> 24) == 0) return;
@@ -127,8 +117,6 @@ public final class GuiGraphicsExtractor {
     public void blitSprite(Object pipeline, ResourceLocation sprite, int x, int y, int width, int height, int color) {
         if ((color >>> 24) == 0) return;
         this.tint(color);
-        // 1.20.1 has no GUI sprite atlas: a sprite is its own texture under textures/gui/sprites/, stretched, or in
-        // nine pieces when its metadata says so.
         ResourceLocation texture = new ResourceLocation(sprite.getNamespace(), "textures/gui/sprites/" + sprite.getPath() + ".png");
         int[] size = net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle.textureSize(texture);
         int border = nineSliceBorder(texture);
@@ -168,7 +156,6 @@ public final class GuiGraphicsExtractor {
         }
     };
 
-    // The border of a sprite's nine-slice scaling (as 1.20.2+ reads it from its .mcmeta), or 0 to stretch it whole.
     private static int nineSliceBorder(ResourceLocation texture) {
         return NINE_SLICE.computeIfAbsent(texture, id -> {
             try {
@@ -193,12 +180,10 @@ public final class GuiGraphicsExtractor {
         this.blitSprite(pipeline, sprite, x, y, width, height, Math.round(net.minecraft.util.Mth.clamp(alpha, 0.0F, 1.0F) * 255) << 24 | 0xFFFFFF);
     }
 
-    /** The count and durability bar of a stack in a slot, over its icon. */
     public void itemDecorations(Font font, net.minecraft.world.item.ItemStack stack, int x, int y) {
         this.raw.renderItemDecorations(font, stack, x, y);
     }
 
-    /** A GL texture (a render target's) over a box, with a colour: 26.1's blit of a texture view. */
     public void texture(int textureId, int x0, int y0, int x1, int y1, float u0, float u1, float v0, float v1, int color) {
         if ((color >>> 24) == 0) return;
         this.raw.flush();
@@ -228,9 +213,6 @@ public final class GuiGraphicsExtractor {
         RenderSystem.disableBlend();
     }
 
-    // --- Items ---
-
-    /** An item as an icon: without its count, and unmoved by the player holding one. */
     public void fakeItem(net.minecraft.world.item.ItemStack stack, int x, int y) {
         this.raw.renderFakeItem(stack, x, y);
     }
@@ -239,9 +221,6 @@ public final class GuiGraphicsExtractor {
         this.raw.renderItem(stack, x, y);
     }
 
-    // --- Clipping and layers ---
-
-    /** Clips to a box given in the current transform (1.20.1's scissor ignores the transform, 26.1's doesn't). */
     public void enableScissor(int x0, int y0, int x1, int y1) {
         Matrix4f matrix = this.raw.pose().last().pose();
         Vector3f a = matrix.transformPosition(new Vector3f(x0, y0, 0));
@@ -253,13 +232,11 @@ public final class GuiGraphicsExtractor {
         this.raw.disableScissor();
     }
 
-    /** What's drawn next goes over what came before: text and items stand off the screen on 1.20.1, so their depth is forgotten too. */
     public void nextStratum() {
         this.raw.flush();
         RenderSystem.clear(org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
     }
 
-    /** 1.20.1 has no menu blur. */
     public void blurBeforeThisStratum() {
         net.ixdarklord.coolcatcore.internal.config.client.gui.style.ConfigStyle.blur(this.raw);
     }
@@ -267,8 +244,6 @@ public final class GuiGraphicsExtractor {
     public void requestCursor(CursorTypes cursor) {
         Cursors.request(cursor);
     }
-
-    // --- Tooltips, drawn by the screen after everything else ---
 
     public void setTooltipForNextFrame(Font font, List<FormattedCharSequence> lines, int x, int y) {
         this.setTooltipForNextFrame(font, lines, DefaultTooltipPositioner.INSTANCE, x, y, false);
@@ -285,7 +260,6 @@ public final class GuiGraphicsExtractor {
                 positioner.positionTooltip(screenWidth, screenHeight, x, y, width, height), true);
     }
 
-    /** 26.1's 2D transform stack, on 1.20.1's PoseStack. */
     public static final class Pose {
         private final PoseStack stack;
 

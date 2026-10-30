@@ -30,11 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-// One or two recipes as the game shows them: a crafting grid, a furnace, a stonecutter or a smithing table, each
-// slot showing in turn every item it takes. Recipes are read from those the client was sent.
 public record RecipePageElement(List<ResourceLocation> recipes, Optional<String> title, String text) implements FoliosPageElement {
     public static final MapCodec<RecipePageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            // One recipe, or a list of up to two.
             net.ixdarklord.folios.internal.compat.Compat.withAlternative(net.ixdarklord.folios.internal.compat.Compat.listOf(ResourceLocation.CODEC, 1, 2), ResourceLocation.CODEC.xmap(List::of, list -> list.get(0))).fieldOf("recipe").forGetter(RecipePageElement::recipes),
             FoliosText.CODEC.optionalFieldOf("title").forGetter(RecipePageElement::title),
             FoliosText.CODEC.optionalFieldOf("text", "").forGetter(RecipePageElement::text)
@@ -49,11 +46,9 @@ public record RecipePageElement(List<ResourceLocation> recipes, Optional<String>
         return layout.flow(title.orElse(null), body.height(), text, body.part());
     }
 
-    /** What it shows between its title and its text. */
     Body body(FoliosLayout layout) {
         Map<SlotDisplay, List<ItemStack>> resolved = new IdentityHashMap<>();
         int room = recipes.size() * BOX + (recipes.size() - 1) * GAP;
-        // Without a title of its own, a page of one recipe is named for what it makes, once that is known.
         boolean named = title.isEmpty() && recipes.size() == 1;
         net.ixdarklord.folios.api.client.page.FoliosIcon icon = layout.titleIcon();
         return new Body(room + (named ? FoliosLayout.TITLE_HEIGHT : 0), (painter, y) -> {
@@ -91,7 +86,6 @@ public record RecipePageElement(List<ResourceLocation> recipes, Optional<String>
             }
             return;
         }
-        // A recipe with several ways to look shows each in turn.
         RecipeDisplay display = displays.get(Mth.positiveModulo((int) (painter.time() / (FoliosStack.CYCLE_SECONDS * 3)), displays.size()));
         int gridX = left + 7;
         int gridY = y + 4;
@@ -131,8 +125,6 @@ public record RecipePageElement(List<ResourceLocation> recipes, Optional<String>
         } else {
             painter.text(Component.literal("?"), gridX + 24, gridY + 22, palette.muted());
         }
-        // The result in a box near the top and, under it, a smaller box of the same make for the block it is made at,
-        // joined to it by a short stem.
         List<ItemStack> stations = stacks(resolved, display.craftingStation());
         int top = stations.isEmpty() ? resultY : y + 6;
         Shapes.arrow(painter, resultX - 17, top + 10, palette.accent());
@@ -152,8 +144,6 @@ public record RecipePageElement(List<ResourceLocation> recipes, Optional<String>
         return FoliosPalette.mix(palette.line(), palette.accent(), result ? 0.55F : 0.3F);
     }
 
-    // A box with softened corners: a hairline edge, a face washed with the book's colour (stronger for a result),
-    // and a light line under its top edge.
     private static void box(FoliosPainter painter, int x0, int y0, int x1, int y1, boolean result) {
         FoliosPalette palette = painter.palette();
         int edge = frame(palette, result);

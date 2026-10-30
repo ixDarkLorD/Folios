@@ -24,52 +24,34 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-// A page drawn on a book in the world. The pose given has the page's top left at its origin, x to the right and y
-// down the page, one unit a page pixel, the page facing +z. Each thing drawn sits a hair above the last, so later
-// things cover earlier ones whatever order the game draws them in. Flat colour is mixed with the paper and drawn
-// opaque; the plain shapes of a page go to the game together, when it ends.
-//
-// A page can also lie on a curved surface (a leaf bending as it turns): then every point of it is carried onto the
-// surface, shapes and pictures are cut into strips that follow its curve, and writing and items are set one glyph
-// at a time along it.
 public final class WorldPainter extends AbstractPainter {
     public static final ResourceLocation WHITE = Folios.rl("textures/book/white.png");
     private static final float DEPTH = 0.004F;
-    /** How high an item stands off the page, and how deep it is drawn: flattened so it never pokes through a leaf over it. */
     private static final float ITEM_LIFT = 0.45F;
     private static final float ITEM_DEPTH = 0.6F;
-    /** How high above the page its content reaches on a full page (some 150 things drawn, items on top): a leaf over it stays above this. */
     public static final float HEIGHT = 1.8F;
 
-    /** A curved page: where a point of it is in the pose's space, and which way its axes point there. */
     public interface Surface {
         void place(float x, float y, float z, Vector3f out);
 
-        /** The directions of the page's x (along it) and z (out of its face) at a point along it. */
         void axes(float x, Vector3f along, Vector3f out);
 
-        /** How far apart, along x, the surface bends: shapes are cut there, so they lie exactly on it. */
         float step();
     }
 
-    /** How far things set on a curved page stand off it, so a glyph spanning a bend isn't cut into by the paper. */
     private static final float SURFACE_LIFT = 0.15F;
 
     private final PoseStack pose;
     private final SubmitNodeCollector collector;
     private final int light;
     private final @Nullable Surface surface;
-    // The page's plain shapes so far: 13 floats each, kept to send together when it ends.
     private float[] shapes = new float[13 * 32];
     private int shapeCount;
     private final Vector3f scratch = new Vector3f();
     private final Vector3f along = new Vector3f();
     private final Vector3f out = new Vector3f();
-    // Starts clear of the paper, so even the page's first layer never shares its plane.
     private float depth = 0.02F;
-    // How high the tallest item on the page stands, for what is drawn above it.
     private float itemTop;
-    // A normal to light the page by, in view space, in place of its own: a turning leaf is lit as the open pages are.
     private @Nullable Vector3f normal;
 
     public WorldPainter(PoseStack pose, SubmitNodeCollector collector, int light, FoliosPalette palette, FoliosSession session, Navigator navigator,
@@ -87,17 +69,13 @@ public final class WorldPainter extends AbstractPainter {
         pose.pushPose();
     }
 
-    /** Lights everything on the page as if it faced this way (a direction in view space), whichever way it turns. */
     public WorldPainter lightAs(Vector3f normal) {
         this.normal = new Vector3f(normal);
         return this;
     }
 
-    // A leaf is the default page's size, whatever its book's pages are; only what is printed on it is drawn at the
-    // pages' own (larger at a small GUI scale), scaled down onto the leaf.
     private boolean printing;
 
-    /** Whether what is drawn now is printed on the leaf, at its pages' size, rather than the leaf's own frame and chrome. */
     public void printing(boolean printing) {
         this.printing = printing;
     }
@@ -112,7 +90,6 @@ public final class WorldPainter extends AbstractPainter {
         return printing ? super.pageHeight() : net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_HEIGHT;
     }
 
-    /** Ends the page: sends its plain shapes and undoes its moves. */
     public void end() {
         this.flush();
         pose.popPose();
@@ -123,7 +100,6 @@ public final class WorldPainter extends AbstractPainter {
         return false;
     }
 
-    // Lifted over the items' tops for it, then back where the page's own layers were.
     @Override
     public void above(Runnable draw) {
         float before = depth;
@@ -137,7 +113,6 @@ public final class WorldPainter extends AbstractPainter {
         return depth;
     }
 
-    /** The paper itself, under everything else, over a rectangle of the page. */
     public void paper(float x0, float y0, float x1, float y1, int color) {
         this.shape(x0, y0, x1, y1, 0, color);
     }
@@ -151,8 +126,6 @@ public final class WorldPainter extends AbstractPainter {
         else this.shape(this.pageX(x0), this.pageY(y0), this.pageX(x1), this.pageY(y1), this.next(), color);
     }
 
-    // A rectangle into the shared buffer: on a flat page in the pose's own space as it is now, on a curved one in
-    // page pixels, cut into strips that follow the curve.
     private void shape(float x0, float y0, float x1, float y1, float z, int color) {
         Matrix4f matrix = pose.last().pose();
         float[] cuts = this.cuts(x0, x1);
@@ -170,7 +143,6 @@ public final class WorldPainter extends AbstractPainter {
         }
     }
 
-    // Where a span along x is cut into strips: its ends, and on a curved page every bend of the surface between them.
     private float[] cuts(float x0, float x1) {
         if (surface == null || x1 <= x0) return new float[]{x0, x1};
         float step = surface.step();
@@ -224,12 +196,10 @@ public final class WorldPainter extends AbstractPainter {
         });
     }
 
-    // Moves the pose onto the surface at a point of the page, turned to lie along it there.
     private void onSurface(Surface surface, float x, float y, float z) {
         surface.place(x, y, z, scratch);
         surface.axes(x, along, out);
         pose.translate(scratch.x, scratch.y, scratch.z);
-        // Columns: the page's x along the curve, its y as it is, its z out of the face.
         net.ixdarklord.folios.internal.compat.Compat.mulPose(pose, new Matrix4f(along.x, along.y, along.z, 0, 0, 1, 0, 0, out.x, out.y, out.z, 0, 0, 0, 0, 1));
     }
 
@@ -245,7 +215,6 @@ public final class WorldPainter extends AbstractPainter {
             pose.popPose();
             return;
         }
-        // On a curve, each glyph is set where it falls, turned to the curve there.
         float scale = this.pageScale();
         float[] advance = {0};
         float top = this.pageY(y);
@@ -270,11 +239,6 @@ public final class WorldPainter extends AbstractPainter {
         this.picture(RenderTypes.entityTranslucent(texture), x, y, width, height, u0, v0, u1, v1, argb);
     }
 
-    /**
-     * A texture whose see-through pixels are cut away rather than blended: for a shape cut out of its texture (a
-     * ribbon's swallowtail, a plate's rounded corners) over things drawn after it, which a blended one's clear corners
-     * would hide. Opaque only: its colour's alpha is ignored.
-     */
     public void cutout(ResourceLocation texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
         this.picture(RenderTypes.entityCutout(texture), x, y, width, height, u0, v0, u1, v1, argb | 0xFF000000);
     }
@@ -288,31 +252,22 @@ public final class WorldPainter extends AbstractPainter {
         this.picture(type, x0, y0, x1, y1, z, u0, v0, u1, v1, argb, 0, 0, false);
     }
 
-    /** The paper itself from a texture, tinted, under everything else, over a rectangle of the page. */
     public void paper(float x0, float y0, float x1, float y1, int color, ResourceLocation texture) {
         this.picture(RenderTypes.entityCutout(texture), x0, y0, x1, y1, 0, 0, 0, 1, 1, color, 0, 0, false);
     }
 
-    /**
-     * The paper from a texture, darkening smoothly to {@code shade} over the last {@code fold} pixels before its
-     * spine edge (its right edge for {@code spineRight}, else its left): the shadow of a book's fold, in the paper
-     * itself so nothing lies over it.
-     */
     public void paper(float x0, float y0, float x1, float y1, int color, ResourceLocation texture, float fold, int shade, boolean spineRight) {
         this.picture(RenderTypes.entityCutout(texture), x0, y0, x1, y1, 0, 0, 0, 1, 1, color, fold, shade, spineRight);
     }
 
-    // A picture over a rectangle given as the pose (flat) or the page (curved) takes it, cut into strips on a curve.
     private void picture(RenderType type, float x0, float y0, float x1, float y1, float z, float u0, float v0, float u1, float v1, int argb,
                          float fold, int shade, boolean spineRight) {
         int light = this.light;
         Vector3f normal = this.normal;
         Matrix4f matrix = pose.last().pose();
         float[] cuts = this.cuts(x0, x1);
-        // A fold's edge is cut too, so its shadow ends there exactly.
         if (fold > 0) cuts = withCut(cuts, spineRight ? x1 - fold : x0 + fold);
         int strips = cuts.length - 1;
-        // Each strip's four corners, placed now: x, y, z, u, v, colour.
         float[] corners = new float[strips * 24];
         for (int strip = 0; strip < strips; strip++) {
             float a = (cuts[strip] - x0) / (x1 - x0);
@@ -352,13 +307,8 @@ public final class WorldPainter extends AbstractPainter {
         });
     }
 
-    // Turns an item's normals, as the pose has them, to light it as if its page faced the viewer: back
-    // to the item's own axes (which face the viewer upright, as in a slot), then turned that way. Called with the
-    // item's own pose in place.
     private org.joml.Matrix3f itemLight() {
         org.joml.Matrix3f toItem = new org.joml.Matrix3f(pose.last().normal()).invert();
-        // Lit as facing the viewer (or as the page is told to be lit), however the page or the camera turns: the
-        // page's own facing would change its faces' light with every turn of the head.
         Vector3f lit = normal != null ? new Vector3f(normal).normalize() : new Vector3f(0, 0, 1);
         return new org.joml.Matrix3f().rotation(new org.joml.Quaternionf().rotationTo(new Vector3f(0, 0, 1), lit)).mul(toItem);
     }
@@ -367,7 +317,6 @@ public final class WorldPainter extends AbstractPainter {
     protected void drawItem(ItemStack stack, int x, int y, int argb) {
         Minecraft minecraft = Minecraft.getInstance();
         BakedModel model = minecraft.getItemRenderer().getModel(stack, minecraft.level, null, 0);
-        // Sat on the page: its depth squashed so a block's far side doesn't sink through the paper.
         float z = this.next() + ITEM_LIFT;
         pose.pushPose();
         if (surface == null) {
@@ -395,7 +344,6 @@ public final class WorldPainter extends AbstractPainter {
     public void scene(SceneViewport viewport, int x, int y, int width, int height) {
         viewport.use();
         if (!viewport.isReady()) return;
-        // Translucent: the ground and its shadows are see-through, and a cutout would draw them solid and dark.
         this.picture(RenderTypes.entityTranslucent(viewport.texture()), x, y, width, height, 0, 1, 1, 0, 0xFFFFFFFF);
     }
 
@@ -413,7 +361,6 @@ public final class WorldPainter extends AbstractPainter {
         this.picture(RenderTypes.entityTranslucent(viewport.texture()), x, y, width, height, u0, 1 - v0, u1, 1 - v1, argb);
     }
 
-    // On a curved page the painter's moves are kept in page pixels (pageX and pageY) rather than in the pose.
     @Override
     protected void pushed() {
         if (surface == null) pose.pushPose();

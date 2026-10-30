@@ -14,9 +14,7 @@ import net.minecraft.network.chat.Component;
 import java.util.List;
 import java.util.Optional;
 
-// Related entries, each a row with its icon that opens it. Entries the reader hasn't unlocked are left out.
 public record LinksPageElement(List<Link> links, Optional<String> title, String text) implements FoliosPageElement {
-    /** An entry to link to (its id, with an optional {@code #marker}), and the words shown for it; empty for its name. */
     public record Link(String entry, String label) {
         static final Codec<Link> CODEC = Codec.either(Codec.STRING, RecordCodecBuilder.<Link>create(instance -> instance.group(
                 Codec.STRING.fieldOf("entry").forGetter(Link::entry),
@@ -38,7 +36,6 @@ public record LinksPageElement(List<Link> links, Optional<String> title, String 
             FoliosEntry entry = layout.book().entry(id(link));
             return entry != null && entry.isVisible();
         }).toList();
-        // Without a title of its own it is "See also", in the reader's language.
         return layout.flow(title.orElse("folios.links"), shown.size() * ROW, text, (painter, y) -> {
             FoliosPalette palette = painter.palette();
             int top = y;

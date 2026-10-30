@@ -13,8 +13,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-// A player whose open book is drawn for this one to read along holds it by its sides, arms low and forward, clear
-// of its pages.
 @Mixin(PlayerModel.class)
 public abstract class SharedBookPoseMixin<T extends LivingEntity> {
     @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At("TAIL"))
@@ -25,7 +23,6 @@ public abstract class SharedBookPoseMixin<T extends LivingEntity> {
             this.folios$sleeves();
             return;
         }
-        // A guide book held shut: its arm raised a little, the book lying on the hand.
         if (model.attackTime > 0) return;
         boolean rightMain = entity.getMainArm() == HumanoidArm.RIGHT;
         ItemStack right = rightMain ? entity.getMainHandItem() : entity.getOffhandItem();
@@ -35,7 +32,6 @@ public abstract class SharedBookPoseMixin<T extends LivingEntity> {
         this.folios$sleeves();
     }
 
-    // The sleeves follow the arms: vanilla copies them over before this runs.
     @Unique
     private void folios$sleeves() {
         PlayerModel<?> model = (PlayerModel<?>) (Object) this;

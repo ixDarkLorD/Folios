@@ -1,0 +1,18 @@
+{
+  "name": "Ores",
+  "icon": "minecraft:iron_ore",
+  "sort": 6,
+  "index": "elements",
+  "pages": [
+    {
+      "title": "Ores",
+      "elements": [
+        "Every ore here is listed in the index on its own, without saying so one by one.",
+        { "type": "spotlight", "item": "minecraft:coal_ore", "text": "Common, near the surface." },
+        { "type": "spotlight", "item": "minecraft:copper_ore", "text": "Turns green in the rain." },
+        { "type": "spotlight", "item": "minecraft:gold_ore", "text": "Kept out of the index.", "index": false },
+        { "type": "recipe", "recipe": "minecraft:iron_ingot_from_smelting_raw_iron", "text": "Press the ingot to read about iron.", "index": false }
+      ]
+    }
+  ]
+}
