@@ -66,23 +66,9 @@ public final class Locked {
 
     private static void backdrop(FoliosPainter painter) {
         int color = light(painter.palette().paper()) ? 0x96FFFFFF : 0x78000000;
-        int x0 = Shapes.FRAME_INSIDE;
-        int y0 = Shapes.FRAME_INSIDE;
-        int x1 = painter.pageWidth() - Shapes.FRAME_INSIDE;
-        int y1 = painter.pageHeight() - Shapes.FRAME_INSIDE;
-        for (int ring = 0; ring < BACKDROP_FADE; ring++) {
-            float t = (ring + 1) / (float) (BACKDROP_FADE + 1);
-            int shade = FoliosPalette.alpha(color, Math.round((color >>> 24) * t * t * (3 - 2 * t)));
-            int ax = x0 + ring, ay = y0 + ring, bx = x1 - ring, by = y1 - ring;
-            painter.fill(ax + 1, ay, bx - 1, ay + 1, shade);
-            painter.fill(ax + 1, by - 1, bx - 1, by, shade);
-            painter.fill(ax, ay + 1, ax + 1, by - 1, shade);
-            painter.fill(bx - 1, ay + 1, bx, by - 1, shade);
-        }
-        painter.fill(x0 + BACKDROP_FADE, y0 + BACKDROP_FADE, x1 - BACKDROP_FADE, y1 - BACKDROP_FADE, color);
+        int inset = Shapes.FRAME_INSIDE;
+        Sprites.draw(painter, Sprites.LOCKED_BACKDROP, inset, inset, painter.pageWidth() - 2 * inset, painter.pageHeight() - 2 * inset, color);
     }
-
-    private static final int BACKDROP_FADE = 5;
 
     private static boolean light(int argb) {
         return (argb >> 16 & 0xFF) * 299 + (argb >> 8 & 0xFF) * 587 + (argb & 0xFF) * 114 > 128_000;
@@ -107,7 +93,7 @@ public final class Locked {
         faded(painter, cx + SEAL + 4, right - PAD - 8, cy, rule, false);
         ornament(painter, left + PAD + 3, cy, accent);
         ornament(painter, right - PAD - 4, cy, accent);
-        seal(painter, cx, cy, accent, palette.paper() | 0xFF000000, glow);
+        seal(painter, cx, cy, accent, glow);
         int at = y + PAD + SEAL_ROOM + drop;
 
         String caption = Component.translatableWithFallback("folios.locked", "Not yet discovered").getString();
@@ -140,25 +126,13 @@ public final class Locked {
         int nTop = top - 2;
         int line = FoliosPalette.alpha(palette.line(), 0xC0);
         int panel = palette.panel() | 0xFF000000;
-        inside(painter, nx0 + 1, nTop + 1, nx1 + 1, ruleY + 3, 0x50000000);
-        inside(painter, x0 + 1, ruleY + 1, x1 + 1, bottom + 1, 0x50000000);
-        inside(painter, nx0, nTop, nx1, ruleY + 3, panel);
-        inside(painter, x0, ruleY, x1, bottom, panel);
+        Sprites.draw(painter, Sprites.LOCKED_NOTCH_FILL, nx0 + 1, nTop + 1, nx1 - nx0, ruleY + 2 - nTop, 0x50000000);
+        Sprites.draw(painter, Sprites.LOCKED_FRAME_FILL, x0 + 1, ruleY + 1, x1 - x0, bottom - ruleY, 0x50000000);
+        Sprites.draw(painter, Sprites.LOCKED_FRAME_FILL, x0, ruleY, x1 - x0, bottom - ruleY, panel);
+        Sprites.draw(painter, Sprites.LOCKED_FRAME_LINE, x0, ruleY, x1 - x0, bottom - ruleY, line);
+        Sprites.draw(painter, Sprites.LOCKED_NOTCH_FILL, nx0, nTop, nx1 - nx0, ruleY + 2 - nTop, panel);
+        Sprites.draw(painter, Sprites.LOCKED_NOTCH_LINE, nx0, nTop, nx1 - nx0, ruleY + 1 - nTop, line);
         glinting(painter, Component.translatableWithFallback("folios.locked.needs", "How to unlock").getString(), cx, top + 1, SMALL, palette.heading(), accent, seed + 1, false);
-        painter.fill(x0 + 2, ruleY, nx0, ruleY + 1, line);
-        painter.fill(nx1, ruleY, x1 - 2, ruleY + 1, line);
-        painter.fill(nx0 + 2, nTop, nx1 - 2, nTop + 1, line);
-        painter.fill(nx0 + 1, nTop + 1, nx0 + 2, nTop + 2, line);
-        painter.fill(nx1 - 2, nTop + 1, nx1 - 1, nTop + 2, line);
-        painter.fill(nx0, nTop + 2, nx0 + 1, ruleY + 1, line);
-        painter.fill(nx1 - 1, nTop + 2, nx1, ruleY + 1, line);
-        painter.fill(x0 + 1, ruleY + 1, x0 + 2, ruleY + 2, line);
-        painter.fill(x1 - 2, ruleY + 1, x1 - 1, ruleY + 2, line);
-        painter.fill(x0, ruleY + 2, x0 + 1, bottom - 2, line);
-        painter.fill(x1 - 1, ruleY + 2, x1, bottom - 2, line);
-        painter.fill(x0 + 1, bottom - 2, x0 + 2, bottom - 1, line);
-        painter.fill(x1 - 2, bottom - 2, x1 - 1, bottom - 1, line);
-        painter.fill(x0 + 2, bottom - 1, x1 - 2, bottom, line);
         list(painter, lock, book, x0 + FRAME_IN, x1 - FRAME_IN, top + HEADING, bottom - 2, accent);
     }
 
@@ -192,6 +166,11 @@ public final class Locked {
         painter.push();
         painter.translate(cx - total * scale / 2, y);
         painter.scale(scale);
+        if (!sweeping) {
+            painter.text(FormattedCharSequence.forward(text, face), 0, 0, color);
+            painter.pop();
+            return;
+        }
         int x = 0;
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
@@ -218,23 +197,8 @@ public final class Locked {
     }
 
     private static void faded(FoliosPainter painter, int x0, int x1, int y, int argb, boolean fromLeft) {
-        int fade = Math.min(12, (x1 - x0) / 2);
-        int alpha = argb >>> 24;
-        for (int x = x0; x < x1; x++) {
-            int from = fromLeft ? x - x0 : x1 - 1 - x;
-            float t = from >= fade ? 1 : (from + 0.5F) / fade;
-            painter.fill(x, y, x + 1, y + 1, FoliosPalette.alpha(argb, Math.round(alpha * t * t)));
-        }
+        Sprites.draw(painter, fromLeft ? Sprites.LOCKED_RULE_LEFT : Sprites.LOCKED_RULE_RIGHT, x0, y, x1 - x0, 1, argb);
     }
-
-    private static void inside(FoliosPainter painter, int x0, int y0, int x1, int y1, int color) {
-        painter.fill(x0 + 2, y0, x1 - 2, y1, color);
-        painter.fill(x0 + 1, y0 + 1, x0 + 2, y1 - 1, color);
-        painter.fill(x1 - 2, y0 + 1, x1 - 1, y1 - 1, color);
-        painter.fill(x0, y0 + 2, x0 + 1, y1 - 2, color);
-        painter.fill(x1 - 1, y0 + 2, x1, y1 - 2, color);
-    }
-
 
     private static void list(FoliosPainter painter, FoliosLock lock, FoliosBook book, int x0, int x1, int top, int bottom, int accent) {
         FoliosPalette palette = painter.palette();
@@ -372,142 +336,32 @@ public final class Locked {
     }
 
     private static void rim(FoliosPainter painter, int x0, int y0, int x1, int y1, int accent) {
-        int in = 2;
-        int stitch = FoliosPalette.alpha(accent, 0x50);
-        for (int x = x0 + in + 4; x < x1 - in - 4; x += 4) {
-            painter.fill(x, y0 + in, x + 2, y0 + in + 1, stitch);
-            painter.fill(x, y1 - in - 1, x + 2, y1 - in, stitch);
-        }
-        for (int y = y0 + in + 4; y < y1 - in - 4; y += 4) {
-            painter.fill(x0 + in, y, x0 + in + 1, y + 2, stitch);
-            painter.fill(x1 - in - 1, y, x1 - in, y + 2, stitch);
-        }
-        int corner = FoliosPalette.alpha(accent, 0xB0);
-        diamond(painter, x0 + in + 1, y0 + in + 1, corner);
-        diamond(painter, x1 - in - 2, y0 + in + 1, corner);
-        diamond(painter, x0 + in + 1, y1 - in - 2, corner);
-        diamond(painter, x1 - in - 2, y1 - in - 2, corner);
+        Sprites.draw(painter, Sprites.LOCKED_RIM, x0, y0, x1 - x0, y1 - y0, accent | 0xFF000000);
     }
 
-    private static void seal(FoliosPainter painter, int cx, int cy, int accent, int paper, float glow) {
-        disc(painter, cx, cy, SEAL + 2, FoliosPalette.alpha(accent, Math.round(0x10 + 0x18 * glow)));
-        int wax = FoliosPalette.mix(accent, 0xFF000000, 0.3F);
-        int edge = FoliosPalette.mix(accent, 0xFF000000, 0.55F);
-        int sheen = FoliosPalette.mix(accent, 0xFFFFFFFF, 0.2F);
-        int face = FoliosPalette.mix(accent, 0xFF000000, 0.42F);
-        int sunk = FoliosPalette.mix(accent, 0xFF000000, 0.62F);
-        int raised = FoliosPalette.mix(accent, 0xFFFFFFFF, 0.15F);
-        for (int dy = -SEAL - 1; dy <= SEAL + 1; dy++) {
-            for (int dx = -SEAL - 1; dx <= SEAL + 1; dx++) {
-                double d = Math.sqrt(dx * dx + dy * dy);
-                double angle = Math.atan2(dy, dx);
-                double reach = SEAL - 0.3 + 0.7 * Math.sin(angle * 5 + 0.6) + 0.35 * Math.sin(angle * 3 - 1.1);
-                if (d > reach + 0.5) continue;
-                int color;
-                if (d > reach - 0.5) color = dx + dy < -2 ? sheen : edge;
-                else if (d > SEAL - 3.5 && d <= SEAL - 2.5) color = dx + dy < 0 ? sunk : raised;
-                else if (d <= SEAL - 3.5) color = face;
-                else color = wax;
-                painter.fill(cx + dx, cy + dy, cx + dx + 1, cy + dy + 1, color);
-            }
-        }
+    private static final int PADLOCK = 0xFFF9F7F3;
+
+    private static void seal(FoliosPainter painter, int cx, int cy, int accent, float glow) {
+        int wax = accent | 0xFF000000;
+        Sprites.draw(painter, Sprites.LOCKED_SEAL_GLOW, cx - SEAL - 2, cy - SEAL - 2, FoliosPalette.alpha(accent, Math.round(0x10 + 0x18 * glow)));
+        Sprites.draw(painter, Sprites.LOCKED_SEAL, cx - SEAL - 1, cy - SEAL - 1, wax);
+        Sprites.draw(painter, Sprites.LOCKED_SEAL_SHINE, cx - SEAL - 1, cy - SEAL - 1, Sprites.AS_IS);
         LOCK.draw(painter, cx - 4, cy - 5, FoliosPalette.alpha(0xFF000000, 0x90));
-        LOCK.draw(painter, cx - 4, cy - 6, FoliosPalette.mix(paper, 0xFFFFFFFF, 0.5F));
+        LOCK.draw(painter, cx - 4, cy - 6, PADLOCK);
     }
-
-    private static void disc(FoliosPainter painter, int cx, int cy, int r, int argb) {
-        for (int dy = -r; dy <= r; dy++) {
-            int half = (int) Math.round(Math.sqrt(Math.max(0, (r + 0.5) * (r + 0.5) - dy * dy)) - 0.5);
-            painter.fill(cx - half, cy + dy, cx + half + 1, cy + dy + 1, argb);
-        }
-    }
-
-    private static final String[] ORNAMENT = {
-            "..a..",
-            ".abd.",
-            "abcdd",
-            ".add.",
-            "..a..",
-    };
 
     private static void ornament(FoliosPainter painter, int x, int y, int accent) {
-        pixels(painter, x, y, ORNAMENT,
-                FoliosPalette.mix(accent, 0xFF000000, 0.3F),
-                FoliosPalette.mix(accent, 0xFFFFFFFF, 0.45F),
-                FoliosPalette.mix(accent, 0xFFFFFFFF, 0.8F),
-                accent);
+        Sprites.draw(painter, Sprites.LOCKED_ORNAMENT, x - 2, y - 2, accent | 0xFF000000);
+        Sprites.draw(painter, Sprites.LOCKED_ORNAMENT_SHINE, x - 2, y - 2, Sprites.AS_IS);
     }
-
-    private static void ring(FoliosPainter painter, int cx, int cy, int r, int argb) {
-        for (int dy = -r; dy <= r; dy++) {
-            int half = (int) Math.floor(Math.sqrt((r + 0.5) * (r + 0.5) - dy * dy));
-            int inner = Math.abs(dy) >= r ? -1 : (int) Math.floor(Math.sqrt((r - 0.5) * (r - 0.5) - dy * dy));
-            if (inner < 0) {
-                painter.fill(cx - half, cy + dy, cx + half + 1, cy + dy + 1, argb);
-            } else {
-                painter.fill(cx - half, cy + dy, cx - inner, cy + dy + 1, argb);
-                painter.fill(cx + inner + 1, cy + dy, cx + half + 1, cy + dy + 1, argb);
-            }
-        }
-    }
-
-    private static void diamond(FoliosPainter painter, int x, int y, int argb) {
-        painter.fill(x, y - 1, x + 1, y + 2, argb);
-        painter.fill(x - 1, y, x + 2, y + 1, argb);
-    }
-
-    private static void pixels(FoliosPainter painter, int x, int y, String[] rows, int... colors) {
-        int top = y - rows.length / 2;
-        for (int row = 0; row < rows.length; row++) {
-            String line = rows[row];
-            int left = x - line.length() / 2;
-            for (int column = 0; column < line.length(); column++) {
-                char c = line.charAt(column);
-                if (c == '.') continue;
-                painter.fill(left + column, top + row, left + column + 1, top + row + 1, colors[c - 'a']);
-            }
-        }
-    }
-
-    private static final String[] EMPTY = {
-            "..aaa..",
-            ".acdda.",
-            "acdddba",
-            "acdddba",
-            "acdddba",
-            ".abbba.",
-            "..aaa..",
-    };
 
     private static void hollow(FoliosPainter painter, int x, int y, int paper) {
-        int grey = FoliosPalette.mix(0xFF9E9E9E, paper, 0.25F);
-        pixels(painter, x, y, EMPTY,
-                FoliosPalette.mix(grey, 0xFF000000, 0.35F),
-                FoliosPalette.mix(grey, 0xFFFFFFFF, 0.35F),
-                FoliosPalette.mix(grey, 0xFF000000, 0.18F),
-                grey);
+        Sprites.draw(painter, Sprites.LOCKED_HOLLOW, x - 3, y - 3, FoliosPalette.mix(0xFF9E9E9E, paper, 0.25F));
+        Sprites.draw(painter, Sprites.LOCKED_HOLLOW_SHINE, x - 3, y - 3, Sprites.AS_IS);
     }
 
-    private static final String[] BADGE = {
-            "..aaaaa..",
-            ".abbbbba.",
-            "abbbbbeca",
-            "abbbbeeca",
-            "abebeedca",
-            "abeeedcca",
-            "accedccca",
-            ".acdccca.",
-            "..aaaaa..",
-    };
-
     private static void check(FoliosPainter painter, int x, int y) {
-        int green = 0xFF4CAF50;
-        pixels(painter, x, y, BADGE,
-                FoliosPalette.mix(green, 0xFF000000, 0.45F),
-                FoliosPalette.mix(green, 0xFFFFFFFF, 0.25F),
-                FoliosPalette.mix(green, 0xFF000000, 0.12F),
-                FoliosPalette.mix(green, 0xFF000000, 0.35F),
-                0xFFFFFFFF);
+        Sprites.draw(painter, Sprites.LOCKED_TICK, x - 4, y - 4, Sprites.AS_IS);
     }
 
     private static void small(FoliosPainter painter, FormattedCharSequence text, int x, int y, int color) {
