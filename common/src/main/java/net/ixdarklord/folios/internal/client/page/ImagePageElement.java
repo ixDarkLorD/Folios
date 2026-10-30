@@ -14,8 +14,6 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 import java.util.Optional;
 
-// Pictures across the page at their own proportions (at most `height` tall), one at a time with arrows to step
-// through several; a caption under them.
 public record ImagePageElement(List<ResourceLocation> images, Optional<String> title, String text, boolean border, int height) implements FoliosPageElement {
     public static final MapCodec<ImagePageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             net.ixdarklord.folios.internal.compat.Compat.withAlternative(net.ixdarklord.folios.internal.compat.Compat.listOf(ResourceLocation.CODEC, 1, 32), ResourceLocation.CODEC.xmap(List::of, list -> list.get(0))).fieldOf("image").forGetter(ImagePageElement::images),
@@ -31,7 +29,6 @@ public record ImagePageElement(List<ResourceLocation> images, Optional<String> t
     public List<Laid> lay(FoliosLayout layout) {
         int[] shown = {0};
         int inner = layout.contentWidth() - (border ? 4 : 0);
-        // The tallest picture sets the room taken, so the text under them stays put as they change.
         int room = 0;
         for (ResourceLocation image : images) room = Math.max(room, fit(image, inner)[1]);
         int pictures = room + (border ? 4 : 0);
@@ -58,7 +55,6 @@ public record ImagePageElement(List<ResourceLocation> images, Optional<String> t
         });
     }
 
-    // A picture's size fitted to a width and the height limit, keeping its proportions.
     private int[] fit(ResourceLocation image, int width) {
         int[] size = ConfigStyle.textureSize(image);
         float scale = Math.min(width / (float) size[0], height / (float) size[1]);

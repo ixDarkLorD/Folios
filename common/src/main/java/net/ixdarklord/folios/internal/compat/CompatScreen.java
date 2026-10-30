@@ -7,17 +7,13 @@ import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.renderer.PanoramaRenderer;
 import net.minecraft.network.chat.Component;
 
-// A screen written against Minecraft 26.1's screen calls.
 public abstract class CompatScreen extends Screen {
     private static final PanoramaRenderer PANORAMA = new PanoramaRenderer(TitleScreen.CUBE_MAP);
-    // Minecraft 26.1 sets the first focus after laying a screen out; 1.20.1 has no such step, so it's done on the next frame.
     private boolean focusPending = true;
 
     protected CompatScreen(Component title) {
         super(title);
     }
-
-    // --- Drawing: 26.1 draws the background and the rest in separate calls ---
 
     @Override
     public final void render(GuiGraphics graphics, int mouseX, int mouseY, float a) {
@@ -30,7 +26,6 @@ public abstract class CompatScreen extends Screen {
         this.extractRenderState(extractor, mouseX, mouseY, a);
     }
 
-    /** Draws the widgets (not the background). */
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         super.render(graphics.raw(), mouseX, mouseY, a);
     }
@@ -44,13 +39,11 @@ public abstract class CompatScreen extends Screen {
         super.renderBackground(graphics.raw());
     }
 
-    /** The title screen's turning panorama. */
     protected void extractPanorama(GuiGraphicsExtractor graphics, float a) {
         graphics.nextStratum();
         PANORAMA.render(Minecraft.getInstance().getDeltaFrameTime(), 1);
     }
 
-    /** Minecraft 26.1's first focus after layout: nothing by default (26.1 focuses the first widget for keyboard players). */
     protected void setInitialFocus() {}
 
     @Override
@@ -58,8 +51,6 @@ public abstract class CompatScreen extends Screen {
         super.rebuildWidgets();
         this.focusPending = true;
     }
-
-    // --- Layout ---
 
     public void init(int width, int height) {
         this.init(Minecraft.getInstance(), width, height);
@@ -73,8 +64,6 @@ public abstract class CompatScreen extends Screen {
     public void resize(int width, int height) {
         super.resize(Minecraft.getInstance(), width, height);
     }
-
-    // --- Input ---
 
     @Override
     public final boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -126,7 +115,6 @@ public abstract class CompatScreen extends Screen {
         return this.mouseScrolled(mouseX, mouseY, 0, delta);
     }
 
-    /** Minecraft 26.1's scroll, with a horizontal amount (1.20.1 has none). */
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         return super.mouseScrolled(mouseX, mouseY, scrollY);
     }

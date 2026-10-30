@@ -14,7 +14,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-// Someone holding up a guide book drawn in their hands by SharedBooks (shut or open): not drawn as the item too.
 @Mixin(ItemInHandLayer.class)
 public abstract class SharedBookItemMixin {
     @Inject(method = "renderArmWithItem", at = @At("HEAD"), cancellable = true)

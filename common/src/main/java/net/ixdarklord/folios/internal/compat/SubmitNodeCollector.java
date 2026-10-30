@@ -8,8 +8,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.FormattedCharSequence;
 
-// Minecraft 26.1's submit calls, on 1.21.1's buffers: 1.21.1 draws into a MultiBufferSource as it's called, so what's
-// submitted goes straight into the buffer of its render type.
 public final class SubmitNodeCollector {
     private final MultiBufferSource buffers;
 

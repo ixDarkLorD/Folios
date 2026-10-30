@@ -19,14 +19,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * The sprites a book's widgets are drawn from: bars, clasps, panels, slots, the flip pager. Each is a file of its own at
- * {@code folios:textures/gui/sprites/book/<name>.png}, greyscale with its shading painted in, drawn tinted with a colour
- * of the book's palette; its {@code .png.mcmeta} says how it scales as vanilla's GUI sprites do ({@code "gui":
- * {"scaling": ...}}: {@code stretch}, {@code tile}, or {@code nine_slice} with a {@code border} and
- * {@code stretch_inner}). They are read here rather than from the GUI atlas, so a handheld book draws them in the world
- * too. A resource pack replaces any of them.
- */
 public final class Sprites {
     public static final ResourceLocation BAR_BORDER = sprite("bar/border");
     public static final ResourceLocation BAR_GROOVE = sprite("bar/groove");
@@ -55,10 +47,8 @@ public final class Sprites {
     public static final ResourceLocation SCROLL_THUMB = sprite("scrollbar/thumb");
     public static final ResourceLocation SCROLL_GRIP = sprite("scrollbar/grip");
 
-    /** Drawn untinted: as the sprite's own colours. */
     public static final int AS_IS = 0xFFFFFFFF;
 
-    /** How a sprite scales, and its size. */
     private record Info(int width, int height, String type, int left, int top, int right, int bottom, boolean stretchInner) {
         static final Info MISSING = new Info(1, 1, "stretch", 0, 0, 0, 0, true);
     }
@@ -71,12 +61,10 @@ public final class Sprites {
         return Folios.rl("textures/gui/sprites/book/" + name + ".png");
     }
 
-    /** Forgets what was read of the sprites, as resources reload. */
     public static void clear() {
         INFO.clear();
     }
 
-    /** A sprite drawn at (x, y), width by height, as its metadata says it scales, tinted with {@code argb}. */
     public static void draw(FoliosPainter painter, ResourceLocation sprite, int x, int y, int width, int height, int argb) {
         if (width <= 0 || height <= 0) return;
         Info info = INFO.computeIfAbsent(sprite, Sprites::read);
@@ -87,13 +75,11 @@ public final class Sprites {
         }
     }
 
-    /** A sprite drawn at its own size. */
     public static void draw(FoliosPainter painter, ResourceLocation sprite, int x, int y, int argb) {
         Info info = INFO.computeIfAbsent(sprite, Sprites::read);
         draw(painter, sprite, x, y, info.width(), info.height(), argb);
     }
 
-    // Its corners kept, its edges and middle stretched or repeated (as "stretch_inner" says).
     private static void nine(FoliosPainter painter, ResourceLocation sprite, Info info, int x, int y, int width, int height, int argb) {
         int left = Math.min(info.left(), width), right = Math.min(info.right(), Math.max(0, width - left));
         int top = Math.min(info.top(), height), bottom = Math.min(info.bottom(), Math.max(0, height - top));
@@ -112,7 +98,6 @@ public final class Sprites {
         }
     }
 
-    // A part of the sprite repeated at its own size from the corner, the last copies cut short.
     private static void tile(FoliosPainter painter, ResourceLocation sprite, Info info, int u, int v, int w, int h, int x, int y, int width, int height, int argb) {
         for (int across = 0; across < width; across += w) {
             for (int down = 0; down < height; down += h) {
@@ -128,7 +113,6 @@ public final class Sprites {
                 (u + w) / (float) info.width(), (v + h) / (float) info.height(), argb);
     }
 
-    // The sprite's size (from its PNG header) and scaling (from its .png.mcmeta, stretched when it says none).
     private static Info read(ResourceLocation sprite) {
         var resources = Minecraft.getInstance().getResourceManager();
         Optional<Resource> png = resources.getResource(sprite);
@@ -153,7 +137,6 @@ public final class Sprites {
             if (scaling == null) return new Info(width, height, "stretch", 0, 0, 0, 0, true);
             String type = scaling.get("type").getAsString();
             if (!type.equals("nine_slice")) return new Info(width, height, type, 0, 0, 0, 0, true);
-            // The slices are of the size the metadata names, which is the sprite's at 1:1.
             JsonElement border = scaling.get("border");
             int left, top, right, bottom;
             if (border.isJsonPrimitive()) {

@@ -14,7 +14,6 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 import java.util.Optional;
 
-// An item shown large on a card, named under it (unless the page has a title), then text. The book links the item here.
 public record SpotlightPageElement(FoliosStack item, Optional<String> title, String text, boolean link) implements FoliosPageElement {
     public static final MapCodec<SpotlightPageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             FoliosStack.CODEC.fieldOf("item").forGetter(SpotlightPageElement::item),
@@ -32,10 +31,8 @@ public record SpotlightPageElement(FoliosStack item, Optional<String> title, Str
         return layout.flow(title.orElse(null), CARD + (named ? 12 : 0), text, (painter, y) -> {
             int left = FoliosLayout.place(painter, align, CARD);
             int middle = left + CARD / 2;
-            // The card: the book's spotlight texture ("textures" › "spotlight"), tinted with the panel colour.
             FoliosPalette palette = painter.palette();
             painter.texture(layout.book().textures().spotlight(), left, y, CARD, CARD, 0, 0, 1, 1, palette.panel() | 0xFF000000);
-            // A soft wash of the book's colour behind the item.
             painter.fill(left + 5, y + 5, left + CARD - 5, y + CARD - 5, FoliosPalette.alpha(palette.accent(), 0x22));
             ItemStack stack = item.at(painter.time());
             painter.push();

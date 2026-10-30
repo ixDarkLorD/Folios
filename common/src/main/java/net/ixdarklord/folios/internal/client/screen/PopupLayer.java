@@ -14,14 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A book's popup windows ({@link FoliosPopup}), over everything else on the screen: the one a link under the pointer
- * shows, in place of a tooltip, and the one pressing it pinned, which stays where it was until the reader presses off
- * it, presses Esc or turns the page. A pinned one takes the pointer: its scene turns when dragged and zooms with the
- * wheel. Screens hand it the pointer in their own (GUI) pixels; its painter works in the popup's own.
- */
 public final class PopupLayer {
-    /** Room round the body, and the title's row over it, in page pixels. */
     private static final int PAD = 4;
     private static final int TITLE = 13;
 
@@ -29,19 +22,13 @@ public final class PopupLayer {
     private @Nullable FoliosPopup placed;
     private FoliosReader.@Nullable Spot placedAt;
     private float x, y, scale = 1;
-    // Where the popup under the pointer was last drawn: a pinned one stays there.
     private float hoverX, hoverY;
     private AbstractPainter.@Nullable Drag dragging;
 
-    /**
-     * Draws the pinned popup, else the one under the pointer; true when one under the pointer was drawn (the screen's
-     * tooltip is then left out).
-     */
     public boolean draw(GuiGraphicsExtractor graphics, FoliosReader reader, FoliosPalette palette, @Nullable FoliosPopup hovered,
                         int mouseX, int mouseY, float scale, int screenWidth, int screenHeight) {
         hits.clear();
         FoliosPopup pinned = reader.pinned();
-        // Turned away from the page it was pinned on: put away.
         if (pinned != null && placed == pinned && placedAt != null && !placedAt.equals(reader.spot)) {
             reader.unpin();
             pinned = null;
@@ -60,7 +47,6 @@ public final class PopupLayer {
         placed = null;
         dragging = null;
         if (hovered == null) return false;
-        // As a tooltip sits: off the pointer's lower right, kept on the screen.
         float width = (hovered.width() + PAD * 2) * scale;
         float height = (hovered.height() + PAD * 2 + TITLE) * scale;
         hoverX = mouseX + 12 + width > screenWidth - 4 ? Math.max(4, mouseX - 12 - width) : mouseX + 12;
@@ -69,14 +55,12 @@ public final class PopupLayer {
         return true;
     }
 
-    // The frame in the book's panel colours, the title centred along its top, the body under it.
     private void box(GuiGraphicsExtractor graphics, FoliosReader reader, FoliosPalette palette, FoliosPopup popup, float x, float y, float scale,
                      int mouseX, int mouseY, boolean pinned) {
         int width = popup.width() + PAD * 2;
         int height = popup.height() + PAD * 2 + TITLE;
         graphics.nextStratum();
         FoliosTooltips.frame(graphics, Math.round(x), Math.round(y), Math.round(width * scale), Math.round(height * scale), reader.book);
-        // The painter takes the pointer, and marks its places, in the popup's own pixels.
         ScreenPainter painter = new ScreenPainter(graphics, x, y, scale, palette, reader.session, reader, reader.seconds(),
                 pinned ? (mouseX - x) / scale : Float.NaN, pinned ? (mouseY - y) / scale : Float.NaN, hits);
         try {
@@ -91,14 +75,12 @@ public final class PopupLayer {
         }
     }
 
-    /** Whether a pinned popup covers this point (GUI pixels). */
     private boolean over(FoliosReader reader, double mouseX, double mouseY) {
         FoliosPopup pinned = reader.pinned();
         if (pinned == null || placed != pinned) return false;
         return mouseX >= x && mouseY >= y && mouseX < x + (pinned.width() + PAD * 2) * scale && mouseY < y + (pinned.height() + PAD * 2 + TITLE) * scale;
     }
 
-    /** A press: on a pinned popup, what is under it; off it, puts it away. True when the press was the popup's. */
     public boolean click(FoliosReader reader, double mouseX, double mouseY) {
         if (reader.pinned() == null || placed == null) return false;
         if (!this.over(reader, mouseX, mouseY)) {
@@ -110,14 +92,16 @@ public final class PopupLayer {
         for (int index = hits.size() - 1; index >= 0; index--) {
             AbstractPainter.Hit hit = hits.get(index);
             if (hit.scroll() != null || !hit.contains(localX, localY)) continue;
-            if (hit.drag() != null) dragging = hit.drag();
+            if (hit.drag() != null) {
+                dragging = hit.drag();
+                AbstractPainter.hold(hit);
+            }
             else hit.action().run();
             return true;
         }
         return true;
     }
 
-    /** The pointer dragged (GUI pixels): true when it turns a pinned popup's scene. */
     public boolean drag(double dx, double dy) {
         if (dragging == null) return false;
         dragging.moved((float) (dx / scale), (float) (dy / scale));
@@ -126,9 +110,9 @@ public final class PopupLayer {
 
     public void release() {
         dragging = null;
+        AbstractPainter.hold(null);
     }
 
-    /** The wheel: true when the pointer is over a pinned popup (zooming its scene, if over one). */
     public boolean scroll(FoliosReader reader, double mouseX, double mouseY, double notches) {
         if (!this.over(reader, mouseX, mouseY)) return false;
         FoliosPainter.Scroll scroll = AbstractPainter.Hit.scrollAt(hits, (mouseX - x) / scale, (mouseY - y) / scale);
@@ -136,7 +120,6 @@ public final class PopupLayer {
         return true;
     }
 
-    /** Esc: true when it put a pinned popup away. */
     public boolean escape(FoliosReader reader) {
         if (reader.pinned() == null) return false;
         reader.unpin();

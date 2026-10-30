@@ -13,10 +13,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Items an objective asks for, as the server matches them: written as a book writes them ({@code "minecraft:diamond"},
- * {@code "#minecraft:logs"}, a stack object, or a list of these), matched by item alone.
- */
 public record ItemMatch(Set<Item> items, List<TagKey<Item>> tags) {
     public static ItemMatch read(JsonElement json) {
         Set<Item> items = new LinkedHashSet<>();

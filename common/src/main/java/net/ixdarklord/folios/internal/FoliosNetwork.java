@@ -34,20 +34,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-// The server's side of guide books: opening them, answering recipe and structure questions, marking the book a player reads in their
-// hands for everyone around to see, and keeping each player's client told which advancements they have (entries can be locked behind them, and a client only hears of the visible ones).
 public final class FoliosNetwork {
-    // Advancements completed or revoked since the last tick, per player; sent together at the end of it.
     private static final Map<UUID, Changes> CHANGED = new HashMap<>();
 
     private record Changes(Set<ResourceLocation> done, Set<ResourceLocation> undone) {}
 
-    // The hand each player reads a handheld book in.
     private static final Map<UUID, InteractionHand> READERS = new HashMap<>();
 
-    // The spread each reader of a handheld book has open, told to the players near them to read along.
     private static final Map<UUID, FoliosPayloads.ReadingAt> SPREADS = new HashMap<>();
-    /** How near (blocks) a player is to be to read along with someone. */
     private static final double READ_ALONG = 16;
 
     private FoliosNetwork() {}
@@ -68,7 +62,6 @@ public final class FoliosNetwork {
             FoliosSourceData.sendAll(player);
         });
         net.ixdarklord.folios.internal.quest.QuestTracker.init();
-        // Sources (FoliosSources): their rows sent from the server; a data pack's loaded with its data.
         Network.registerClientbound(FoliosPayloads.Source.TYPE, FoliosPayloads.Source.STREAM_CODEC, (payload, context) -> FoliosSourceData.receive(payload));
         net.ixdarklord.coolcatcore.api.registry.ReloadListeners.registerServer(net.ixdarklord.folios.internal.core.Folios.rl("sources"), FoliosSourceData.INSTANCE);
         ServerTickEvents.END.register(FoliosSourceData::tick);
@@ -91,8 +84,6 @@ public final class FoliosNetwork {
         if (Network.canPlayerReceive(player, FoliosPayloads.Open.TYPE)) Network.sendToPlayer(player, new FoliosPayloads.Open(book, Optional.ofNullable(entry)));
     }
 
-    // Marks the book in the reader's hand as being read, so everyone tracking them sees it open in their hands (the
-    // component goes to them with the hand's stack), or takes the mark off both hands.
     private static void reading(ServerPlayer player, FoliosPayloads.Reading payload) {
         for (InteractionHand hand : InteractionHand.values()) {
             ItemStack stack = player.getItemInHand(hand);
@@ -108,11 +99,8 @@ public final class FoliosNetwork {
         READERS.put(player.getUUID(), hand);
     }
 
-    /** How many books' records a player keeps; more than any modpack has, fewer than a client could send to fill a save. */
     private static final int MAX_BOOKS = 256;
 
-    // What a player has done with a book, sent by their client: kept with them, or, for a book that keeps its own, on
-    // the book in the hand they read it in (only a guide book of that same book).
     private static void progress(ServerPlayer player, FoliosPayloads.Progress payload) {
         FoliosRecord record = payload.record().capped();
         if (payload.hand() < 0) {
@@ -129,12 +117,10 @@ public final class FoliosNetwork {
         if (payload.book().equals(bookOf(stack))) FoliosRegistry.BOOK_PROGRESS.set(stack, record.forStack());
     }
 
-    /** The book a stack opens: a guide book item's, or any stack's that names one. */
     public static @Nullable ResourceLocation bookOf(ItemStack stack) {
         return stack.getItem() instanceof FoliosBookItem item ? item.book(stack) : FoliosBooks.bookOf(stack);
     }
 
-    // A reader's open spread: kept, and told to those near them now (the rest hear of it as they come near).
     private static void readingAt(ServerPlayer player, FoliosPayloads.ReadingAt payload) {
         if (!payload.open()) {
             stopShared(player);
@@ -160,19 +146,15 @@ public final class FoliosNetwork {
         }
     }
 
-    /** Whether a stack is the one its holder is reading now; a mark on any other stack is left over and goes. */
     public static boolean isRead(Entity holder, ItemStack stack) {
         InteractionHand hand = READERS.get(holder.getUUID());
         return hand != null && holder instanceof ServerPlayer player && player.getItemInHand(hand) == stack;
     }
 
-    // Recipe unlocks have their own advancements, one per recipe: books don't lock entries behind those, and there are
-    // too many to send.
     private static boolean tracked(ResourceLocation advancement) {
         return !advancement.getPath().startsWith("recipes/");
     }
 
-    /** Called by PlayerAdvancementsMixin when an advancement of a player's becomes done or no longer done. */
     public static void changed(ServerPlayer player, Advancement advancement, boolean done) {
         net.ixdarklord.folios.internal.quest.QuestTracker.due(player);
         if (!tracked(advancement.getId())) return;
@@ -191,8 +173,6 @@ public final class FoliosNetwork {
     }
 
     private static void flush(MinecraftServer server) {
-        // Each second, those reading are told again to everyone near them: to whoever has come near since, and so a
-        // client can let go of a book whose reader it no longer hears of.
         if (server.getTickCount() % 20 == 0 && !SPREADS.isEmpty()) {
             for (Map.Entry<UUID, FoliosPayloads.ReadingAt> entry : SPREADS.entrySet()) {
                 ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
@@ -223,8 +203,6 @@ public final class FoliosNetwork {
         }
     }
 
-    // A structure's blocks as a page shows them: its first palette (a structure with several, as a shipwreck has, keeps
-    // its others as variants), less air and the blocks only structures have; a jigsaw as the block it leaves behind.
     private static FoliosPayloads.Structure structure(ResourceLocation id, StructureTemplate template) {
         List<StructureTemplate.Palette> palettes = ((StructureTemplateAccessor) template).folios$palettes();
         List<BlockState> palette = new ArrayList<>();

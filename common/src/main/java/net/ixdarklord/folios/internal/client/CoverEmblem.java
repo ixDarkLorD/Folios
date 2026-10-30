@@ -12,21 +12,12 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
-// The book's icon set in its cover's gem (the box a cover model marks "#icon"): the gem's face covered by a dark inset
-// of its own diamond shape, and the icon lying flat on it, a little narrower than the gem is from corner to corner, so
-// the inset's diamond shows round it. Drawn by the item's cover (FoliosCoverText) and a handheld book's (CoverModel).
 public final class CoverEmblem {
-    /** How wide the icon is, of the gem's width from corner to corner (turned 45°, as a gem setting is): small enough that the inset's corners show round it. */
     private static final float ICON_SHARE = 0.75F;
-    /** How thick a block's icon stands off the face, of its width: thin, so it lies on the face as an inlay. */
     private static final float DEPTH = 0.04F;
 
     private CoverEmblem() {}
 
-    /**
-     * Draws an icon in a gem {@code side} units square, turned 45°: the pose's origin at the gem's middle on its front
-     * face, one unit a model unit, +z out of the cover, y up. {@code scale} sizes the icon from its usual size.
-     */
     public static void draw(PoseStack pose, SubmitNodeCollector collector, int light, FoliosIcon icon, float side, float scale, int accent) {
         float corner = side / (float) Math.sqrt(2);
         int inset = FoliosPalette.mix(0xFF000000 | accent, 0xFF000000, 0.55F);
@@ -52,7 +43,6 @@ public final class CoverEmblem {
             pose.pushPose();
             pose.translate(0, 0, 0.01F + size * DEPTH / 2);
             pose.scale(size, size, size * DEPTH);
-            // As in an inventory slot: a flat item faces out, a block shows its three faces.
             minecraft.getItemRenderer().renderStatic(null, stack, ItemDisplayContext.GUI, false, pose, collector.buffers(), minecraft.level, light, OverlayTexture.NO_OVERLAY, 0);
             pose.popPose();
         }
