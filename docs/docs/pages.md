@@ -82,12 +82,12 @@ Builds shown with `build` come from [build files](elements/build-files.md). Two 
 | `type` | string | `"text"` | The kind of page. |
 | `marker` | string | none | A name links can reach this page by: `entry:<entry id>#<marker>`. See [Links](text-formatting.md#links). |
 | `icon` | [icon](categories-and-entries.md#icons) or `"none"` | see below | An icon before the page's title. |
-| `requires`, `secret`, `show_unlock`, `peek` | | | Lock the page: it is sealed where it stands until it opens, or left out while it is `secret`. See [Locks](categories-and-entries.md#locks). |
+| `requires`, `secret`, `show_list`, `peek` | | | Lock the page: it is sealed where it stands until it opens, or left out while it is `secret`. See [Locks](categories-and-entries.md#locks). |
 | `index` | `true`, or object | none | List the page on its own in the book's index and search. See [Listed on their own](#listed-on-their-own). |
 | `overflow`, `alignment`, `title_alignment`, `anchor` | | the book's | How the page and its elements are set. See [Setting pages](setting-pages.md). |
 | `observe` | object | none | A live list, written after the page's text. See [Live lists](live-lists.md). |
 
-Every element in a page's `elements` takes `marker`, `requires`, `secret`, `show_unlock`, `peek`, `index`,
+Every element in a page's `elements` takes `marker`, `requires`, `secret`, `show_list`, `peek`, `index`,
 `overflow`, `alignment`, `title_alignment`, `anchor` and `observe` too: a link to an element's marker opens the page it
 starts on, and a locked element is sealed where it stands on its page.
 

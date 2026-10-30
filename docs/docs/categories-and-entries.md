@@ -116,7 +116,7 @@ Categories, entries, pages and a page's elements can be locked until the player 
 | --- | --- | --- |
 | `requires` | condition, or list of them | Locked until it holds, or until every one in the list holds. A condition is written as a quest objective is: see [Conditions](quests.md#conditions). |
 | `secret` | boolean | Hide it entirely until it opens. Without it, a locked category or entry is still listed, as `???`, and a locked page or element is sealed where it stands (see below). |
-| `show_unlock` | boolean | Pages and elements: `false` leaves out the *How to unlock* list. `true` by default. |
+| `show_list` | boolean | Pages and elements: `false` leaves out the *How to unlock* list. `true` by default. |
 | `peek` | number | Pages and elements: how plainly the page shows faintly behind its seal, as a float: `1.0` by default, `0.5` fainter, `2.0` plainer, `0.0` not at all. |
 
 ```json title="entries/secrets/the_end.json"
