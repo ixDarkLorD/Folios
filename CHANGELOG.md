@@ -1,5 +1,16 @@
 # Changelog
 
+## v3.1.1 Release | Oct 30, 2026
+Fixes for locked elements and the performance of locked pages, and a clearer name for one lock key.
+
+### 🎨 Changes
+- The lock key `"show_unlock"` is now `"show_list"`. `"show_unlock"` is still read, so books written for 3.1.0 keep working. The Java field stays `FoliosLock.showUnlock`.
+- The padlock on the seal keeps its light colour in dark mode.
+
+### 🐛 Fixes
+- An element locked by an `"obtained"` condition now opens once the item is obtained. Before, only category, entry and page locks were watched for obtained items.
+- Locked pages and elements no longer lower the frame rate: their seal and frame were rebuilt from many small draw calls every frame. They now take a handful of draws, so a locked spread renders about as fast as a normal one.
+
 ## v3.1.0 Release | Oct 30, 2026
 Locks on single pages and elements, index and search listings for pages and elements, an item look-up key, and a grid view for categories. Books written for 3.0 load unchanged: every new key is optional.
 

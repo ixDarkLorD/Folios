@@ -46,11 +46,27 @@ public final class Sprites {
     public static final Identifier SCROLL_TRACK = sprite("scrollbar/track");
     public static final Identifier SCROLL_THUMB = sprite("scrollbar/thumb");
     public static final Identifier SCROLL_GRIP = sprite("scrollbar/grip");
+    public static final Identifier LOCKED_SEAL = sprite("locked/seal");
+    public static final Identifier LOCKED_SEAL_SHINE = sprite("locked/seal_shine");
+    public static final Identifier LOCKED_SEAL_GLOW = sprite("locked/seal_glow");
+    public static final Identifier LOCKED_ORNAMENT = sprite("locked/ornament");
+    public static final Identifier LOCKED_ORNAMENT_SHINE = sprite("locked/ornament_shine");
+    public static final Identifier LOCKED_RULE_LEFT = sprite("locked/rule_left");
+    public static final Identifier LOCKED_RULE_RIGHT = sprite("locked/rule_right");
+    public static final Identifier LOCKED_RIM = sprite("locked/rim");
+    public static final Identifier LOCKED_BACKDROP = sprite("locked/backdrop");
+    public static final Identifier LOCKED_FRAME_FILL = sprite("locked/frame_fill");
+    public static final Identifier LOCKED_FRAME_LINE = sprite("locked/frame_line");
+    public static final Identifier LOCKED_NOTCH_FILL = sprite("locked/notch_fill");
+    public static final Identifier LOCKED_NOTCH_LINE = sprite("locked/notch_line");
+    public static final Identifier LOCKED_HOLLOW = sprite("locked/hollow");
+    public static final Identifier LOCKED_HOLLOW_SHINE = sprite("locked/hollow_shine");
+    public static final Identifier LOCKED_TICK = sprite("locked/tick");
 
     public static final int AS_IS = 0xFFFFFFFF;
 
-    private record Info(int width, int height, String type, int left, int top, int right, int bottom, boolean stretchInner) {
-        static final Info MISSING = new Info(1, 1, "stretch", 0, 0, 0, 0, true);
+    private record Info(int width, int height, String type, int left, int top, int right, int bottom, boolean stretchInner, boolean emptyCenter) {
+        static final Info MISSING = new Info(1, 1, "stretch", 0, 0, 0, 0, true, false);
     }
 
     private static final Map<Identifier, Info> INFO = new ConcurrentHashMap<>();
@@ -91,6 +107,7 @@ public final class Sprites {
         for (int[] column : columns) {
             for (int[] row : rows) {
                 if (column[3] <= 0 || row[3] <= 0 || column[1] <= 0 || row[1] <= 0) continue;
+                if (column == columns[1] && row == rows[1] && info.emptyCenter()) continue;
                 boolean inner = column == columns[1] || row == rows[1];
                 if (inner && !info.stretchInner()) tile(painter, sprite, info, column[0], row[0], column[1], row[1], column[2], row[2], column[3], row[3], argb);
                 else part(painter, sprite, info, column[0], row[0], column[1], row[1], column[2], row[2], column[3], row[3], argb);
@@ -130,13 +147,13 @@ public final class Sprites {
             return Info.MISSING;
         }
         Optional<Resource> meta = resources.getResource(sprite.withPath(sprite.getPath() + ".mcmeta"));
-        if (meta.isEmpty()) return new Info(width, height, "stretch", 0, 0, 0, 0, true);
+        if (meta.isEmpty()) return new Info(width, height, "stretch", 0, 0, 0, 0, true, false);
         try (Reader reader = new InputStreamReader(meta.get().open(), StandardCharsets.UTF_8)) {
             JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
             JsonObject scaling = json.has("gui") ? json.getAsJsonObject("gui").getAsJsonObject("scaling") : null;
-            if (scaling == null) return new Info(width, height, "stretch", 0, 0, 0, 0, true);
+            if (scaling == null) return new Info(width, height, "stretch", 0, 0, 0, 0, true, false);
             String type = scaling.get("type").getAsString();
-            if (!type.equals("nine_slice")) return new Info(width, height, type, 0, 0, 0, 0, true);
+            if (!type.equals("nine_slice")) return new Info(width, height, type, 0, 0, 0, 0, true, false);
             JsonElement border = scaling.get("border");
             int left, top, right, bottom;
             if (border.isJsonPrimitive()) {
@@ -149,10 +166,25 @@ public final class Sprites {
                 bottom = sides.get("bottom").getAsInt();
             }
             boolean stretch = scaling.has("stretch_inner") && scaling.get("stretch_inner").getAsBoolean();
-            return new Info(width, height, type, left, top, right, bottom, stretch);
+            return new Info(width, height, type, left, top, right, bottom, stretch, emptyCenter(png.get(), left, top, width - right, height - bottom));
         } catch (Exception e) {
             Folios.LOGGER.warn("Couldn't read the scaling of the book sprite {}: {}", sprite, e.getMessage());
-            return new Info(width, height, "stretch", 0, 0, 0, 0, true);
+            return new Info(width, height, "stretch", 0, 0, 0, 0, true, false);
+        }
+    }
+
+    private static boolean emptyCenter(Resource png, int x0, int y0, int x1, int y1) {
+        try (InputStream stream = png.open()) {
+            java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(stream);
+            if (image == null) return false;
+            for (int y = y0; y < y1; y++) {
+                for (int x = x0; x < x1; x++) {
+                    if ((image.getRGB(x, y) >>> 24) != 0) return false;
+                }
+            }
+            return x1 > x0 && y1 > y0;
+        } catch (IOException e) {
+            return false;
         }
     }
 }

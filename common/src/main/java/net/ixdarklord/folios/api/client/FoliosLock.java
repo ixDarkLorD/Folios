@@ -15,7 +15,7 @@ import java.util.List;
  *     all of which must hold: {@code "requires": {"advancement": "mymod:story/found_ore"}},
  *     {@code "requires": [{"read": "basics/first_steps"}, {"obtained": "minecraft:diamond"}]};</li>
  *     <li>{@code "secret": true}: left out until it opens, where it would otherwise be shown locked ({@code ???}).</li>
- *     <li>{@code "show_unlock": false}: a locked page or element shown without the list of what opens it.</li>
+ *     <li>{@code "show_list": false}: a locked page or element shown without the list of what opens it.</li>
  *     <li>{@code "peek"}: a float, how plainly a locked page or element shows a glimpse of itself behind its seal, 1.0 by
  *     default: 0.5 half as plainly, 2.0 twice as plainly, 0.0 not at all.</li>
  * </ul>
@@ -44,7 +44,8 @@ public record FoliosLock(@Nullable Identifier book, List<FoliosObjective> requir
     public static FoliosLock read(JsonObject json, @Nullable Identifier book) {
         List<FoliosObjective> requires = json.has("requires") ? FoliosObjective.readAll(json.get("requires")) : List.of();
         boolean secret = json.has("secret") && json.get("secret").getAsBoolean();
-        boolean show = !json.has("show_unlock") || json.get("show_unlock").getAsBoolean();
+        String listKey = json.has("show_list") ? "show_list" : "show_unlock";
+        boolean show = !json.has(listKey) || json.get(listKey).getAsBoolean();
         float peek = json.has("peek") ? json.get("peek").getAsFloat() : 1.0F;
         return requires.isEmpty() && !secret ? NONE : new FoliosLock(book, requires, secret, show, peek);
     }
