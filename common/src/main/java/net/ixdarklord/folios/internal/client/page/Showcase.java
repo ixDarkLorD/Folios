@@ -19,11 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-// The window of a page that shows one of several builds or structures, turning, to look at (not to build: no list
-// of blocks, nor a clasp to build it in the world). When there are more than one, a row under the window picks which: clasps stepping back and on with its
-// name between them ("arrows"), or a numbered clasp for each ("numbers", as arrows when there are too many to fit).
 final class Showcase {
-    /** How a page with several things to show picks between them. */
     enum Selector implements StringRepresentable {
         ARROWS("arrows"),
         NUMBERS("numbers");
@@ -42,19 +38,15 @@ final class Showcase {
         }
     }
 
-    /** One of the things a page shows, as written: its id, and the label it is shown by, if any. */
     record Shown(String id, Optional<String> label) {
         private static final Codec<Shown> OBJECT = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.fieldOf("id").forGetter(Shown::id),
                 FoliosText.CODEC.optionalFieldOf("label").forGetter(Shown::label)
         ).apply(instance, Shown::new));
-        /** An id alone, or {"id": ..., "label": ...}. */
         static final Codec<Shown> ONE = Codec.withAlternative(OBJECT, Codec.STRING.xmap(id -> new Shown(id, Optional.empty()), Shown::id));
-        /** One, or a list of them. */
         static final Codec<List<Shown>> CODEC = Codec.withAlternative(ONE.listOf(1, 32), ONE.xmap(List::of, List::getFirst));
     }
 
-    /** What is known of one thing to show now: its blocks, or, while there are none (yet), what to say instead. */
     record State(@Nullable Map<BlockPos, BlockChoice> blocks, @Nullable Component message) {
         static State of(Map<BlockPos, BlockChoice> blocks) {
             return new State(blocks, null);
@@ -65,27 +57,22 @@ final class Showcase {
         }
     }
 
-    /** One thing to show: the name it is shown by, if any, and what is known of it now. */
     record Item(@Nullable Component name, Supplier<State> state) {}
 
-    /** The selector's row: a clasp's height and a little room either side. */
     private static final int SELECTOR = Shapes.BUTTON + 4;
     private static final int GAP = 2;
 
     private Showcase() {}
 
-    /** Lays out the page: its title, the window {@code height} tall, the selector when there is more than one item, and the text. */
     static List<FoliosPageElement.Laid> lay(FoliosLayout layout, Optional<String> title, String text, int height, Selector selector, List<Item> items) {
         Body body = body(layout, height, selector, items);
         return layout.flow(title.orElse(null), body.height(), text, body.part());
     }
 
-    /** The window and, when there is more than one item, the selector under it. */
     static Body body(FoliosLayout layout, int authoredHeight, Selector selector, List<Item> items) {
         int height = layout.scaled(authoredHeight);
         int contentWidth = layout.contentWidth();
         SceneViewport view = layout.viewport(contentWidth * FoliosLayout.SCENE_DETAIL, height * FoliosLayout.SCENE_DETAIL);
-        // Drawn every frame: a scene drawn fewer times turns in uneven steps.
         view.refreshRate(240);
         view.ground(0, 1, 0x30808080, 0x55A0A0A0, false);
         Window window = new Window(view, items);
@@ -96,7 +83,6 @@ final class Showcase {
         });
     }
 
-    // The window and which item it shows.
     private static final class Window {
         private final BuildScene scene;
         private final SceneControl control;
@@ -131,7 +117,6 @@ final class Showcase {
             int contentWidth = painter.contentRight() - left;
             Shapes.panel(painter, left, y, left + contentWidth, y + height);
             State state = items.get(current).state().get();
-            // Another item picked, or the one shown just now known: put in the window in place of what was there.
             if (state.blocks() != shown) {
                 shown = state.blocks();
                 scene.show(shown != null ? shown : Map.of());
@@ -141,7 +126,6 @@ final class Showcase {
                 control.draw(painter, left + 1, y + 1, contentWidth - 2, height - 2);
                 return;
             }
-            // Nothing to show: what to say instead, in the middle of the window.
             Component message = state.message() != null ? state.message() : Component.translatableWithFallback("folios.showcase.empty", "Nothing to show");
             List<net.minecraft.util.FormattedCharSequence> lines = painter.font().split(message, contentWidth - 12);
             int top = y + height / 2 - lines.size() * 10 / 2;
@@ -152,7 +136,6 @@ final class Showcase {
         }
     }
 
-    // The row that picks which item the window shows: numbered clasps if asked for and they fit, else clasps back and on.
     private static void selector(FoliosPainter painter, Window window, Selector selector, int y) {
         int count = window.size();
         int width = count >= 10 ? Shapes.BUTTON + 4 : Shapes.BUTTON;
@@ -177,7 +160,6 @@ final class Showcase {
         boolean on = painter.action(right, y - 1, Shapes.BUTTON, Shapes.BUTTON + 1,
                 Component.translatableWithFallback("folios.showcase.next", "Next"), () -> window.pick(window.current() + 1));
         Shapes.button(painter, right, y, Shapes.Icon.NEXT, on);
-        // Between them, its name and which it is of how many; the name cut short if it must be.
         FoliosPalette palette = painter.palette();
         String counter = (window.current() + 1) + "/" + count;
         Component name = window.name(window.current());

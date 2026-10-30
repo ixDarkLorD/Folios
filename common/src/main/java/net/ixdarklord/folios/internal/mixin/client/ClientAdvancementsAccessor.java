@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.Map;
 
-// The progress of the advancements a client was shown, for unlocking books on a server that doesn't send its own.
 @Mixin(ClientAdvancements.class)
 public interface ClientAdvancementsAccessor {
     @Accessor("progress")

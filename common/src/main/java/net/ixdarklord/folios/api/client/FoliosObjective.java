@@ -199,6 +199,11 @@ public final class FoliosObjective {
         return false;
     }
 
+    /** How many it counts to: a count of items carried, or a source's value; 1 for the rest. */
+    public int goal() {
+        return Math.max(1, goal);
+    }
+
     /** Whether it is done or not done, with nothing between: no bar of its own is shown for it. */
     public boolean isAllOrNothing() {
         return kind != Kind.READ_CATEGORY && kind != Kind.READ_BOOK && kind != Kind.QUEST && kind != Kind.SOURCE && kind != Kind.ANY
@@ -269,8 +274,12 @@ public final class FoliosObjective {
                 if (display != null) return display.title();
             }
         }
+        // Not sent yet (one the player hasn't come near): its title by the game's own key for it, as vanilla names them
+        // ("advancements.end.root.title"); else its last word, written out.
         String path = id.getPath();
-        return Component.literal(path.substring(path.lastIndexOf('/') + 1).replace('_', ' '));
+        String last = path.substring(path.lastIndexOf('/') + 1).replace('_', ' ');
+        String written = last.isEmpty() ? last : Character.toUpperCase(last.charAt(0)) + last.substring(1);
+        return Component.translatableWithFallback("advancements." + path.replace('/', '.') + ".title", written);
     }
 
     /** The items it counts, for an icon; null for objectives that aren't about items. */

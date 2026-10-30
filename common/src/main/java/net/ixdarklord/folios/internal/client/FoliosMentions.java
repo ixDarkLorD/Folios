@@ -22,39 +22,25 @@ import com.mojang.blaze3d.platform.InputConstants;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Mentions of a book's pages in chat. With a book open, the mention key (M) over a page writes a mention of it into a new
- * chat message, {@code [[mymod:handbook|basics/first_steps|2]]} (the book, the entry, and which page of the entry's
- * JSON, so it finds the same page whatever size or language another player's pages are laid out at). Every client with
- * Folios shows a mention in a message as the page's name, pressed to open the book there; to a player without the book,
- * or who hasn't unlocked the page, it is scrambled. An entry left empty mentions the book's front.
- */
 public final class FoliosMentions {
-    /** The key that mentions the page under the pointer. */
     public static final KeyMapping KEY = new KeyMapping("key.folios.mention", InputConstants.KEY_M, KeyMapping.Category.MULTIPLAYER);
     private static final Pattern TOKEN = Pattern.compile("\\[\\[([a-z0-9_.-]+:[a-z0-9_./-]+)\\|([a-z0-9_./-]*)\\|(\\d{1,4})]]");
 
     private FoliosMentions() {}
 
-    /** A mention of a page, as written in chat; {@code at} null for the book's front. */
     public static String token(Identifier book, FoliosBook.@Nullable Location at) {
         return "[[" + book + "|" + (at != null ? at.entry() : "") + "|" + (at != null ? at.page() : 0) + "]]";
     }
 
-    /** Opens the chat with a mention of a page written in, to say something about it and send. */
     public static void mention(Identifier book, FoliosBook.@Nullable Location at) {
         Minecraft.getInstance().gui.setScreen(new ChatScreen(token(book, at) + " ", false));
     }
 
-    // ---- Shown in chat ----
-
-    /** A chat message with each mention in it shown as the page's name (or scrambled); others as they are. */
     public static Component decorate(Component message) {
         if (!message.getString().contains("[[")) return message;
         return copy(message);
     }
 
-    // The component again, its text's mentions shown, its translations' arguments too.
     private static MutableComponent copy(Component component) {
         ComponentContents contents = component.getContents();
         MutableComponent out;
@@ -85,8 +71,6 @@ public final class FoliosMentions {
         return out;
     }
 
-    // A mention as this player sees it: the page's name in the book's colour, pressed to open it there; scrambled
-    // when they haven't the book or haven't unlocked the page.
     private static Component shown(Identifier bookId, String entryId, int page) {
         FoliosBook book = FoliosLibrary.book(bookId);
         if (book == null) return scrambled(Component.translatableWithFallback("folios.mention.no_book", "A page of a book you don't have"));
@@ -114,9 +98,6 @@ public final class FoliosMentions {
                 .withStyle(Style.EMPTY.withColor(ChatFormatting.GRAY).withHoverEvent(new HoverEvent.ShowText(why)));
     }
 
-    // ---- Opening one ----
-
-    /** {@code <book> <entry or -> <page>}, as a mention's command gives it: opens the book there, if the player may. */
     public static boolean open(String written) {
         String[] parts = written.strip().split("\\s+");
         if (parts.length != 3) return false;

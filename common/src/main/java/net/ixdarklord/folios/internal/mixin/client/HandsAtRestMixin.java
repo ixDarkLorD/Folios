@@ -10,8 +10,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-// Held up, the book is in place of the hands: vanilla's hands are kept at rest with what they hold, so once it is put
-// back the item is simply there, as the book left it, with no swap of its own.
 @Mixin(value = FirstPersonHandsAndItems.class, priority = 900)
 public abstract class HandsAtRestMixin {
     @Shadow private float mainHandHeight;

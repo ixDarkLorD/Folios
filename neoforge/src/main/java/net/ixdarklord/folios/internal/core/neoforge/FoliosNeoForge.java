@@ -7,7 +7,6 @@ import net.ixdarklord.coolcatcore.api.core.neoforge.NeoForgeModEntrypoint;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 
-// Folios's NeoForge entry point: its common and client setup, through CoolCatLib's.
 @Mod(Folios.MOD_ID)
 public final class FoliosNeoForge extends NeoForgeModEntrypoint {
     public FoliosNeoForge(ModContainer container) {

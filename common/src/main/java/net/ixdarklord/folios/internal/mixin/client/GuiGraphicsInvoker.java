@@ -7,7 +7,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-// A texture view drawn on a screen with a colour, which the public draw doesn't take: for a scene fading in.
 @Mixin(GuiGraphicsExtractor.class)
 public interface GuiGraphicsInvoker {
     @Invoker("innerBlit")

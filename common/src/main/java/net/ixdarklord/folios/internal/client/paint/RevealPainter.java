@@ -16,21 +16,13 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-// A page's painter while its content is revealed: what is drawn asks the effect how it looks where it is (through the
-// page's own moves, which this keeps count of), and is drawn faded, tinted and moved by that. So an effect sweeps
-// through things rather than each thing changing at once: text is drawn a letter at a time, and fills and pictures a
-// small cell at a time where the effect differs across them, scenes the same. Items fade, tint and move whole, as the
-// effect has it at their middle. Places are given to the effect across the open spread (the right page's from a page's width on), so
-// an effect runs on over the fold. Where things can be pressed is left as it is.
 public final class RevealPainter implements FoliosPainter {
-    /** How large the cells are that fills and pictures are cut into while an effect differs across them. */
     private static final int CELL = 6;
     private static final int PICTURE_CELL = 12;
     private static final FontDescription RUNES = new FontDescription.Resource(Identifier.withDefaultNamespace("alt"));
 
     private final FoliosPainter painter;
 
-    // The page's size is the painter's it wraps.
     @Override
     public int pageWidth() {
         return painter.pageWidth();
@@ -55,23 +47,15 @@ public final class RevealPainter implements FoliosPainter {
         this.pageX = pageX;
     }
 
-    /**
-     * Draws a page's content as it is at this point of its reveal, then what the effect draws over it.
-     *
-     * @param pageX where the page starts across the open spread: 0 for the left page, a page's width for the right
-     */
     public static void draw(FoliosPainter painter, FoliosPageElement.Laid page, @Nullable FoliosReveal effect, float progress, float pageX) {
         page.draw(of(painter, effect, progress, pageX));
-        // Nothing over a page whose reveal has yet to start (the right one, while the left reveals).
         if (effect != null && progress > 0 && progress < 1) above(painter, () -> effect.overlay(new EdgeFadePainter(painter, 0, 0, 1), progress, painter.time(), pageX));
     }
 
-    /** The painter to draw a page's content through at this point of its reveal: the page's own once it is done. */
     public static FoliosPainter of(FoliosPainter painter, @Nullable FoliosReveal effect, float progress, float pageX) {
         return effect == null || progress >= 1 ? painter : new RevealPainter(painter, effect, progress, pageX);
     }
 
-    // How a thing at (x, y) in the current moves looks.
     private FoliosReveal.Look look(float x, float y) {
         return effect.look(progress, pageX + offsetX + x * scale, offsetY + y * scale);
     }
@@ -81,7 +65,6 @@ public final class RevealPainter implements FoliosPainter {
         return FoliosPalette.alpha(argb, alpha);
     }
 
-    // A colour faded and tinted as a look has it.
     private static int shaded(int argb, FoliosReveal.Look look) {
         int tint = look.tint();
         if ((tint >>> 24) != 0) argb = FoliosPalette.alpha(FoliosPalette.mix(argb | 0xFF000000, tint | 0xFF000000, (tint >>> 24) / 255.0F), argb >>> 24);
@@ -92,20 +75,16 @@ public final class RevealPainter implements FoliosPainter {
         return Math.abs(a.opacity() - b.opacity()) < 0.02F && a.tint() == b.tint() && Math.abs(a.dx() - b.dx()) < 0.5F && Math.abs(a.dy() - b.dy()) < 0.5F;
     }
 
-    // Whether the effect is the same all over a rectangle: its corners and its middle look alike.
     private boolean even(float x0, float y0, float x1, float y1) {
         FoliosReveal.Look middle = this.look((x0 + x1) / 2, (y0 + y1) / 2);
         return same(middle, this.look(x0, y0)) && same(middle, this.look(x1, y0)) && same(middle, this.look(x0, y1)) && same(middle, this.look(x1, y1));
     }
 
-    // What the effect draws about a thing just drawn, at its place in the painter's pixels.
     private void around(float x, float y, float width, float height) {
-        // Faded out towards the page's edges and fold, as the overlay is.
         effect.around(new EdgeFadePainter(painter, offsetX, offsetY, scale), progress, painter.time(), x, y, width, height,
                 pageX + offsetX + (x + width / 2) * scale, offsetY + (y + height / 2) * scale);
     }
 
-    // The same, about an item: over it, not under.
     private void aroundItem(int x, int y) {
         above(painter, () -> this.around(x, y, 16, 16));
     }
@@ -115,7 +94,6 @@ public final class RevealPainter implements FoliosPainter {
         else draw.run();
     }
 
-    // Draws something moved by its look, in the page's own pixels (so the move doesn't grow with a scale).
     private void moved(FoliosReveal.Look look, Runnable draw) {
         if (look.dx() == 0 && look.dy() == 0) {
             draw.run();
@@ -147,7 +125,6 @@ public final class RevealPainter implements FoliosPainter {
     @Override
     public void text(FormattedCharSequence text, int x, int y, int argb) {
         Font font = painter.font();
-        // Where the effect is the same all along the line, the line at once.
         int lineWidth = font.width(text);
         if (this.even(x, y, x + lineWidth, y + 8)) {
             FoliosReveal.Look look = this.look(x + lineWidth / 2.0F, y + 4);
@@ -159,7 +136,6 @@ public final class RevealPainter implements FoliosPainter {
                 return;
             }
         }
-        // Otherwise a letter at a time, each as the effect has it where it stands.
         int flicker = (int) (painter.time() * 12);
         float[] at = {x};
         text.accept((index, style, codePoint) -> {
@@ -169,7 +145,6 @@ public final class RevealPainter implements FoliosPainter {
             at[0] += width;
             if (codePoint == ' ') return true;
             FoliosReveal.Look look = this.look(left + width / 2.0F, y + 4);
-            // Text too faint can't be drawn: it is left out until it shows.
             if (look.opacity() < 0.1F) return true;
             boolean rune = look.runes() > 0.01F && FoliosReveal.noise(Math.round(left) * 31 + y * 131 + flicker * 104729) < look.runes();
             FormattedCharSequence shown = rune ? FormattedCharSequence.codepoint(codePoint, style.withFont(RUNES)) : letter;
@@ -219,6 +194,13 @@ public final class RevealPainter implements FoliosPainter {
     }
 
     @Override
+    public void silhouette(ItemStack stack, int x, int y, int argb) {
+        FoliosReveal.Look look = this.look(x + 8, y + 8);
+        if (look.opacity() > 0.02F) this.moved(look, () -> painter.silhouette(stack, x, y, shaded(argb, look)));
+        this.aroundItem(x, y);
+    }
+
+    @Override
     public void scene(SceneViewport viewport, int x, int y, int width, int height) {
         this.scene(viewport, x, y, width, height, 0, 0, 1, 1, -1);
     }
@@ -230,7 +212,6 @@ public final class RevealPainter implements FoliosPainter {
 
     @Override
     public void scene(SceneViewport viewport, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
-        // Whole where the effect is the same all over it; otherwise a cell at a time, as a picture is.
         if (this.even(x, y, x + width, y + height)) {
             FoliosReveal.Look look = this.look(x + width / 2.0F, y + height / 2.0F);
             if (look.opacity() > 0.01F) this.moved(look, () -> painter.scene(viewport, x, y, width, height, u0, v0, u1, v1, shaded(argb, look)));
@@ -249,7 +230,10 @@ public final class RevealPainter implements FoliosPainter {
         }
     }
 
-    // ---- Moves, kept count of as well as passed on ----
+    @Override
+    public void clip(int x, int y, int width, int height, Runnable draw) {
+        painter.clip(x, y, width, height, draw);
+    }
 
     @Override
     public void push() {
@@ -278,8 +262,6 @@ public final class RevealPainter implements FoliosPainter {
         scale *= factor;
         painter.scale(factor);
     }
-
-    // ---- The rest as the page's own ----
 
     @Override
     public Font font() {
