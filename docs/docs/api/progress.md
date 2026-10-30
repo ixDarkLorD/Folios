@@ -52,4 +52,5 @@ A `source` objective can lock content too, like any other condition:
 ## Reading conditions in code
 
 `FoliosObjective.read(json)` reads one condition as a book writes it, and `FoliosObjective.readAll(json)` one or a list.
-A category's, entry's or page's lock is a `FoliosLock` (`book`, `requires`, `secret`), with `isOpen()`.
+A category's, entry's, page's or element's lock is a `FoliosLock` (`book`, `requires`, `secret`, `showUnlock`,
+`peek`), with `isOpen()`. The `(book, requires, secret)` constructor shows the unlock list and a peek of `1.0`.

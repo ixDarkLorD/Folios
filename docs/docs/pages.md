@@ -82,11 +82,14 @@ Builds shown with `build` come from [build files](elements/build-files.md). Two 
 | `type` | string | `"text"` | The kind of page. |
 | `marker` | string | none | A name links can reach this page by: `entry:<entry id>#<marker>`. See [Links](text-formatting.md#links). |
 | `icon` | [icon](categories-and-entries.md#icons) or `"none"` | see below | An icon before the page's title. |
-| `requires`, `secret` | | | Leave the page out until it opens. See [Locks](categories-and-entries.md#locks). |
+| `requires`, `secret`, `show_unlock`, `peek` | | | Lock the page: it is sealed where it stands until it opens, or left out while it is `secret`. See [Locks](categories-and-entries.md#locks). |
+| `index` | `true`, or object | none | List the page on its own in the book's index and search. See [Listed on their own](#listed-on-their-own). |
 | `overflow`, `alignment`, `title_alignment`, `anchor` | | the book's | How the page and its elements are set. See [Setting pages](setting-pages.md). |
 | `observe` | object | none | A live list, written after the page's text. See [Live lists](live-lists.md). |
 
-Every element in a page's `elements` takes `overflow`, `alignment`, `title_alignment`, `anchor` and `observe` too.
+Every element in a page's `elements` takes `marker`, `requires`, `secret`, `show_unlock`, `peek`, `index`,
+`overflow`, `alignment`, `title_alignment`, `anchor` and `observe` too: a link to an element's marker opens the page it
+starts on, and a locked element is sealed where it stands on its page.
 
 Most pages also take `title` and `text`. Texts are [Folios Markdown](text-formatting.md), translation keys, or
 `{"translate": ...}`.
@@ -97,6 +100,72 @@ line under it; the title starts where the rest of the line does. Later pages sho
 
 Items are written as described under [Icons](categories-and-entries.md#icons): an id, `id*count`, a `#tag`, a list,
 or an item stack object.
+
+## Listed on their own
+
+The index and search list entries. A page, or an element of one, can be listed beside them with `index`, under a name
+and an icon of its own: a guide to many items can keep them on the pages of one entry, and each can still be looked up
+and found. Pressing it opens the entry at it.
+
+```json title="entries/world/materials.json"
+{
+  "icon": "minecraft:chest",
+  "pages": [
+    {
+      "title": "Materials",
+      "elements": [
+        { "type": "spotlight", "item": "minecraft:oak_log", "text": "Wood, from any tree.", "index": true },
+        { "type": "spotlight", "item": "minecraft:iron_ingot", "text": "Smelted from raw iron.", "index": { "name": "Iron" } },
+        { "type": "spotlight", "item": "minecraft:diamond", "text": "Deep underground.", "index": true,
+          "requires": { "obtained": "minecraft:diamond" } }
+      ]
+    }
+  ]
+}
+```
+
+| `index` | What is listed |
+| --- | --- |
+| `true` | Its `title`; without one, the name of the first item it shows; without that, its entry's name. Its icon is that item, else its entry's icon. |
+| `{"name": ..., "icon": ...}` | The name and [icon](categories-and-entries.md#icons) given; either can be left out, to be found as above. |
+| `false` | Nothing, even in an entry that lists its elements (below). |
+
+An entry of many things can list them all at once: `"index": "elements"` on the entry lists each of its elements that
+shows an item or has a title, as if each had `"index": true`. Give one `"index": false` to leave it out, or its own
+`"index"` to name it.
+
+```json title="entries/world/ores.json"
+{
+  "icon": "minecraft:iron_ore",
+  "index": "elements",
+  "pages": [
+    {
+      "title": "Ores",
+      "elements": [
+        { "type": "spotlight", "item": "minecraft:coal_ore", "text": "Common, near the surface." },
+        { "type": "spotlight", "item": "minecraft:copper_ore", "text": "Turns green in the rain." },
+        { "type": "spotlight", "item": "minecraft:gold_ore", "text": "Kept out of the index.", "index": false }
+      ]
+    }
+  ]
+}
+```
+
+In the index and in search results, a listed page or element shows the entry it is in at the end of its row. Search
+finds it by its name and its words, as it finds an entry, and its name matches first. Opening it turns to its page and
+lights it up for a moment, and so does pressing an item it shows anywhere in the book (*Press to read*): the item leads
+to the element listed for it before the first page that shows it.
+
+A locked one is listed in the index as `???` until it opens, and isn't found by search; a `secret` one isn't listed at
+all until then.
+
+### Looking an item up from an inventory
+
+A player carrying a book can look any item up in it without opening it first. In an inventory, the tooltip of an item a
+book they carry tells of ends with that book: its item, its name, and **Hold B to learn more**. Holding the key (*Look up in
+a guide book*, under Inventory in the controls) fills the frame round the book, and once it is full the book opens at
+the item, lighting it up when it is listed on its own. The book can be anywhere in the player's inventory; with several
+that tell of the item, the one in hand comes first.
 
 ## Mentioning a page in chat
 

@@ -14,7 +14,8 @@ Set with `"style"` in [book.json](book.md).
     - A bar like the book's cover across the top shows where you are, with a bookmark star, search (a glass that opens
       into a field as you type), a light/dark paper switch, and a button to fold the book away.
     - Ribbon tabs come out of the leaves' edge: one for the front page and one per category, with bookmarks and an
-      index of every entry from A to Z at the foot.
+      index of every entry from A to Z at the foot. When the categories' tabs don't all fit, two buttons under them
+      (or the mouse wheel over them) turn to the next or previous group, with the group shown above them ("1/3").
     - Leaves fold across the spine as they turn.
     - Using the book item raises it out of the hand and opens it part way in 3D before the screen comes up.
     - Clicking off the book does **not** close it, unless `close_on_click_outside` is `true`.

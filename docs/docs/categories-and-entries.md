@@ -63,6 +63,7 @@ Each entry is a file under the book's `entries/` folder, in its category's folde
 | `featured` | boolean | `false` | Shown first in its category, and marked. |
 | `pages` | list | none | Its [pages](pages.md). A plain string in the list is a page of text. |
 | `reveal` | string or object | the book's | Its own [reveal effect](styles-and-look.md#reveal-effects), written as in [book.json](book.md#reveal). |
+| `index` | `"elements"` | none | List each of its elements that shows an item or has a title in the book's index and search, as if each had `"index": true`. See [Listed on their own](pages.md#listed-on-their-own). |
 | `requires`, `secret` | | | [Locks](#locks). |
 
 An entry's name key has its id with dots for slashes: `entries/getting_started/first_steps.json` is
@@ -109,12 +110,14 @@ spot.
 
 ## Locks
 
-Categories, entries and single pages can be locked until the player has earned them:
+Categories, entries, pages and a page's elements can be locked until the player has earned them:
 
 | Key | Type | What it does |
 | --- | --- | --- |
 | `requires` | condition, or list of them | Locked until it holds, or until every one in the list holds. A condition is written as a quest objective is: see [Conditions](quests.md#conditions). |
-| `secret` | boolean | Hide it entirely until it opens. Without it, a locked category or entry is still listed, as `???`. |
+| `secret` | boolean | Hide it entirely until it opens. Without it, a locked category or entry is still listed, as `???`, and a locked page or element is sealed where it stands (see below). |
+| `show_unlock` | boolean | Pages and elements: `false` leaves out the *How to unlock* list. `true` by default. |
+| `peek` | number | Pages and elements: how plainly the page shows faintly behind its seal, as a float: `1.0` by default, `0.5` fainter, `2.0` plainer, `0.0` not at all. |
 
 ```json title="entries/secrets/the_end.json"
 {
@@ -132,7 +135,11 @@ What a lock does:
 
 - A locked **category** or **entry** shows as `???` with no icon and can't be opened. With `secret`, it isn't shown at
   all.
-- A locked **page** is left out of its entry until it opens.
+- A locked **page** or **element** stays where it stands, sealed: a wax seal with a padlock over *Not yet discovered*,
+  and *How to unlock*, each condition that opens it ticked once done, with a bar for one that counts. A long list
+  scrolls with the mouse wheel or its scrollbar. Behind the seal, unless `peek` is `0.0`, the page itself shows
+  faintly: its words in runes, its items, blocks and entities as dark shapes. Nothing on it can be pressed until it
+  opens. With `secret`, it is left out until then.
 - A link to a locked entry or category does nothing, and its tooltip says "Not yet discovered".
 
 ```json title="A page that opens once a quest is done"

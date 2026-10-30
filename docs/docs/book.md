@@ -71,6 +71,7 @@ and `folios.list.and`, so a language can put them in its own order. A book's `"a
 | `format_version` | string | `"2.0"` | The version of the format the book is written in: `"3.0"`. A book without it is read as a 2.x book and updated as it loads. See [Migrating to 3.0](migrating-to-3.0.md#format-versions). |
 | `icon` | [icon](categories-and-entries.md#icons) | the book's own item | The icon shown in the bar and on the front page. |
 | `show_progress` | boolean | `true` | Whether the lists of categories show how much of each has been read, as bars. |
+| `categories` | object | list, paged | How the front of the book lists its categories: `"view"`: `"list"` (a row each) or `"grid"` (a tile each, its icon over its name, three to a row on a page of the usual size; a category of one entry has no bar), and `"overflow"`: `"pages"` (more pages when they don't fit) or `"scroll"` (one page that scrolls). |
 | `progress_scope` | string | `"player"` | Where what is read is kept: `"player"` or `"copy"`. See [Reading progress](categories-and-entries.md#reading-progress). |
 | `celebrations` | boolean or object | none | How finishing part of the book is celebrated. Off unless the book says so. See [Celebrations](celebrations.md). |
 

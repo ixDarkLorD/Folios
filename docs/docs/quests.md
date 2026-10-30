@@ -236,7 +236,7 @@ Details:
 
 ## Locks
 
-Categories, entries and single pages can be locked until the player has earned them, with `requires`: one condition,
+Categories, entries, pages and elements can be locked until the player has earned them, with `requires`: one condition,
 or a list of them that must all be done. `secret` hides the thing entirely until it opens.
 
 ```json title="entries/advanced/second_quest.json"
