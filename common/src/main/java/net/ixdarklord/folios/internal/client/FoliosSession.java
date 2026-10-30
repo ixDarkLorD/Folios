@@ -7,6 +7,7 @@ import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.page.ErrorPage;
+import net.ixdarklord.folios.internal.client.page.Locked;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -21,17 +22,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-// A book as laid out for the reader's language and progress: each entry's pages are set out the first time they're
-// shown and kept until something they depend on changes (a reload, the language, an unlock).
 public final class FoliosSession {
-    /** An entry's pages, ready to draw: markers and the pages of its JSON point into them. */
-    public record EntryPages(List<FoliosPageElement.Laid> pages, Map<String, Integer> markers, int[] starts) {
-        /** Where a page of the entry's JSON begins among the laid pages. */
+    public record EntryPages(List<FoliosPageElement.Laid> pages, Map<String, Integer> markers, int[] starts, Map<String, FoliosLayout.Mark> places) {
+        public EntryPages(List<FoliosPageElement.Laid> pages, Map<String, Integer> markers, int[] starts) {
+            this(pages, markers, starts, Map.of());
+        }
+
         public int start(int page) {
             return page < 0 || page >= starts.length ? 0 : starts[page];
         }
 
-        /** Which page of the entry's JSON a laid page came from. */
         public int source(int laid) {
             int source = 0;
             for (int index = 0; index < starts.length; index++) {
@@ -41,8 +41,11 @@ public final class FoliosSession {
         }
     }
 
-    /** Where a link goes. */
-    public record Target(@Nullable String entry, int page, @Nullable String category, @Nullable String url) {}
+    public record Target(@Nullable String entry, int page, @Nullable String category, @Nullable String url, @Nullable String marker) {
+        public Target(@Nullable String entry, int page, @Nullable String category, @Nullable String url) {
+            this(entry, page, category, url, null);
+        }
+    }
 
     private final FoliosBook book;
     private final FoliosLayout layout;
@@ -55,7 +58,6 @@ public final class FoliosSession {
         this(book, FoliosLayout.PAGE_WIDTH, FoliosLayout.PAGE_HEIGHT);
     }
 
-    /** Laid out to pages {@code pageWidth} by {@code pageHeight}. */
     FoliosSession(FoliosBook book, int pageWidth, int pageHeight) {
         this.book = book;
         this.layout = new FoliosLayout(book, Minecraft.getInstance().font, pageWidth, pageHeight);
@@ -88,23 +90,46 @@ public final class FoliosSession {
         return pages;
     }
 
+    private FoliosPageElement.@org.jspecify.annotations.Nullable Laid under(FoliosEntry.Page page, net.ixdarklord.folios.api.client.page.@org.jspecify.annotations.Nullable FoliosIcon first) {
+        try {
+            layout.titleIcon(page.icon() != null ? page.icon() : first != null ? first : net.ixdarklord.folios.api.client.page.FoliosIcon.NONE);
+            layout.takeMarks();
+            List<FoliosPageElement.Laid> laid = page.page().lay(layout);
+            layout.takeMarks();
+            return laid.isEmpty() ? null : laid.getFirst();
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
     private EntryPages lay(String id) {
         FoliosEntry entry = book.entry(id);
         List<FoliosPageElement.Laid> pages = new ArrayList<>();
         Map<String, Integer> markers = new HashMap<>();
+        Map<String, FoliosLayout.Mark> places = new HashMap<>();
         if (entry == null) return new EntryPages(pages, markers, new int[0]);
         int[] starts = new int[entry.pages().size()];
         for (int index = 0; index < entry.pages().size(); index++) {
             FoliosEntry.Page page = entry.pages().get(index);
-            // A page over both pages starts on a left one.
             if (page.lock().isOpen() && page.page().spread() && pages.size() % 2 == 1) pages.add(painter -> {});
             starts[index] = pages.size();
-            if (!page.lock().isOpen()) continue;
+            if (!page.lock().isVisible()) continue;
+            markers.put("@" + index, pages.size());
             if (page.marker() != null) markers.put(page.marker(), pages.size());
+            if (!page.lock().isOpen()) {
+                pages.add(Locked.page(page.lock(), (id + "#" + index).hashCode(), page.lock().peek() > 0 ? under(page, index == 0 ? entry.icon() : null) : null));
+                continue;
+            }
+            int base = pages.size();
             try {
-                // The entry's icon heads its first page; a later page shows one only if it names its own.
                 layout.titleIcon(page.icon() != null ? page.icon() : index == 0 ? entry.icon() : net.ixdarklord.folios.api.client.page.FoliosIcon.NONE);
+                layout.takeMarks();
                 pages.addAll(page.page().lay(layout));
+                for (Map.Entry<String, FoliosLayout.Mark> mark : layout.takeMarks().entrySet()) {
+                    String name = mark.getKey().startsWith("@") ? "@" + index + "." + mark.getKey().substring(1) : mark.getKey();
+                    FoliosLayout.Mark at = mark.getValue();
+                    if (markers.putIfAbsent(name, base + at.page()) == null) places.put(name, new FoliosLayout.Mark(base + at.page(), at.top(), at.bottom()));
+                }
             } catch (RuntimeException e) {
                 Folios.LOGGER.error("Couldn't lay out page {} of the entry {} of the guide {}", index + 1, id, book.id(), e);
                 pages.addAll(new ErrorPage("This page couldn't be shown: " + e).lay(layout));
@@ -112,20 +137,29 @@ public final class FoliosSession {
         }
         layout.titleIcon(net.ixdarklord.folios.api.client.page.FoliosIcon.NONE);
         if (pages.isEmpty()) pages.add(painter -> {});
-        return new EntryPages(List.copyOf(pages), Map.copyOf(markers), starts);
+        return new EntryPages(List.copyOf(pages), Map.copyOf(markers), starts, Map.copyOf(places));
     }
 
-    /** A laid page of an entry as a place in the book. */
     public FoliosBook.Location location(String entry, int laid) {
         return new FoliosBook.Location(entry, entry(entry).source(laid));
     }
 
-    /** Which laid page of its entry a place is. */
     public int pageOf(FoliosBook.Location location) {
-        return entry(location.entry()).start(location.page());
+        EntryPages pages = entry(location.entry());
+        if (location.element() >= 0) {
+            Integer at = pages.markers().get(elementMarker(location));
+            if (at != null) return at;
+        }
+        return pages.start(location.page());
     }
 
-    // ---- Links ----
+    public static String elementMarker(FoliosBook.Location location) {
+        return "@" + location.page() + "." + location.element();
+    }
+
+    public FoliosLayout.@Nullable Mark place(String entry, String marker) {
+        return entry(entry).places().get(marker);
+    }
 
     public @Nullable Target resolve(String link) {
         if (link.startsWith("http://") || link.startsWith("https://")) return new Target(null, 0, null, link);
@@ -148,21 +182,17 @@ public final class FoliosSession {
             Integer at = entry(entry).markers().get(marker);
             if (at != null) page = at;
         }
-        return new Target(entry, page, null, null);
+        return new Target(entry, page, null, null, marker);
     }
 
-    /** What a link's tooltip says: where it goes. */
-    // Each link's popup, made once while the book is laid out this way (so its scene is kept).
     private final Map<String, java.util.Optional<net.ixdarklord.folios.api.client.page.FoliosPopup>> popups = new HashMap<>();
 
-    /** The popup window a link shows ({@link net.ixdarklord.folios.api.client.FoliosLinks}); null for none, or while it is locked. */
     public net.ixdarklord.folios.api.client.page.@Nullable FoliosPopup popup(String link) {
         net.ixdarklord.folios.api.client.FoliosLinks.Found found = net.ixdarklord.folios.api.client.FoliosLinks.find(link);
         if (found == null || !found.kind().isOpen(book, found.target())) return null;
         return popups.computeIfAbsent(link, key -> java.util.Optional.ofNullable(found.kind().popup(layout, found.target()))).orElse(null);
     }
 
-    /** What a link says under the pointer: a kind of a mod's own as it says, else where it goes. */
     public java.util.List<Component> tooltip(String link) {
         net.ixdarklord.folios.api.client.FoliosLinks.Found found = net.ixdarklord.folios.api.client.FoliosLinks.find(link);
         if (found == null) return java.util.List.of(this.describe(link));
@@ -182,41 +212,57 @@ public final class FoliosSession {
         return entry != null ? entry.title() : Component.literal(String.valueOf(target.entry()));
     }
 
-    // ---- Search ----
+    public record Found(FoliosEntry entry, FoliosEntry.@Nullable Listing listing) {}
 
-    /** The open entries whose name or words contain every word of a query, best matches (by name) first. */
-    public List<FoliosEntry> search(String query) {
+    public List<Found> search(String query) {
         String[] words = query.toLowerCase(Locale.ROOT).strip().split("\\s+");
         if (searchIndex == null) {
             searchIndex = FoliosText.in(book, () -> {
                 Map<String, String> index = new HashMap<>();
                 for (FoliosEntry entry : book.entries().values()) {
                     StringBuilder text = new StringBuilder();
-                    for (FoliosEntry.Page page : entry.pages()) text.append(' ').append(FoliosText.plain(page.page().searchText()));
+                    for (FoliosEntry.Page page : entry.pages()) {
+                        if (page.lock().isOpen()) text.append(' ').append(FoliosText.plain(page.page().searchText()));
+                    }
                     index.put(entry.id(), text.toString().toLowerCase(Locale.ROOT));
+                    for (FoliosEntry.Listing listing : entry.listings()) {
+                        index.put(key(entry, listing), FoliosText.plain(listing.shown().searchText()).toLowerCase(Locale.ROOT));
+                    }
                 }
                 return index;
             });
         }
-        List<FoliosEntry> named = new ArrayList<>();
-        List<FoliosEntry> mentioned = new ArrayList<>();
+        List<Found> named = new ArrayList<>();
+        List<Found> mentioned = new ArrayList<>();
         for (FoliosEntry entry : book.entries().values()) {
             if (!entry.isOpen()) continue;
             FoliosCategory category = book.category(entry.category());
             if (category == null || !category.isOpen()) continue;
-            String name = entry.title().getString().toLowerCase(Locale.ROOT);
-            String body = searchIndex.getOrDefault(entry.id(), "");
-            boolean inName = true;
-            boolean anywhere = true;
-            for (String word : words) {
-                if (word.isEmpty()) continue;
-                inName &= name.contains(word);
-                anywhere &= name.contains(word) || body.contains(word);
+            match(words, entry.title(), searchIndex.getOrDefault(entry.id(), ""), new Found(entry, null), named, mentioned);
+            for (FoliosEntry.Listing listing : entry.listings()) {
+                if (!listing.isOpen(entry)) continue;
+                Component title = FoliosText.in(book, () -> listing.title(entry));
+                match(words, title, searchIndex.getOrDefault(key(entry, listing), ""), new Found(entry, listing), named, mentioned);
             }
-            if (inName) named.add(entry);
-            else if (anywhere) mentioned.add(entry);
         }
         named.addAll(mentioned);
         return named;
+    }
+
+    private static String key(FoliosEntry entry, FoliosEntry.Listing listing) {
+        return entry.id() + "#@" + listing.page() + "." + listing.element();
+    }
+
+    private static void match(String[] words, Component title, String body, Found found, List<Found> named, List<Found> mentioned) {
+        String name = title.getString().toLowerCase(Locale.ROOT);
+        boolean inName = true;
+        boolean anywhere = true;
+        for (String word : words) {
+            if (word.isEmpty()) continue;
+            inName &= name.contains(word);
+            anywhere &= name.contains(word) || body.contains(word);
+        }
+        if (inName) named.add(found);
+        else if (anywhere) mentioned.add(found);
     }
 }

@@ -14,13 +14,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 
-// What has unlocked the player's books: the advancements the server says they have, and flags code sets. A server
-// without CoolCatLib sends nothing; then the advancements the client was shown are what counts.
 public final class FoliosProgress {
     private static final Set<Identifier> DONE = new HashSet<>();
     private static final Map<String, BooleanSupplier> FLAGS = new ConcurrentHashMap<>();
     private static boolean heard;
-    // Goes up whenever anything here changes, so what was laid out with locks in mind is laid out again.
     private static int version;
 
     private FoliosProgress() {}
@@ -47,7 +44,6 @@ public final class FoliosProgress {
         version++;
     }
 
-    /** Whether the server has CoolCatLib: it has said which advancements the player has. */
     public static synchronized boolean serverHasGuides() {
         return heard;
     }

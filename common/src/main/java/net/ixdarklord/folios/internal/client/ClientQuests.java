@@ -22,22 +22,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * The server's quests on the client: what the server sent of each (books show them as they are written), what it found
- * of the player's progress, and claiming their rewards. Also tells the server which entry is open, for its reading.
- */
 public final class ClientQuests {
-    /** A server quest as a book shows it. */
     public record Quest(List<FoliosObjective> objectives, boolean inOrder, @Nullable JsonObject rewards) {}
 
     private static final Map<Identifier, Quest> QUESTS = new ConcurrentHashMap<>();
     private static final Map<Identifier, QuestRewards> REWARDS = new ConcurrentHashMap<>();
-    // The entry last said to be open, so it is said again only when it changes.
     private static @Nullable String told;
 
     private ClientQuests() {}
 
-    /** The quests the server sent: kept, and books laid out again so their quest pages show them. */
     public static void receive(FoliosPayloads.Quests payload) {
         QUESTS.clear();
         REWARDS.clear();
@@ -59,7 +52,6 @@ public final class ClientQuests {
         return QUESTS.get(id);
     }
 
-    /** A quest's rewards, read with the client's world; null where it has none, or before the world is there. */
     public static @Nullable QuestRewards rewards(Identifier id) {
         QuestRewards known = REWARDS.get(id);
         if (known != null) return known;
@@ -71,13 +63,11 @@ public final class ClientQuests {
         return read;
     }
 
-    /** What the server found of the player's progress with a quest. */
     public static PlayerQuests.Progress progress(Identifier id) {
         var player = Minecraft.getInstance().player;
         return player == null ? PlayerQuests.Progress.NONE : FoliosRegistry.PLAYER_QUESTS.get(player).progress(id);
     }
 
-    /** What the server found of the player's quests changed: books are laid out again if any opened or was done. */
     public static void synced(PlayerQuests old, PlayerQuests now) {
         for (Identifier id : QUESTS.keySet()) {
             PlayerQuests.Progress before = old.progress(id);
@@ -89,12 +79,10 @@ public final class ClientQuests {
         }
     }
 
-    /** Asks the server for a quest's reward. */
     public static void claim(Identifier id) {
         Network.sendToServer(new FoliosPayloads.Claim(id));
     }
 
-    /** Every client tick: tells the server which entry is open, when that has changed. */
     public static void tick(Minecraft minecraft) {
         FoliosReader reader = minecraft.gui.screen() instanceof FoliosScreen screen ? screen.reader() : HandheldBook.current();
         var entry = reader != null ? reader.entry() : null;
@@ -105,7 +93,6 @@ public final class ClientQuests {
         Network.sendToServer(new FoliosPayloads.Viewing(book, entry != null ? entry.id() : ""));
     }
 
-    /** Forgets what a server sent, as the client leaves it. */
     public static void forget() {
         QUESTS.clear();
         REWARDS.clear();

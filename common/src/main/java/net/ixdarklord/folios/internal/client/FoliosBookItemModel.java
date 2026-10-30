@@ -20,19 +20,11 @@ import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4fc;
 import org.jspecify.annotations.Nullable;
 
-// The "folios:guide_book" item model: the model a stack's book asks for in its book.json ("models"/"item", an item
-// model id like "mymod:handbook" for assets/mymod/items/handbook.json), or the fallback for books that don't; and while
-// its holder reads it in their hands, as others see them, the book's open model ("models"/"open"), if it names one.
-// In inventory slots it is the "flat" icon, unless the book asks for its model there ("models"/"gui": "model"): then
-// "gui", the model without what is too small to read at that size (the cover's lettering), or the model itself.
 public final class FoliosBookItemModel implements ItemModel {
     public static final Identifier TYPE = Folios.rl("guide_book");
     private final ItemModel fallback;
-    // The flat icon shown in inventory slots, for books that don't ask for their model there; null for none.
     private final @Nullable ItemModel flat;
-    // The model in inventory slots, for books that ask for their model there; null for the model itself.
     private final @Nullable ItemModel gui;
-    // A book's model may itself be a guide book model; it is followed only one step.
     private static boolean resolving;
 
     private FoliosBookItemModel(ItemModel fallback, @Nullable ItemModel flat, @Nullable ItemModel gui) {
@@ -46,10 +38,8 @@ public final class FoliosBookItemModel implements ItemModel {
                        @Nullable ClientLevel level, @Nullable ItemOwner owner, int seed) {
         Identifier id = FoliosBooks.bookOf(item);
         FoliosBook book = id != null ? FoliosLibrary.book(id) : null;
-        // Held up open by someone reading it, seen from outside them: the book's open model.
         Identifier model = book != null ? book.itemModel() : null;
         boolean thirdPerson = displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || displayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
-        // Held up by someone, shut or open, and drawn in their hands by SharedBooks: not as the item too.
         if (thirdPerson && owner instanceof net.minecraft.world.entity.Entity holder && net.ixdarklord.folios.internal.client.handheld.SharedBooks.isShown(holder)) return;
         if (item.has(FoliosRegistry.READING.get()) && thirdPerson && book != null && book.models().open() != null) model = book.models().open();
         if (model != null && !resolving) {

@@ -1,0 +1,35 @@
+{
+  "name": "Materials",
+  "icon": "minecraft:chest",
+  "sort": 5,
+  "pages": [
+    {
+      "title": "Materials",
+      "elements": [
+        "Everything worth gathering, each on its own in the index and in search.",
+        { "type": "spotlight", "item": "minecraft:oak_log", "text": "Wood, from any tree.", "index": true },
+        { "type": "spotlight", "item": "minecraft:iron_ingot", "text": "Smelted from raw iron.", "index": { "name": "Iron" }, "marker": "iron" },
+        { "type": "spotlight", "item": "minecraft:diamond", "text": "Deep underground, near lava.", "index": true,
+          "requires": [
+            { "obtained": "minecraft:diamond" },
+            { "advancement": "minecraft:story/mine_stone" },
+            { "carried": "minecraft:iron_ingot", "goal": 5 },
+            { "advancement": "minecraft:story/iron_tools" },
+            { "carried": "minecraft:torch", "goal": 16 }
+          ] },
+        { "type": "spotlight", "item": "minecraft:nether_star", "text": "Dropped by the Wither.", "index": true, "secret": true,
+          "requires": { "obtained": "minecraft:nether_star" } }
+      ]
+    },
+    {
+      "title": "Rare Finds",
+      "text": "Only for those who have stood in the End.",
+      "index": true,
+      "peek": 0.0,
+      "requires": [
+        { "advancement": "minecraft:end/root" },
+        { "carried": "minecraft:ender_pearl", "goal": 4 }
+      ]
+    }
+  ]
+}

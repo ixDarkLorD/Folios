@@ -10,7 +10,6 @@ import net.minecraft.client.renderer.state.gui.pip.PictureInPictureRenderState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-// A book's item drawn larger or smaller than 16 pixels goes to the screen as one drawn at its size (ScaledGuiItems).
 @Mixin(GuiGraphicsExtractor.class)
 public class GuiScaledItemsMixin {
     @WrapOperation(method = "item(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;III)V",
