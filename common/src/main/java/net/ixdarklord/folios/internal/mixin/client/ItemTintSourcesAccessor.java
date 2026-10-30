@@ -8,7 +8,6 @@ import net.minecraft.util.ExtraCodecs;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-// The item tint sources, so "folios:guide_cover" can be one of them on either loader.
 @Mixin(ItemTintSources.class)
 public interface ItemTintSourcesAccessor {
     @Accessor("ID_MAPPER")

@@ -6,7 +6,6 @@ import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
-// Stands in for a page that couldn't be read or laid out, saying why, so a book's writer sees the mistake in place.
 public record ErrorPage(String message) implements FoliosPageElement {
     @Override
     public List<Laid> lay(FoliosLayout layout) {

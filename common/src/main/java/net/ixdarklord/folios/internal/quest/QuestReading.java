@@ -18,31 +18,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * What the server counts as reading, for quests' {@code "read"} objectives. Reading happens on the player's screen, so
- * the server can't see it; it makes faking it cost what reading does. The client says which entry is open as that
- * changes, and the server counts it read once it has been open a while ({@code readSeconds}), in a book the player has
- * with them or one the server opened for them ({@code needsBook}), and no faster than {@code readsPerMinute}. What it
- * turns down is logged, once a minute at most for each player.
- */
 public final class QuestReading {
     private record Open(Identifier book, String entry, long since) {}
 
     private static final Map<UUID, Open> OPEN = new HashMap<>();
-    // Books the server opened for each player: these count without being in hand.
     private static final Map<UUID, Set<Identifier>> OPENED = new HashMap<>();
-    // When each player's last entries were counted, the last minute's.
     private static final Map<UUID, Deque<Long>> COUNTED = new HashMap<>();
     private static final Map<UUID, Long> WARNED = new HashMap<>();
 
     private QuestReading() {}
 
-    /** A book the server opened for a player, by the book item or {@code FoliosBooks.open}. */
     public static void opened(ServerPlayer player, Identifier book) {
         OPENED.computeIfAbsent(player.getUUID(), uuid -> new HashSet<>()).add(book);
     }
 
-    /** The client saying which entry is open now; none for {@link FoliosPayloads#NO_BOOK} or no entry. */
     static void viewing(ServerPlayer player, Identifier book, String entry) {
         UUID id = player.getUUID();
         if (book.equals(FoliosPayloads.NO_BOOK) || entry.isEmpty()) {
@@ -59,7 +48,6 @@ public final class QuestReading {
         OPEN.put(id, new Open(book, entry, Util.getMillis()));
     }
 
-    /** Every tick, for each player: an entry open long enough is counted read. */
     static void tick(ServerPlayer player) {
         Open open = OPEN.get(player.getUUID());
         if (open == null || Util.getMillis() - open.since < FoliosServerConfig.READ_SECONDS.get() * 1000) return;
@@ -72,7 +60,6 @@ public final class QuestReading {
         QuestTracker.read(player, open.book, open.entry);
     }
 
-    // Whether the player may read the book: they have it with them, or the server opened it for them.
     private static boolean mayRead(ServerPlayer player, Identifier book) {
         if (!FoliosServerConfig.NEEDS_BOOK.get()) return true;
         Set<Identifier> opened = OPENED.get(player.getUUID());
@@ -85,7 +72,6 @@ public final class QuestReading {
         return false;
     }
 
-    // Counts one more entry in the last minute's, unless that is as many as are allowed.
     private static boolean withinRate(ServerPlayer player) {
         long now = Util.getMillis();
         Deque<Long> times = COUNTED.computeIfAbsent(player.getUUID(), uuid -> new ArrayDeque<>());
@@ -103,7 +89,6 @@ public final class QuestReading {
         Folios.LOGGER.warn("Not counting {} as reading: {}", player.getName().getString(), what);
     }
 
-    /** Forgets a player, as they leave. */
     static void leave(UUID player) {
         OPEN.remove(player);
         OPENED.remove(player);

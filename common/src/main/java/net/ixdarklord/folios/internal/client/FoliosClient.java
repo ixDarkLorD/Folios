@@ -30,9 +30,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import org.jspecify.annotations.Nullable;
 
-// Sets up guide books on the client: the kinds of page and book, the item's model, and what opens a book.
 public final class FoliosClient {
-    // A book a command asked for, opened at the next tick (the chat closing would otherwise close it).
     private static @Nullable Runnable pending;
 
     private FoliosClient() {}
@@ -48,7 +46,6 @@ public final class FoliosClient {
         FoliosPageElements.register(Folios.rl("structure"), net.ixdarklord.folios.internal.client.page.StructurePageElement.CODEC);
         FoliosPageElements.register(Folios.rl("build"), net.ixdarklord.folios.internal.client.page.BuildPageElement.CODEC);
         FoliosPageElements.register(Folios.rl("links"), LinksPageElement.CODEC);
-        // Links showing an entity, a structure, a build or a multiblock in a popup window.
         net.ixdarklord.folios.internal.client.page.ScenePopups.register();
         FoliosPageElements.register(Folios.rl("quest"), QuestPageElement.CODEC);
         FoliosPageElements.register(Folios.rl("empty"), EmptyPage.CODEC);
@@ -65,8 +62,6 @@ public final class FoliosClient {
         net.ixdarklord.folios.internal.mixin.client.ItemTintSourcesAccessor.folios$idMapper().put(FoliosCoverTint.TYPE, FoliosCoverTint.MAP_CODEC);
         net.ixdarklord.folios.internal.mixin.client.SpecialModelRenderersAccessor.folios$idMapper().put(FoliosCoverText.TYPE, FoliosCoverText.Unbaked.MAP_CODEC);
         FoliosHooks.opener = (book, hand) -> open(book, null, hand);
-        // A book's data changing in the hand (marked as being read, and no longer) doesn't swap it out and back: it is
-        // the same book while it names the same one.
         net.ixdarklord.coolcatcore.api.client.item.HeldItemSwaps.quiet(net.ixdarklord.folios.internal.core.FoliosRegistry.READING);
         net.ixdarklord.coolcatcore.api.client.item.HeldItemSwaps.register((shown, next) -> shown.getItem() instanceof net.ixdarklord.folios.api.FoliosBookItem
                 && next.is(shown.getItem()) && java.util.Objects.equals(net.ixdarklord.folios.api.FoliosBooks.bookOf(shown), net.ixdarklord.folios.api.FoliosBooks.bookOf(next)));
@@ -84,7 +79,6 @@ public final class FoliosClient {
             }
             FoliosRecipes.tick();
             FoliosStructures.tick();
-            // The books' clock counts out a pause; what moves by ticks stands still in one.
             FoliosClock.millis();
             if (!FoliosClock.paused()) net.ixdarklord.folios.internal.client.page.PreviewEntities.tick();
             net.ixdarklord.folios.internal.client.build.BuildGuide.tick(minecraft);
@@ -95,12 +89,9 @@ public final class FoliosClient {
             ClientQuests.tick(minecraft);
             net.ixdarklord.folios.internal.client.handheld.SharedBooks.tick();
         });
-        // What the player has done with books comes from the server: a sync (on joining, and after each change) is taken
-        // up by the memories without unsent changes of their own.
         net.ixdarklord.folios.internal.core.FoliosRegistry.PLAYER_PROGRESS.onChange((holder, old, now) -> {
             if (holder.isClientSide() && holder.owner() == Minecraft.getInstance().player) FoliosMemory.synced(now);
         });
-        // The server's quests: books laid out again when one opens or is done, not as each step of it moves.
         net.ixdarklord.folios.internal.core.FoliosRegistry.PLAYER_QUESTS.onChange((holder, old, now) -> {
             if (holder.isClientSide() && holder.owner() == Minecraft.getInstance().player) ClientQuests.synced(old, now);
         });
@@ -115,7 +106,6 @@ public final class FoliosClient {
             net.ixdarklord.folios.internal.client.handheld.SharedBooks.clear();
             net.ixdarklord.folios.internal.client.build.BuildGuide.stop();
         });
-        // A carried build guide takes the use that sets it down, before the item or block in reach does anything.
         net.ixdarklord.coolcatcore.api.event.v2.common.InteractionEvents.USE_ITEM.register((player, hand) ->
                 player.level().isClientSide() && hand == net.minecraft.world.InteractionHand.MAIN_HAND
                         && net.ixdarklord.folios.internal.client.build.BuildGuide.onUse(player.isShiftKeyDown())
@@ -126,11 +116,11 @@ public final class FoliosClient {
                         ? net.minecraft.world.InteractionResult.FAIL : net.minecraft.world.InteractionResult.PASS);
         net.ixdarklord.coolcatcore.api.event.v2.client.ClientGuiEvents.RENDER_HUD.register((graphics, delta) ->
                 net.ixdarklord.folios.internal.client.build.BuildGuide.hud(graphics));
-        // The key that mentions the page under the pointer in chat; what mentions a message has, shown as pages.
         net.ixdarklord.coolcatcore.api.client.registry.KeyMappingRegistry.register(FoliosMentions.KEY);
+        net.ixdarklord.coolcatcore.api.client.registry.KeyMappingRegistry.register(BookLookup.KEY);
+        net.ixdarklord.coolcatcore.api.event.v2.client.ClientTickEvents.END.register(BookLookup::tick);
         ClientCommandEvents.REGISTER.register((dispatcher, context) -> dispatcher.register(
                 LiteralArgumentBuilder.<SharedSuggestionProvider>literal("folios")
-                        // What pressing a page's mention in chat runs: the book opened there.
                         .then(LiteralArgumentBuilder.<SharedSuggestionProvider>literal("mention")
                                 .then(RequiredArgumentBuilder.<SharedSuggestionProvider, String>argument("page", StringArgumentType.greedyString())
                                         .executes(ctx -> {
@@ -147,7 +137,6 @@ public final class FoliosClient {
                                         .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(FoliosLibrary.books().keySet().stream().map(Identifier::toString), builder))
                                         .executes(ctx -> {
                                             Identifier id = Identifier.tryParse(StringArgumentType.getString(ctx, "book"));
-                                            // A command's screen would be closed by the chat closing: open it a moment later.
                                             if (id == null || FoliosLibrary.book(id) == null) {
                                                 ClientCommandEvents.sendError(Component.literal("No guide book with that id"));
                                                 return 0;
@@ -157,7 +146,6 @@ public final class FoliosClient {
                                         })))));
     }
 
-    /** Opens a book in its style: at an entry (with an optional "#marker"), or where the player left off for null. */
     public static boolean open(Identifier id, @Nullable String entry, @Nullable InteractionHand hand) {
         FoliosBook book = FoliosLibrary.book(id);
         if (book == null) {
@@ -174,7 +162,6 @@ public final class FoliosClient {
         return open(book, at, hand);
     }
 
-    /** Opens a book in its style at a page of an entry's JSON ({@code null} for where the player left off). */
     public static boolean open(Identifier id, FoliosBook.@Nullable Location at) {
         FoliosBook book = FoliosLibrary.book(id);
         return book != null && open(book, at, null);

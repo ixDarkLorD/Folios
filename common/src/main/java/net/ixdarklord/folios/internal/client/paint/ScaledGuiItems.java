@@ -25,20 +25,29 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-// Items a book draws larger or smaller than 16 pixels. The game draws an item on a screen from a picture of it made at
-// 16 pixels (times the GUI scale) and stretches that picture to the size asked for, so a spotlight's large item is
-// blurred and a small one loses pixels unevenly. Such an item is instead drawn on its own, at the size it is shown, as
-// the game draws its oversized items.
 public final class ScaledGuiItems {
     private static boolean sharp;
-    // One drawing each for the items of a frame, as each keeps its picture until the frame is drawn.
+    private static boolean plain;
     private static final List<Renderer> RENDERERS = new ArrayList<>();
     private static int used;
 
     private ScaledGuiItems() {}
 
-    /** Draws what {@code draw} hands the screen with its scaled items drawn at the size they are shown. */
+    public static void plain(Runnable draw) {
+        boolean before = plain;
+        plain = true;
+        try {
+            draw.run();
+        } finally {
+            plain = before;
+        }
+    }
+
     public static void sharp(Runnable draw) {
+        if (plain) {
+            draw.run();
+            return;
+        }
         boolean before = sharp;
         sharp = true;
         try {
@@ -48,18 +57,15 @@ public final class ScaledGuiItems {
         }
     }
 
-    /** An item handed to the screen as one drawn on its own at its size, or null to draw it as the game does. */
     public static @Nullable PictureInPictureRenderState scaled(GuiItemRenderState item) {
         if (!sharp || item.oversizedItemBounds() != null) return null;
         Matrix3x2f pose = item.pose();
-        // Only one scaled the same both ways and not turned.
         if (Math.abs(pose.m01) > 1.0E-4F || Math.abs(pose.m10) > 1.0E-4F || Math.abs(pose.m00 - pose.m11) > 1.0E-4F) return null;
         float scale = pose.m00;
         if (Math.abs(scale - 1) < 1.0E-3F || scale <= 0) return null;
         Vector2f corner = pose.transformPosition(item.x(), item.y(), new Vector2f());
         float size = 16 * scale;
         int box = Math.max(1, (int) Math.ceil(size));
-        // A whole number of pixels across, centred where the item is, the rest of the way there by the pose.
         float left = corner.x + (size - box) / 2;
         float top = corner.y + (size - box) / 2;
         int x0 = (int) Math.floor(left);
@@ -69,7 +75,6 @@ public final class ScaledGuiItems {
         return new State(item, x0, y0, x0 + box, y0 + box, size, shift, tint);
     }
 
-    /** The frame's scaled items are about to be drawn: their drawings are free again. */
     public static void startFrame() {
         used = 0;
     }
@@ -130,7 +135,6 @@ public final class ScaledGuiItems {
 
         @Override
         protected void blitTexture(State state, GuiRenderState screen) {
-            // As the game's own, with the colour the item was handed with (a page fading in).
             screen.addBlitToCurrentLayer(new BlitRenderState(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA,
                     TextureSetup.singleTexture(((PictureInPictureRendererAccessor) (Object) this).folios$view(), RenderSystem.getSamplerCache().getRepeat(FilterMode.NEAREST)),
                     state.pose(), state.x0(), state.y0(), state.x1(), state.y1(), 0.0F, 1.0F, 1.0F, 0.0F,

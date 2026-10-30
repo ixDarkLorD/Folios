@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-// A book's scaled items (ScaledGuiItems) drawn with the screen's other pictures in pictures, each by a drawing of its own.
 @Mixin(GuiRenderer.class)
 public class GuiRendererScaledItemsMixin {
     @Shadow @Final private GuiRenderState renderState;
@@ -24,7 +23,6 @@ public class GuiRendererScaledItemsMixin {
         ScaledGuiItems.startFrame();
     }
 
-    // Vanilla's (and Fabric's): (state, guiScale), returning nothing.
     @Inject(method = "preparePictureInPictureState(Lnet/minecraft/client/renderer/state/gui/pip/PictureInPictureRenderState;I)V",
             at = @At("HEAD"), cancellable = true, require = 0)
     private void folios$prepare(PictureInPictureRenderState state, int guiScale, CallbackInfo ci) {
@@ -34,8 +32,6 @@ public class GuiRendererScaledItemsMixin {
         }
     }
 
-    // NeoForge's, patched to draw through its pools of renderers: (state, guiScale, a flag of its own), returning
-    // whether the picture was drawn.
     @Inject(method = "preparePictureInPictureState(Lnet/minecraft/client/renderer/state/gui/pip/PictureInPictureRenderState;IZ)Z",
             at = @At("HEAD"), cancellable = true, require = 0)
     private void folios$prepareNeoForge(PictureInPictureRenderState state, int guiScale, boolean flag, CallbackInfoReturnable<Boolean> cir) {

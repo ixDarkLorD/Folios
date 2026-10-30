@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-// An item handed to the screen keeps the colour it was handed with (see TintedGuiItems).
 @Mixin(GuiItemRenderState.class)
 public class GuiItemTintMixin implements TintedGuiItems.Tinted {
     @Unique

@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-// How recipes look, asked of the server the first time a page shows one (clients aren't sent recipes) and kept for
-// the rest of the visit. Requests made in one frame go together at the next tick.
 public final class FoliosRecipes {
     private static final Map<Identifier, List<RecipeDisplay>> KNOWN = new HashMap<>();
     private static final Set<Identifier> ASKED = new LinkedHashSet<>();
@@ -24,7 +22,6 @@ public final class FoliosRecipes {
 
     private FoliosRecipes() {}
 
-    /** A recipe's displays; null until the server answers (empty when it has no such recipe or can't answer). */
     public static synchronized @Nullable List<RecipeDisplay> get(Identifier recipe) {
         List<RecipeDisplay> displays = KNOWN.get(recipe);
         if (displays == null && ASKED.add(recipe)) TO_ASK.add(recipe);
@@ -39,8 +36,6 @@ public final class FoliosRecipes {
         if (Minecraft.getInstance().getConnection() == null) return;
         connectedTicks++;
         if (TO_ASK.isEmpty()) return;
-        // The server says which advancements the player has as they join, if it has CoolCatLib: until then it may yet,
-        // and after a few seconds without a word it hasn't, and has no recipes to tell of either.
         if (!FoliosProgress.serverHasGuides()) {
             if (connectedTicks < 100) return;
             TO_ASK.forEach(id -> KNOWN.put(id, List.of()));

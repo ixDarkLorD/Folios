@@ -6,12 +6,10 @@ import net.ixdarklord.coolcatcore.api.config.ConfigScope;
 import net.ixdarklord.coolcatcore.api.config.ConfigValue;
 import net.ixdarklord.folios.internal.core.Folios;
 
-/** Each player's own preferences. */
 public final class FoliosClientConfig {
     private static final ConfigBuilder BUILDER = Config.builder(Folios.MOD_ID, ConfigScope.CLIENT)
             .comment("Folios client settings.");
 
-    /** A corner of the screen. */
     public enum Corner { TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT }
 
     static {

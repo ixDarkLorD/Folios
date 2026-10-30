@@ -13,16 +13,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.List;
 import java.util.Optional;
 
-// The guide's packets. Books are client resources, so the server only opens them and answers what the client
-// can't know: the recipes a page shows (clients aren't sent recipes), the structures it shows (data packs' own) and
-// the advancements that unlock entries.
 public final class FoliosPayloads {
-    /** The book named in a {@link ReadingAt} saying none is open. */
     public static final Identifier NO_BOOK = Folios.rl("none");
 
     private FoliosPayloads() {}
 
-    /** The server opening a book, at an entry or its start. */
     public record Open(Identifier book, Optional<String> entry) implements CustomPacketPayload {
         public static final Type<Open> TYPE = new Type<>(Folios.rl("guide_open"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Open> STREAM_CODEC = StreamCodec.composite(
@@ -36,7 +31,6 @@ public final class FoliosPayloads {
         }
     }
 
-    /** A client saying its player started or stopped reading the handheld book in a hand (-1 for no hand). */
     public record Reading(boolean reading, int hand) implements CustomPacketPayload {
         public static final Type<Reading> TYPE = new Type<>(Folios.rl("guide_reading"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Reading> STREAM_CODEC = StreamCodec.composite(
@@ -50,10 +44,6 @@ public final class FoliosPayloads {
         }
     }
 
-    /**
-     * A client saying which spread of the handheld book its player has open, or that none is ({@code open} false);
-     * {@code shut} while it is held up shut, about to be opened.
-     */
     public record ReadingAt(boolean open, Identifier book, String chapter, int page, boolean shut) implements CustomPacketPayload {
         public static final Type<ReadingAt> TYPE = new Type<>(Folios.rl("guide_reading_at"));
         public static final StreamCodec<RegistryFriendlyByteBuf, ReadingAt> STREAM_CODEC = StreamCodec.composite(
@@ -70,7 +60,6 @@ public final class FoliosPayloads {
         }
     }
 
-    /** The server telling a player which spread someone near them has open in their hands, to read along. */
     public record SharedReading(int reader, ReadingAt at) implements CustomPacketPayload {
         public static final Type<SharedReading> TYPE = new Type<>(Folios.rl("guide_shared_reading"));
         public static final StreamCodec<RegistryFriendlyByteBuf, SharedReading> STREAM_CODEC = StreamCodec.composite(
@@ -84,10 +73,6 @@ public final class FoliosPayloads {
         }
     }
 
-    /**
-     * A client sending what its player has done with a book, to be kept: with the player ({@code hand} -1), or on the
-     * book in that hand, for a book that keeps its own.
-     */
     public record Progress(Identifier book, int hand, FoliosRecord record) implements CustomPacketPayload {
         public static final Type<Progress> TYPE = new Type<>(Folios.rl("guide_progress"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Progress> STREAM_CODEC = StreamCodec.composite(
@@ -102,7 +87,6 @@ public final class FoliosPayloads {
         }
     }
 
-    /** A client asking how recipes look. */
     public record RecipeRequest(List<Identifier> recipes) implements CustomPacketPayload {
         public static final Type<RecipeRequest> TYPE = new Type<>(Folios.rl("guide_recipe_request"));
         public static final StreamCodec<RegistryFriendlyByteBuf, RecipeRequest> STREAM_CODEC = StreamCodec.composite(
@@ -115,7 +99,6 @@ public final class FoliosPayloads {
         }
     }
 
-    /** A source's rows (FoliosSources), from the server, for the pages observing it, and the ids data packs took out. */
     public record Source(Identifier source, List<net.ixdarklord.folios.api.FoliosSources.Row> rows, List<String> removed) implements CustomPacketPayload {
         public static final Type<Source> TYPE = new Type<>(Folios.rl("source"));
         private static final StreamCodec<RegistryFriendlyByteBuf, net.ixdarklord.folios.api.FoliosSources.Row> ROW = StreamCodec.composite(
@@ -135,7 +118,6 @@ public final class FoliosPayloads {
         }
     }
 
-    /** The server's quests (data packs' {@code folios/quests}), each as its file is written, sent to a player. */
     public record Quests(java.util.Map<Identifier, String> quests) implements CustomPacketPayload {
         public static final Type<Quests> TYPE = new Type<>(Folios.rl("quests"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Quests> STREAM_CODEC = StreamCodec.composite(
@@ -149,7 +131,6 @@ public final class FoliosPayloads {
         }
     }
 
-    /** A client claiming the reward of a server quest its player has done. */
     public record Claim(Identifier quest) implements CustomPacketPayload {
         public static final Type<Claim> TYPE = new Type<>(Folios.rl("claim"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Claim> STREAM_CODEC = StreamCodec.composite(
@@ -162,10 +143,6 @@ public final class FoliosPayloads {
         }
     }
 
-    /**
-     * A client saying which entry of a book is on its player's screen, as that changes; {@link #NO_BOOK} once none is.
-     * The server counts an entry read once it has been open long enough (QuestReading).
-     */
     public record Viewing(Identifier book, String entry) implements CustomPacketPayload {
         public static final Type<Viewing> TYPE = new Type<>(Folios.rl("viewing"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Viewing> STREAM_CODEC = StreamCodec.composite(
@@ -179,7 +156,6 @@ public final class FoliosPayloads {
         }
     }
 
-    /** How one recipe looks, as the recipe book shows it; empty for a recipe the server doesn't have. */
     public record Recipe(Identifier id, List<RecipeDisplay> displays) implements CustomPacketPayload {
         public static final Type<Recipe> TYPE = new Type<>(Folios.rl("guide_recipe"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Recipe> STREAM_CODEC = StreamCodec.composite(
@@ -193,7 +169,6 @@ public final class FoliosPayloads {
         }
     }
 
-    /** A client asking for structures' blocks. */
     public record StructureRequest(List<Identifier> structures) implements CustomPacketPayload {
         public static final Type<StructureRequest> TYPE = new Type<>(Folios.rl("guide_structure_request"));
         public static final StreamCodec<RegistryFriendlyByteBuf, StructureRequest> STREAM_CODEC = StreamCodec.composite(
@@ -206,13 +181,8 @@ public final class FoliosPayloads {
         }
     }
 
-    /** No more blocks than this of a structure are sent; a larger one is said to be too large. */
     public static final int MOST_STRUCTURE_BLOCKS = 32768;
 
-    /**
-     * A structure's blocks: its {@code palette} of states, and each block as four numbers in {@code blocks}, its x, y and
-     * z and its state's place in the palette. {@code status} is {@link #FOUND}, {@link #MISSING} or {@link #TOO_LARGE}.
-     */
     public record Structure(Identifier id, int status, List<BlockState> palette, List<Integer> blocks) implements CustomPacketPayload {
         public static final int FOUND = 0;
         public static final int MISSING = 1;
@@ -231,7 +201,6 @@ public final class FoliosPayloads {
         }
     }
 
-    /** The advancements a player has completed: all of them ({@code reset}), or ones newly completed or revoked. */
     public record Advancements(boolean reset, List<Identifier> done, List<Identifier> undone) implements CustomPacketPayload {
         public static final Type<Advancements> TYPE = new Type<>(Folios.rl("guide_advancements"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Advancements> STREAM_CODEC = StreamCodec.composite(
