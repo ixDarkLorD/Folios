@@ -7,7 +7,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-// Every message the chat shows: the pages it mentions shown as their names, or scrambled (FoliosMentions).
 @Mixin(ChatComponent.class)
 public abstract class ChatComponentMixin {
     @ModifyVariable(method = "addMessage", at = @At("HEAD"), argsOnly = true, ordinal = 0)

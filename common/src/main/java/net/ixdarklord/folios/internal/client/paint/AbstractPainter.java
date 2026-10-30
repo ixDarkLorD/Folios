@@ -18,20 +18,15 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
-// What both painters share: the pointer in page pixels through the painter's own moves, the places marked to be
-// pressed, and the tooltip for this frame.
 public abstract class AbstractPainter implements FoliosPainter {
-    /** Where a book goes when something on a page is pressed. */
     public interface Navigator {
         void follow(String link);
 
         void open(FoliosBook.Location location);
 
-        /** The page shown, to tell links to it apart from links elsewhere; null when none. */
         FoliosBook.@Nullable Location here();
     }
 
-    /** A rectangle that can be pressed, dragged or scrolled over, in page pixels. One that takes the wheel is never pressed. */
     public record Hit(float x0, float y0, float x1, float y1, Runnable action, @Nullable Drag drag, @Nullable Scroll scroll) {
         public Hit(float x0, float y0, float x1, float y1, Runnable action) {
             this(x0, y0, x1, y1, action, null, null);
@@ -41,7 +36,6 @@ public abstract class AbstractPainter implements FoliosPainter {
             this(x0, y0, x1, y1, action, drag, null);
         }
 
-        /** The wheel handler of the last place among these the pointer is over that takes it; null for none. */
         public static @Nullable Scroll scrollAt(List<Hit> hits, double x, double y) {
             for (int index = hits.size() - 1; index >= 0; index--) {
                 Hit hit = hits.get(index);
@@ -69,11 +63,6 @@ public abstract class AbstractPainter implements FoliosPainter {
     private float scale = 1;
     private @Nullable List<Component> tooltip;
 
-    /**
-     * @param pointerX the pointer on the page, in page pixels; NaN when it isn't on it or the page can't be pressed
-     * @param hits     where this page's pressable places are put
-     */
-    // The page's size is its book's layout's: larger on a screen book at a small GUI scale.
     @Override
     public int pageWidth() {
         return session.layout().pageWidth();
@@ -109,10 +98,8 @@ public abstract class AbstractPainter implements FoliosPainter {
         return time;
     }
 
-    // The popup window of the link under the pointer, if it has one.
     private net.ixdarklord.folios.api.client.page.@Nullable FoliosPopup popupHovered;
 
-    /** The popup window of the link under the pointer; null when there is none. */
     public net.ixdarklord.folios.api.client.page.@Nullable FoliosPopup popup() {
         return popupHovered;
     }
@@ -120,8 +107,6 @@ public abstract class AbstractPainter implements FoliosPainter {
     public @Nullable List<Component> tooltipLines() {
         return tooltip;
     }
-
-    // ---- Moves ----
 
     @Override
     public void push() {
@@ -151,7 +136,6 @@ public abstract class AbstractPainter implements FoliosPainter {
         this.scaled(factor);
     }
 
-    /** Where a point of the painter's own coordinates is on the page, through its moves. */
     protected float pageX(float x) {
         return offsetX + x * scale;
     }
@@ -172,8 +156,6 @@ public abstract class AbstractPainter implements FoliosPainter {
 
     protected abstract void scaled(float factor);
 
-    // ---- The pointer ----
-
     @Override
     public boolean hovered(int x, int y, int width, int height) {
         if (Float.isNaN(pointerX)) return false;
@@ -190,7 +172,6 @@ public abstract class AbstractPainter implements FoliosPainter {
     public boolean link(int x, int y, int width, int height, String target) {
         boolean over = this.hovered(x, y, width, height);
         if (over) {
-            // A link with a popup window shows it in place of a tooltip.
             net.ixdarklord.folios.api.client.page.FoliosPopup popup = session.popup(target);
             if (popup != null) this.popupHovered = popup;
             else this.tooltip(session.tooltip(target));
@@ -210,11 +191,19 @@ public abstract class AbstractPainter implements FoliosPainter {
     @Override
     public boolean drag(int x, int y, int width, int height, Drag drag) {
         boolean over = this.hovered(x, y, width, height);
-        // Moves in page pixels at this painter's scale.
         float scale = this.scale;
-        hits.add(new Hit(offsetX + x * scale, offsetY + y * scale, offsetX + (x + width) * scale, offsetY + (y + height) * scale, () -> {},
-                (dx, dy) -> drag.moved(dx / scale, dy / scale)));
-        return over;
+        Hit hit = new Hit(offsetX + x * scale, offsetY + y * scale, offsetX + (x + width) * scale, offsetY + (y + height) * scale, () -> {},
+                (dx, dy) -> drag.moved(dx / scale, dy / scale));
+        hits.add(hit);
+        Hit held = HELD;
+        return over || held != null && Math.abs(held.x0 - hit.x0) < 0.5F && Math.abs(held.y0 - hit.y0) < 0.5F
+                && Math.abs(held.x1 - hit.x1) < 0.5F && Math.abs(held.y1 - hit.y1) < 0.5F;
+    }
+
+    private static volatile @Nullable Hit HELD;
+
+    public static void hold(@Nullable Hit hit) {
+        HELD = hit;
     }
 
     @Override
@@ -241,11 +230,13 @@ public abstract class AbstractPainter implements FoliosPainter {
         tooltip = new ArrayList<>(Screen.getTooltipFromItem(minecraft, stack));
     }
 
-    // ---- Items ----
-
     @Override
     public void item(ItemStack stack, int x, int y) {
         this.item(stack, x, y, -1);
+    }
+
+    public void quietItem(ItemStack stack, int x, int y, int argb) {
+        if (!stack.isEmpty() && (argb >>> 24) != 0) this.drawItem(stack, x, y, argb);
     }
 
     @Override
@@ -264,13 +255,13 @@ public abstract class AbstractPainter implements FoliosPainter {
         mark(x, y, 16, 16, () -> navigator.open(about));
     }
 
-    /** Draws an item, tinted by {@code argb} (white and opaque: as it is). */
+    @Override
+    public void silhouette(ItemStack stack, int x, int y, int argb) {
+        if (!stack.isEmpty() && (argb >>> 24) != 0) this.drawItem(stack.copyWithCount(1), x, y, argb);
+    }
+
     protected abstract void drawItem(ItemStack stack, int x, int y, int argb);
 
-    /**
-     * Draws over everything drawn so far, items included (which otherwise lie over flat things drawn after them): for
-     * a reveal's effect about an item or over a whole page.
-     */
     public void above(Runnable draw) {
         draw.run();
     }

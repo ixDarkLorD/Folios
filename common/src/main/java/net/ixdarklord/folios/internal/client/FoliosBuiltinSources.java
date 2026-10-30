@@ -23,18 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-/**
- * The sources Folios gives itself, worked out from the game as a page observing one is laid out, so a data pack can
- * list live game content with no code. {@code "of"} on the page's {@code observe} narrows each:
- * <ul>
- *     <li>{@code folios:items}, {@code folios:blocks}, {@code folios:entities}: a registry's entries, of a tag
- *     ({@code "of": "#minecraft:logs"}) or a mod ({@code "of": "create"}); fields {@code name} (a translation key),
- *     {@code mod}, and for items {@code durability} and {@code stack}, for entities {@code category};</li>
- *     <li>{@code folios:advancements}: the advancements the player has been shown, of a mod or under an id
- *     ({@code "of": "minecraft:story"}); fields {@code name}, {@code description}, and {@code done} ({@code true} or
- *     {@code false}, the reader's own). Hidden ones are left out until done.</li>
- * </ul>
- */
 public final class FoliosBuiltinSources {
     public static final Identifier ITEMS = Folios.rl("items");
     public static final Identifier BLOCKS = Folios.rl("blocks");
@@ -47,7 +35,6 @@ public final class FoliosBuiltinSources {
         return source.equals(ITEMS) || source.equals(BLOCKS) || source.equals(ENTITIES) || source.equals(ADVANCEMENTS);
     }
 
-    /** The source's rows now, narrowed by {@code of} (null for all); null for a source that isn't one of these. */
     public static @Nullable List<FoliosSources.Row> rows(Identifier source, @Nullable String of) {
         if (source.equals(ITEMS)) return registry(BuiltInRegistries.ITEM, of, (item, row) -> {
             ItemStack stack = new ItemStack(item);
@@ -60,7 +47,6 @@ public final class FoliosBuiltinSources {
         return null;
     }
 
-    // A registry's entries, of a tag ("#namespace:path") or a mod (a namespace), in the registry's order.
     private static <T> List<FoliosSources.Row> registry(Registry<T> registry, @Nullable String of, BiConsumer<T, FoliosSources.Builder> fields) {
         List<T> entries = new ArrayList<>();
         if (of != null && of.startsWith("#")) {
@@ -87,7 +73,6 @@ public final class FoliosBuiltinSources {
         return (ResourceKey<? extends Registry<T>>) registry.key();
     }
 
-    // The advancements the client was sent, of a mod or under an id.
     private static List<FoliosSources.Row> advancements(@Nullable String of) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.getConnection() == null) return List.of();
@@ -105,7 +90,6 @@ public final class FoliosBuiltinSources {
         return rows;
     }
 
-    // Of a mod ("minecraft"), or under an id ("minecraft:story" takes minecraft:story and minecraft:story/...).
     private static boolean under(Identifier id, @Nullable String of) {
         if (of == null) return true;
         if (!of.contains(":")) return id.getNamespace().equals(of);
@@ -113,7 +97,6 @@ public final class FoliosBuiltinSources {
         return written.equals(of) || written.startsWith(of.endsWith("/") ? of : of + "/");
     }
 
-    // A component's translation key when it is one (so the page translates it), else its text.
     private static String text(Component component) {
         return component.getContents() instanceof TranslatableContents translatable ? translatable.getKey() : component.getString();
     }

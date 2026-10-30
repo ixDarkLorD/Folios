@@ -15,13 +15,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
-// Reading a handheld book. The book is in the world, in the reader's hands (HandheldRenderer), with its bar over it
-// once it lies open; this screen draws nothing but tooltips. It is here to free the pointer: what is on the pages and
-// the bar is pressed with it, the wheel and the arrow keys turn the leaves, and closing it shuts the book and lowers
-// it. The bar's search field is a hidden text box here that takes the keys. As the book allows, the reader looks
-// about while holding the right button and walks with the movement keys.
 public final class HandheldScreen extends Screen {
-    // Links' popup windows: the one under the pointer, and the one pinned over the book.
     private final net.ixdarklord.folios.internal.client.screen.PopupLayer popups = new net.ixdarklord.folios.internal.client.screen.PopupLayer();
     private final HandheldBook book;
     private final FoliosBar bar;
@@ -40,7 +34,6 @@ public final class HandheldScreen extends Screen {
     @Override
     protected void init() {
         hintY = Integer.MIN_VALUE;
-        // Its pages as large as the GUI scale makes them (PageSize), printed smaller on leaves of the same size.
         float factor = net.ixdarklord.folios.internal.client.PageSize.handheldFactor();
         net.ixdarklord.folios.internal.client.FoliosSession sized = net.ixdarklord.folios.internal.client.FoliosLibrary.session(book.book.id(),
                 net.ixdarklord.folios.internal.client.PageSize.width(factor), net.ixdarklord.folios.internal.client.PageSize.height(factor));
@@ -55,7 +48,6 @@ public final class HandheldScreen extends Screen {
 
     @Override
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        // The world shows through: the book is in it.
     }
 
     @Override
@@ -65,24 +57,20 @@ public final class HandheldScreen extends Screen {
             this.setFocused(null);
         }
         super.extractRenderState(graphics, mouseX, mouseY, a);
-        // Where the pointer is on each page and on the bar, for the book's next frame.
         float[] none = {Float.NaN, Float.NaN};
         book.leftPointer = book.placed ? this.pointer(book.leftClip, mouseX, mouseY) : none;
         book.rightPointer = book.placed ? this.pointer(book.rightClip, mouseX, mouseY) : none.clone();
         book.barPointer = book.barPlaced ? this.pointer(book.barClip, mouseX, mouseY) : none.clone();
-        // From outside, the mouse turns the view: nothing on the book is pointed at.
         if (outside()) return;
         List<Component> tooltip = book.tooltip;
         int rule = -1;
         if (book.isShut() && book.placed && onCover(book.rightPointer)) {
-            // Over one of the cover's plates, what it says comes first (a long summary wrapped), then how to open it.
             List<Component> lines = new java.util.ArrayList<>();
             for (Component said : HandheldRenderer.plateText(book, book.rightPointer)) {
                 for (net.minecraft.network.chat.FormattedText row : this.font.getSplitter().splitLines(said, PLATE_WIDTH, net.minecraft.network.chat.Style.EMPTY)) {
                     lines.add(Component.literal(row.getString()));
                 }
             }
-            // A soft rule sets what the plate says apart from how to open the book.
             if (!lines.isEmpty()) rule = lines.size();
             lines.add(Component.translatableWithFallback("folios.open", "Click to open"));
             tooltip = lines;
@@ -92,23 +80,16 @@ public final class HandheldScreen extends Screen {
         this.lookHint(graphics);
     }
 
-    /** How wide (GUI pixels) a cover plate's words run in the tooltip before they wrap. */
     private static final int PLATE_WIDTH = 180;
 
-    /** Minecraft's own right-button icon, from its tutorial toasts. */
     private static final net.minecraft.resources.Identifier RIGHT_CLICK = net.minecraft.resources.Identifier.withDefaultNamespace("toast/right_click");
 
-    /** How long (ms) the hint stays once the book lies open, then how long it takes to fade. */
     private static final long HINT_MILLIS = 6000;
     private static final long HINT_FADE = 600;
-    // Once the reader has looked about, they know how: no hint again this game.
     private static boolean lookedAbout;
     private long openedAt;
     private int hintY = Integer.MIN_VALUE;
 
-    // Over the open book (over its bar, while that is out), a hint that the right button held looks about:
-    // Minecraft's right-click icon and a line beside it, framed as the book's tooltips are. It fades after a few
-    // seconds, and goes for good once the reader looks about; never for a book that doesn't allow it.
     private void lookHint(GuiGraphicsExtractor graphics) {
         if (!book.isOpen()) {
             openedAt = 0;
@@ -125,12 +106,9 @@ public final class HandheldScreen extends Screen {
         Component hint = Component.translatableWithFallback("folios.hint.look", "Hold right click to look around");
         int wide = 16 + 4 + this.font.width(hint);
         int tall = 16;
-        // The top of the bar over the book: its rim, the gap and the bar's height above the pages' head (taken from
-        // the page, as the bar may still be growing out of its pull).
         float[] top = this.onScreen(book.rightClip, 0, -(net.ixdarklord.folios.internal.client.screen.FoliosScreen.BORDER + 5 + FoliosBar.HEIGHT));
         if (top == null) return;
         int x = (this.width - wide) / 2;
-        // Placed once, where the book first lies: it stays put as the book bobs with the reader's steps.
         if (hintY == Integer.MIN_VALUE) hintY = Math.max(14, Math.round(top[1]) - tall - 12);
         int y = hintY;
         graphics.nextStratum();
@@ -140,7 +118,6 @@ public final class HandheldScreen extends Screen {
         graphics.text(this.font, hint, x + 20, y + 4, (fade << 24) | (ink & 0xFFFFFF), true);
     }
 
-    // Where a point of a page or the bar (its own pixels) is on the screen, in GUI pixels; null behind the eye.
     private float @Nullable [] onScreen(org.joml.Matrix4f clip, float x, float y) {
         org.joml.Vector4f at = clip.transform(new org.joml.Vector4f(x, y, 0, 1));
         if (at.w <= 0) return null;
@@ -158,15 +135,10 @@ public final class HandheldScreen extends Screen {
         else book.keepCurrent();
     }
 
-    // ---- Looking about and walking while reading ----
-
-    // Looking about: the pointer hidden and free while the right button is held, put back where it was after.
     private boolean looking;
     private double lookFromX;
     private double lookFromY;
 
-    // Seen from outside (the perspective key cycles the view while reading), the pointer is let go of the pages and the
-    // mouse turns the view freely, as in play; back in the reader's own eyes, the pointer is theirs again.
     private boolean outside() {
         return !this.minecraft.options.getCameraType().isFirstPerson();
     }
@@ -210,7 +182,6 @@ public final class HandheldScreen extends Screen {
         }
     }
 
-    // The movement keys, passed to the player while the book allows walking with it open.
     private boolean walks(KeyEvent event) {
         if (!book.book.handling().walk()) return false;
         var options = this.minecraft.options;
@@ -229,9 +200,7 @@ public final class HandheldScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        // A pinned popup takes the press first: on it, what is under it; off it, it is put away.
         if (event.button() == 0 && this.popups.click(book, event.x(), event.y())) return true;
-        // From outside, the pages can't be pressed; the mouse only turns the view.
         if (outside()) return true;
         if (event.button() == 1 && book.book.handling().lookAround() && !this.bar.typing()) {
             lookedAbout = true;
@@ -249,7 +218,6 @@ public final class HandheldScreen extends Screen {
             return true;
         }
         if (event.button() != 0) return false;
-        // Held up shut: a press on its cover opens it, a press off it puts it away.
         if (book.isShut()) {
             if (!book.placed) return true;
             if (onCover(book.rightPointer)) book.openCover();
@@ -258,7 +226,6 @@ public final class HandheldScreen extends Screen {
         }
         if (!book.isOpen()) return false;
         if (this.press(book.rightHits, book.rightPointer, book.rightClip) || this.press(book.leftHits, book.leftPointer, book.leftClip)) return true;
-        // A press on a page's outer half turns it; a press off the book puts it away.
         float[] right = book.rightPointer;
         float[] left = book.leftPointer;
         if (inside(right, 0, 300) || inside(left, 0, 300)) {
@@ -270,20 +237,17 @@ public final class HandheldScreen extends Screen {
         return true;
     }
 
-    // Whether the pointer is over the shut book: its cover lies over the right page, a little larger than it.
     private static boolean onCover(float[] at) {
         float margin = 6;
         return !Float.isNaN(at[0]) && at[0] >= -margin && at[0] < net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_WIDTH + margin
                 && at[1] >= -margin && at[1] < net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_HEIGHT + margin;
     }
 
-    // Whether the pointer is on a page (within its height) between two x's.
     private static boolean inside(float[] at, float x0, float x1) {
         return !Float.isNaN(at[0]) && at[0] >= x0 && at[0] < Math.min(x1, net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_WIDTH)
                 && at[1] >= 0 && at[1] < net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_HEIGHT;
     }
 
-    // What on a page is being dragged while the left button is held, and how that page lies on the screen.
     private AbstractPainter.@Nullable Drag dragging;
     private org.joml.@Nullable Matrix4f draggedOn;
 
@@ -291,12 +255,10 @@ public final class HandheldScreen extends Screen {
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
         if (event.button() == 0 && this.popups.drag(dx, dy)) return true;
         if (looking && event.button() == 1 && !outside()) {
-            // Turned as the view is turned in play, at the player's own sensitivity.
             this.turn(dx, dy);
             return true;
         }
         if (dragging != null && draggedOn != null && event.button() == 0) {
-            // How far the pointer moved, carried onto the page's own plane.
             float[] now = HandheldRenderer.onPage(draggedOn, event.x(), event.y(), this.width, this.height);
             float[] before = HandheldRenderer.onPage(draggedOn, event.x() - dx, event.y() - dy, this.width, this.height);
             if (now != null && before != null) dragging.moved(now[0] - before[0], now[1] - before[1]);
@@ -315,6 +277,7 @@ public final class HandheldScreen extends Screen {
         if (event.button() == 0) {
             dragging = null;
             draggedOn = null;
+            AbstractPainter.hold(null);
         }
         return super.mouseReleased(event);
     }
@@ -326,6 +289,7 @@ public final class HandheldScreen extends Screen {
             if (hit.scroll() == null && hit.contains(at[0], at[1])) {
                 if (hit.drag() != null) {
                     dragging = hit.drag();
+                    AbstractPainter.hold(hit);
                     draggedOn = new org.joml.Matrix4f(clip);
                     return true;
                 }
@@ -341,7 +305,6 @@ public final class HandheldScreen extends Screen {
     public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
         if (this.popups.scroll(book, x, y, scrollY)) return true;
         if (scrollY == 0) return true;
-        // Over something on a page that takes the wheel (a scene zooming), it goes there; otherwise it turns the page.
         if (book.isOpen()) {
             net.ixdarklord.folios.api.client.page.FoliosPainter.Scroll scroll = null;
             if (!Float.isNaN(book.rightPointer[0])) scroll = AbstractPainter.Hit.scrollAt(book.rightHits, book.rightPointer[0], book.rightPointer[1]);
@@ -357,11 +320,9 @@ public final class HandheldScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        // The mention key over a page: a mention of it in a new chat message.
         if (!this.bar.typing() && book.isOpen() && net.ixdarklord.folios.internal.client.FoliosMentions.KEY.matches(event)
                 && (!Float.isNaN(book.rightPointer[0]) ? book.mention(true) : !Float.isNaN(book.leftPointer[0]) && book.mention(false))) return true;
         if (event.key() == GLFW.GLFW_KEY_ESCAPE && this.popups.escape(book)) return true;
-        // The view cycles as in play; from outside, the mouse turns it freely.
         if (this.minecraft.options.keyTogglePerspective.matches(event) && !this.bar.typing()) {
             var options = this.minecraft.options;
             options.setCameraType(options.getCameraType().cycle());
@@ -375,9 +336,7 @@ public final class HandheldScreen extends Screen {
             this.search.setFocused(true);
             return true;
         }
-        // While searching, keys are the field's (Escape still closes).
         if (this.bar.typing()) return super.keyPressed(event);
-        // Walking with it, the movement keys are the player's (so D and Space walk and jump, and the arrows turn).
         boolean walking = this.walks(event);
         if (book.isShut()) {
             switch (event.key()) {
@@ -421,16 +380,13 @@ public final class HandheldScreen extends Screen {
 
     @Override
     public void onClose() {
-        // The book shuts and is lowered first; the screen goes once it is down (HandheldBook.finish).
         book.close();
     }
 
     @Override
     public void removed() {
-        // Done looking about and walking: the pointer back, the keys let go.
         this.look(false, 0, 0);
         net.minecraft.client.KeyMapping.releaseAll();
-        // Closed some other way (another screen opened over it): the book goes too.
         if (HandheldBook.current() == book && !book.closing) book.close();
     }
 }

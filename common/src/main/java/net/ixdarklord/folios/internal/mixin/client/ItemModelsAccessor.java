@@ -8,7 +8,6 @@ import net.minecraft.util.ExtraCodecs;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-// The item model types, so "folios:guide_book" can be one of them on either loader.
 @Mixin(ItemModels.class)
 public interface ItemModelsAccessor {
     @Accessor("ID_MAPPER")

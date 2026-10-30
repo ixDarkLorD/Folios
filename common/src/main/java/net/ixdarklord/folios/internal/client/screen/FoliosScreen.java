@@ -36,20 +36,13 @@ import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.List;
 
-// The screen kind of book: a flat book of two pages in the middle of the screen, the world dimmed around it. Over it
-// a slim bar says where the reader is and holds search, a bookmark, light or dark paper and closing; ribbon tabs at
-// its edge open the front, each category and the bookmarks. Leaves turn by folding across the spine. Its pages are
-// the same as a handheld book's (FoliosReader), drawn flat in the player's light or dark mode, tinted by the book.
 public final class FoliosScreen extends Screen {
-    /** How far the cover shows around the pages, and how wide the fold between them is. */
     public static final int BORDER = 7;
     private static final int SPINE = 6;
-    /** The open book across at the default page size, its border included: as wide as its bar, and the handheld book's. */
     public static final int BOOK_WIDTH = FoliosLayout.PAGE_WIDTH * 2 + SPINE + BORDER * 2;
     private static final int BAR = FoliosBar.HEIGHT;
     private static final int BAR_GAP = 5;
     private static final int TAB = 22;
-    /** How strong the fold's shadow is under a spread, of its usual strength. */
     private static final float SPREAD_FOLD = 0.35F;
     private static final float OPEN_MILLIS = 260;
 
@@ -61,7 +54,6 @@ public final class FoliosScreen extends Screen {
 
     private final FoliosReader reader;
 
-    /** The book as it is read on this screen: where it is open. */
     public FoliosReader reader() {
         return reader;
     }
@@ -69,16 +61,13 @@ public final class FoliosScreen extends Screen {
     private final long openedAt = net.ixdarklord.folios.internal.client.FoliosClock.millis();
     private final FoliosBar bar;
     private @Nullable StyledEditBox search;
-    // This frame's pressable places, in book pixels; and on each page, in page pixels.
     private final List<Hit> hits = new ArrayList<>();
     private final List<AbstractPainter.Hit> leftHits = new ArrayList<>();
     private final List<AbstractPainter.Hit> rightHits = new ArrayList<>();
-    // Links' popup windows: the one under the pointer, and the one pinned over the book.
     private final PopupLayer popups = new PopupLayer();
     private net.ixdarklord.folios.api.client.page.@org.jspecify.annotations.Nullable FoliosPopup hoveredPopup;
     private final List<AbstractPainter.Hit> unpressable = new ArrayList<>();
     private @Nullable List<Component> tooltip;
-    // Where the book's top left is on the screen (the bar is above it), and its scale.
     private float originX;
     private float originY;
     private float scale = 1;
@@ -87,7 +76,6 @@ public final class FoliosScreen extends Screen {
         this(book, session, at, null);
     }
 
-    /** A book opened from a copy in {@code hand} (null for none), whose own progress it keeps if the book says so. */
     public FoliosScreen(FoliosBook book, FoliosSession session, FoliosBook.@Nullable Location at, net.minecraft.world.@Nullable InteractionHand hand) {
         super(book.title());
         this.book = book;
@@ -98,17 +86,11 @@ public final class FoliosScreen extends Screen {
         });
     }
 
-    // ---- Layout ----
-
-    // The pages' size now (larger at a small GUI scale: PageSize), and the open book's, its border included.
     private int pw = FoliosLayout.PAGE_WIDTH;
     private int ph = FoliosLayout.PAGE_HEIGHT;
     private int bookWidth = BOOK_WIDTH;
     private int bookHeight = FoliosLayout.PAGE_HEIGHT + BORDER * 2;
 
-    // How large the book is drawn, in GUI pixels a book pixel, at the default page size: as large as it would be at the
-    // Auto GUI scale, a whole number of the window's pixels a book pixel so the pixel font stays sharp, no larger than
-    // fits. A window too small for even one is shrunk to fit.
     private float bookScale(int needWidth, int needHeight) {
         com.mojang.blaze3d.platform.Window window = net.minecraft.client.Minecraft.getInstance().getWindow();
         int guiScale = Math.max(1, window.getGuiScale());
@@ -121,9 +103,6 @@ public final class FoliosScreen extends Screen {
 
     @Override
     protected void init() {
-        // At a GUI scale smaller than Auto, larger pages drawn a little larger than the GUI (PageSize says how much of
-        // each), as many times the default as fit the screen; the book keeps about its size and holds more. Otherwise
-        // the default page, drawn as large as at Auto.
         float factor = PageSize.factor();
         float drawn = PageSize.drawn();
         int chromeWidth = SPINE + BORDER * 2 + TAB * 2 + 8;
@@ -144,12 +123,10 @@ public final class FoliosScreen extends Screen {
         this.search = this.addRenderableWidget(this.bar.search(this.search));
     }
 
-    /** The paper and ink for the player's mode, tinted by the book. */
     private FoliosPalette palette() {
         return pagePalette(this.book);
     }
 
-    /** The paper and ink of a screen book's pages, for the player's mode. */
     public static FoliosPalette pagePalette(FoliosBook book) {
         int accent = 0xFF000000 | book.accent();
         if (ConfigStyle.mode() == ConfigTheme.Mode.DARK) {
@@ -167,11 +144,8 @@ public final class FoliosScreen extends Screen {
         return (float) ((mouseY - this.originY) / this.scale);
     }
 
-    // ---- Input ----
-
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        // A pinned popup takes the press first: on it, what is under it; off it, it is put away.
         if (event.button() == 0 && this.popups.click(this.reader, event.x(), event.y())) return true;
         if (event.button() == 3) {
             this.reader.back();
@@ -196,7 +170,6 @@ public final class FoliosScreen extends Screen {
             if (this.press(this.leftHits, x - BORDER, y - BORDER)) return true;
             if (this.press(this.rightHits, x - BORDER - pw - SPINE, y - BORDER)) return true;
         }
-        // Off the book, its bar and its tabs: closes it, if the book says so.
         boolean onBook = x >= -2 && x < bookWidth + 36 && y >= -BAR - BAR_GAP - 2 && y < bookHeight + 2;
         if (!onBook && this.book.clickOutsideCloses()) {
             this.onClose();
@@ -211,6 +184,7 @@ public final class FoliosScreen extends Screen {
             if (hit.scroll() == null && hit.contains(x, y)) {
                 if (hit.drag() != null) {
                     this.dragging = hit.drag();
+                    AbstractPainter.hold(hit);
                     return true;
                 }
                 this.click();
@@ -221,7 +195,6 @@ public final class FoliosScreen extends Screen {
         return false;
     }
 
-    // What on a page is being dragged, while the left button is held.
     private AbstractPainter.@Nullable Drag dragging;
 
     @Override
@@ -237,7 +210,10 @@ public final class FoliosScreen extends Screen {
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
         if (event.button() == 0) this.popups.release();
-        if (event.button() == 0) this.dragging = null;
+        if (event.button() == 0) {
+            this.dragging = null;
+            AbstractPainter.hold(null);
+        }
         return super.mouseReleased(event);
     }
 
@@ -249,7 +225,11 @@ public final class FoliosScreen extends Screen {
     public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
         if (this.popups.scroll(this.reader, x, y, scrollY)) return true;
         if (scrollY == 0) return true;
-        // Over something on a page that takes the wheel (a scene zooming), it goes there; otherwise it turns the page.
+        float[] column = this.tabColumn;
+        if (column != null && over(this.bookX(x), this.bookY(y), column[0], column[1], column[2], column[3])) {
+            this.tabFirst += scrollY > 0 ? -this.tabShown : this.tabShown;
+            return true;
+        }
         if (this.reader.flip == null) {
             float bx = this.bookX(x);
             float by = this.bookY(y);
@@ -266,7 +246,6 @@ public final class FoliosScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        // The mention key over a page: a mention of it in a new chat message.
         if (!this.bar.typing() && FoliosMentions.KEY.matches(event) && this.mentionHovered()) return true;
         if (event.key() == GLFW.GLFW_KEY_ESCAPE && this.popups.escape(this.reader)) return true;
         boolean typing = this.bar.typing();
@@ -313,9 +292,6 @@ public final class FoliosScreen extends Screen {
         return false;
     }
 
-    // ---- Drawing ----
-
-    // 0 to 1 as the book comes up on the screen.
     private float opening() {
         float t = Math.min(1, (net.ixdarklord.folios.internal.client.FoliosClock.millis() - this.openedAt) / OPEN_MILLIS);
         if (!StyleSettings.transitions()) t = 1;
@@ -323,7 +299,6 @@ public final class FoliosScreen extends Screen {
         return 1 - u * u * u;
     }
 
-    // Pages laid out again when what they show changed (a live list, the reader's progress), at the same place.
     @Override
     public void tick() {
         super.tick();
@@ -332,7 +307,6 @@ public final class FoliosScreen extends Screen {
 
     @Override
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        // The world stays in sight, dimmed more towards the edges so the book stands out.
         Identifier backdrop = this.book.textures().backdrop();
         if (backdrop != null) {
             layer(graphics, backdrop, 0, 0, this.width, this.height, FoliosPalette.alpha(0xFFFFFFFF, Math.round(255 * this.opening())));
@@ -356,8 +330,6 @@ public final class FoliosScreen extends Screen {
         graphics.pose().translate(this.originX, this.originY + (1 - this.opening()) * 12);
         graphics.pose().scale(this.scale, this.scale);
         this.reader.tabs.frame();
-        // The bar, its foot BAR_GAP over the book: first, so a leaf turning over the book passes over it too. Drawn as a
-        // page is, its places to press moved into the book's pixels.
         List<AbstractPainter.Hit> barHits = new ArrayList<>();
         ScreenPainter barPainter = new ScreenPainter(graphics, 0, -BAR - BAR_GAP, 1, this.bar.palette(), this.reader.session, this.reader,
                 this.reader.seconds(), bx, by + BAR + BAR_GAP, barHits);
@@ -373,10 +345,8 @@ public final class FoliosScreen extends Screen {
         if (!popped && this.tooltip != null && !this.tooltip.isEmpty()) net.ixdarklord.folios.internal.client.FoliosTooltips.show(graphics, this.font, this.tooltip, mouseX, mouseY, this.book, -1, this.scale);
     }
 
-    // Where the pointer last was, in the book's pixels, for the mention key.
     private float pointerX = Float.NaN, pointerY = Float.NaN;
 
-    // Mentions the page under the pointer, if it is over one.
     private boolean mentionHovered() {
         if (this.reader.flip != null || Float.isNaN(pointerX) || pointerY < BORDER || pointerY >= BORDER + ph) return false;
         if (pointerX >= BORDER && pointerX < BORDER + pw) return this.reader.mention(false);
@@ -392,7 +362,6 @@ public final class FoliosScreen extends Screen {
         return x >= x0 && x < x1 && y >= y0 && y < y1;
     }
 
-    // A texture layer stretched over a rectangle, tinted.
     private static void layer(GuiGraphicsExtractor graphics, Identifier texture, int x, int y, int width, int height, int tint) {
         int[] size = ConfigStyle.textureSize(texture);
         graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0, 0, width, height, size[0], size[1], size[0], size[1], tint);
@@ -406,11 +375,9 @@ public final class FoliosScreen extends Screen {
         graphics.fill(x1 - 1, y0 + 2, x1, y1 - 2, color);
     }
 
-    // The cover, the two pages and the fold, what is on them, and a leaf folding over while a spread changes.
     private void drawBook(GuiGraphicsExtractor graphics, float mouseX, float mouseY) {
         FoliosPalette palette = this.palette();
         int cover = 0xFF000000 | this.book.cover();
-        // A soft shadow under the book.
         for (int step = 1; step <= 4; step++) {
             rounded(graphics, -step + 2, step + 1, bookWidth + step - 2, bookHeight + step + 2, 0x18000000);
         }
@@ -422,7 +389,6 @@ public final class FoliosScreen extends Screen {
         int gilt = FoliosPalette.alpha(FoliosPalette.mix(palette.accent(), 0xFFFFFFFF, 0.2F), 0x90);
         graphics.fill(3, 3, bookWidth - 3, 4, gilt);
         graphics.fill(3, bookHeight - 4, bookWidth - 3, bookHeight - 3, gilt);
-        // The pages, with the fold between them.
         int leftX = BORDER;
         int rightX = BORDER + pw + SPINE;
         int top = BORDER;
@@ -437,8 +403,6 @@ public final class FoliosScreen extends Screen {
         float angle = flip == null ? 0 : ease(flip.forward() ? turned : 1 - turned) * Mth.PI;
         FoliosPageElement.Laid left = flip == null ? this.reader.page(spot, 0) : flip.forward() ? flip.oldLeft() : flip.newLeft();
         FoliosPageElement.Laid right = flip == null ? this.reader.page(spot, 1) : flip.forward() ? flip.newRight() : flip.oldRight();
-        // The fold: a shadow over the paper, deepest at the spine; each side as strong as its own page has it (fainter
-        // under half of a spread), so it stays right while a leaf turns between a spread and other pages.
         int leftFold = foldStrength(left);
         int rightFold = foldStrength(right);
         for (int step = 0; step < 8; step++) {
@@ -446,11 +410,9 @@ public final class FoliosScreen extends Screen {
             graphics.fill(spine - step - 1, top, spine - step, top + ph, Math.round(leftFold * fade) << 24);
             graphics.fill(spine + step, top, spine + step + 1, top + ph, Math.round(rightFold * fade) << 24);
         }
-        // The fore-edges of the leaves past each page, the tabs coming out of the right one.
         ScreenPainter edges = new ScreenPainter(graphics, 0, 0, 1, palette, this.reader.session, this.reader, this.reader.seconds(), Float.NaN, Float.NaN, this.unpressable);
         Shapes.foreEdge(edges, leftX, top + 1, top + ph - 1, false);
         Shapes.foreEdge(edges, rightX + pw, top + 1, top + ph - 1, true);
-        // Each page worn with age at its head, foot and outer side; then the head and foot cut a little rough, over it.
         Shapes.wornEdges(edges, leftX, top, leftX + pw, top + ph, false, cover);
         Shapes.wornEdges(edges, rightX, top, rightX + pw, top + ph, true, cover);
         Shapes.deckle(edges, leftX, rightX + pw, top, false, cover);
@@ -463,14 +425,11 @@ public final class FoliosScreen extends Screen {
         this.page(graphics, palette, left, leftX, top, mouseX, mouseY, settled, this.leftHits, settled ? spot : flip.staticLeft(), false);
         this.page(graphics, palette, right, rightX, top, mouseX, mouseY, settled, this.rightHits, settled ? spot : flip.staticRight(), true);
         if (!settled) {
-            // A layer of its own: items go in a pass over the flat things of their layer, so the pages' items (a
-            // recipe's) would show through the leaf turning over them.
             graphics.nextStratum();
             this.leaf(graphics, palette, flip, angle, spine, top);
         }
     }
 
-    // How dark the fold's shadow is at the spine on a page: fainter under half of a spread.
     private static int foldStrength(FoliosPageElement.@Nullable Laid page) {
         int fold = ConfigStyle.mode() == ConfigTheme.Mode.DARK ? 0x70 : 0x2C;
         return page instanceof FoliosPageElement.SpreadHalf ? Math.round(fold * SPREAD_FOLD) : fold;
@@ -492,7 +451,6 @@ public final class FoliosScreen extends Screen {
         try {
             Shapes.pageFrame(painter, this.book.textures().frame(), pw, ph, page, right);
             if (page != null) this.reader.drawRevealed(painter, page, spot, right);
-            // Its number and arrow are the page's own, so they go with it as it turns.
             this.reader.chrome(painter, spot, right, pressable, null);
         } finally {
             painter.end();
@@ -501,8 +459,6 @@ public final class FoliosScreen extends Screen {
         if (painter.popup() != null) this.hoveredPopup = painter.popup();
     }
 
-    // A leaf folding over the spine: it narrows as it rises and widens as it lies down on the other side, darker the
-    // more it stands up, casting a shadow on the page it uncovers. Its writing is left out while it is very narrow.
     private void leaf(GuiGraphicsExtractor graphics, FoliosPalette palette, FoliosReader.Flip flip, float angle, int spine, int top) {
         float upright = Mth.sin(angle);
         boolean faceShown = angle < Mth.HALF_PI;
@@ -515,11 +471,6 @@ public final class FoliosScreen extends Screen {
             if (faceShown) graphics.fill(spine - to, top, spine - from, top + ph, alpha << 24);
             else graphics.fill(spine + from, top, spine + to, top + ph, alpha << 24);
         }
-        // The leaf, cut into upright strips from the spine to its free edge, each turned a little more than the last
-        // (for a bending page turn) so the leaf curls, its free edge trailing as it lifts and following as it comes
-        // down. Each strip shows its part of the page, stretched to how wide it stands, and is shaded by how far it
-        // is turned from facing the reader. Where the strips are, across the screen: from the spine, each a step of
-        // the leaf's length turned by its angle.
         float length = pw + SPINE / 2.0F;
         boolean bend = this.book.pageTurn() == FoliosBook.PageTurn.BEND;
         float curl = bend ? (flip.forward() ? -1 : 1) * LEAF_BEND * upright : 0;
@@ -534,8 +485,6 @@ public final class FoliosScreen extends Screen {
         FoliosReader.Spot spot = faceShown ? flip.face() : flip.back();
         int fold = foldStrength(shown);
         for (int strip = 0; strip < LEAF_STRIPS; strip++) {
-            // The strip's part of the leaf, in the leaf's own pixels: from the spine for the face (its left edge), from
-            // the free edge for the back (whose spine edge is its right).
             float s0 = strip * length / LEAF_STRIPS;
             float s1 = (strip + 1) * length / LEAF_STRIPS;
             float u0 = faceShown ? s0 : length - s1;
@@ -543,14 +492,9 @@ public final class FoliosScreen extends Screen {
             float x0 = faceShown ? edges[strip] : edges[strip + 1];
             float x1 = faceShown ? edges[strip + 1] : edges[strip];
             float stretch = (x1 - x0) / (u1 - u0);
-            // Turned past edge-on, it lies behind the rest of the leaf.
             if (stretch <= 0.01F) continue;
             int clipFrom = Math.round(Math.min(x0, x1));
             int clipTo = Math.max(clipFrom + 1, Math.round(Math.max(x0, x1)));
-            // Each strip reaches a pixel into the next, drawn after it over the overlap: at a book scale that isn't a
-            // whole number of screen pixels, strips clipped edge to edge could leave a hair's gap between them, the
-            // page under the leaf showing through as a broken line.
-            // The next strip lies on this one's side away from the spine.
             if (strip + 1 < LEAF_STRIPS) {
                 if (edges[strip + 1] >= edges[strip]) clipTo++;
                 else clipFrom--;
@@ -561,19 +505,15 @@ public final class FoliosScreen extends Screen {
             graphics.pose().scale(stretch, 1);
             graphics.pose().translate(-u0, 0);
             this.leafPage(graphics, palette, shown, spot, faceShown, fold, stretch > 0.15F);
-            // The strip's shade: darker the more it is turned from facing the reader.
             graphics.fill(0, 0, Math.round(length), ph, Math.round(0x60 * (1 - Math.abs(Mth.cos(turns[strip])))) << 24);
             graphics.pose().popMatrix();
             graphics.disableScissor();
         }
-        // The leaf's free edge, a line of the leaves' colour.
         float outer = edges[LEAF_STRIPS];
         int edgeX = Math.round(outer) - (outer > spine ? 1 : 0);
         graphics.fill(edgeX, top, edgeX + 1, top + ph, FoliosPalette.mix(palette.paper(), palette.line(), 0.8F));
     }
 
-    // The whole of a turning leaf in its own pixels, the spine at the left for its face (at the right for its back):
-    // paper, the fold's shadow at its spine edge, and what is on it, when it stands open enough to be read.
     private void leafPage(GuiGraphicsExtractor graphics, FoliosPalette palette, FoliosPageElement.@Nullable Laid shown, FoliosReader.Spot spot,
                           boolean faceShown, int fold, boolean content) {
         graphics.fill(0, 0, pw + SPINE / 2, ph, palette.paper());
@@ -596,27 +536,19 @@ public final class FoliosScreen extends Screen {
         }
     }
 
-    /** How many strips a turning leaf is drawn in, and how far its free edge curls from its spine at the most (radians). */
     private static final int LEAF_STRIPS = 18;
     private static final float LEAF_BEND = 1.0F;
 
-    /** How tall a tab is at rest; the open one grows to TAB. */
     private static final int TAB_SMALL = 18;
 
-    // A tab: what it is for, and its place from the top.
     private record TabSpot(boolean here, Component name, Runnable action, @Nullable FoliosCategory category, String part, int order) {}
 
-    // Ribbon tabs out of the book's right edge: the front and each open category from the top, the bookmarks and the
-    // index at the foot. At rest each is small; the open one grows as it opens. They are laid one under the other with
-    // the same gap between each, whatever their sizes, so the column stays even as one grows. Under the pointer a tab
-    // only swings further out, so nothing moves beneath it.
     private void drawTabs(GuiGraphicsExtractor graphics, float mouseX, float mouseY) {
         FoliosPalette palette = this.palette();
         int x = bookWidth - 2 + this.book.layout().tabX();
         int gap = this.book.layout().tabSpacing();
         String chapter = this.reader.spot.chapter();
         FoliosCategory open = this.reader.category();
-        // The foot first, from the bottom up: the index, then the bookmarks once there are any.
         int foot = bookHeight - 6;
         int order = 99;
         foot = this.footTab(graphics, mouseX, mouseY, x, foot, palette, new TabSpot("index".equals(chapter),
@@ -625,41 +557,156 @@ public final class FoliosScreen extends Screen {
             foot = this.footTab(graphics, mouseX, mouseY, x, foot, palette, new TabSpot("bookmarks".equals(chapter),
                     Component.translatableWithFallback("folios.bookmarks", "Bookmarks"), this.reader::bookmarks, null, "bookmarks", order--)) - gap;
         }
-        // Then from the top down, as many as fit above the foot.
         int y = BORDER + this.book.layout().tabY();
+        int top = y + TAB + gap;
         order = 0;
         y = this.tab(graphics, mouseX, mouseY, x, y, palette, new TabSpot("home".equals(chapter),
                 Component.translatableWithFallback("folios.introduction", "Introduction"), this.reader::home, null, "home", order++)) + gap;
-        for (FoliosCategory category : this.book.visibleCategories()) {
-            if (y + TAB > foot) break;
-            if (!category.isOpen()) continue;
+        List<FoliosCategory> categories = this.book.visibleCategories().stream().filter(FoliosCategory::isOpen).toList();
+        int room = foot - top;
+        boolean fits = categories.size() * (TAB_SMALL + gap) + TAB - TAB_SMALL <= room;
+        int shown = fits ? categories.size() : Math.max(1, (room - TAB_SMALL - PAGER_LABEL - (TAB - TAB_SMALL)) / (TAB_SMALL + gap));
+        int pages = (categories.size() + shown - 1) / shown;
+        int last = (pages - 1) * shown;
+        this.tabShown = shown;
+        String openId = open != null ? open.id() : null;
+        if (openId != null && !openId.equals(this.tabFollowed)) {
+            int at = categories.indexOf(open);
+            if (at >= 0 && (at < this.tabFirst || at >= this.tabFirst + shown)) this.tabFirst = at;
+        }
+        this.tabFollowed = openId;
+        this.tabFirst = Mth.clamp(this.tabFirst, 0, Math.max(0, last)) / shown * shown;
+        this.tabColumn = fits ? null : new float[]{x, y, x + 38, foot};
+        float phase = this.tabSwapPhase();
+        boolean leaving = phase < 0.5F;
+        int first = Mth.clamp(this.tabShownFirst, 0, Math.max(0, last));
+        List<FoliosCategory> window = categories.subList(first, Math.min(categories.size(), first + shown));
+        float step = Math.min(TAB_STAGGER, 0.4F / Math.max(1, window.size() - 1));
+        float half = leaving ? phase * 2 : (phase - 0.5F) * 2;
+        for (int index = 0; index < window.size(); index++) {
+            FoliosCategory category = window.get(index);
+            float t = Mth.clamp((half - index * step) / (1 - (window.size() - 1) * step), 0, 1);
+            float slide = phase >= 1 ? 1 : leaving ? 1 - t * t * (3 - 2 * t) : 1 - (1 - t) * (1 - t) * (1 - t);
             y = this.tab(graphics, mouseX, mouseY, x, y, palette, new TabSpot(open != null && open.id().equals(category.id()), category.title(),
-                    () -> this.reader.category(category.id()), category, "category", order++)) + gap;
+                    () -> this.reader.category(category.id()), category, "category", order++), slide) + gap;
+        }
+        if (!fits) {
+            this.tabPager(graphics, mouseX, mouseY, x, foot - TAB_SMALL, this.tabFirst > 0, this.tabFirst < last, this.tabFirst / shown + 1, pages, palette);
         }
     }
 
-    /** How far out a tab is past which it grows: under the pointer it swings out, open it grows too. */
+    private static final int PAGER_PLATE = 12;
+    private static final int PAGER_LABEL = 10;
+    private static final float TAB_SWAP_MILLIS = 380;
+    private static final float TAB_STAGGER = 0.08F;
+    private int tabFirst;
+    private int tabShown = 1;
+    private int tabShownFirst = -1;
+    private long tabSwapAt = -1;
+    private @Nullable String tabFollowed;
+    private float @Nullable [] tabColumn;
+
+    private float tabSwapPhase() {
+        long now = net.ixdarklord.folios.internal.client.FoliosClock.millis();
+        if (this.tabShownFirst < 0 || !StyleSettings.transitions()) {
+            this.tabShownFirst = this.tabFirst;
+            this.tabSwapAt = -1;
+            return 1;
+        }
+        if (this.tabSwapAt < 0) {
+            if (this.tabShownFirst == this.tabFirst) return 1;
+            this.tabSwapAt = now;
+            this.tabSwapped = false;
+        }
+        float phase = (now - this.tabSwapAt) / TAB_SWAP_MILLIS;
+        if (!this.tabSwapped && phase >= 0.5F) {
+            this.tabShownFirst = this.tabFirst;
+            this.tabSwapped = true;
+        } else if (this.tabSwapped && this.tabShownFirst != this.tabFirst && phase < 1) {
+            this.tabSwapAt = now - Math.round((1 - phase) * TAB_SWAP_MILLIS);
+            this.tabSwapped = false;
+            phase = 1 - phase;
+        }
+        if (phase >= 1) {
+            this.tabSwapAt = -1;
+            if (this.tabShownFirst == this.tabFirst) return 1;
+            this.tabSwapAt = now;
+            this.tabSwapped = false;
+            return 0;
+        }
+        return phase;
+    }
+
+    private boolean tabSwapped;
+
+    private void tabPager(GuiGraphicsExtractor graphics, float mouseX, float mouseY, int x, int y, boolean earlier, boolean later, int page, int pages, FoliosPalette palette) {
+        int reach = 2 * PAGER_PLATE + 10;
+        float moved = this.reader.tabs.out("pager", false, true);
+        float pressed = this.reader.tabs.pressed("pager");
+        int push = Math.round(4 * pressed + 4 * (1 - moved));
+        int firstX = x + 1 - push;
+        int secondX = firstX + PAGER_PLATE + 2;
+        int depth = Shapes.tabDepth(6, moved);
+        int edge = bookWidth - BORDER;
+        int out = Math.round(reach + 4) - depth - push;
+        int color = FoliosPalette.mix(this.reader.tabColor(null, palette, moved), 0xFF000000, 0.12F + 0.15F * pressed + 0.06F * depth);
+        int root = Shapes.ribbonRoot(edge, depth);
+        layer(graphics, this.book.textures().tab(), root, y, x - root + out, TAB_SMALL, color);
+        ScreenPainter tuck = new ScreenPainter(graphics, 0, 0, 1, palette, this.reader.session, this.reader, this.reader.seconds(), Float.NaN, Float.NaN, this.unpressable);
+        Shapes.tuck(tuck, edge, y, TAB_SMALL, depth, color);
+        tuck.end();
+        int plateY = y + (TAB_SMALL - PAGER_PLATE) / 2;
+        this.pagerPlate(graphics, mouseX, mouseY, firstX, plateY, false, earlier, palette);
+        this.pagerPlate(graphics, mouseX, mouseY, secondX, plateY, true, later, palette);
+        String label = page + "/" + pages;
+        int middle = firstX + push + PAGER_PLATE + 1;
+        graphics.text(this.font, label, middle - this.font.width(label) / 2, y - PAGER_LABEL + 1, 0xFFF2EEE6, true);
+    }
+
+    private void pagerPlate(GuiGraphicsExtractor graphics, float mouseX, float mouseY, int x, int y, boolean next, boolean enabled, FoliosPalette palette) {
+        boolean hovered = enabled && over(mouseX, mouseY, x - 1, y - 1, x + PAGER_PLATE + 1, y + PAGER_PLATE + 1);
+        int plate = palette.paper() | 0xFF000000;
+        if (hovered) plate = FoliosPalette.mix(plate, palette.accent() | 0xFF000000, 0.2F);
+        if (!enabled) plate = FoliosPalette.alpha(plate, 0x80);
+        layer(graphics, this.book.textures().tabPlate(), x, y, PAGER_PLATE, PAGER_PLATE, plate);
+        net.ixdarklord.folios.internal.client.paint.PixelIcon arrow = (next ? Shapes.Icon.NEXT : Shapes.Icon.PREVIOUS).image();
+        int ink = !enabled ? FoliosPalette.alpha(palette.muted(), 0x70)
+                : hovered ? palette.accent() | 0xFF000000 : FoliosPalette.mix(palette.muted(), palette.text(), 0.35F);
+        arrow.draw(graphics, x + (PAGER_PLATE - arrow.width()) / 2, y + (PAGER_PLATE - arrow.height()) / 2, ink);
+        if (!enabled) return;
+        if (hovered) this.tooltip = List.of(next ? Component.translatableWithFallback("folios.tabs.next", "Next")
+                : Component.translatableWithFallback("folios.tabs.previous", "Back"));
+        this.hit(x - 1, y - 1, x + PAGER_PLATE + 1, y + PAGER_PLATE + 1, () -> this.scrollTabs(next ? this.tabShown : -this.tabShown));
+    }
+
+    private void scrollTabs(int by) {
+        this.tabFirst += by;
+        this.reader.tabs.press("pager");
+        this.minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.0F, 0.5F));
+    }
+
     private static final float HOVER_OUT = 0.55F;
 
-    // A tab whose foot is at y: drawn up from it; returns its top.
     private int footTab(GuiGraphicsExtractor graphics, float mouseX, float mouseY, int x, int bottom, FoliosPalette palette, TabSpot spot) {
         boolean hovered = over(mouseX, mouseY, x, bottom - TAB_SMALL, x + 38, bottom);
         float moved = this.reader.tabs.out(FoliosReader.tabKey(spot.category, spot.part), hovered, spot.here);
         int tall = tabTall(moved);
-        this.tab(graphics, x, bottom - tall, tall, spot, palette, moved, hovered);
+        this.tab(graphics, x, bottom - tall, tall, spot, palette, moved, hovered, 1);
         return bottom - tall;
     }
 
-    // A tab whose top is at y: drawn down from it; returns its foot.
     private int tab(GuiGraphicsExtractor graphics, float mouseX, float mouseY, int x, int top, FoliosPalette palette, TabSpot spot) {
-        boolean hovered = over(mouseX, mouseY, x, top, x + 38, top + TAB_SMALL);
+        return this.tab(graphics, mouseX, mouseY, x, top, palette, spot, 1);
+    }
+
+    private int tab(GuiGraphicsExtractor graphics, float mouseX, float mouseY, int x, int top, FoliosPalette palette, TabSpot spot, float slide) {
+        boolean hovered = slide >= 1 && over(mouseX, mouseY, x, top, x + 38, top + TAB_SMALL);
         float moved = this.reader.tabs.out(FoliosReader.tabKey(spot.category, spot.part), hovered, spot.here);
         int tall = tabTall(moved);
-        this.tab(graphics, x, top, tall, spot, palette, moved, hovered);
+        this.tab(graphics, x, top, tall, spot, palette, moved, hovered, slide);
         return top + tall;
     }
 
-    // How grown a tab is, 0 at rest (and under the pointer) to 1 open, and so how tall.
     private static float tabGrow(float moved) {
         return Mth.clamp((moved - HOVER_OUT) / (1 - HOVER_OUT), 0, 1);
     }
@@ -668,41 +715,42 @@ public final class FoliosScreen extends Screen {
         return Math.round(Mth.lerp(tabGrow(moved), TAB_SMALL, TAB));
     }
 
-    // What a tab's tooltip says under its name.
     private @Nullable Component tabDetail(@Nullable FoliosCategory category, String part) {
         return this.reader.tabDetail(category, part);
     }
 
-    private void tab(GuiGraphicsExtractor graphics, int x, int y, int tall, TabSpot spot, FoliosPalette palette, float moved, boolean hovered) {
+    private void tab(GuiGraphicsExtractor graphics, int x, int y, int tall, TabSpot spot, FoliosPalette palette, float moved, boolean hovered, float slide) {
         String key = FoliosReader.tabKey(spot.category, spot.part);
         float pressed = this.reader.tabs.pressed(key);
         float grow = tabGrow(moved);
-        // Tucked deeper in the leaves the lower it is, it lies a little in their shade; open, it rises to the surface.
         int depth = Shapes.tabDepth(Math.min(spot.order, 6), moved);
-        int out = Math.round(24 + 15 * moved - 4 * pressed) - depth;
-        int color = FoliosPalette.mix(this.reader.tabColor(spot.category, palette, moved), 0xFF000000, 0.15F * pressed + 0.06F * depth);
-        // The ribbon texture, its swallowtail end at the right, stretched from its root under the page to its tip,
-        // in its colour; then the leaves over its root.
         int edge = bookWidth - BORDER;
+        int full = Math.round(24 + 15 * moved - 4 * pressed) - depth;
+        int out = slide >= 1 ? full : Math.round(Mth.lerp(slide, edge - x, full));
+        if (slide <= 0) return;
+        int color = FoliosPalette.mix(this.reader.tabColor(spot.category, palette, moved), 0xFF000000, 0.15F * pressed + 0.06F * depth);
         int root = Shapes.ribbonRoot(edge, depth);
         layer(graphics, this.book.textures().tab(), root, y, x - root + out, tall, color);
         ScreenPainter tuck = new ScreenPainter(graphics, 0, 0, 1, palette, this.reader.session, this.reader, this.reader.seconds(), Float.NaN, Float.NaN, this.unpressable);
         Shapes.tuck(tuck, edge, y, tall, depth, color);
         tuck.end();
-        // A plate centred on the ribbon's body (between the shade at its root and the bottom of its notch, a fifth of
-        // its length), and the icon on it, a pixel inside it; both larger as it grows.
         int plate = Math.round(Mth.lerp(grow, 14, 18));
         int icon = plate - 2;
-        int plateX = Math.round(x + 3 + (out * 0.8F - 3 - plate) / 2.0F);
+        int plateX = Math.round(x + 3 + (full * 0.8F - 3 - plate) / 2.0F) - (full - out);
         int plateY = y + (tall - plate) / 2;
+        if (slide < 1) graphics.enableScissor(edge, y - 2, x + out + 2, y + tall + 2);
         layer(graphics, this.book.textures().tabPlate(), plateX, plateY, plate, plate, palette.paper() | 0xFF000000);
         if (spot.category != null) spot.category.icon().draw(graphics, plateX + 1, plateY + 1, icon, this.reader.seconds());
         else if (spot.part.equals("bookmarks")) FoliosBar.pixels(graphics, FoliosBar.STAR, plateX + 1, plateY + 1, icon, palette.accent());
         else if (spot.part.equals("index")) FoliosBar.pixels(graphics, FoliosBar.INDEX, plateX + 1, plateY + 1, icon, palette.accent());
         else this.book.icon().draw(graphics, plateX + 1, plateY + 1, icon, this.reader.seconds());
+        if (slide < 1) {
+            graphics.disableScissor();
+            return;
+        }
         if (hovered) this.tooltip = net.ixdarklord.folios.internal.client.FoliosTooltips.of(spot.name, this.tabDetail(spot.category, spot.part));
         this.hit(x, y, x + 38, y + tall, () -> {
-            this.reader.tabs.press(key);
+            if (!spot.here) this.reader.tabs.press(key);
             spot.action.run();
         });
     }

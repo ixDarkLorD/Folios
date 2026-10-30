@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 
-// Folios: guide books for mods, built on CoolCatLib.
 public final class Folios {
     public static final String MOD_ID = "folios";
     public static final Logger LOGGER = LoggerFactory.getLogger("Folios");

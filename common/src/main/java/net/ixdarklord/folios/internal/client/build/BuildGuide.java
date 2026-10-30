@@ -39,13 +39,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// A build from a book, shown in the world to be built: on the client only. First it is carried: the whole build
-// stands as ghosts where the player looks, turned the way they face, until they use (right-click) to set it down.
-// Then the blocks still to place stand there as ghosts, their own models see-through (CoolCatLib's GhostBlocks), the
-// layer to build now clearer than the rest, a block of the wrong kind boxed in red; a panel on the HUD tracks how far it has come and what is still needed. It looks at the
-// world twice a second, and goes when the build is done, when its builder walks off, or on sneak + use.
 public final class BuildGuide {
-    /** No more ghosts than this are drawn at once, however large the build. */
     private static final int MOST = 512;
     private static final double WANDER = 48;
 
@@ -53,7 +47,6 @@ public final class BuildGuide {
 
     private record Part(BlockPos offset, BlockChoice choice) {}
 
-    // A kind of block still needed, and how many of it.
     private static final class Need {
         final BlockChoice choice;
         int count;
@@ -64,7 +57,6 @@ public final class BuildGuide {
     }
 
     private final Component name;
-    // The book it came from, for the panel's colours: the one being read when it was shown; null for none.
     private final net.ixdarklord.folios.api.client.@Nullable FoliosBook book;
     private final List<Part> parts = new ArrayList<>();
     private final BlockPos size;
@@ -74,7 +66,6 @@ public final class BuildGuide {
     private boolean useHeld = true;
     private boolean handled;
     private int age;
-    // From the last look at the world: each part done or not, and what is still needed.
     private boolean[] done = new boolean[0];
     private boolean[] wrong = new boolean[0];
     private int placed;
@@ -97,7 +88,6 @@ public final class BuildGuide {
         this.wrong = new boolean[parts.size()];
     }
 
-    /** Starts guiding a build (offsets from its lowest corner), in place of any other. */
     public static void start(Component name, Map<BlockPos, BlockChoice> blocks) {
         BuildGuide guide = new BuildGuide(name, blocks);
         if (guide.parts.isEmpty()) return;
@@ -105,7 +95,6 @@ public final class BuildGuide {
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.2F, 0.8F));
     }
 
-    // The book being read now: on its screen, or in the hands.
     private static net.ixdarklord.folios.api.client.@Nullable FoliosBook reading() {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.screen instanceof net.ixdarklord.folios.internal.client.screen.FoliosScreen screen) return screen.reader().book;
@@ -121,19 +110,14 @@ public final class BuildGuide {
         current = null;
     }
 
-    // ---- Where each part goes ----
-
     private BlockPos origin() {
         return anchor != null ? anchor : preview;
     }
 
-    // A part's place in the world: turned about the build's middle, its middle at the origin's column.
     private BlockPos at(Part part) {
         BlockPos centred = new BlockPos(part.offset.getX() - size.getX() / 2, part.offset.getY(), part.offset.getZ() - size.getZ() / 2);
         return origin().offset(centred.rotate(rotation));
     }
-
-    // ---- Each tick ----
 
     public static void tick(Minecraft minecraft) {
         BuildGuide guide = current;
@@ -143,7 +127,6 @@ public final class BuildGuide {
             return;
         }
         guide.age++;
-        // A use with nothing in hand reaches no item or block: the key itself is watched for that.
         boolean use = minecraft.options.keyUse.isDown();
         boolean pressed = use && !guide.useHeld && !guide.handled;
         guide.useHeld = use;
@@ -153,7 +136,6 @@ public final class BuildGuide {
             if (current == null) return;
         }
         if (guide.anchor == null) {
-            // Carried: where the player looks, turned the way they face.
             HitResult hit = minecraft.hitResult;
             if (hit instanceof BlockHitResult block && hit.getType() == HitResult.Type.BLOCK) {
                 guide.preview = block.getBlockPos().relative(block.getDirection());
@@ -178,12 +160,6 @@ public final class BuildGuide {
         }
     }
 
-    /**
-     * A use (right-click) by the local player, before the game acts on it: while the guide is carried it sets it down,
-     * and sneaking it puts the guide away; either way the use is the guide's. Otherwise it is left to the game.
-     *
-     * @return whether the guide took it
-     */
     public static boolean onUse(boolean sneaking) {
         BuildGuide guide = current;
         if (guide == null || Minecraft.getInstance().screen != null || !sneaking && guide.anchor != null) return false;
@@ -204,7 +180,6 @@ public final class BuildGuide {
         }
     }
 
-    // The front of the build faces the player: their facing turns it from facing north.
     private static Rotation rotation(Direction facing) {
         return switch (facing) {
             case EAST -> Rotation.CLOCKWISE_90;
@@ -214,7 +189,6 @@ public final class BuildGuide {
         };
     }
 
-    // What of it stands in the world now.
     private void look(Minecraft minecraft) {
         placed = 0;
         needs.clear();
@@ -228,7 +202,6 @@ public final class BuildGuide {
             if (right) {
                 placed++;
             } else {
-                // Counted by the items it takes: a door's top half comes with its foot, a double slab is two.
                 int items = part.choice.items();
                 if (items > 0) needs.computeIfAbsent(part.choice.isTag() ? part.choice.key() : part.choice.stack(0, 1).getItem(),
                         key -> new Need(part.choice)).count += items;
@@ -237,9 +210,6 @@ public final class BuildGuide {
         }
     }
 
-    // ---- Drawing in the world ----
-
-    /** Draws the ghosts, after the level and before the hands. */
     public static void render(CameraRenderState camera, float partialTick) {
         BuildGuide guide = current;
         Minecraft minecraft = Minecraft.getInstance();
@@ -248,8 +218,6 @@ public final class BuildGuide {
         float breath = 0.5F + 0.5F * Mth.sin(time * 4.0F);
         boolean carried = guide.anchor == null;
         Vec3 eye = camera.pos;
-        // The blocks themselves as ghosts, turned as the build is: the layer to build now clearer than the rest (all of
-        // it while it is carried); a wrong block there is marked by a red box instead.
         List<GhostBlocks.Placed> now = new ArrayList<>();
         List<GhostBlocks.Placed> later = new ArrayList<>();
         List<float[]> boxes = new ArrayList<>();
@@ -305,18 +273,11 @@ public final class BuildGuide {
         }
     }
 
-    // ---- The panel on the HUD ----
-
-    /** The panel's room inside its frame, and its rows. */
     private static final int PAD = 4;
     private static final int ROW = 20;
     private static final int MOST_ROWS = 5;
-    /** The clear margin round the tooltip frame's images (textures/gui/sprites/tooltip), in GUI pixels. */
     private static final int MARGIN = 8;
 
-    // The panel, in the look of the book's tooltips: its ground and gilt frame in the book's colours; the build's name
-    // in gilt and how far along it is; a gilt rule; a bar of how much is placed; the blocks still needed, each in a slot
-    // with its count; a rule; and what to do now, quieter. As wide as its widest line, so nothing runs past its frame.
     public static void hud(GuiGraphicsExtractor graphics) {
         BuildGuide guide = current;
         Minecraft minecraft = Minecraft.getInstance();
@@ -325,7 +286,6 @@ public final class BuildGuide {
         net.ixdarklord.folios.api.client.FoliosBook book = guide.book;
         int cover = book != null ? 0xFF000000 | book.cover() : 0xFF3B2618;
         int gilt = book != null ? net.ixdarklord.folios.internal.client.FoliosTooltips.titleColor(book) : 0xFFF2E6CC;
-        // The book's panel scheme: its frame for the rules, slots and the bar's rim, its detail for quieter text.
         int frame = book != null ? 0xFF000000 | net.ixdarklord.folios.internal.client.FoliosTooltips.frameColor(book) : 0xFFE8C66A;
         int rule = net.ixdarklord.folios.api.client.page.FoliosPalette.mix(frame, cover, 0.45F);
         int quiet = book != null ? net.ixdarklord.folios.internal.client.FoliosTooltips.detailColor(book)
@@ -339,7 +299,6 @@ public final class BuildGuide {
                 : Component.translatableWithFallback("folios.build.cancel", "Sneak + right-click to put away");
         int rows = Math.min(MOST_ROWS, guide.needs.size());
         int more = guide.needs.size() - rows;
-        // As wide as what it holds: the name and count, each need's row, the hint.
         int wide = Math.max(130, font.width(title) + 10 + font.width(count));
         int row = 0;
         float time = guide.age / 20.0F;
@@ -349,9 +308,7 @@ public final class BuildGuide {
         }
         wide = Math.min(Math.max(wide, font.width(hint)), graphics.guiWidth() / 3);
         int tall = 9 + 4 + 6 + 4 + rows * ROW + (more > 0 ? 10 : 0) + 4 + 9;
-        // The frame's outer edge exactly where the settings put it, from the chosen corner; the content inside its border.
         int inset = 13;
-        // In the corner the settings choose, moved in from it by their x and y.
         var corner = net.ixdarklord.folios.internal.config.FoliosClientConfig.BUILD_PANEL_CORNER.get();
         boolean right = corner == net.ixdarklord.folios.internal.config.FoliosClientConfig.Corner.TOP_RIGHT
                 || corner == net.ixdarklord.folios.internal.config.FoliosClientConfig.Corner.BOTTOM_RIGHT;
@@ -359,19 +316,15 @@ public final class BuildGuide {
                 || corner == net.ixdarklord.folios.internal.config.FoliosClientConfig.Corner.BOTTOM_RIGHT;
         int offsetX = net.ixdarklord.folios.internal.config.FoliosClientConfig.BUILD_PANEL_X.get();
         int offsetY = net.ixdarklord.folios.internal.config.FoliosClientConfig.BUILD_PANEL_Y.get();
-        // The frame's images have a clear margin round what shows (MARGIN): taken off, so 0 puts the visible frame on the
-        // screen's edge.
         int edge = inset - MARGIN;
         int x = right ? graphics.guiWidth() - edge - wide - offsetX : edge + offsetX;
         int y = bottom ? graphics.guiHeight() - edge - tall - offsetY : edge + offsetY;
         if (book != null) net.ixdarklord.folios.internal.client.FoliosTooltips.frame(graphics, x, y, wide, tall, book, 255, inset);
         else graphics.fill(x - 4, y - 4, x + wide + 4, y + tall + 4, 0xE0201810);
-        // The name, cut short if it must, and the count.
         int nameRoom = wide - 8 - font.width(count);
         graphics.text(font, fit(font, title, nameRoom), x, y, gilt, true);
         graphics.text(font, count, x + wide - font.width(count), y, quiet, true);
         int at = y + 9 + 3;
-        // How much is placed: a short bar under the name, as wide as the frame's inside, a little in from each side.
         int barLeft = x + 1;
         int barRight = x + wide - 1;
         int outline = net.ixdarklord.folios.api.client.page.FoliosPalette.mix(frame, cover, 0.25F);
@@ -380,7 +333,6 @@ public final class BuildGuide {
         row = 0;
         for (Need need : guide.needs.values()) {
             if (row++ >= rows) break;
-            // A slot sunk into the ground, outlined in gilt as the bar is, the block in it (a tag's in turn).
             graphics.fill(x, at, x + 18, at + 18, outline);
             graphics.fill(x + 1, at + 1, x + 17, at + 17, 0xFF141010);
             graphics.fakeItem(need.choice.stack(time, 1), x + 1, at + 1);
@@ -395,8 +347,6 @@ public final class BuildGuide {
             graphics.text(font, fit(font, also, wide), x, at + 1, quiet, true);
             at += 10;
         }
-        // A rule, then what to do now.
-        // A soft rule: strongest in the middle, fading out to nothing at both ends.
         for (int px = 0; px < wide; px++) {
             float t = 1 - Math.abs(px + 0.5F - wide / 2.0F) / (wide / 2.0F);
             int alpha = Math.round(255 * t * t * (3 - 2 * t));
@@ -405,28 +355,21 @@ public final class BuildGuide {
         fitted(graphics, font, hint, x, at + 4, wide, quiet);
     }
 
-    // The build's progress bar, 7 pixels tall from (x, y): a soft shadow under it and to its right; a gilt rim with its
-    // corners rounded off; a dark groove, its top in shadow; and the placed length in gilt (green once done), lit along
-    // its top, shaded along its foot, with a glint at its end and faint marks at each tenth so it reads as it fills.
     private static void progressBar(GuiGraphicsExtractor graphics, int x, int y, int width, float progress, int rim) {
         int groove = 0xFF141010;
         int x1 = x + width;
         int y1 = y + 7;
-        // The shadow, a pixel down and right, fading off at its far end.
         graphics.fill(x + 2, y1, x1, y1 + 1, 0x50000000);
         graphics.fill(x1, y + 2, x1 + 1, y1, 0x50000000);
         graphics.fill(x1, y1, x1 + 1, y1 + 1, 0x28000000);
-        // The rim, its corner pixels left out.
         graphics.fill(x + 1, y, x1 - 1, y + 1, rim);
         graphics.fill(x + 1, y1 - 1, x1 - 1, y1, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(rim, 0xFF000000, 0.3F));
         graphics.fill(x, y + 1, x + 1, y1 - 1, rim);
         graphics.fill(x1 - 1, y + 1, x1, y1 - 1, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(rim, 0xFF000000, 0.2F));
-        // The groove, shaded under the rim's top.
         graphics.fill(x + 1, y + 1, x1 - 1, y1 - 1, groove);
         graphics.fill(x + 1, y + 1, x1 - 1, y + 2, 0xFF0A0707);
         int inside = width - 2;
         int filled = Math.round(inside * Math.max(0, Math.min(1, progress)));
-        // A faint mark at each tenth along the groove.
         for (int tenth = 1; tenth < 10; tenth++) {
             int at = x + 1 + inside * tenth / 10;
             graphics.fill(at, y1 - 3, at + 1, y1 - 1, 0xFF2A2420);
@@ -435,12 +378,10 @@ public final class BuildGuide {
         int fill = progress >= 1 ? 0xFF6FBF5A : 0xFFE0B04C;
         int left = x + 1;
         int right = left + filled;
-        // The fill, square at its ends, filling the groove's height.
         graphics.fill(left, y + 1, right, y1 - 1, fill);
         graphics.fill(left, y + 1, right, y + 2, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFFFFFFFF, 0.45F));
         graphics.fill(left, y + 2, right, y + 3, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFFFFFFFF, 0.18F));
         graphics.fill(left, y1 - 2, right, y1 - 1, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFF000000, 0.3F));
-        // The tenths it has passed, a shade darker in the fill.
         for (int tenth = 1; tenth < 10; tenth++) {
             int at = left + inside * tenth / 10;
             if (at < right - 1) graphics.fill(at, y + 3, at + 1, y1 - 2, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFF000000, 0.18F));
@@ -448,8 +389,6 @@ public final class BuildGuide {
         if (filled < inside && filled > 2) graphics.fill(right - 2, y + 2, right - 1, y1 - 2, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFFFFFFFF, 0.6F));
     }
 
-    // A line in the room it has: as it is if it fits; else shrunk, to no less than three quarters; else in two lines at
-    // that size, centred on its place (the second cut short if it must).
     private static void fitted(GuiGraphicsExtractor graphics, Font font, Component text, int x, int y, int room, int color) {
         int wide = font.width(text);
         if (wide <= room) {
@@ -468,7 +407,6 @@ public final class BuildGuide {
         graphics.pose().popMatrix();
     }
 
-    // A line cut short with an ellipsis to fit the room, if it must.
     private static net.minecraft.util.FormattedCharSequence fit(Font font, Component text, int room) {
         if (font.width(text) <= room) return text.getVisualOrderText();
         net.minecraft.network.chat.FormattedText head = font.substrByWidth(text, Math.max(0, room - font.width("…")));
