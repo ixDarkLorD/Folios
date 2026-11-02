@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://ixdarklord.github.io/Folios/docs/
+    about: How to write books, every JSON key, and the API for mod developers.
+  - name: Questions and help on Discord
+    url: https://discord.gg/ZapGEPqm2V
+    about: Ask how to do something with Folios, or share the book you're making.
