@@ -1,0 +1,120 @@
+name: Bug Report
+description: Something in Folios doesn't work, looks wrong or crashes.
+labels: [ "bug" ]
+assignees:
+  - ixDarkLorD
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Thank you for taking the time to report this!** Every report helps make Folios better.
+        Questions about writing a book are answered faster in the [docs](https://ixdarklord.github.io/Folios/docs/) or on [Discord](https://discord.gg/ZapGEPqm2V).
+  - type: checkboxes
+    attributes:
+      label: Before you start
+      options:
+        - label: I searched the [open and closed issues](https://github.com/ixDarkLorD/Folios/issues?q=is%3Aissue) and this hasn't been reported yet.
+          required: true
+        - label: I'm using the latest Folios and CoolCatLib for my Minecraft version, or I've said below why I can't.
+          required: true
+  - type: textarea
+    attributes:
+      label: What happens
+      description: What goes wrong? Include any error message you see in game.
+      placeholder: "Example: With shaders on, hovering a handheld book highlights a row on the wrong page."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What should happen
+      description: What you expected to see instead.
+      placeholder: "Example: The row under the cursor is highlighted, as it is with shaders off."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: The shortest way to make it happen. If it only happens with one book, say which.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Where it happens
+      description: Pick every place you've seen it.
+      multiple: true
+      options:
+        - Screen-style book
+        - Handheld book
+        - Book item (inventory, hand, cover)
+        - Book loading (JSON, resource packs, reloads)
+        - Multiplayer or servers
+        - API or another mod using Folios
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Minecraft version
+      options:
+        - "26.3"
+        - "26.2"
+        - "26.1.2"
+        - "1.21.1"
+        - "1.20.1"
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Mod loader
+      description: 26.x runs on Fabric and NeoForge, 1.21.1 on Fabric, Forge and NeoForge, 1.20.1 on Fabric and Forge.
+      options:
+        - Fabric
+        - NeoForge
+        - Forge
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Folios and CoolCatLib versions
+      description: Shown in the mod list, or in the jar names.
+      placeholder: "Folios 3.1.2, CoolCatLib 8.0.0"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Other mods and shaders
+      description: Mods that change rendering or GUIs matter most (Iris, Sodium, Embeddium, OptiFine, GUI or HUD mods), and the shader pack if one is on. A modpack name and version works too.
+      placeholder: "Iris 1.11.7, Sodium 0.9.2, BSL v10.1.8"
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Book JSON
+      description: If it's about a book you wrote, paste the smallest part of it that shows the problem (book.json, an entry or a page).
+      render: json
+    validations:
+      required: false
+  - type: input
+    attributes:
+      label: Log or crash report
+      description: A **link** to `logs/latest.log` or the crash report, uploaded to [mclo.gs](https://mclo.gs) or a Gist. Please don't paste the whole log here.
+      placeholder: "https://mclo.gs/..."
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Screenshots or videos
+      description: Drag images or clips here. For anything visual, a screenshot helps the most.
+    validations:
+      required: false
+  - type: input
+    attributes:
+      label: Operating system and GPU
+      description: Only needed for rendering problems.
+      placeholder: "Windows 11, NVIDIA RTX 3060"
+    validations:
+      required: false
