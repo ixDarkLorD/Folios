@@ -1,6 +1,7 @@
 package net.ixdarklord.folios.internal.compat;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import org.joml.Matrix3f;
@@ -17,7 +18,7 @@ public final class Compat {
     }
 
     public static <T> Codec<T> withAlternative(Codec<T> codec, Codec<? extends T> alternative) {
-        return Codec.either(codec, alternative).xmap(either -> either.map(value -> value, value -> value), com.mojang.datafixers.util.Either::left);
+        return Codec.either(codec, alternative).xmap(either -> either.map(value -> value, value -> value), Either::left);
     }
 
     private static <T> DataResult<List<T>> sized(List<T> list, int min, int max) {

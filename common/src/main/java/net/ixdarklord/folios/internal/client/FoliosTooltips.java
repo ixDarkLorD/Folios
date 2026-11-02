@@ -7,6 +7,7 @@ import net.minecraft.client.gui.Font;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.folios.internal.compat.RenderPipelines;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +95,7 @@ public final class FoliosTooltips {
         List<FormattedCharSequence> styled = new ArrayList<>(lines.size());
         int width = 0;
         for (int index = 0; index < lines.size(); index++) {
-            Component line = Component.empty().withStyle(net.minecraft.network.chat.Style.EMPTY.withColor(index == 0 ? title : detail)).append(lines.get(index));
+            Component line = Component.empty().withStyle(Style.EMPTY.withColor(index == 0 ? title : detail)).append(lines.get(index));
             styled.add(line.getVisualOrderText());
             width = Math.max(width, font.width(line));
         }

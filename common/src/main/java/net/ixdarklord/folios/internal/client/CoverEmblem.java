@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.ixdarklord.folios.api.client.page.FoliosIcon;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.client.paint.WorldPainter;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.ixdarklord.folios.internal.compat.SubmitNodeCollector;
 import net.ixdarklord.folios.internal.compat.RenderTypes;
@@ -37,7 +38,7 @@ public final class CoverEmblem {
                 vertex(consumer, last, -half, half, 0.01F, 0, 0, 0xFFFFFFFF, light);
             });
         } else if (icon.stack() != null) {
-            ItemStack stack = icon.stack().at(net.minecraft.Util.getMillis() / 1000.0F);
+            ItemStack stack = icon.stack().at(Util.getMillis() / 1000.0F);
             if (stack.isEmpty()) return;
             Minecraft minecraft = Minecraft.getInstance();
             pose.pushPose();

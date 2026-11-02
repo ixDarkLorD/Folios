@@ -1,6 +1,7 @@
 package net.ixdarklord.folios.internal.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.ixdarklord.folios.internal.client.handheld.HandheldBook;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.Camera;
@@ -45,7 +46,7 @@ public abstract class GameRendererMixin {
         float walked = -(player.walkDist + (player.walkDist - player.walkDistO) * partialTicks) * Mth.PI;
         float bob = Mth.lerp(partialTicks, player.oBob, player.bob) * FOLIOS$BOB;
         poseStack.translate(Mth.sin(walked) * bob * 0.5F, -Math.abs(Mth.cos(walked) * bob), 0.0F);
-        poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(Mth.sin(walked) * bob * 3.0F));
-        poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(Math.abs(Mth.cos(walked - 0.2F) * bob) * 5.0F));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.sin(walked) * bob * 3.0F));
+        poseStack.mulPose(Axis.XP.rotationDegrees(Math.abs(Mth.cos(walked - 0.2F) * bob) * 5.0F));
     }
 }

@@ -8,12 +8,15 @@ import net.ixdarklord.folios.internal.FoliosPayloads;
 import net.ixdarklord.folios.internal.client.FoliosLibrary;
 import net.ixdarklord.folios.internal.client.FoliosReader;
 import net.ixdarklord.folios.internal.client.FoliosSession;
+import net.ixdarklord.folios.internal.compat.Compat;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.ixdarklord.folios.internal.compat.SubmitNodeCollector;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.Util;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 
 import org.jetbrains.annotations.Nullable;
@@ -116,7 +119,7 @@ public final class SharedBooks {
         return shared != null ? shared.open : 1;
     }
 
-    public static void holdArms(net.minecraft.client.model.geom.ModelPart right, net.minecraft.client.model.geom.ModelPart left, boolean crouching, float open) {
+    public static void holdArms(ModelPart right, ModelPart left, boolean crouching, float open) {
         float pitch = crouching ? -0.88F : -1.05F;
         float swing = CoverModel.swing(open);
         float in = SHUT_IN * (1 - swing * swing * (3 - 2 * swing));
@@ -140,7 +143,7 @@ public final class SharedBooks {
                 || !(minecraft.level.getEntity(entry.getKey()) instanceof AbstractClientPlayer player) || player.isRemoved());
         for (int id : BOOKS.keySet()) {
             if (minecraft.level.getEntity(id) instanceof AbstractClientPlayer player) {
-                player.setYBodyRot(net.minecraft.util.Mth.rotLerp(0.5F, player.yBodyRot, player.getYHeadRot()));
+                player.setYBodyRot(Mth.rotLerp(0.5F, player.yBodyRot, player.getYHeadRot()));
             }
         }
     }
@@ -152,12 +155,12 @@ public final class SharedBooks {
         FoliosReader reader = own != null ? own : shared.reader;
         float open = own != null ? own.open(Minecraft.getInstance().getFrameTime()) : shared.openNow();
         pose.pushPose();
-        pose.mulPose(Axis.YP.rotationDegrees(-net.minecraft.util.Mth.rotLerp(partialTicks, player.yBodyRotO, player.yBodyRot)));
+        pose.mulPose(Axis.YP.rotationDegrees(-Mth.rotLerp(partialTicks, player.yBodyRotO, player.yBodyRot)));
         pose.scale(player.getScale(), player.getScale(), player.getScale());
         pose.translate(0.0F, HELD_UP - (player.isCrouching() ? CROUCHED : 0), HELD_AHEAD);
         pose.mulPose(Axis.YP.rotationDegrees(180.0F));
         pose.mulPose(Axis.XP.rotationDegrees(-LEAN));
-        net.ixdarklord.folios.internal.compat.Compat.scale(pose, HandheldRenderer.SCALE * SIZE, -HandheldRenderer.SCALE * SIZE, HandheldRenderer.SCALE * SIZE);
+        Compat.scale(pose, HandheldRenderer.SCALE * SIZE, -HandheldRenderer.SCALE * SIZE, HandheldRenderer.SCALE * SIZE);
         pose.translate(0.0F, -FoliosLayout.PAGE_HEIGHT / 2.0F, 0.0F);
         HandheldRenderer.drawShared(pose, collector, light, reader, open);
         pose.popPose();

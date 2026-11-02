@@ -10,7 +10,9 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.client.gui.components.toasts.ToastComponent;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +92,7 @@ public final class FoliosToast implements Toast {
 
     private static FormattedCharSequence fit(Font font, Component text, int room) {
         if (font.width(text) <= room) return text.getVisualOrderText();
-        net.minecraft.network.chat.FormattedText head = font.substrByWidth(text, Math.max(0, room - font.width("…")));
-        return net.minecraft.locale.Language.getInstance().getVisualOrder(net.minecraft.network.chat.FormattedText.composite(head, net.minecraft.network.chat.FormattedText.of("…")));
+        FormattedText head = font.substrByWidth(text, Math.max(0, room - font.width("…")));
+        return Language.getInstance().getVisualOrder(FormattedText.composite(head, FormattedText.of("…")));
     }
 }

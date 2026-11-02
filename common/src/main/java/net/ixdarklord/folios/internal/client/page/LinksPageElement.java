@@ -9,6 +9,7 @@ import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.api.client.page.FoliosText;
+import net.ixdarklord.folios.internal.compat.Compat;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public record LinksPageElement(List<Link> links, Optional<String> title, String 
     }
 
     public static final MapCodec<LinksPageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            net.ixdarklord.folios.internal.compat.Compat.listOf(Link.CODEC, 1, 12).fieldOf("links").forGetter(LinksPageElement::links),
+            Compat.listOf(Link.CODEC, 1, 12).fieldOf("links").forGetter(LinksPageElement::links),
             FoliosText.CODEC.optionalFieldOf("title").forGetter(LinksPageElement::title),
             FoliosText.CODEC.optionalFieldOf("text", "").forGetter(LinksPageElement::text)
     ).apply(instance, LinksPageElement::new));

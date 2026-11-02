@@ -8,13 +8,16 @@ import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
 import net.ixdarklord.folios.api.client.page.FoliosStack;
 import net.ixdarklord.folios.api.client.page.FoliosText;
+import net.ixdarklord.folios.internal.client.ClientQuests;
 import net.ixdarklord.folios.internal.client.FoliosMemory;
 import net.ixdarklord.folios.internal.client.FoliosProgress;
+import net.ixdarklord.folios.internal.client.ObtainedItems;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
@@ -160,7 +163,7 @@ public final class FoliosObjective {
             case QUEST -> target.indexOf(':') >= 0 ? serverQuest(new ResourceLocation(target)) : this.bookQuest(book);
             case FLAG -> FoliosProgress.flag(target) ? 1 : 0;
             case CARRIED -> Mth.clamp(this.carried() / (float) goal, 0, 1);
-            case OBTAINED -> items != null && net.ixdarklord.folios.internal.client.ObtainedItems.has(items) ? 1 : 0;
+            case OBTAINED -> items != null && ObtainedItems.has(items) ? 1 : 0;
             case SOURCE -> {
                 FoliosObjectives.Source source = FoliosObjectives.get(new ResourceLocation(target));
                 LocalPlayer player = Minecraft.getInstance().player;
@@ -182,7 +185,7 @@ public final class FoliosObjective {
 
     // A quest of the server's ("mymod:first_quest"), as far along as the server found the player.
     private static float serverQuest(ResourceLocation id) {
-        var found = net.ixdarklord.folios.internal.client.ClientQuests.progress(id);
+        var found = ClientQuests.progress(id);
         if (found.done()) return 1;
         float sum = 0;
         for (float value : found.objectives()) sum += value;
@@ -254,7 +257,7 @@ public final class FoliosObjective {
             }
             case SOURCE -> Component.literal(target);
             case ANY -> {
-                net.minecraft.network.chat.MutableComponent joined = Component.empty();
+                MutableComponent joined = Component.empty();
                 for (int index = 0; index < any.size(); index++) {
                     if (index > 0) joined.append(Component.translatableWithFallback("folios.objective.or", " or "));
                     joined.append(any.get(index).label(book));

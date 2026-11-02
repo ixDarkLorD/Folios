@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.client.screen;
 
+import com.mojang.blaze3d.platform.Window;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyledEditBox;
@@ -11,16 +12,22 @@ import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.api.client.page.FoliosPopup;
+import net.ixdarklord.folios.internal.client.FoliosClock;
 import net.ixdarklord.folios.internal.client.FoliosMentions;
 import net.ixdarklord.folios.internal.client.FoliosReader;
 import net.ixdarklord.folios.internal.client.FoliosSession;
 import net.ixdarklord.folios.internal.client.FoliosLibrary;
+import net.ixdarklord.folios.internal.client.FoliosTooltips;
 import net.ixdarklord.folios.internal.client.PageSize;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.page.Shapes;
+import net.ixdarklord.folios.internal.client.paint.PixelIcon;
 import net.ixdarklord.folios.internal.client.paint.ScreenPainter;
+import net.ixdarklord.folios.internal.compat.CompatScreen;
 import net.minecraft.ChatFormatting;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.ixdarklord.folios.internal.compat.KeyEvent;
 import net.ixdarklord.folios.internal.compat.MouseButtonEvent;
@@ -31,13 +38,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.Util;
+import net.minecraft.world.InteractionHand;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.CompatScreen {
+public final class FoliosScreen extends CompatScreen {
     public static final int BORDER = 7;
     private static final int SPINE = 6;
     public static final int BOOK_WIDTH = FoliosLayout.PAGE_WIDTH * 2 + SPINE + BORDER * 2;
@@ -59,14 +67,20 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
         return reader;
     }
     private final FoliosBook book;
-    private final long openedAt = net.ixdarklord.folios.internal.client.FoliosClock.millis();
+    private final long openedAt = FoliosClock.millis();
     private final FoliosBar bar;
     private @Nullable StyledEditBox search;
     private final List<Hit> hits = new ArrayList<>();
     private final List<AbstractPainter.Hit> leftHits = new ArrayList<>();
+    private final BookCache cache = new BookCache();
+    private int inputs;
+    private int ticks;
+    private float seconds;
+    private @Nullable List<Component> bookTooltip;
+    private @Nullable FoliosPopup bookPopup;
     private final List<AbstractPainter.Hit> rightHits = new ArrayList<>();
     private final PopupLayer popups = new PopupLayer();
-    private net.ixdarklord.folios.api.client.page.@org.jetbrains.annotations.Nullable FoliosPopup hoveredPopup;
+    private @Nullable FoliosPopup hoveredPopup;
     private final List<AbstractPainter.Hit> unpressable = new ArrayList<>();
     private @Nullable List<Component> tooltip;
     private float originX;
@@ -77,7 +91,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
         this(book, session, at, null);
     }
 
-    public FoliosScreen(FoliosBook book, FoliosSession session, FoliosBook.@Nullable Location at, net.minecraft.world.@Nullable InteractionHand hand) {
+    public FoliosScreen(FoliosBook book, FoliosSession session, FoliosBook.@Nullable Location at, @Nullable InteractionHand hand) {
         super(book.title());
         this.book = book;
         this.reader = new FoliosReader(book, session, at, hand);
@@ -93,9 +107,9 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
     private int bookHeight = FoliosLayout.PAGE_HEIGHT + BORDER * 2;
 
     private float bookScale(int needWidth, int needHeight) {
-        com.mojang.blaze3d.platform.Window window = net.minecraft.client.Minecraft.getInstance().getWindow();
+        Window window = Minecraft.getInstance().getWindow();
         int guiScale = Math.max(1, (int) Math.round(window.getGuiScale()));
-        int auto = window.calculateScale(0, net.minecraft.client.Minecraft.getInstance().isEnforceUnicode());
+        int auto = window.calculateScale(0, Minecraft.getInstance().isEnforceUnicode());
         int fits = (int) Math.min(window.getWidth() / (float) needWidth, window.getHeight() / (float) needHeight);
         int pixels = Math.min(Math.max(auto, guiScale), fits);
         if (pixels < 1) return Math.min(this.width / (float) needWidth, this.height / (float) needHeight);
@@ -147,6 +161,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        this.inputs++;
         if (event.button() == 0 && this.popups.click(this.reader, event.x(), event.y())) return true;
         if (event.button() == 3) {
             this.reader.back();
@@ -200,6 +215,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+        this.inputs++;
         if (event.button() == 0 && this.popups.drag(dx, dy)) return true;
         if (this.dragging != null && event.button() == 0) {
             this.dragging.moved((float) (dx / this.scale), (float) (dy / this.scale));
@@ -210,6 +226,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        this.inputs++;
         if (event.button() == 0) this.popups.release();
         if (event.button() == 0) {
             this.dragging = null;
@@ -224,6 +241,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
 
     @Override
     public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
+        this.inputs++;
         if (this.popups.scroll(this.reader, x, y, scrollY)) return true;
         if (scrollY == 0) return true;
         float[] column = this.tabColumn;
@@ -247,6 +265,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
 
     @Override
     public boolean keyPressed(KeyEvent event) {
+        this.inputs++;
         if (!this.bar.typing() && FoliosMentions.KEY.matches(event.key(), event.scancode()) && this.mentionHovered()) return true;
         if (event.key() == GLFW.GLFW_KEY_ESCAPE && this.popups.escape(this.reader)) return true;
         boolean typing = this.bar.typing();
@@ -286,6 +305,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
     @Override
     public void removed() {
         this.reader.save();
+        this.cache.close();
     }
 
     @Override
@@ -294,7 +314,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
     }
 
     private float opening() {
-        float t = Math.min(1, (net.ixdarklord.folios.internal.client.FoliosClock.millis() - this.openedAt) / OPEN_MILLIS);
+        float t = Math.min(1, (FoliosClock.millis() - this.openedAt) / OPEN_MILLIS);
         if (!StyleSettings.transitions()) t = 1;
         float u = 1 - t;
         return 1 - u * u * u;
@@ -303,6 +323,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
     @Override
     public void tick() {
         super.tick();
+        this.ticks++;
         this.reader.keepCurrent();
     }
 
@@ -338,12 +359,27 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
         barPainter.end();
         for (AbstractPainter.Hit hit : barHits) this.hit(hit.x0(), hit.y0() - BAR - BAR_GAP, hit.x1(), hit.y1() - BAR - BAR_GAP, hit.action());
         if (barPainter.tooltipLines() != null) this.tooltip = barPainter.tooltipLines();
-        this.drawBook(graphics, bx, by);
+        this.shadow(graphics);
+        this.seconds = this.reader.seconds();
+        if (this.reader.flip != null) this.drawBook(graphics, bx, by);
+        else {
+            BookCache.Inputs state = new BookCache.Inputs(mouseX, mouseY, this.inputs, this.ticks, this.reader.spot, graphics.pose().snapshot());
+            boolean drawn = this.cache.draw(graphics, mouseX, mouseY, 0, 0, bookWidth, bookHeight,
+                    state, this.seconds, offscreen -> {
+                        this.drawBook(offscreen, bx, by);
+                        this.bookTooltip = this.tooltip;
+                        this.bookPopup = this.hoveredPopup;
+                    });
+            if (!drawn) {
+                this.tooltip = this.bookTooltip;
+                this.hoveredPopup = this.bookPopup;
+            }
+        }
         this.drawTabs(graphics, bx, by);
         graphics.pose().popMatrix();
         super.extractRenderState(graphics, mouseX, mouseY, a);
         boolean popped = this.popups.draw(graphics, this.reader, this.palette(), this.hoveredPopup, mouseX, mouseY, this.scale, this.width, this.height);
-        if (!popped && this.tooltip != null && !this.tooltip.isEmpty()) net.ixdarklord.folios.internal.client.FoliosTooltips.show(graphics, this.font, this.tooltip, mouseX, mouseY, this.book, -1, this.scale);
+        if (!popped && this.tooltip != null && !this.tooltip.isEmpty()) FoliosTooltips.show(graphics, this.font, this.tooltip, mouseX, mouseY, this.book, -1, this.scale);
     }
 
     private float pointerX = Float.NaN, pointerY = Float.NaN;
@@ -376,12 +412,15 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
         graphics.fill(x1 - 1, y0 + 2, x1, y1 - 2, color);
     }
 
-    private void drawBook(GuiGraphicsExtractor graphics, float mouseX, float mouseY) {
-        FoliosPalette palette = this.palette();
-        int cover = 0xFF000000 | this.book.cover();
+    private void shadow(GuiGraphicsExtractor graphics) {
         for (int step = 1; step <= 4; step++) {
             rounded(graphics, -step + 2, step + 1, bookWidth + step - 2, bookHeight + step + 2, 0x18000000);
         }
+    }
+
+    private void drawBook(GuiGraphicsExtractor graphics, float mouseX, float mouseY) {
+        FoliosPalette palette = this.palette();
+        int cover = 0xFF000000 | this.book.cover();
         rounded(graphics, 0, 0, bookWidth, bookHeight, cover);
         FoliosBook.Textures textures = this.book.textures();
         layer(graphics, textures.cover(), 1, 1, bookWidth - 2, bookHeight - 2, cover);
@@ -411,13 +450,15 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
             graphics.fill(spine - step - 1, top, spine - step, top + ph, Math.round(leftFold * fade) << 24);
             graphics.fill(spine + step, top, spine + step + 1, top + ph, Math.round(rightFold * fade) << 24);
         }
-        ScreenPainter edges = new ScreenPainter(graphics, 0, 0, 1, palette, this.reader.session, this.reader, this.reader.seconds(), Float.NaN, Float.NaN, this.unpressable);
-        Shapes.foreEdge(edges, leftX, top + 1, top + ph - 1, false);
-        Shapes.foreEdge(edges, rightX + pw, top + 1, top + ph - 1, true);
-        Shapes.wornEdges(edges, leftX, top, leftX + pw, top + ph, false, cover);
-        Shapes.wornEdges(edges, rightX, top, rightX + pw, top + ph, true, cover);
-        Shapes.deckle(edges, leftX, rightX + pw, top, false, cover);
-        Shapes.deckle(edges, leftX, rightX + pw, top + ph - 1, true, cover);
+        ScreenPainter edges = new ScreenPainter(graphics, 0, 0, 1, palette, this.reader.session, this.reader, this.seconds, Float.NaN, Float.NaN, this.unpressable);
+        edges.baked("edges", () -> {
+            Shapes.foreEdge(edges, leftX, top + 1, top + ph - 1, false);
+            Shapes.foreEdge(edges, rightX + pw, top + 1, top + ph - 1, true);
+            Shapes.wornEdges(edges, leftX, top, leftX + pw, top + ph, false, cover);
+            Shapes.wornEdges(edges, rightX, top, rightX + pw, top + ph, true, cover);
+            Shapes.deckle(edges, leftX, rightX + pw, top, false, cover);
+            Shapes.deckle(edges, leftX, rightX + pw, top + ph - 1, true, cover);
+        });
         edges.end();
 
         boolean settled = flip == null;
@@ -447,7 +488,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
         float pointerY = mouseY - y;
         boolean on = pressable && pointerX >= 0 && pointerX < pw && pointerY >= 0 && pointerY < ph;
         this.unpressable.clear();
-        ScreenPainter painter = new ScreenPainter(graphics, x, y, 1, palette, this.reader.session, this.reader, this.reader.seconds(),
+        ScreenPainter painter = new ScreenPainter(graphics, x, y, 1, palette, this.reader.session, this.reader, this.seconds,
                 on ? pointerX : Float.NaN, on ? pointerY : Float.NaN, pressable ? pageHits : this.unpressable);
         try {
             Shapes.pageFrame(painter, this.book.textures().frame(), pw, ph, page, right);
@@ -608,7 +649,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
     private float @Nullable [] tabColumn;
 
     private float tabSwapPhase() {
-        long now = net.ixdarklord.folios.internal.client.FoliosClock.millis();
+        long now = FoliosClock.millis();
         if (this.tabShownFirst < 0 || !StyleSettings.transitions()) {
             this.tabShownFirst = this.tabFirst;
             this.tabSwapAt = -1;
@@ -654,7 +695,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
         int root = Shapes.ribbonRoot(edge, depth);
         layer(graphics, this.book.textures().tab(), root, y, x - root + out, TAB_SMALL, color);
         ScreenPainter tuck = new ScreenPainter(graphics, 0, 0, 1, palette, this.reader.session, this.reader, this.reader.seconds(), Float.NaN, Float.NaN, this.unpressable);
-        Shapes.tuck(tuck, edge, y, TAB_SMALL, depth, color);
+        tuck.baked("tuck_pager", () -> Shapes.tuck(tuck, edge, y, TAB_SMALL, depth, color));
         tuck.end();
         int plateY = y + (TAB_SMALL - PAGER_PLATE) / 2;
         this.pagerPlate(graphics, mouseX, mouseY, firstX, plateY, false, earlier, palette);
@@ -670,7 +711,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
         if (hovered) plate = FoliosPalette.mix(plate, palette.accent() | 0xFF000000, 0.2F);
         if (!enabled) plate = FoliosPalette.alpha(plate, 0x80);
         layer(graphics, this.book.textures().tabPlate(), x, y, PAGER_PLATE, PAGER_PLATE, plate);
-        net.ixdarklord.folios.internal.client.paint.PixelIcon arrow = (next ? Shapes.Icon.NEXT : Shapes.Icon.PREVIOUS).image();
+        PixelIcon arrow = (next ? Shapes.Icon.NEXT : Shapes.Icon.PREVIOUS).image();
         int ink = !enabled ? FoliosPalette.alpha(palette.muted(), 0x70)
                 : hovered ? palette.accent() | 0xFF000000 : FoliosPalette.mix(palette.muted(), palette.text(), 0.35F);
         arrow.draw(graphics, x + (PAGER_PLATE - arrow.width()) / 2, y + (PAGER_PLATE - arrow.height()) / 2, ink);
@@ -733,7 +774,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
         int root = Shapes.ribbonRoot(edge, depth);
         layer(graphics, this.book.textures().tab(), root, y, x - root + out, tall, color);
         ScreenPainter tuck = new ScreenPainter(graphics, 0, 0, 1, palette, this.reader.session, this.reader, this.reader.seconds(), Float.NaN, Float.NaN, this.unpressable);
-        Shapes.tuck(tuck, edge, y, tall, depth, color);
+        tuck.baked("tuck_" + key, () -> Shapes.tuck(tuck, edge, y, tall, depth, color));
         tuck.end();
         int plate = Math.round(Mth.lerp(grow, 14, 18));
         int icon = plate - 2;
@@ -749,7 +790,7 @@ public final class FoliosScreen extends net.ixdarklord.folios.internal.compat.Co
             graphics.disableScissor();
             return;
         }
-        if (hovered) this.tooltip = net.ixdarklord.folios.internal.client.FoliosTooltips.of(spot.name, this.tabDetail(spot.category, spot.part));
+        if (hovered) this.tooltip = FoliosTooltips.of(spot.name, this.tabDetail(spot.category, spot.part));
         this.hit(x, y, x + 38, y + tall, () -> {
             if (!spot.here) this.reader.tabs.press(key);
             spot.action.run();

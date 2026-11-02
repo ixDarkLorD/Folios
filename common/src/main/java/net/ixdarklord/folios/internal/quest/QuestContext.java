@@ -1,6 +1,7 @@
 package net.ixdarklord.folios.internal.quest;
 
 import net.ixdarklord.folios.api.FoliosQuests;
+import net.minecraft.advancements.Advancement;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,7 +33,7 @@ final class QuestContext {
 
     boolean advancement(ResourceLocation id) {
         var server = player.level().getServer();
-        net.minecraft.advancements.Advancement holder = server.getAdvancements().getAdvancement(id);
+        Advancement holder = server.getAdvancements().getAdvancement(id);
         return holder != null && player.getAdvancements().getOrStartProgress(holder).isDone();
     }
 

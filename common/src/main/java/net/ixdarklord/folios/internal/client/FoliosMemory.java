@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -187,7 +188,7 @@ public final class FoliosMemory {
     }
 
     public synchronized void setLast(FoliosBook.@Nullable Location location) {
-        if (java.util.Objects.equals(last, location)) return;
+        if (Objects.equals(last, location)) return;
         last = location;
         dirty = true;
     }
@@ -201,7 +202,7 @@ public final class FoliosMemory {
     }
 
     public synchronized void setLastSpread(@Nullable String chapter, int page) {
-        if (java.util.Objects.equals(lastChapter, chapter) && lastPage == page) return;
+        if (Objects.equals(lastChapter, chapter) && lastPage == page) return;
         lastChapter = chapter;
         lastPage = page;
         dirty = true;

@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.client.page;
 
+import net.ixdarklord.folios.api.client.page.FoliosAlign;
 import net.ixdarklord.folios.api.client.page.FoliosText;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -8,6 +9,7 @@ import net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle;
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.internal.compat.Compat;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
@@ -16,7 +18,7 @@ import java.util.Optional;
 
 public record ImagePageElement(List<ResourceLocation> images, Optional<String> title, String text, boolean border, int height) implements FoliosPageElement {
     public static final MapCodec<ImagePageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            net.ixdarklord.folios.internal.compat.Compat.withAlternative(net.ixdarklord.folios.internal.compat.Compat.listOf(ResourceLocation.CODEC, 1, 32), ResourceLocation.CODEC.xmap(List::of, list -> list.get(0))).fieldOf("image").forGetter(ImagePageElement::images),
+            Compat.withAlternative(Compat.listOf(ResourceLocation.CODEC, 1, 32), ResourceLocation.CODEC.xmap(List::of, list -> list.get(0))).fieldOf("image").forGetter(ImagePageElement::images),
             FoliosText.CODEC.optionalFieldOf("title").forGetter(ImagePageElement::title),
             FoliosText.CODEC.optionalFieldOf("text", "").forGetter(ImagePageElement::text),
             Codec.BOOL.optionalFieldOf("border", true).forGetter(ImagePageElement::border),
@@ -33,7 +35,7 @@ public record ImagePageElement(List<ResourceLocation> images, Optional<String> t
         for (ResourceLocation image : images) room = Math.max(room, fit(image, inner)[1]);
         int pictures = room + (border ? 4 : 0);
         int frame = pictures + (images.size() > 1 ? ARROWS : 0);
-        net.ixdarklord.folios.api.client.page.FoliosAlign align = layout.alignment();
+        FoliosAlign align = layout.alignment();
         return layout.flow(title.orElse(null), frame, text, (painter, y) -> {
             FoliosPalette palette = painter.palette();
             int count = images.size();
