@@ -12,9 +12,11 @@ import net.minecraft.client.renderer.block.MovingBlockRenderState;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.gizmos.DrawableGizmoPrimitives;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.renderer.state.level.QuadParticleRenderState;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.UvMapping;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
@@ -25,6 +27,7 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
@@ -157,7 +160,7 @@ final class PageItemCollector implements SubmitNodeCollector {
     }
 
     @Override
-    public void submitShapeOutline(PoseStack poseStack, net.minecraft.world.phys.shapes.VoxelShape shape, RenderType renderType, int color, float width,
+    public void submitShapeOutline(PoseStack poseStack, VoxelShape shape, RenderType renderType, int color, float width,
                                    boolean afterTerrain) {
         target.submitShapeOutline(poseStack, shape, renderType, color, width, afterTerrain);
     }
@@ -168,12 +171,12 @@ final class PageItemCollector implements SubmitNodeCollector {
     }
 
     @Override
-    public void submitQuadParticleGroup(net.minecraft.client.renderer.state.level.QuadParticleRenderState particles) {
+    public void submitQuadParticleGroup(QuadParticleRenderState particles) {
         target.submitQuadParticleGroup(particles);
     }
 
     @Override
-    public void submitGizmoPrimitives(net.minecraft.client.renderer.gizmos.DrawableGizmoPrimitives.Group group, CameraRenderState camera, boolean onTop) {
+    public void submitGizmoPrimitives(DrawableGizmoPrimitives.Group group, CameraRenderState camera, boolean onTop) {
         target.submitGizmoPrimitives(group, camera, onTop);
     }
 }

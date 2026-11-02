@@ -6,11 +6,14 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.build.BlockChoice;
 import net.ixdarklord.folios.internal.client.build.BuildGuide;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -67,7 +70,7 @@ public record MultiblockPageElement(List<List<String>> pattern, Map<String, Stri
         Component buildName = title.isPresent() ? FoliosText.inline(title.get()) : Component.translatableWithFallback("folios.build", "Build");
         SceneControl.Extra build = new SceneControl.Extra(Component.translatableWithFallback("folios.build.show", "Show in the world"), () -> {
             BuildGuide.start(buildName, blocks);
-            net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
+            Minecraft minecraft = Minecraft.getInstance();
             if (minecraft.gui.screen() != null) minecraft.gui.screen().onClose();
         });
         Requirements needs = new Requirements(blocks.values());
@@ -78,9 +81,9 @@ public record MultiblockPageElement(List<List<String>> pattern, Map<String, Stri
         });
     }
 
-    static void sceneWindow(net.ixdarklord.folios.api.client.page.FoliosPainter painter, BuildScene scene, SceneControl control,
-                            @org.jspecify.annotations.Nullable Requirements needs, int x, int y, int width, int height,
-                            Shapes.@org.jspecify.annotations.Nullable Icon extra, SceneControl.@org.jspecify.annotations.Nullable Extra action) {
+    static void sceneWindow(FoliosPainter painter, BuildScene scene, SceneControl control,
+                            @Nullable Requirements needs, int x, int y, int width, int height,
+                            Shapes.@Nullable Icon extra, SceneControl.@Nullable Extra action) {
         if (needs != null && !needs.isEmpty() && needs.isOpen()) {
             needs.popup(painter, x, y, width, height);
             return;

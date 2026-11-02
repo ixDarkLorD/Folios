@@ -3,7 +3,9 @@ package net.ixdarklord.folios.api;
 import net.ixdarklord.folios.internal.FoliosHooks;
 import net.ixdarklord.folios.internal.FoliosNetwork;
 import net.ixdarklord.folios.internal.core.FoliosRegistry;
+import net.ixdarklord.folios.internal.quest.QuestReading;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.ChatFormatting;
@@ -56,7 +58,7 @@ public class FoliosBookItem extends Item {
         Identifier id = this.book(player.getItemInHand(hand));
         if (id == null) return InteractionResult.PASS;
         if (level.isClientSide()) FoliosHooks.openFromItem(id, hand);
-        else if (player instanceof net.minecraft.server.level.ServerPlayer reader) net.ixdarklord.folios.internal.quest.QuestReading.opened(reader, id);
+        else if (player instanceof ServerPlayer reader) QuestReading.opened(reader, id);
         return InteractionResult.SUCCESS;
     }
 

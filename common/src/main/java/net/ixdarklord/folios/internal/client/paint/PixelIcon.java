@@ -1,10 +1,12 @@
 package net.ixdarklord.folios.internal.client.paint;
 
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 
 public record PixelIcon(Identifier texture, int width, int height, int frames) {
     public static PixelIcon of(String name, int width, int height) {
@@ -29,6 +31,8 @@ public record PixelIcon(Identifier texture, int width, int height, int frames) {
     }
 
     public void draw(GuiGraphicsExtractor graphics, int x, int y, int frame, int color) {
+        float v0 = frame / (float) frames;
+        if (ScreenAtlas.blit(graphics, texture, x, y, x + width, y + height, 0, v0, 1, v0 + 1.0F / frames, color)) return;
         graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0, frame * height, width, height, width, height, width, height * frames, color);
     }
 
@@ -59,7 +63,11 @@ public record PixelIcon(Identifier texture, int width, int height, int frames) {
         }
         for (int row = 0; row < height; row++) {
             for (int column = 0; column < width; column++) {
-                graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x + column, y + row, column, row, 1, 1, width, height * frames, hue(seconds, column + row, base, strength));
+                int color = hue(seconds, column + row, base, strength);
+                float u0 = column / (float) width;
+                float v0 = row / (float) (height * frames);
+                if (ScreenAtlas.blit(graphics, texture, x + column, y + row, x + column + 1, y + row + 1, u0, v0, u0 + 1.0F / width, v0 + 1.0F / (height * frames), color)) continue;
+                graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x + column, y + row, column, row, 1, 1, width, height * frames, color);
             }
         }
     }
@@ -71,8 +79,8 @@ public record PixelIcon(Identifier texture, int width, int height, int frames) {
     }
 
     private static int hue(float seconds, int diagonal, int base, float strength) {
-        int rainbow = 0xFF000000 | net.minecraft.util.Mth.hsvToRgb((seconds * 0.35F + diagonal * 0.04F) % 1.0F, 0.65F, 1.0F);
-        return net.ixdarklord.folios.api.client.page.FoliosPalette.mix(base, rainbow, strength);
+        int rainbow = 0xFF000000 | Mth.hsvToRgb((seconds * 0.35F + diagonal * 0.04F) % 1.0F, 0.65F, 1.0F);
+        return FoliosPalette.mix(base, rainbow, strength);
     }
 
     public int sweepFrame(float seconds, float period, float length) {

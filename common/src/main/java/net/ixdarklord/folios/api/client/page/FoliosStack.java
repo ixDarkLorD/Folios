@@ -1,8 +1,10 @@
 package net.ixdarklord.folios.api.client.page;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
@@ -33,7 +35,7 @@ import java.util.List;
 public final class FoliosStack {
     public static final Codec<FoliosStack> CODEC = Codec.PASSTHROUGH.comapFlatMap(
             dynamic -> DataResult.success(new FoliosStack(dynamic.convert(JsonOps.INSTANCE).getValue())),
-            stack -> new com.mojang.serialization.Dynamic<>(JsonOps.INSTANCE, stack.json));
+            stack -> new Dynamic<>(JsonOps.INSTANCE, stack.json));
     /** How long each of several items is shown, in seconds. */
     public static final float CYCLE_SECONDS = 1.25F;
 
@@ -46,7 +48,7 @@ public final class FoliosStack {
 
     /** One item. */
     public static FoliosStack of(Identifier item) {
-        return new FoliosStack(new com.google.gson.JsonPrimitive(item.toString()));
+        return new FoliosStack(new JsonPrimitive(item.toString()));
     }
 
     /** Every stack it stands for; a missing item is a barrier, so the mistake shows. */

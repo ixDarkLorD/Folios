@@ -9,11 +9,13 @@ import net.ixdarklord.folios.internal.client.FoliosLibrary;
 import net.ixdarklord.folios.internal.client.FoliosReader;
 import net.ixdarklord.folios.internal.client.FoliosSession;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
 import net.minecraft.world.entity.Entity;
 
@@ -117,7 +119,7 @@ public final class SharedBooks {
         return shared != null ? shared.open : 1;
     }
 
-    public static void holdArms(net.minecraft.client.model.geom.ModelPart right, net.minecraft.client.model.geom.ModelPart left, boolean crouching, float open) {
+    public static void holdArms(ModelPart right, ModelPart left, boolean crouching, float open) {
         float pitch = crouching ? -0.88F : -1.05F;
         float swing = CoverModel.swing(open);
         float in = SHUT_IN * (1 - swing * swing * (3 - 2 * swing));
@@ -141,7 +143,7 @@ public final class SharedBooks {
                 || !(minecraft.level.getEntity(entry.getKey()) instanceof AbstractClientPlayer player) || player.isRemoved());
         for (int id : BOOKS.keySet()) {
             if (minecraft.level.getEntity(id) instanceof AbstractClientPlayer player) {
-                player.setYBodyRot(net.minecraft.util.Mth.rotLerp(0.5F, player.yBodyRot, player.getYHeadRot()));
+                player.setYBodyRot(Mth.rotLerp(0.5F, player.yBodyRot, player.getYHeadRot()));
             }
         }
     }

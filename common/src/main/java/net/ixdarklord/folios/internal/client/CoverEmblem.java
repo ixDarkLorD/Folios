@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.util.Util;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
@@ -38,7 +39,7 @@ public final class CoverEmblem {
                 vertex(consumer, last, -half, half, 0.01F, 0, 0, 0xFFFFFFFF, light);
             });
         } else if (icon.stack() != null) {
-            ItemStack stack = icon.stack().at(net.minecraft.util.Util.getMillis() / 1000.0F);
+            ItemStack stack = icon.stack().at(Util.getMillis() / 1000.0F);
             if (stack.isEmpty()) return;
             Minecraft minecraft = Minecraft.getInstance();
             ItemStackRenderState state = new ItemStackRenderState();
