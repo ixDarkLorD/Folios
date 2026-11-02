@@ -1,10 +1,12 @@
 package net.ixdarklord.folios.internal.client.paint;
 
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.folios.internal.compat.RenderPipelines;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 
 public record PixelIcon(ResourceLocation texture, int width, int height, int frames) {
     public static PixelIcon of(String name, int width, int height) {
@@ -71,8 +73,8 @@ public record PixelIcon(ResourceLocation texture, int width, int height, int fra
     }
 
     private static int hue(float seconds, int diagonal, int base, float strength) {
-        int rainbow = 0xFF000000 | net.minecraft.util.Mth.hsvToRgb((seconds * 0.35F + diagonal * 0.04F) % 1.0F, 0.65F, 1.0F);
-        return net.ixdarklord.folios.api.client.page.FoliosPalette.mix(base, rainbow, strength);
+        int rainbow = 0xFF000000 | Mth.hsvToRgb((seconds * 0.35F + diagonal * 0.04F) % 1.0F, 0.65F, 1.0F);
+        return FoliosPalette.mix(base, rainbow, strength);
     }
 
     public int sweepFrame(float seconds, float period, float length) {

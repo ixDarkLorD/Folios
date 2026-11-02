@@ -1,16 +1,24 @@
 package net.ixdarklord.folios.api.client.page;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -34,7 +42,7 @@ import java.util.List;
 public final class FoliosStack {
     public static final Codec<FoliosStack> CODEC = Codec.PASSTHROUGH.comapFlatMap(
             dynamic -> DataResult.success(new FoliosStack(dynamic.convert(JsonOps.INSTANCE).getValue())),
-            stack -> new com.mojang.serialization.Dynamic<>(JsonOps.INSTANCE, stack.json));
+            stack -> new Dynamic<>(JsonOps.INSTANCE, stack.json));
     /** How long each of several items is shown, in seconds. */
     public static final float CYCLE_SECONDS = 1.25F;
 
@@ -47,7 +55,7 @@ public final class FoliosStack {
 
     /** One item. */
     public static FoliosStack of(ResourceLocation item) {
-        return new FoliosStack(new com.google.gson.JsonPrimitive(item.toString()));
+        return new FoliosStack(new JsonPrimitive(item.toString()));
     }
 
     /** Every stack it stands for; a missing item is a barrier, so the mistake shows. */
@@ -103,17 +111,17 @@ public final class FoliosStack {
             int amount = count;
             BuiltInRegistries.ITEM.getOptional(id).ifPresent(item -> out.add(new ItemStack(item, amount)));
         } else if (json.isJsonObject()) {
-            com.google.gson.JsonObject object = json.getAsJsonObject();
-            ResourceLocation id = ResourceLocation.tryParse(net.minecraft.util.GsonHelper.getAsString(object, "id", ""));
+            JsonObject object = json.getAsJsonObject();
+            ResourceLocation id = ResourceLocation.tryParse(GsonHelper.getAsString(object, "id", ""));
             Item item = id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
             if (item == null) return;
-            ItemStack stack = new ItemStack(item, net.minecraft.util.GsonHelper.getAsInt(object, "count", 1));
+            ItemStack stack = new ItemStack(item, GsonHelper.getAsInt(object, "count", 1));
             JsonElement nbt = object.get("nbt");
             if (nbt != null) {
                 try {
-                    stack.setTag(nbt.isJsonPrimitive() ? net.minecraft.nbt.TagParser.parseTag(nbt.getAsString())
-                            : (net.minecraft.nbt.CompoundTag) JsonOps.INSTANCE.convertTo(net.minecraft.nbt.NbtOps.INSTANCE, nbt));
-                } catch (com.mojang.brigadier.exceptions.CommandSyntaxException | ClassCastException e) {
+                    stack.setTag(nbt.isJsonPrimitive() ? TagParser.parseTag(nbt.getAsString())
+                            : (CompoundTag) JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, nbt));
+                } catch (CommandSyntaxException | ClassCastException e) {
                     return;
                 }
             }

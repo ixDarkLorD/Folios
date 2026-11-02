@@ -14,17 +14,27 @@ import net.ixdarklord.folios.api.client.page.FoliosIcon;
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPageElements;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.api.client.page.FoliosStack;
 import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.FoliosLibrary;
+import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
+import net.ixdarklord.folios.internal.client.paint.ObscuredPainter;
+import net.ixdarklord.folios.internal.compat.Compat;
 import net.ixdarklord.folios.internal.core.Folios;
+import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ExtraCodecs;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.IntFunction;
 
 public record TextPage(Optional<String> title, String text, List<Item> elements, ElementLayout settings, boolean single, @Nullable Observed observed)
         implements FoliosPageElement {
@@ -39,7 +49,7 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
     public static final MapCodec<TextPage> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             FoliosText.CODEC.optionalFieldOf("title").forGetter(TextPage::title),
             FoliosText.CODEC.optionalFieldOf("text", "").forGetter(TextPage::text),
-            net.ixdarklord.folios.internal.compat.Compat.listOf(ELEMENT, 0, 64).optionalFieldOf("elements", List.of()).forGetter(TextPage::elements)
+            Compat.listOf(ELEMENT, 0, 64).optionalFieldOf("elements", List.of()).forGetter(TextPage::elements)
     ).apply(instance, (title, text, elements) -> new TextPage(title, text, elements, ElementLayout.NONE, false, null)));
 
     private static final int GAP = 6;
@@ -162,7 +172,7 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
         }
         Part title = found;
         Part heading = (painter, y) -> {
-            if (title != null) title.draw(new net.ixdarklord.folios.internal.client.paint.ObscuredPainter(painter, lock.peek()), y);
+            if (title != null) title.draw(new ObscuredPainter(painter, lock.peek()), y);
         };
         pieces.add(new Fixed(FoliosLayout.TITLE_HEIGHT, heading, true));
         int fill = bottom - FoliosLayout.CONTENT_TOP - FoliosLayout.TITLE_HEIGHT - GAP;
@@ -214,9 +224,9 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
         }
     }
 
-    private record Words(FoliosText text, java.util.function.IntFunction<FoliosText> relay) implements Piece {
+    private record Words(FoliosText text, IntFunction<FoliosText> relay) implements Piece {
         static Words of(FoliosLayout layout, String raw) {
-            net.minecraft.client.gui.Font font = layout.font();
+            Font font = layout.font();
             FoliosAlign align = layout.alignment();
             return new Words(layout.text(raw), width -> FoliosText.of(font, raw, width, align));
         }
@@ -284,7 +294,7 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
             setter.y += FoliosLayout.TITLE_HEIGHT;
         }
         record Span(int page, int top, int bottom) {}
-        java.util.Map<String, Span> spans = new java.util.LinkedHashMap<>();
+        Map<String, Span> spans = new LinkedHashMap<>();
         for (Group group : groups) {
             int page = setter.pages.size() - 1;
             int before = setter.page.size();
@@ -463,7 +473,7 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
             FoliosText chunk = chunks.get(shown[0]);
             chunk.draw(painter, FoliosLayout.CONTENT_LEFT + FRAME_SIDE, y + FRAME_EDGE + offset(anchor, tall - chunk.height()));
             painter.scroll(FoliosLayout.CONTENT_LEFT, y, right - FoliosLayout.CONTENT_LEFT, framed,
-                    notches -> shown[0] = net.minecraft.util.Mth.clamp(shown[0] + (notches > 0 ? -1 : 1), 0, count - 1));
+                    notches -> shown[0] = Mth.clamp(shown[0] + (notches > 0 ? -1 : 1), 0, count - 1));
             pager(painter, shown, slide, count, (FoliosLayout.CONTENT_LEFT + right) / 2, y + framed + 4);
         });
         setter.y = settings.height() != null && settings.height().sized() ? bottom : setter.bottom;
@@ -540,7 +550,7 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
                 over(painter, () -> {
                     for (int row = 0; row < SCROLL_FADE; row++) {
                         float t = 1 - (row + 0.5F) / SCROLL_FADE;
-                        int color = net.ixdarklord.folios.api.client.page.FoliosPalette.alpha(face, Math.round(255 * t * t * (3 - 2 * t)));
+                        int color = FoliosPalette.alpha(face, Math.round(255 * t * t * (3 - 2 * t)));
                         if (above) painter.fill(left, y + row, across, y + row + 1, color);
                         if (below) painter.fill(left, y + inside - 1 - row, across, y + inside - row, color);
                     }
@@ -572,8 +582,8 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
     private static final int SCROLL_GAP = 3;
     private static final int SCROLL_FADE = 14;
 
-    private static void over(net.ixdarklord.folios.api.client.page.FoliosPainter painter, Runnable draw) {
-        if (painter instanceof net.ixdarklord.folios.internal.client.paint.AbstractPainter drawing) drawing.above(draw);
+    private static void over(FoliosPainter painter, Runnable draw) {
+        if (painter instanceof AbstractPainter drawing) drawing.above(draw);
         else draw.run();
     }
     private static final int FRAME_SIDE = 4;
@@ -589,23 +599,29 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
 
     private static final int PAGER_SQUARES = 7;
 
-    private static void pager(net.ixdarklord.folios.api.client.page.FoliosPainter painter, int[] shown, float[] slide, int count, int middle, int y) {
-        net.ixdarklord.folios.api.client.page.FoliosPalette palette = painter.palette();
-        int face = net.ixdarklord.folios.api.client.page.FoliosPalette.mix(palette.panel(), palette.paper(), 0.4F);
-        int rim = net.ixdarklord.folios.api.client.page.FoliosPalette.mix(palette.line(), palette.accent(), 0.2F);
-        int lit = net.ixdarklord.folios.api.client.page.FoliosPalette.mix(palette.line(), palette.accent(), 0.6F);
-        int ink = net.ixdarklord.folios.api.client.page.FoliosPalette.mix(palette.muted(), palette.text(), 0.35F);
-        float now = painter.time();
-        if (slide[1] < 0) slide[0] = shown[0];
-        else slide[0] += (shown[0] - slide[0]) * Math.min(1, (now - slide[1]) * 14);
-        if (Math.abs(shown[0] - slide[0]) < 0.01F) slide[0] = shown[0];
-        slide[1] = now;
+    private static void pager(FoliosPainter painter, int[] shown, float[] slide, int count, int middle, int y) {
+        FoliosPalette palette = painter.palette();
+        int face = FoliosPalette.mix(palette.panel(), palette.paper(), 0.4F);
+        int rim = FoliosPalette.mix(palette.line(), palette.accent(), 0.2F);
+        int lit = FoliosPalette.mix(palette.line(), palette.accent(), 0.6F);
+        int ink = FoliosPalette.mix(palette.muted(), palette.text(), 0.35F);
+        if (slide[1] < 0) {
+            slide[0] = shown[0];
+            slide[1] = Float.NaN;
+        }
+        if (slide[0] != shown[0]) {
+            float now = painter.time();
+            if (Float.isNaN(slide[1])) slide[1] = now;
+            slide[0] += (shown[0] - slide[0]) * Math.min(1, (now - slide[1]) * 14);
+            if (Math.abs(shown[0] - slide[0]) < 0.01F) slide[0] = shown[0];
+            slide[1] = slide[0] == shown[0] ? Float.NaN : now;
+        }
         int visible = Math.min(count, PAGER_SQUARES);
         int inner = visible * 5 - 2 + 2;
         int width = inner + 24;
         int left = middle - width / 2;
         int right = left + width;
-        int outline = net.ixdarklord.folios.api.client.page.FoliosPalette.alpha(rim, 0x90);
+        int outline = FoliosPalette.alpha(rim, 0x90);
         Sprites.draw(painter, Sprites.PAGER_FACE, left, y - 1, width, 11, face);
         Sprites.draw(painter, Sprites.PAGER_OUTLINE, left, y - 1, width, 11, outline);
         boolean first = shown[0] == 0;
@@ -614,7 +630,7 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
         Component after = Component.translatableWithFallback("folios.overflow.page", "Page: %s/%s", shown[0] + 2, count);
         boolean back = !first && painter.action(left, y - 1, 10, 11, before, () -> shown[0]--);
         boolean on = !last && painter.action(right - 10, y - 1, 10, 11, after, () -> shown[0]++);
-        int hover = net.ixdarklord.folios.api.client.page.FoliosPalette.mix(face, palette.accent(), 0.14F);
+        int hover = FoliosPalette.mix(face, palette.accent(), 0.14F);
         if (back) Sprites.draw(painter, Sprites.PAGER_FACE, left, y - 1, 11, 11, hover);
         if (on) Sprites.draw(painter, Sprites.PAGER_FACE, right - 11, y - 1, 11, 11, hover);
         float start = count > visible ? Math.max(0, Math.min(count - visible, slide[0] - (visible - 1) / 2F)) : 0;
@@ -629,12 +645,12 @@ public record TextPage(Optional<String> title, String text, List<Item> elements,
         }
         int marker = x0 + Math.round((slide[0] - start) * 5) + 1;
         Sprites.draw(painter, Sprites.PAGER_MARKER, marker - 2, y + 2, lit);
-        int faded = net.ixdarklord.folios.api.client.page.FoliosPalette.alpha(rim, 0x80);
+        int faded = FoliosPalette.alpha(rim, 0x80);
         arrow(painter, "‹", left + 5, y, first ? faded : back ? palette.accent() : ink, back);
         arrow(painter, "›", right - 4, y, last ? faded : on ? palette.accent() : ink, on);
     }
 
-    private static void arrow(net.ixdarklord.folios.api.client.page.FoliosPainter painter, String mark, int x, int y, int color, boolean over) {
+    private static void arrow(FoliosPainter painter, String mark, int x, int y, int color, boolean over) {
         float grow = over ? 1.2F : 1;
         float half = painter.font().width(mark) / 2F;
         painter.push();

@@ -2,6 +2,7 @@ package net.ixdarklord.folios.api;
 
 import net.ixdarklord.folios.internal.FoliosNetwork;
 import net.ixdarklord.folios.internal.core.FoliosRegistry;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -56,7 +57,7 @@ public final class FoliosBooks {
 
     /** The book a stack's NBT names; null when none. */
     static @Nullable ResourceLocation named(ItemStack stack) {
-        if (stack.isEmpty() || stack.getTag() == null || !stack.getTag().contains(FoliosRegistry.GUIDE_BOOK, net.minecraft.nbt.Tag.TAG_STRING)) return null;
+        if (stack.isEmpty() || stack.getTag() == null || !stack.getTag().contains(FoliosRegistry.GUIDE_BOOK, Tag.TAG_STRING)) return null;
         return ResourceLocation.tryParse(stack.getTag().getString(FoliosRegistry.GUIDE_BOOK));
     }
 

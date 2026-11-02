@@ -1,5 +1,22 @@
 # Changelog
 
+## v3.1.2 Release | Nov 2, 2026
+Faster screen-style books on 1.20.1 and 1.21, which are now drawn once and reused, smaller tab icons, and a fix for the outline of locked pages.
+
+### 🎨 Changes
+- Decoration built from many small fills is drawn once into a texture and reused instead of being rebuilt every frame: the page edges, the title bar's ribbon and fold pocket, the tab tucks, and a hand-held book's torn edges, leaf edges and sketch lines.
+- An open screen-style book is drawn into an off-screen image and reused within a game tick, instead of being redrawn every frame. It is redrawn on each tick, input or page change; page turns, 3D scenes, animated textures, enchantment glints and obfuscated text are drawn live. The result is pixel-identical to drawing the book directly. In testing, the front page went from about 383 to 440 FPS on 1.21 and from about 366 to 445 FPS on 1.20.1.
+- A page heading's icon no longer shows an item tooltip or link when hovered.
+- Unselected tab icons and page heading icons are drawn smaller. At GUI scale 3 and up they keep a whole number of screen pixels per texel (about 10 to 12 pixels); at GUI scale 1 and 2, where no such size exists, they are drawn as a 12-pixel image with evenly sized pixels.
+- API: `FoliosPainter.quietItem` and `FoliosIcon.drawQuiet` draw an item or icon with no tooltip or link.
+- API: `FoliosPainter.time(step)` returns the time held still between steps of `step` seconds, so something that only changes every few seconds (like an item cycling through a tag) lets the book reuse what it drew in between.
+
+### 🐛 Fixes
+- Items drawn larger or smaller than 16 pixels are drawn at the nearest size where every texel is a whole number of screen pixels, on a whole pixel, so enlarged and shrunk items no longer show uneven, smeared texels.
+- Screen-style books draw much faster on 1.20.1 and 1.21: fills and text are batched, and back-to-back textures are sent in one draw instead of one draw each (an open book went from about 95 to over 300 FPS in testing).
+- Hand-held books: the dark specks along the page edges are gone. They were gaps between edge strips stacked at different depths.
+- The dashed outline around a locked page or element is drawn with its dashes 4 pixels apart again; 3.1.1 drew them 16 pixels apart.
+
 ## v3.1.1 Release | Oct 30, 2026
 Fixes for locked elements and the performance of locked pages, and a clearer name for one lock key.
 

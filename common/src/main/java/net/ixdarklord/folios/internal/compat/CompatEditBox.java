@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.compat;
 
+import net.ixdarklord.folios.internal.mixin.client.EditBoxAccessor;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -23,7 +24,7 @@ public class CompatEditBox extends EditBox {
     }
 
     public void moveCursorTo(int position, boolean select) {
-        int anchor = ((net.ixdarklord.folios.internal.mixin.client.EditBoxAccessor) this).folios$highlightPos();
+        int anchor = ((EditBoxAccessor) this).folios$highlightPos();
         this.moveCursorTo(position);
         this.setHighlightPos(select ? anchor : this.getCursorPosition());
     }

@@ -22,8 +22,10 @@ public abstract class CompatScreen extends Screen {
             this.setInitialFocus();
         }
         GuiGraphicsExtractor extractor = GuiGraphicsExtractor.of(graphics);
-        this.extractBackground(extractor, mouseX, mouseY, a);
-        this.extractRenderState(extractor, mouseX, mouseY, a);
+        graphics.drawManaged(() -> extractor.batch(() -> {
+            this.extractBackground(extractor, mouseX, mouseY, a);
+            this.extractRenderState(extractor, mouseX, mouseY, a);
+        }));
     }
 
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {

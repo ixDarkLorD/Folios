@@ -12,6 +12,7 @@ import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.ClientQuests;
+import net.ixdarklord.folios.internal.compat.Compat;
 import net.ixdarklord.folios.internal.quest.PlayerQuests;
 import net.ixdarklord.folios.internal.quest.QuestRewards;
 import net.minecraft.ChatFormatting;
@@ -33,7 +34,7 @@ import java.util.Optional;
 public record QuestPageElement(List<FoliosObjective> objectives, Optional<String> title, String text, Optional<String> reward, boolean inOrder,
                                Optional<ResourceLocation> quest, Optional<String> locked) implements FoliosPageElement {
     public static final MapCodec<QuestPageElement> CODEC = RecordCodecBuilder.<QuestPageElement>mapCodec(instance -> instance.group(
-            net.ixdarklord.folios.internal.compat.Compat.listOf(FoliosObjective.CODEC, 0, 32).optionalFieldOf("objectives", List.of()).forGetter(QuestPageElement::objectives),
+            Compat.listOf(FoliosObjective.CODEC, 0, 32).optionalFieldOf("objectives", List.of()).forGetter(QuestPageElement::objectives),
             FoliosText.CODEC.optionalFieldOf("title").forGetter(QuestPageElement::title),
             FoliosText.CODEC.optionalFieldOf("text", "").forGetter(QuestPageElement::text),
             FoliosText.CODEC.optionalFieldOf("reward").forGetter(QuestPageElement::reward),

@@ -8,17 +8,24 @@ import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.client.FoliosLibrary;
+import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.paint.ObscuredPainter;
 import net.ixdarklord.folios.internal.client.paint.PixelIcon;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 public final class Locked {
     private Locked() {}
@@ -36,10 +43,10 @@ public final class Locked {
     private static final int HEADING = 9;
     private static final int LIST_TOP = 2;
     private static final int FRAME_IN = 3;
-    private static final java.util.Map<FoliosLock, float[]> EASED = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+    private static final Map<FoliosLock, float[]> EASED = Collections.synchronizedMap(new WeakHashMap<>());
     private static final int FADE = 5;
-    private static final java.util.Map<FoliosLock, int[]> SCROLLED = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
-    private static final java.util.Map<FoliosLock, float[]> PULLED = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+    private static final Map<FoliosLock, int[]> SCROLLED = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<FoliosLock, float[]> PULLED = Collections.synchronizedMap(new WeakHashMap<>());
 
     public static FoliosPageElement.Laid page(FoliosLock lock, int seed, FoliosPageElement.@Nullable Laid under) {
         return painter -> {
@@ -136,17 +143,17 @@ public final class Locked {
         list(painter, lock, book, x0 + FRAME_IN, x1 - FRAME_IN, top + HEADING, bottom - 2, accent);
     }
 
-    private static final net.minecraft.network.chat.Style ITALIC = net.minecraft.network.chat.Style.EMPTY.withItalic(true);
-    private static final net.minecraft.network.chat.Style RUNES = ITALIC.withFont(new net.minecraft.resources.ResourceLocation("alt"));
-    private static final net.minecraft.network.chat.Style UPRIGHT = net.minecraft.network.chat.Style.EMPTY;
-    private static final net.minecraft.network.chat.Style UPRIGHT_RUNES = RUNES.withItalic(false);
+    private static final Style ITALIC = Style.EMPTY.withItalic(true);
+    private static final Style RUNES = ITALIC.withFont(new ResourceLocation("alt"));
+    private static final Style UPRIGHT = Style.EMPTY;
+    private static final Style UPRIGHT_RUNES = RUNES.withItalic(false);
     private static final float GLINT_CYCLE = 6;
     private static final float GLINT_SWEEP = 1.4F;
     private static final float GLINT_REACH = 1.8F;
 
     private static void glinting(FoliosPainter painter, String text, int cx, int y, float scale, int color, int accent, int seed, boolean italic) {
-        net.minecraft.network.chat.Style face = italic ? ITALIC : UPRIGHT;
-        net.minecraft.network.chat.Style runes = italic ? RUNES : UPRIGHT_RUNES;
+        Style face = italic ? ITALIC : UPRIGHT;
+        Style runes = italic ? RUNES : UPRIGHT_RUNES;
         Font font = painter.font();
         int[] widths = new int[text.length()];
         int total = 0;
@@ -295,7 +302,7 @@ public final class Locked {
     }
 
     private static void above(FoliosPainter painter, Runnable draw) {
-        if (painter instanceof net.ixdarklord.folios.internal.client.paint.AbstractPainter drawing) drawing.above(draw);
+        if (painter instanceof AbstractPainter drawing) drawing.above(draw);
         else draw.run();
     }
 
@@ -317,7 +324,7 @@ public final class Locked {
     }
 
     private static Rows rows(FoliosLock lock, FoliosBook book, int width, boolean narrow) {
-        Font font = net.minecraft.client.Minecraft.getInstance().font;
+        Font font = Minecraft.getInstance().font;
         int room = width - 12 - (narrow ? Shapes.SCROLLBAR + 2 : 0);
         List<Integer> heights = new ArrayList<>();
         int total = 0;

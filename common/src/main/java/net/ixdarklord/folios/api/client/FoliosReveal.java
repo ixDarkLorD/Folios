@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.api.client;
 
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -44,7 +45,7 @@ public interface FoliosReveal {
      *
      * @param seconds a clock for what flickers or drifts (the book's)
      */
-    default void overlay(net.ixdarklord.folios.api.client.page.FoliosPainter painter, float progress, float seconds, float pageX) {
+    default void overlay(FoliosPainter painter, float progress, float seconds, float pageX) {
     }
 
     /**
@@ -54,7 +55,7 @@ public interface FoliosReveal {
      * {@link #look} is given it. Called for letters, items and pictures (not for plain fills), so keep it to a few
      * fills, and only where it shows. Nothing by default.
      */
-    default void around(net.ixdarklord.folios.api.client.page.FoliosPainter painter, float progress, float seconds,
+    default void around(FoliosPainter painter, float progress, float seconds,
                         float x, float y, float width, float height, float spreadX, float spreadY) {
     }
 
