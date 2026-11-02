@@ -2,6 +2,7 @@ package net.ixdarklord.folios.internal.client.paint;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.client.FoliosSession;
 import net.ixdarklord.folios.internal.core.Folios;
@@ -17,7 +18,9 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
@@ -82,12 +85,12 @@ public final class WorldPainter extends AbstractPainter {
 
     @Override
     public int pageWidth() {
-        return printing ? super.pageWidth() : net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_WIDTH;
+        return printing ? super.pageWidth() : FoliosLayout.PAGE_WIDTH;
     }
 
     @Override
     public int pageHeight() {
-        return printing ? super.pageHeight() : net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_HEIGHT;
+        return printing ? super.pageHeight() : FoliosLayout.PAGE_HEIGHT;
     }
 
     public void end() {
@@ -113,6 +116,30 @@ public final class WorldPainter extends AbstractPainter {
         return depth;
     }
 
+    private static int[] recorded = new int[1 << 12];
+    private int recording = -1;
+
+    public void baked(String site, Runnable draw) {
+        if (surface != null) {
+            draw.run();
+            return;
+        }
+        recording = 0;
+        int count;
+        try {
+            draw.run();
+        } finally {
+            count = recording;
+            recording = -1;
+        }
+        BakedFills.Site baked = BakedFills.site(site, recorded, count, false);
+        if (baked != null) {
+            this.cutout(baked.id, baked.x0, baked.y0, baked.width, baked.height, 0, 0, 1, 1, 0xFFFFFFFF);
+            return;
+        }
+        for (int at = 0; at < count; at += 5) this.shape(recorded[at], recorded[at + 1], recorded[at + 2], recorded[at + 3], this.next(), recorded[at + 4]);
+    }
+
     public void paper(float x0, float y0, float x1, float y1, int color) {
         this.shape(x0, y0, x1, y1, 0, color);
     }
@@ -122,6 +149,15 @@ public final class WorldPainter extends AbstractPainter {
         if (x1 <= x0 || y1 <= y0 || (argb >>> 24) == 0) return;
         int alpha = argb >>> 24;
         int color = alpha >= 0xFF ? argb : FoliosPalette.mix(palette.paper() | 0xFF000000, argb | 0xFF000000, alpha / 255.0F);
+        if (recording >= 0) {
+            if (recording + 5 > recorded.length) recorded = Arrays.copyOf(recorded, recorded.length * 2);
+            recorded[recording++] = x0;
+            recorded[recording++] = y0;
+            recorded[recording++] = x1;
+            recorded[recording++] = y1;
+            recorded[recording++] = color;
+            return;
+        }
         if (surface == null) this.shape(x0, y0, x1, y1, this.next(), color);
         else this.shape(this.pageX(x0), this.pageY(y0), this.pageX(x1), this.pageY(y1), this.next(), color);
     }
@@ -307,10 +343,10 @@ public final class WorldPainter extends AbstractPainter {
         });
     }
 
-    private org.joml.Matrix3f itemLight() {
-        org.joml.Matrix3f toItem = new org.joml.Matrix3f(pose.last().normal()).invert();
+    private Matrix3f itemLight() {
+        Matrix3f toItem = new Matrix3f(pose.last().normal()).invert();
         Vector3f lit = normal != null ? new Vector3f(normal).normalize() : new Vector3f(0, 0, 1);
-        return new org.joml.Matrix3f().rotation(new org.joml.Quaternionf().rotationTo(new Vector3f(0, 0, 1), lit)).mul(toItem);
+        return new Matrix3f().rotation(new Quaternionf().rotationTo(new Vector3f(0, 0, 1), lit)).mul(toItem);
     }
 
     @Override

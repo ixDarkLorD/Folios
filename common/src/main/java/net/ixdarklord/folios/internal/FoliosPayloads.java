@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal;
 
+import net.ixdarklord.folios.api.FoliosSources;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -10,7 +11,9 @@ import net.minecraft.world.item.crafting.display.RecipeDisplay;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public final class FoliosPayloads {
@@ -99,13 +102,13 @@ public final class FoliosPayloads {
         }
     }
 
-    public record Source(Identifier source, List<net.ixdarklord.folios.api.FoliosSources.Row> rows, List<String> removed) implements CustomPacketPayload {
+    public record Source(Identifier source, List<FoliosSources.Row> rows, List<String> removed) implements CustomPacketPayload {
         public static final Type<Source> TYPE = new Type<>(Folios.rl("source"));
-        private static final StreamCodec<RegistryFriendlyByteBuf, net.ixdarklord.folios.api.FoliosSources.Row> ROW = StreamCodec.composite(
-                ByteBufCodecs.STRING_UTF8, net.ixdarklord.folios.api.FoliosSources.Row::id,
-                ByteBufCodecs.<RegistryFriendlyByteBuf, String, String, java.util.Map<String, String>>map(java.util.HashMap::new, ByteBufCodecs.STRING_UTF8,
-                        ByteBufCodecs.STRING_UTF8, 64), net.ixdarklord.folios.api.FoliosSources.Row::fields,
-                net.ixdarklord.folios.api.FoliosSources.Row::new);
+        private static final StreamCodec<RegistryFriendlyByteBuf, FoliosSources.Row> ROW = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, FoliosSources.Row::id,
+                ByteBufCodecs.<RegistryFriendlyByteBuf, String, String, Map<String, String>>map(HashMap::new, ByteBufCodecs.STRING_UTF8,
+                        ByteBufCodecs.STRING_UTF8, 64), FoliosSources.Row::fields,
+                FoliosSources.Row::new);
         public static final StreamCodec<RegistryFriendlyByteBuf, Source> STREAM_CODEC = StreamCodec.composite(
                 Identifier.STREAM_CODEC, Source::source,
                 ROW.apply(ByteBufCodecs.list(4096)), Source::rows,
@@ -118,10 +121,10 @@ public final class FoliosPayloads {
         }
     }
 
-    public record Quests(java.util.Map<Identifier, String> quests) implements CustomPacketPayload {
+    public record Quests(Map<Identifier, String> quests) implements CustomPacketPayload {
         public static final Type<Quests> TYPE = new Type<>(Folios.rl("quests"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Quests> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.<RegistryFriendlyByteBuf, Identifier, String, java.util.Map<Identifier, String>>map(java.util.HashMap::new, Identifier.STREAM_CODEC,
+                ByteBufCodecs.<RegistryFriendlyByteBuf, Identifier, String, Map<Identifier, String>>map(HashMap::new, Identifier.STREAM_CODEC,
                         ByteBufCodecs.STRING_UTF8, 4096), Quests::quests,
                 Quests::new);
 

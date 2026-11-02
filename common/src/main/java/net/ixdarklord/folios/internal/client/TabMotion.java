@@ -11,11 +11,11 @@ public final class TabMotion {
     private static final float PRESS_SECONDS = 0.3F;
 
     private final Map<String, float[]> tabs = new HashMap<>();
-    private long lastFrame = net.ixdarklord.folios.internal.client.FoliosClock.millis();
+    private long lastFrame = FoliosClock.millis();
     private float frame;
 
     public void frame() {
-        long now = net.ixdarklord.folios.internal.client.FoliosClock.millis();
+        long now = FoliosClock.millis();
         frame = Math.min(0.1F, (now - lastFrame) / 1000.0F);
         lastFrame = now;
     }

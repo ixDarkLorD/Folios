@@ -18,6 +18,13 @@ import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPageElements;
 import net.ixdarklord.folios.api.client.page.FoliosText;
+import net.ixdarklord.folios.internal.client.handheld.CoverModel;
+import net.ixdarklord.folios.internal.client.page.ElementLayout;
+import net.ixdarklord.folios.internal.client.page.Observed;
+import net.ixdarklord.folios.internal.client.page.Sprites;
+import net.ixdarklord.folios.internal.client.page.TextPage;
+import net.ixdarklord.folios.internal.client.paint.BakedFills;
+import net.ixdarklord.folios.internal.client.paint.ScreenAtlas;
 import net.ixdarklord.folios.internal.format.BookUpgrader;
 import net.ixdarklord.folios.internal.client.page.ErrorPage;
 import net.ixdarklord.folios.internal.core.Folios;
@@ -34,7 +41,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public final class FoliosLibrary {
     private static final FileToIdConverter FILES = FileToIdConverter.json("folios");
@@ -48,7 +57,7 @@ public final class FoliosLibrary {
     private static Map<Identifier, Credits> credits = Map.of();
     private static Map<Identifier, FoliosIcon> coverIcons = Map.of();
     private static Map<Identifier, Float> coverIconSizes = Map.of();
-    private static Map<Identifier, net.ixdarklord.folios.internal.client.page.ElementLayout> layouts = Map.of();
+    private static Map<Identifier, ElementLayout> layouts = Map.of();
     private static Map<Identifier, CelebrationSettings> celebrations = Map.of();
     private static final Map<Identifier, FoliosSession> SESSIONS = new HashMap<>();
     private static final Map<Identifier, FoliosSession> LARGER = new HashMap<>();
@@ -150,8 +159,10 @@ public final class FoliosLibrary {
     }
 
     public static void reload(ResourceManager manager) {
-        net.ixdarklord.folios.internal.client.page.Sprites.clear();
-        net.ixdarklord.folios.internal.client.handheld.CoverModel.clear();
+        Sprites.clear();
+        BakedFills.clear();
+        ScreenAtlas.clear();
+        CoverModel.clear();
         CoverMarkers.clear();
         ObtainedItems.clear();
         Map<Identifier, JsonObject> bookFiles = new LinkedHashMap<>();
@@ -187,7 +198,7 @@ public final class FoliosLibrary {
         Map<Identifier, Credits> credited = new HashMap<>();
         Map<Identifier, FoliosIcon> emblems = new HashMap<>();
         Map<Identifier, Float> emblemSizes = new HashMap<>();
-        Map<Identifier, net.ixdarklord.folios.internal.client.page.ElementLayout> setting = new HashMap<>();
+        Map<Identifier, ElementLayout> setting = new HashMap<>();
         Map<Identifier, CelebrationSettings> celebrating = new HashMap<>();
         for (Map.Entry<Identifier, JsonObject> file : bookFiles.entrySet()) {
             Identifier id = file.getKey();
@@ -202,7 +213,7 @@ public final class FoliosLibrary {
                     if (cover.has("icon")) emblems.put(id, coverIcon(cover.get("icon")));
                     if (cover.has("icon_size")) emblemSizes.put(id, Mth.clamp(cover.get("icon_size").getAsFloat(), 0.25F, 2.0F));
                 }
-                setting.put(id, net.ixdarklord.folios.internal.client.page.ElementLayout.read(book, "The guide " + id));
+                setting.put(id, ElementLayout.read(book, "The guide " + id));
                 Map<String, JsonObject> categories = new LinkedHashMap<>();
                 Map<String, JsonObject> entries = new LinkedHashMap<>();
                 files.forEach((path, json) -> {
@@ -270,8 +281,8 @@ public final class FoliosLibrary {
         return FoliosText.translation(textKey(id, key), List.of(), fallback);
     }
 
-    public static net.ixdarklord.folios.internal.client.page.ElementLayout layoutOf(Identifier book) {
-        return layouts.getOrDefault(book, net.ixdarklord.folios.internal.client.page.ElementLayout.NONE);
+    public static ElementLayout layoutOf(Identifier book) {
+        return layouts.getOrDefault(book, ElementLayout.NONE);
     }
 
     public static final String MIGRATION = "https://ixdarklord.github.io/Folios/docs/migrating-to-3.0/";
@@ -315,7 +326,7 @@ public final class FoliosLibrary {
                 !json.has("show_progress") || json.get("show_progress").getAsBoolean(),
                 handheld.has("tilt") ? Mth.clamp(handheld.get("tilt").getAsFloat(), -45.0F, 80.0F) : DEFAULT_TILT,
                 handheld.has("distance") ? Mth.clamp(handheld.get("distance").getAsFloat(), 0.3F, 1.5F) : DEFAULT_DISTANCE,
-                handheld.has("page_turn") ? FoliosBook.PageTurn.valueOf(handheld.get("page_turn").getAsString().toUpperCase(java.util.Locale.ROOT)) : FoliosBook.PageTurn.BEND,
+                handheld.has("page_turn") ? FoliosBook.PageTurn.valueOf(handheld.get("page_turn").getAsString().toUpperCase(Locale.ROOT)) : FoliosBook.PageTurn.BEND,
                 json.has("reveal") ? reveal(json.get("reveal")) : FoliosReveals.DEFAULT,
                 textures(json.has("textures") ? json.getAsJsonObject("textures") : new JsonObject()),
                 layout(json.has("layout") ? json.getAsJsonObject("layout") : new JsonObject()),
@@ -328,16 +339,16 @@ public final class FoliosLibrary {
                 categories, entries);
     }
 
-    private static final java.util.Set<String> PAGE_COLORS = java.util.Set.of("paper", "text", "muted", "heading", "accent", "link", "panel", "line");
+    private static final Set<String> PAGE_COLORS = Set.of("paper", "text", "muted", "heading", "accent", "link", "panel", "line");
 
-    private static final java.util.Set<String> PANEL_COLORS = java.util.Set.of("background", "frame", "title", "detail");
+    private static final Set<String> PANEL_COLORS = Set.of("background", "frame", "title", "detail");
 
     private static FoliosBook.Colors colors(JsonObject json, @Nullable JsonElement panel) {
         Map<String, Integer> panelColors = panel != null && panel.isJsonObject() ? named(panel.getAsJsonObject(), PANEL_COLORS) : Map.of();
         return new FoliosBook.Colors(named(json, PAGE_COLORS), json.has("dark") ? named(json.getAsJsonObject("dark"), PAGE_COLORS) : Map.of(), panelColors);
     }
 
-    private static Map<String, Integer> named(JsonObject json, java.util.Set<String> names) {
+    private static Map<String, Integer> named(JsonObject json, Set<String> names) {
         Map<String, Integer> colors = new HashMap<>();
         for (String name : names) {
             Integer value = argb(json, name);
@@ -425,10 +436,10 @@ public final class FoliosLibrary {
         List<FoliosEntry.Listing> found = new ArrayList<>();
         String where = "page " + (index + 1) + " of the entry " + entry + " of the guide " + book;
         boolean ofElements = page.has("elements") && page.get("elements").isJsonArray()
-                && read.page() instanceof net.ixdarklord.folios.internal.client.page.TextPage;
+                && read.page() instanceof TextPage;
         FoliosEntry.Listing own = listing(page, index, -1, read.page(), List.of(read.lock()), all && !ofElements, "P" + where.substring(1));
         if (own != null) found.add(own);
-        if (ofElements && read.page() instanceof net.ixdarklord.folios.internal.client.page.TextPage text) {
+        if (ofElements && read.page() instanceof TextPage text) {
             var elements = page.getAsJsonArray("elements");
             for (int at = 0; at < elements.size() && at < text.elements().size(); at++) {
                 if (!elements.get(at).isJsonObject()) continue;
@@ -462,7 +473,7 @@ public final class FoliosLibrary {
         return new FoliosEntry.Listing(name, icon, page, element, title, shown, locks);
     }
 
-    private static final java.util.Set<String> ANCHORS = java.util.Set.of("top", "center", "bottom");
+    private static final Set<String> ANCHORS = Set.of("top", "center", "bottom");
 
     private static @Nullable FoliosIcon pageIcon(@Nullable JsonElement json) {
         if (json == null || json.isJsonNull()) return null;
@@ -488,10 +499,10 @@ public final class FoliosLibrary {
             MapCodec<? extends FoliosPageElement> codec = FoliosPageElements.get(type);
             if (codec == null) throw new IllegalArgumentException("no page type " + type);
             FoliosPageElement page = codec.codec().parse(JsonOps.INSTANCE, object).getOrThrow(IllegalArgumentException::new);
-            var settings = net.ixdarklord.folios.internal.client.page.ElementLayout.read(object, "Page " + (index + 1) + " of the entry " + entry + " of the guide " + book);
-            var observed = net.ixdarklord.folios.internal.client.page.Observed.read(object);
-            if (page instanceof net.ixdarklord.folios.internal.client.page.TextPage text) return text.with(settings, observed);
-            return page.spread() ? page : net.ixdarklord.folios.internal.client.page.TextPage.single(page, settings, observed);
+            var settings = ElementLayout.read(object, "Page " + (index + 1) + " of the entry " + entry + " of the guide " + book);
+            var observed = Observed.read(object);
+            if (page instanceof TextPage text) return text.with(settings, observed);
+            return page.spread() ? page : TextPage.single(page, settings, observed);
         } catch (Exception e) {
             Folios.LOGGER.error("Couldn't read page {} of the entry {} of the guide {}: {}", index + 1, entry, book, e.getMessage());
             return new ErrorPage("Page " + (index + 1) + " couldn't be read: " + e.getMessage());

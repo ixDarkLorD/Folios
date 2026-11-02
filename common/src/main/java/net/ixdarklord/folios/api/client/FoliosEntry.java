@@ -3,10 +3,12 @@ package net.ixdarklord.folios.api.client;
 import net.ixdarklord.folios.api.client.page.FoliosIcon;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosStack;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -69,8 +71,8 @@ public record FoliosEntry(String id, String category, String name, FoliosIcon ic
 
         /** What it is listed as. */
         public Component title(FoliosEntry entry) {
-            if (name != null) return net.ixdarklord.folios.api.client.page.FoliosText.inline(name);
-            if (title != null && !title.isEmpty()) return net.ixdarklord.folios.api.client.page.FoliosText.inline(title);
+            if (name != null) return FoliosText.inline(name);
+            if (title != null && !title.isEmpty()) return FoliosText.inline(title);
             ItemStack item = this.item();
             return item.isEmpty() ? entry.title() : item.getHoverName();
         }
@@ -114,12 +116,12 @@ public record FoliosEntry(String id, String category, String name, FoliosIcon ic
     }
 
     public Component title() {
-        return net.ixdarklord.folios.api.client.page.FoliosText.inline(name);
+        return FoliosText.inline(name);
     }
 
     /** Everything its pages ask the player to do; empty for an entry that isn't a quest. */
     public List<FoliosObjective> objectives() {
-        List<FoliosObjective> all = new java.util.ArrayList<>();
+        List<FoliosObjective> all = new ArrayList<>();
         for (Page page : pages) all.addAll(page.page().objectives());
         return all;
     }
