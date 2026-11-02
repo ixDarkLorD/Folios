@@ -1,0 +1,51 @@
+name: Feature Request
+description: An idea for a new page type, book option, look or API.
+labels: [ "enhancement" ]
+assignees:
+  - ixDarkLorD
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Thank you for the idea!** Suggestions shape what comes next in Folios.
+        Check the [docs](https://ixdarklord.github.io/Folios/docs/) first: it may already be possible with an existing key.
+  - type: textarea
+    attributes:
+      label: What you want to do
+      description: The book, page or feature you're trying to make, and what stops you today.
+      placeholder: "Example: My guide has long item lists and I'd like readers to filter them by mod."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Your idea
+      description: How you picture it working, for readers and for book authors.
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Book format (JSON keys, pages, elements)
+        - Screen-style books
+        - Handheld books
+        - Book item and covers
+        - Progress, locks and objectives
+        - API for other mods
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Example
+      description: Optional. How the JSON could look, or a sketch or screenshot of the result.
+      render: json
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Other options
+      description: Optional. Workarounds you use now, or other mods that do something similar.
+    validations:
+      required: false
