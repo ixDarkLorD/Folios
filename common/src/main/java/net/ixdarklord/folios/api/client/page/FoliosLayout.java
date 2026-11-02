@@ -3,12 +3,18 @@ package net.ixdarklord.folios.api.client.page;
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
 import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.internal.core.Folios;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -197,7 +203,7 @@ public final class FoliosLayout {
     public record Mark(int page, int top, int bottom) {}
 
     // The names marked on the pages of the page being laid out, and where.
-    private final java.util.Map<String, Mark> marks = new java.util.HashMap<>();
+    private final Map<String, Mark> marks = new HashMap<>();
 
     /**
      * Marks a place on the pages the page being laid out lays out with a name, for links to reach and to be shown when
@@ -214,8 +220,8 @@ public final class FoliosLayout {
     }
 
     /** The names marked since this was last asked, each with its place; and forgets them. */
-    public java.util.Map<String, Mark> takeMarks() {
-        java.util.Map<String, Mark> taken = java.util.Map.copyOf(marks);
+    public Map<String, Mark> takeMarks() {
+        Map<String, Mark> taken = Map.copyOf(marks);
         marks.clear();
         return taken;
     }
@@ -238,7 +244,7 @@ public final class FoliosLayout {
     public static void title(FoliosPainter painter, Component title, int y, FoliosIcon icon, @Nullable FoliosAlign align) {
         FoliosPalette palette = painter.palette();
         Font font = painter.font();
-        Component bold = title.copy().withStyle(net.minecraft.ChatFormatting.BOLD);
+        Component bold = title.copy().withStyle(ChatFormatting.BOLD);
         int right = painter.contentRight();
         int indent = icon.isEmpty() ? 0 : 18;
         // On one line: made smaller to fit, down to three quarters, and past that cut short with an ellipsis.
@@ -251,13 +257,13 @@ public final class FoliosLayout {
             painter.push();
             painter.translate(CONTENT_LEFT + 2 + across, y - 2);
             painter.scale(0.75F);
-            icon.draw(painter, 0, 0);
+            icon.drawQuiet(painter, 0, 0);
             painter.pop();
         }
-        net.minecraft.util.FormattedCharSequence line = bold.getVisualOrderText();
+        FormattedCharSequence line = bold.getVisualOrderText();
         if (font.width(bold) * fit > room) {
-            net.minecraft.network.chat.FormattedText cut = font.substrByWidth(bold, (int) (room / fit) - font.width("…"));
-            line = net.minecraft.locale.Language.getInstance().getVisualOrder(net.minecraft.network.chat.FormattedText.composite(cut, net.minecraft.network.chat.FormattedText.of("…")));
+            FormattedText cut = font.substrByWidth(bold, (int) (room / fit) - font.width("…"));
+            line = Language.getInstance().getVisualOrder(FormattedText.composite(cut, FormattedText.of("…")));
         }
         painter.push();
         painter.translate(CONTENT_LEFT + indent + across, y + (1 - fit) * 4);

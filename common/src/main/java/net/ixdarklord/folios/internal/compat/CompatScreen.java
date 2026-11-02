@@ -19,8 +19,10 @@ public abstract class CompatScreen extends Screen {
         GuiGraphicsExtractor extractor = GuiGraphicsExtractor.of(graphics);
         Cursors.begin();
         try {
-            this.extractBackground(extractor, mouseX, mouseY, a);
-            this.extractRenderState(extractor, mouseX, mouseY, a);
+            graphics.drawManaged(() -> extractor.batch(() -> {
+                this.extractBackground(extractor, mouseX, mouseY, a);
+                this.extractRenderState(extractor, mouseX, mouseY, a);
+            }));
         } finally {
             Cursors.end();
         }

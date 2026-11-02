@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 
+import java.awt.image.BufferedImage;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.imageio.ImageIO;
 
 public final class Sprites {
     public static final ResourceLocation BAR_BORDER = sprite("bar/border");
@@ -175,7 +177,7 @@ public final class Sprites {
 
     private static boolean emptyCenter(Resource png, int x0, int y0, int x1, int y1) {
         try (InputStream stream = png.open()) {
-            java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(stream);
+            BufferedImage image = ImageIO.read(stream);
             if (image == null) return false;
             for (int y = y0; y < y1; y++) {
                 for (int x = x0; x < x1; x++) {

@@ -6,8 +6,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import net.ixdarklord.folios.api.FoliosFormat;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,6 +21,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
@@ -232,7 +235,7 @@ public final class BookUpgrader {
     private static void colorString(JsonObject json, String path, List<String> done) {
         JsonElement value = get(json, path);
         if (value == null || !value.isJsonPrimitive()) return;
-        com.google.gson.JsonPrimitive primitive = value.getAsJsonPrimitive();
+        JsonPrimitive primitive = value.getAsJsonPrimitive();
         String written = null;
         if (primitive.isNumber()) {
             try {
@@ -248,7 +251,7 @@ public final class BookUpgrader {
             boolean marked = text.startsWith("#");
             String hex = marked ? text.substring(1) : text;
             if (hex.matches("[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8}")) {
-                written = "#" + (marked ? hex : hex.toUpperCase(java.util.Locale.ROOT));
+                written = "#" + (marked ? hex : hex.toUpperCase(Locale.ROOT));
                 if (written.equals(primitive.getAsString())) return;
             }
         }
@@ -257,7 +260,7 @@ public final class BookUpgrader {
             return;
         }
         take(json, path);
-        put(json, path, new com.google.gson.JsonPrimitive(written));
+        put(json, path, new JsonPrimitive(written));
         done.add(path + " written as \"" + written + "\"");
     }
 
@@ -338,7 +341,7 @@ public final class BookUpgrader {
     private static boolean matches(JsonObject json, JsonObject where) {
         for (Map.Entry<String, JsonElement> value : where.entrySet()) {
             JsonElement has = json.get(value.getKey());
-            if (has == null && value.getKey().equals("type")) has = new com.google.gson.JsonPrimitive("text");
+            if (has == null && value.getKey().equals("type")) has = new JsonPrimitive("text");
             if (!value.getValue().equals(has)) return false;
         }
         return true;
@@ -448,7 +451,7 @@ public final class BookUpgrader {
             Path folder = bookJson.getParent();
             Path folios = folios(bookJson);
             Path assets = folios.getParent();
-            String id = assets.getFileName() + ":" + folios.relativize(folder).toString().replace(java.io.File.separatorChar, '/');
+            String id = assets.getFileName() + ":" + folios.relativize(folder).toString().replace(File.separatorChar, '/');
             Map<String, JsonObject> files = new LinkedHashMap<>();
             try (Stream<Path> walk = Files.walk(folder)) {
                 for (Path file : walk.filter(path -> path.toString().endsWith(".json")).toList()) {

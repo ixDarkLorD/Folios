@@ -2,7 +2,9 @@ package net.ixdarklord.folios.internal.client.page;
 
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.internal.client.FoliosClock;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 
 final class SceneControl {
     record Extra(Component tooltip, Runnable run) {}
@@ -27,7 +29,7 @@ final class SceneControl {
     }
 
     private void pause() {
-        if (!held) view.spin(net.ixdarklord.folios.internal.client.FoliosClock.paused() ? 0 : spin);
+        if (!held) view.spin(FoliosClock.paused() ? 0 : spin);
     }
 
     private void zoomed(double notches) {
@@ -46,7 +48,7 @@ final class SceneControl {
     }
 
     void drawPart(FoliosPainter painter, int x, int y, int width, int height, float u0, float u1, boolean first, boolean last,
-                  Shapes.@org.jetbrains.annotations.Nullable Icon extra, @org.jetbrains.annotations.Nullable Extra action) {
+                  Shapes.@Nullable Icon extra, @Nullable Extra action) {
         painter.scroll(x, y, width, height, this::zoomed);
         painter.drag(x, y, width, height, (dx, dy) -> {
             held = true;
@@ -69,8 +71,8 @@ final class SceneControl {
         Shapes.button(painter, bx, y + 2, Shapes.Icon.RESET, over);
     }
 
-    void draw(FoliosPainter painter, int x, int y, int width, int height, Shapes.@org.jetbrains.annotations.Nullable Icon extra,
-              @org.jetbrains.annotations.Nullable Extra action) {
+    void draw(FoliosPainter painter, int x, int y, int width, int height, Shapes.@Nullable Icon extra,
+              @Nullable Extra action) {
         painter.scroll(x, y, width, height, this::zoomed);
         painter.drag(x, y, width, height, (dx, dy) -> {
             held = true;

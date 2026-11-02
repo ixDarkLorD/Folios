@@ -2,7 +2,9 @@ package net.ixdarklord.folios.internal.client.page;
 
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.api.client.page.FoliosStack;
 import net.ixdarklord.folios.internal.client.build.BlockChoice;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -136,9 +138,9 @@ final class Requirements {
 
     static void slot(FoliosPainter painter, Need need, int x, int y) {
         Shapes.slot(painter, x, y);
-        painter.item(need.stack(painter.time()), x + 1, y + 1);
+        painter.item(need.stack(painter.time(FoliosStack.CYCLE_SECONDS)), x + 1, y + 1);
         if (need.choice().isTag() && painter.hovered(x + 1, y + 1, 16, 16)) {
-            painter.tooltip(List.of(need.choice().name(painter.time()), Component.literal("×" + need.count()).withStyle(net.minecraft.ChatFormatting.GRAY)));
+            painter.tooltip(List.of(need.choice().name(painter.time(FoliosStack.CYCLE_SECONDS)), Component.literal("×" + need.count()).withStyle(ChatFormatting.GRAY)));
         }
     }
 

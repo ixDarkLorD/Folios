@@ -1,12 +1,17 @@
 package net.ixdarklord.folios.internal.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.page.FoliosIcon;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.internal.client.paint.WorldPainter;
+import net.ixdarklord.folios.internal.compat.RenderTypes;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.ixdarklord.folios.internal.compat.SubmitNodeCollector;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
@@ -27,7 +32,7 @@ public record FoliosCoverText(float x, float titleY, float subtitleY, float z, f
             if (lettering.kind() == CoverMarkers.Kind.RULE) this.rule(pose, collector, lettering, gilt, cover, light);
             else this.lines(pose, collector, font, lettering, CoverMarkers.color(lettering.kind(), gilt, cover), light);
         }
-        net.ixdarklord.folios.api.client.page.FoliosIcon icon = FoliosLibrary.coverIcon(id);
+        FoliosIcon icon = FoliosLibrary.coverIcon(id);
         CoverMarkers.Marked gem = marked.icon();
         if (gem != null && !icon.isEmpty()) {
             float unit = 1 / 16.0F;
@@ -49,7 +54,7 @@ public record FoliosCoverText(float x, float titleY, float subtitleY, float z, f
         pose.pushPose();
         pose.translate(line.x() * unit, line.y() * unit, (lettering.z() + 0.005F) * unit);
         pose.scale(unit, unit, unit);
-        collector.submitCustomGeometry(pose, net.ixdarklord.folios.internal.compat.RenderTypes.entityCutout(net.ixdarklord.folios.internal.client.paint.WorldPainter.WHITE), (last, consumer) -> {
+        collector.submitCustomGeometry(pose, RenderTypes.entityCutout(WorldPainter.WHITE), (last, consumer) -> {
             for (int index = 0; index < runs.length - 1; index++) {
                 float[] run = runs[index];
                 if (run[2] < 0.05F) continue;
@@ -61,10 +66,10 @@ public record FoliosCoverText(float x, float titleY, float subtitleY, float z, f
         pose.popPose();
     }
 
-    private static void quad(com.mojang.blaze3d.vertex.VertexConsumer consumer, PoseStack.Pose last, float ax, float ay, float bx, float by, float cx, float cy,
+    private static void quad(VertexConsumer consumer, PoseStack.Pose last, float ax, float ay, float bx, float by, float cx, float cy,
                              float dx, float dy, int color, int light) {
         for (float[] p : new float[][]{{ax, ay}, {bx, by}, {cx, cy}, {dx, dy}}) {
-            consumer.addVertex(last, p[0], p[1], 0).setColor(color).setUv(0.5F, 0.5F).setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
+            consumer.addVertex(last, p[0], p[1], 0).setColor(color).setUv(0.5F, 0.5F).setOverlay(OverlayTexture.NO_OVERLAY)
                     .setLight(light).setNormal(last, 0, 0, 1);
         }
     }

@@ -1,22 +1,43 @@
 package net.ixdarklord.folios.internal.client.handheld;
 
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.Window;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyledEditBox;
+import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.internal.client.FoliosClock;
+import net.ixdarklord.folios.internal.client.FoliosLibrary;
+import net.ixdarklord.folios.internal.client.FoliosMentions;
+import net.ixdarklord.folios.internal.client.FoliosSession;
+import net.ixdarklord.folios.internal.client.FoliosTooltips;
+import net.ixdarklord.folios.internal.client.PageSize;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.screen.FoliosBar;
+import net.ixdarklord.folios.internal.client.screen.FoliosScreen;
+import net.ixdarklord.folios.internal.client.screen.PopupLayer;
+import net.ixdarklord.folios.internal.compat.CompatScreen;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.folios.internal.compat.RenderPipelines;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.screens.Screen;
 import net.ixdarklord.folios.internal.compat.KeyEvent;
 import net.ixdarklord.folios.internal.compat.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
+import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.CompatScreen {
-    private final net.ixdarklord.folios.internal.client.screen.PopupLayer popups = new net.ixdarklord.folios.internal.client.screen.PopupLayer();
+public final class HandheldScreen extends CompatScreen {
+    private final PopupLayer popups = new PopupLayer();
     private final HandheldBook book;
     private final FoliosBar bar;
     private @Nullable StyledEditBox search;
@@ -34,9 +55,9 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
     @Override
     protected void init() {
         hintY = Integer.MIN_VALUE;
-        float factor = net.ixdarklord.folios.internal.client.PageSize.handheldFactor();
-        net.ixdarklord.folios.internal.client.FoliosSession sized = net.ixdarklord.folios.internal.client.FoliosLibrary.session(book.book.id(),
-                net.ixdarklord.folios.internal.client.PageSize.width(factor), net.ixdarklord.folios.internal.client.PageSize.height(factor));
+        float factor = PageSize.handheldFactor();
+        FoliosSession sized = FoliosLibrary.session(book.book.id(),
+                PageSize.width(factor), PageSize.height(factor));
         if (sized != null) book.useSession(sized);
         this.search = this.addRenderableWidget(this.bar.search(this.search));
     }
@@ -65,9 +86,9 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
         List<Component> tooltip = book.tooltip;
         int rule = -1;
         if (book.isShut() && book.placed && onCover(book.rightPointer)) {
-            List<Component> lines = new java.util.ArrayList<>();
+            List<Component> lines = new ArrayList<>();
             for (Component said : HandheldRenderer.plateText(book, book.rightPointer)) {
-                for (net.minecraft.network.chat.FormattedText row : this.font.getSplitter().splitLines(said, PLATE_WIDTH, net.minecraft.network.chat.Style.EMPTY)) {
+                for (FormattedText row : this.font.getSplitter().splitLines(said, PLATE_WIDTH, Style.EMPTY)) {
                     lines.add(Component.literal(row.getString()));
                 }
             }
@@ -76,13 +97,13 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
             tooltip = lines;
         }
         boolean popped = this.popups.draw(graphics, book, HandheldRenderer.palette(book.book), book.popup, mouseX, mouseY, 1, this.width, this.height);
-        if (!popped && tooltip != null && !tooltip.isEmpty()) net.ixdarklord.folios.internal.client.FoliosTooltips.show(graphics, this.font, tooltip, mouseX, mouseY, book.book, rule);
+        if (!popped && tooltip != null && !tooltip.isEmpty()) FoliosTooltips.show(graphics, this.font, tooltip, mouseX, mouseY, book.book, rule);
         this.lookHint(graphics);
     }
 
     private static final int PLATE_WIDTH = 180;
 
-    private static final net.minecraft.resources.ResourceLocation RIGHT_CLICK = net.minecraft.resources.ResourceLocation.withDefaultNamespace("toast/right_click");
+    private static final ResourceLocation RIGHT_CLICK = ResourceLocation.withDefaultNamespace("toast/right_click");
 
     private static final long HINT_MILLIS = 6000;
     private static final long HINT_FADE = 600;
@@ -96,9 +117,9 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
             hintY = Integer.MIN_VALUE;
             return;
         }
-        if (openedAt == 0) openedAt = net.ixdarklord.folios.internal.client.FoliosClock.millis();
+        if (openedAt == 0) openedAt = FoliosClock.millis();
         if (lookedAbout || looking || !book.placed || !book.book.handling().lookAround()) return;
-        long shown = net.ixdarklord.folios.internal.client.FoliosClock.millis() - openedAt;
+        long shown = FoliosClock.millis() - openedAt;
         if (shown > HINT_MILLIS + HINT_FADE) return;
         float alpha = shown <= HINT_MILLIS ? 1 : 1 - (shown - HINT_MILLIS) / (float) HINT_FADE;
         int fade = Math.round(alpha * 255);
@@ -106,25 +127,25 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
         Component hint = Component.translatableWithFallback("folios.hint.look", "Hold right click to look around");
         int wide = 16 + 4 + this.font.width(hint);
         int tall = 16;
-        float[] top = this.onScreen(book.rightClip, 0, -(net.ixdarklord.folios.internal.client.screen.FoliosScreen.BORDER + 5 + FoliosBar.HEIGHT));
+        float[] top = this.onScreen(book.rightClip, 0, -(FoliosScreen.BORDER + 5 + FoliosBar.HEIGHT));
         if (top == null) return;
         int x = (this.width - wide) / 2;
         if (hintY == Integer.MIN_VALUE) hintY = Math.max(14, Math.round(top[1]) - tall - 12);
         int y = hintY;
         graphics.nextStratum();
-        net.ixdarklord.folios.internal.client.FoliosTooltips.frame(graphics, x, y, wide, tall, book.book, fade);
-        graphics.blitSprite(net.ixdarklord.folios.internal.compat.RenderPipelines.GUI_TEXTURED, RIGHT_CLICK, x - 2, y - 2, 20, 20, alpha);
-        int ink = net.ixdarklord.folios.internal.client.FoliosTooltips.titleColor(book.book);
+        FoliosTooltips.frame(graphics, x, y, wide, tall, book.book, fade);
+        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, RIGHT_CLICK, x - 2, y - 2, 20, 20, alpha);
+        int ink = FoliosTooltips.titleColor(book.book);
         graphics.text(this.font, hint, x + 20, y + 4, (fade << 24) | (ink & 0xFFFFFF), true);
     }
 
-    private float @Nullable [] onScreen(org.joml.Matrix4f clip, float x, float y) {
-        org.joml.Vector4f at = clip.transform(new org.joml.Vector4f(x, y, 0, 1));
+    private float @Nullable [] onScreen(Matrix4f clip, float x, float y) {
+        Vector4f at = clip.transform(new Vector4f(x, y, 0, 1));
         if (at.w <= 0) return null;
         return new float[]{(at.x / at.w + 1) / 2 * this.width, (1 - at.y / at.w) / 2 * this.height};
     }
 
-    private float[] pointer(org.joml.Matrix4f clip, int mouseX, int mouseY) {
+    private float[] pointer(Matrix4f clip, int mouseX, int mouseY) {
         float[] at = HandheldRenderer.onPage(clip, mouseX, mouseY, this.width, this.height);
         return at != null ? at : new float[]{Float.NaN, Float.NaN};
     }
@@ -171,7 +192,7 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
     private void look(boolean on, double x, double y) {
         if (looking == on) return;
         looking = on;
-        com.mojang.blaze3d.platform.Window window = this.minecraft.getWindow();
+        Window window = this.minecraft.getWindow();
         if (on) {
             lookFromX = x * window.getGuiScale();
             lookFromY = y * window.getGuiScale();
@@ -185,7 +206,7 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
     private boolean walks(KeyEvent event) {
         if (!book.book.handling().walk()) return false;
         var options = this.minecraft.options;
-        for (net.minecraft.client.KeyMapping key : new net.minecraft.client.KeyMapping[]{options.keyUp, options.keyDown, options.keyLeft,
+        for (KeyMapping key : new KeyMapping[]{options.keyUp, options.keyDown, options.keyLeft,
                 options.keyRight, options.keyJump, options.keyShift, options.keySprint}) {
             if (key.matches(event.key(), event.scancode())) return true;
         }
@@ -194,7 +215,7 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
 
     @Override
     public boolean keyReleased(KeyEvent event) {
-        if (this.walks(event)) net.minecraft.client.KeyMapping.set(com.mojang.blaze3d.platform.InputConstants.getKey(event.key(), event.scancode()), false);
+        if (this.walks(event)) KeyMapping.set(InputConstants.getKey(event.key(), event.scancode()), false);
         return super.keyReleased(event);
     }
 
@@ -229,8 +250,8 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
         float[] right = book.rightPointer;
         float[] left = book.leftPointer;
         if (inside(right, 0, 300) || inside(left, 0, 300)) {
-            if (inside(right, net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_WIDTH * 0.6F, 400)) book.turn(1);
-            else if (inside(left, 0, net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_WIDTH * 0.4F)) book.turn(-1);
+            if (inside(right, FoliosLayout.PAGE_WIDTH * 0.6F, 400)) book.turn(1);
+            else if (inside(left, 0, FoliosLayout.PAGE_WIDTH * 0.4F)) book.turn(-1);
             return true;
         }
         if (book.book.clickOutsideCloses()) this.onClose();
@@ -239,17 +260,17 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
 
     private static boolean onCover(float[] at) {
         float margin = 6;
-        return !Float.isNaN(at[0]) && at[0] >= -margin && at[0] < net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_WIDTH + margin
-                && at[1] >= -margin && at[1] < net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_HEIGHT + margin;
+        return !Float.isNaN(at[0]) && at[0] >= -margin && at[0] < FoliosLayout.PAGE_WIDTH + margin
+                && at[1] >= -margin && at[1] < FoliosLayout.PAGE_HEIGHT + margin;
     }
 
     private static boolean inside(float[] at, float x0, float x1) {
-        return !Float.isNaN(at[0]) && at[0] >= x0 && at[0] < Math.min(x1, net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_WIDTH)
-                && at[1] >= 0 && at[1] < net.ixdarklord.folios.api.client.page.FoliosLayout.PAGE_HEIGHT;
+        return !Float.isNaN(at[0]) && at[0] >= x0 && at[0] < Math.min(x1, FoliosLayout.PAGE_WIDTH)
+                && at[1] >= 0 && at[1] < FoliosLayout.PAGE_HEIGHT;
     }
 
     private AbstractPainter.@Nullable Drag dragging;
-    private org.joml.@Nullable Matrix4f draggedOn;
+    private @Nullable Matrix4f draggedOn;
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
@@ -282,7 +303,7 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
         return super.mouseReleased(event);
     }
 
-    private boolean press(List<AbstractPainter.Hit> hits, float[] at, org.joml.Matrix4f clip) {
+    private boolean press(List<AbstractPainter.Hit> hits, float[] at, Matrix4f clip) {
         if (Float.isNaN(at[0])) return false;
         for (int index = hits.size() - 1; index >= 0; index--) {
             AbstractPainter.Hit hit = hits.get(index);
@@ -290,7 +311,7 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
                 if (hit.drag() != null) {
                     dragging = hit.drag();
                     AbstractPainter.hold(hit);
-                    draggedOn = new org.joml.Matrix4f(clip);
+                    draggedOn = new Matrix4f(clip);
                     return true;
                 }
                 this.minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.0F, 0.5F));
@@ -306,7 +327,7 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
         if (this.popups.scroll(book, x, y, scrollY)) return true;
         if (scrollY == 0) return true;
         if (book.isOpen()) {
-            net.ixdarklord.folios.api.client.page.FoliosPainter.Scroll scroll = null;
+            FoliosPainter.Scroll scroll = null;
             if (!Float.isNaN(book.rightPointer[0])) scroll = AbstractPainter.Hit.scrollAt(book.rightHits, book.rightPointer[0], book.rightPointer[1]);
             if (scroll == null && !Float.isNaN(book.leftPointer[0])) scroll = AbstractPainter.Hit.scrollAt(book.leftHits, book.leftPointer[0], book.leftPointer[1]);
             if (scroll != null) {
@@ -320,7 +341,7 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        if (!this.bar.typing() && book.isOpen() && net.ixdarklord.folios.internal.client.FoliosMentions.KEY.matches(event.key(), event.scancode())
+        if (!this.bar.typing() && book.isOpen() && FoliosMentions.KEY.matches(event.key(), event.scancode())
                 && (!Float.isNaN(book.rightPointer[0]) ? book.mention(true) : !Float.isNaN(book.leftPointer[0]) && book.mention(false))) return true;
         if (event.key() == GLFW.GLFW_KEY_ESCAPE && this.popups.escape(book)) return true;
         if (this.minecraft.options.keyTogglePerspective.matches(event.key(), event.scancode()) && !this.bar.typing()) {
@@ -349,7 +370,7 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
             }
         }
         if (walking) {
-            net.minecraft.client.KeyMapping.set(com.mojang.blaze3d.platform.InputConstants.getKey(event.key(), event.scancode()), true);
+            KeyMapping.set(InputConstants.getKey(event.key(), event.scancode()), true);
             return true;
         }
         switch (event.key()) {
@@ -386,7 +407,7 @@ public final class HandheldScreen extends net.ixdarklord.folios.internal.compat.
     @Override
     public void removed() {
         this.look(false, 0, 0);
-        net.minecraft.client.KeyMapping.releaseAll();
+        KeyMapping.releaseAll();
         if (HandheldBook.current() == book && !book.closing) book.close();
     }
 }

@@ -1,5 +1,7 @@
 package net.ixdarklord.folios.internal.client.screen;
 
+import net.ixdarklord.folios.internal.client.FoliosClock;
+import net.ixdarklord.folios.internal.client.FoliosTooltips;
 import net.ixdarklord.folios.internal.client.paint.PixelIcon;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings;
@@ -11,6 +13,7 @@ import net.ixdarklord.folios.api.client.FoliosEntry;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.client.FoliosReader;
+import net.ixdarklord.folios.internal.client.paint.ScreenPainter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -19,6 +22,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.Util;
@@ -87,9 +91,9 @@ public final class FoliosBar {
         boolean wanted = this.typing();
         if (wanted != searchWanted) {
             searchWanted = wanted;
-            searchMovedAt = net.ixdarklord.folios.internal.client.FoliosClock.millis();
+            searchMovedAt = FoliosClock.millis();
         }
-        float t = Math.min(1, (net.ixdarklord.folios.internal.client.FoliosClock.millis() - searchMovedAt) / 140.0F);
+        float t = Math.min(1, (FoliosClock.millis() - searchMovedAt) / 140.0F);
         if (!StyleSettings.transitions()) t = 1;
         float eased = 1 - (1 - t) * (1 - t) * (1 - t);
         return searchWanted ? eased : 1 - eased;
@@ -112,7 +116,7 @@ public final class FoliosBar {
     }
 
     public float shown() {
-        float t = Math.min(1, (net.ixdarklord.folios.internal.client.FoliosClock.millis() - movedAt) / MILLIS);
+        float t = Math.min(1, (FoliosClock.millis() - movedAt) / MILLIS);
         if (!StyleSettings.transitions()) t = 1;
         float eased = 1 - (1 - t) * (1 - t) * (1 - t);
         return folded ? 1 - eased : eased;
@@ -120,7 +124,7 @@ public final class FoliosBar {
 
     private void fold(boolean fold) {
         folded = fold;
-        movedAt = net.ixdarklord.folios.internal.client.FoliosClock.millis();
+        movedAt = FoliosClock.millis();
         if (search != null && fold) search.setFocused(false);
     }
 
@@ -157,7 +161,11 @@ public final class FoliosBar {
             }
             return;
         }
-        this.ribbon(painter, 0, 0, width, bottom, cover, gilt);
+        if (painter instanceof ScreenPainter screen) {
+            screen.baked("bar", () -> this.ribbon(painter, 0, 0, width, bottom, cover, gilt));
+        } else {
+            this.ribbon(painter, 0, 0, width, bottom, cover, gilt);
+        }
         int text = 0xFFF2EEE6;
         int dim = FoliosPalette.mix(cover, text, 0.62F);
         int x = 8;
@@ -203,7 +211,7 @@ public final class FoliosBar {
             Component starName = marked ? Component.translatableWithFallback("folios.bookmark.remove", "Remove bookmark")
                     : Component.translatableWithFallback("folios.bookmark.add", "Bookmark this page");
             boolean hovered = painter.action(star, INSET, 16, 16, starName, () -> reader.memory.toggleBookmark(here));
-            if (hovered && !marked) painter.tooltip(net.ixdarklord.folios.internal.client.FoliosTooltips.of(starName, Component.translatableWithFallback("folios.tip.bookmark", "Find it again under the star tab")));
+            if (hovered && !marked) painter.tooltip(FoliosTooltips.of(starName, Component.translatableWithFallback("folios.tip.bookmark", "Find it again under the star tab")));
             if (hovered) rounded(painter, star, INSET, star + 16, INSET + 16, 0x30FFFFFF);
             int shine = FoliosPalette.mix(gilt, 0xFFFFE680, 0.65F);
             pixels(painter, marked ? STAR : STAR_OUTLINE, star, INSET, 16, marked ? (hovered ? 0xFFFFF4C0 : shine) : hovered ? text : dim);
@@ -255,19 +263,23 @@ public final class FoliosBar {
         boolean hovered = painter.action(x0, y0, POCKET_WIDTH, POCKET_HEIGHT, Component.translatableWithFallback("folios.bar.hide", "Hide the bar"), () -> this.fold(true));
         int rim = FoliosPalette.mix(cover, gilt, 0.56F);
         int well = FoliosPalette.mix(cover, 0xFF000000, hovered ? 0.2F : 0.38F);
-        painter.fill(x0 - 1, y1 - 3, x0, y1 - 2, cover);
-        painter.fill(x1, y1 - 3, x1 + 1, y1 - 2, cover);
-        painter.fill(x0 - 1, y0 + 3, x0, y1 - 2, rim);
-        painter.fill(x1, y0 + 3, x1 + 1, y1 - 2, rim);
-        painter.fill(x0, y0 + 1, x0 + 1, y0 + 3, rim);
-        painter.fill(x1 - 1, y0 + 1, x1, y0 + 3, rim);
-        painter.fill(x0 + 1, y0, x0 + 3, y0 + 1, rim);
-        painter.fill(x1 - 3, y0, x1 - 1, y0 + 1, rim);
-        painter.fill(x0 + 3, y0 - 1, x1 - 3, y0, rim);
-        painter.fill(x0 + 3, y0, x1 - 3, y1, well);
-        painter.fill(x0 + 1, y0 + 1, x1 - 1, y1, well);
-        painter.fill(x0, y0 + 3, x1, y1, well);
-        painter.fill(x0 + 3, y0, x1 - 3, y0 + 1, FoliosPalette.mix(well, 0xFF000000, 0.3F));
+        Runnable pocket = () -> {
+            painter.fill(x0 - 1, y1 - 3, x0, y1 - 2, cover);
+            painter.fill(x1, y1 - 3, x1 + 1, y1 - 2, cover);
+            painter.fill(x0 - 1, y0 + 3, x0, y1 - 2, rim);
+            painter.fill(x1, y0 + 3, x1 + 1, y1 - 2, rim);
+            painter.fill(x0, y0 + 1, x0 + 1, y0 + 3, rim);
+            painter.fill(x1 - 1, y0 + 1, x1, y0 + 3, rim);
+            painter.fill(x0 + 1, y0, x0 + 3, y0 + 1, rim);
+            painter.fill(x1 - 3, y0, x1 - 1, y0 + 1, rim);
+            painter.fill(x0 + 3, y0 - 1, x1 - 3, y0, rim);
+            painter.fill(x0 + 3, y0, x1 - 3, y1, well);
+            painter.fill(x0 + 1, y0 + 1, x1 - 1, y1, well);
+            painter.fill(x0, y0 + 3, x1, y1, well);
+            painter.fill(x0 + 3, y0, x1 - 3, y0 + 1, FoliosPalette.mix(well, 0xFF000000, 0.3F));
+        };
+        if (painter instanceof ScreenPainter screen) screen.baked("pocket", pocket);
+        else pocket.run();
         int ink = hovered ? 0xFFFFFFFF : FoliosPalette.mix(cover, text, 0.75F);
         pixels(painter, FOLD, x0 + (POCKET_WIDTH - 9) / 2, y0 + (POCKET_HEIGHT - 9) / 2, 9, ink);
     }
@@ -331,7 +343,7 @@ public final class FoliosBar {
 
     private void button(FoliosPainter painter, int x, PixelIcon icon, int color, Component name, @Nullable Component detail, Runnable action) {
         boolean hovered = painter.action(x, INSET, 16, 16, name, action);
-        if (hovered && detail != null) painter.tooltip(net.ixdarklord.folios.internal.client.FoliosTooltips.of(name, detail));
+        if (hovered && detail != null) painter.tooltip(FoliosTooltips.of(name, detail));
         plate(painter, x, INSET, this.gilt(), 0xFF000000 | book.cover(), hovered);
         pixels(painter, icon, x, INSET, 16, hovered ? 0xFFFFFFFF : color);
     }
@@ -358,7 +370,7 @@ public final class FoliosBar {
             lines.add(parts.get(0));
             lines.add(Component.literal("› ").withStyle(ChatFormatting.GRAY).append(parts.get(1)));
         } else {
-            lines.addAll(font.getSplitter().splitLines(where, Math.round(room / 0.75F), net.minecraft.network.chat.Style.EMPTY));
+            lines.addAll(font.getSplitter().splitLines(where, Math.round(room / 0.75F), Style.EMPTY));
         }
         int longest = 0;
         for (FormattedText line : lines) longest = Math.max(longest, font.width(line));

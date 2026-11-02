@@ -3,8 +3,11 @@ package net.ixdarklord.folios.internal.client;
 import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.api.client.FoliosCategory;
 import net.ixdarklord.folios.api.client.FoliosEntry;
+import net.ixdarklord.folios.api.client.FoliosLinks;
+import net.ixdarklord.folios.api.client.page.FoliosIcon;
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
+import net.ixdarklord.folios.api.client.page.FoliosPopup;
 import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.page.ErrorPage;
 import net.ixdarklord.folios.internal.client.page.Locked;
@@ -21,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 public final class FoliosSession {
     public record EntryPages(List<FoliosPageElement.Laid> pages, Map<String, Integer> markers, int[] starts, Map<String, FoliosLayout.Mark> places) {
@@ -90,9 +94,9 @@ public final class FoliosSession {
         return pages;
     }
 
-    private FoliosPageElement.@org.jetbrains.annotations.Nullable Laid under(FoliosEntry.Page page, net.ixdarklord.folios.api.client.page.@org.jetbrains.annotations.Nullable FoliosIcon first) {
+    private FoliosPageElement.@Nullable Laid under(FoliosEntry.Page page, @Nullable FoliosIcon first) {
         try {
-            layout.titleIcon(page.icon() != null ? page.icon() : first != null ? first : net.ixdarklord.folios.api.client.page.FoliosIcon.NONE);
+            layout.titleIcon(page.icon() != null ? page.icon() : first != null ? first : FoliosIcon.NONE);
             layout.takeMarks();
             List<FoliosPageElement.Laid> laid = page.page().lay(layout);
             layout.takeMarks();
@@ -122,7 +126,7 @@ public final class FoliosSession {
             }
             int base = pages.size();
             try {
-                layout.titleIcon(page.icon() != null ? page.icon() : index == 0 ? entry.icon() : net.ixdarklord.folios.api.client.page.FoliosIcon.NONE);
+                layout.titleIcon(page.icon() != null ? page.icon() : index == 0 ? entry.icon() : FoliosIcon.NONE);
                 layout.takeMarks();
                 pages.addAll(page.page().lay(layout));
                 for (Map.Entry<String, FoliosLayout.Mark> mark : layout.takeMarks().entrySet()) {
@@ -135,7 +139,7 @@ public final class FoliosSession {
                 pages.addAll(new ErrorPage("This page couldn't be shown: " + e).lay(layout));
             }
         }
-        layout.titleIcon(net.ixdarklord.folios.api.client.page.FoliosIcon.NONE);
+        layout.titleIcon(FoliosIcon.NONE);
         if (pages.isEmpty()) pages.add(painter -> {});
         return new EntryPages(List.copyOf(pages), Map.copyOf(markers), starts, Map.copyOf(places));
     }
@@ -185,18 +189,18 @@ public final class FoliosSession {
         return new Target(entry, page, null, null, marker);
     }
 
-    private final Map<String, java.util.Optional<net.ixdarklord.folios.api.client.page.FoliosPopup>> popups = new HashMap<>();
+    private final Map<String, Optional<FoliosPopup>> popups = new HashMap<>();
 
-    public net.ixdarklord.folios.api.client.page.@Nullable FoliosPopup popup(String link) {
-        net.ixdarklord.folios.api.client.FoliosLinks.Found found = net.ixdarklord.folios.api.client.FoliosLinks.find(link);
+    public @Nullable FoliosPopup popup(String link) {
+        FoliosLinks.Found found = FoliosLinks.find(link);
         if (found == null || !found.kind().isOpen(book, found.target())) return null;
-        return popups.computeIfAbsent(link, key -> java.util.Optional.ofNullable(found.kind().popup(layout, found.target()))).orElse(null);
+        return popups.computeIfAbsent(link, key -> Optional.ofNullable(found.kind().popup(layout, found.target()))).orElse(null);
     }
 
-    public java.util.List<Component> tooltip(String link) {
-        net.ixdarklord.folios.api.client.FoliosLinks.Found found = net.ixdarklord.folios.api.client.FoliosLinks.find(link);
-        if (found == null) return java.util.List.of(this.describe(link));
-        if (!found.kind().isOpen(book, found.target())) return java.util.List.of(Component.translatableWithFallback("folios.link.locked", "Not yet discovered"));
+    public List<Component> tooltip(String link) {
+        FoliosLinks.Found found = FoliosLinks.find(link);
+        if (found == null) return List.of(this.describe(link));
+        if (!found.kind().isOpen(book, found.target())) return List.of(Component.translatableWithFallback("folios.link.locked", "Not yet discovered"));
         return found.kind().tooltip(book, found.target());
     }
 

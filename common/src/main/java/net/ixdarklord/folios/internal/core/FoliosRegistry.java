@@ -10,6 +10,7 @@ import net.ixdarklord.folios.api.FoliosBookItem;
 import net.ixdarklord.folios.internal.FoliosRecord;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Unit;
@@ -26,7 +27,7 @@ public final class FoliosRegistry {
     public static final RegistryEntry<DataComponentType<ResourceLocation>> GUIDE_BOOK = COMPONENTS.register("guide_book",
             () -> DataComponentType.<ResourceLocation>builder().persistent(ResourceLocation.CODEC).networkSynchronized(ResourceLocation.STREAM_CODEC).build());
     public static final RegistryEntry<DataComponentType<Unit>> READING = COMPONENTS.register("guide_reading",
-            () -> DataComponentType.<Unit>builder().persistent(Unit.CODEC).networkSynchronized(net.minecraft.network.codec.StreamCodec.unit(Unit.INSTANCE)).build());
+            () -> DataComponentType.<Unit>builder().persistent(Unit.CODEC).networkSynchronized(StreamCodec.unit(Unit.INSTANCE)).build());
     private static final AttachmentRegistry ATTACHMENTS = AttachmentRegistry.create(Folios.MOD_ID);
     public static final Attachment<Map<ResourceLocation, FoliosRecord>> PLAYER_PROGRESS = ATTACHMENTS.builder("progress",
                     Codec.unboundedMap(ResourceLocation.CODEC, FoliosRecord.CODEC), Map.<ResourceLocation, FoliosRecord>of())

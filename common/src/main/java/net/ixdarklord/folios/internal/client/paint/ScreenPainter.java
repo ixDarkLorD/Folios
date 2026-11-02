@@ -4,12 +4,14 @@ import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
 import net.ixdarklord.coolcatcanvas.internal.client.viewport.SceneViewportManager;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.client.FoliosSession;
+import net.ixdarklord.folios.internal.client.screen.BookCache;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.folios.internal.compat.RenderPipelines;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.Arrays;
 import java.util.List;
 
 public final class ScreenPainter extends AbstractPainter {
@@ -34,8 +36,37 @@ public final class ScreenPainter extends AbstractPainter {
         return true;
     }
 
+    private static int[] recorded = new int[1 << 12];
+    private int recording = -1;
+
+    public void baked(String site, Runnable draw) {
+        recording = 0;
+        int count;
+        try {
+            draw.run();
+        } finally {
+            count = recording;
+            recording = -1;
+        }
+        BakedFills.Site baked = BakedFills.site(site, recorded, count);
+        if (baked != null) {
+            this.plainTexture(baked.id, baked.x0, baked.y0, baked.width, baked.height);
+            return;
+        }
+        for (int at = 0; at < count; at += 5) graphics.fill(recorded[at], recorded[at + 1], recorded[at + 2], recorded[at + 3], recorded[at + 4]);
+    }
+
     @Override
     public void fill(int x0, int y0, int x1, int y1, int argb) {
+        if (recording >= 0) {
+            if (recording + 5 > recorded.length) recorded = Arrays.copyOf(recorded, recorded.length * 2);
+            recorded[recording++] = x0;
+            recorded[recording++] = y0;
+            recorded[recording++] = x1;
+            recorded[recording++] = y1;
+            recorded[recording++] = argb;
+            return;
+        }
         graphics.fill(x0, y0, x1, y1, argb);
     }
 
@@ -48,6 +79,10 @@ public final class ScreenPainter extends AbstractPainter {
     public void texture(ResourceLocation texture, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
         graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, u0 * UV, v0 * UV, width, height,
                 Math.round((u1 - u0) * UV), Math.round((v1 - v0) * UV), UV, UV, argb);
+    }
+
+    void plainTexture(ResourceLocation texture, int x, int y, int width, int height) {
+        graphics.plainBlit(texture, x, y, width, height);
     }
 
     @Override
@@ -65,6 +100,7 @@ public final class ScreenPainter extends AbstractPainter {
     @Override
     public void scene(SceneViewport viewport, int x, int y, int width, int height) {
         viewport.use();
+        BookCache.markDynamic();
         int view = SceneViewportManager.textureId(viewport);
         if (view >= 0) graphics.texture(view, x, y, x + width, y + height, 0.0F, 1.0F, 1.0F, 0.0F, 0xFFFFFFFF);
     }
@@ -72,6 +108,7 @@ public final class ScreenPainter extends AbstractPainter {
     @Override
     public void scene(SceneViewport viewport, int x, int y, int width, int height, float u0, float u1) {
         viewport.use();
+        BookCache.markDynamic();
         int view = SceneViewportManager.textureId(viewport);
         if (view >= 0) graphics.texture(view, x, y, x + width, y + height, u0, u1, 1.0F, 0.0F, 0xFFFFFFFF);
     }
@@ -79,6 +116,7 @@ public final class ScreenPainter extends AbstractPainter {
     @Override
     public void scene(SceneViewport viewport, int x, int y, int width, int height, float u0, float v0, float u1, float v1, int argb) {
         viewport.use();
+        BookCache.markDynamic();
         int view = SceneViewportManager.textureId(viewport);
         if (view >= 0) graphics.texture(view, x, y, x + width, y + height, u0, u1, 1 - v0, 1 - v1, argb);
     }
