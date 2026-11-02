@@ -5,16 +5,22 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.util.FormattedCharSequence;
 import org.jspecify.annotations.Nullable;
 
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,10 +38,10 @@ public final class CoverMarkers {
     private static final float NAME_SHARE = 0.5F;
     private static final float SUBTITLE_SHARE = 0.29F;
 
-    public static java.util.List<Lettering> layout(FoliosBook book, Markers marked, FoliosBook.CoverText.Line titleDefault,
+    public static List<Lettering> layout(FoliosBook book, Markers marked, FoliosBook.CoverText.Line titleDefault,
                                                    FoliosBook.CoverText.Line lowerDefault, float z) {
         FoliosBook.CoverText text = book.coverText();
-        java.util.List<Lettering> out = new java.util.ArrayList<>();
+        List<Lettering> out = new ArrayList<>();
         FoliosBook.CoverText.Line title = text.titleOr(marked.title() != null ? marked.title().line() : titleDefault);
         float titleZ = marked.title() != null ? marked.title().z() : z;
         Marked lowerMark = marked.summary() != null ? marked.summary() : marked.subtitle();
@@ -70,7 +76,7 @@ public final class CoverMarkers {
     }
 
     public static int color(Kind kind, int gilt, int cover) {
-        return kind == Kind.TITLE ? gilt : net.ixdarklord.folios.api.client.page.FoliosPalette.mix(gilt, cover, kind == Kind.SUBTITLE ? 0.3F : 0.4F);
+        return kind == Kind.TITLE ? gilt : FoliosPalette.mix(gilt, cover, kind == Kind.SUBTITLE ? 0.3F : 0.4F);
     }
 
     public static float[][] rule(FoliosBook.CoverText.Line line) {
@@ -78,7 +84,7 @@ public final class CoverMarkers {
         float half = line.width() / 2;
         float stud = line.size() * 3.2F;
         float gap = stud * 1.6F;
-        java.util.List<float[]> runs = new java.util.ArrayList<>();
+        List<float[]> runs = new ArrayList<>();
         for (int side = -1; side <= 1; side += 2) {
             for (int step = 0; step < steps; step++) {
                 float a = gap + (half - gap) * step / steps;
@@ -92,9 +98,9 @@ public final class CoverMarkers {
         return runs.toArray(new float[0][]);
     }
 
-    public record Rows(java.util.List<net.minecraft.util.FormattedCharSequence> lines, float scale, float top) {}
+    public record Rows(List<FormattedCharSequence> lines, float scale, float top) {}
 
-    public static Rows rows(net.minecraft.client.gui.Font font, Lettering lettering) {
+    public static Rows rows(Font font, Lettering lettering) {
         FoliosBook.CoverText.Line line = lettering.line();
         float full = line.size() * 1.6F / 9.0F;
         if (lettering.kind() == Kind.TITLE) {
@@ -102,25 +108,25 @@ public final class CoverMarkers {
             if (two != null) return two;
         }
         float shared = lettering.lines() > 1 ? full / lettering.lines() * 0.64F : full;
-        java.util.List<net.minecraft.util.FormattedCharSequence> lines = wrap(font, lettering, Math.round(line.width() / shared));
+        List<FormattedCharSequence> lines = wrap(font, lettering, Math.round(line.width() / shared));
         while (lettering.lines() > 1 && shared > full * 0.2F && font.split(lettering.text(), Math.round(line.width() / shared)).size() > lettering.lines()) {
             shared *= 0.9F;
             lines = wrap(font, lettering, Math.round(line.width() / shared));
         }
         float scale = shared;
-        for (net.minecraft.util.FormattedCharSequence row : lines) scale = Math.min(scale, line.width() / Math.max(1, font.width(row)));
+        for (FormattedCharSequence row : lines) scale = Math.min(scale, line.width() / Math.max(1, font.width(row)));
         return new Rows(lines, scale, -(lines.size() * 9 - 1) / 2.0F);
     }
 
-    private static @Nullable Rows twoLines(net.minecraft.client.gui.Font font, Lettering lettering, float full) {
+    private static @Nullable Rows twoLines(Font font, Lettering lettering, float full) {
         FoliosBook.CoverText.Line line = lettering.line();
         int wide = font.width(lettering.text());
         float one = Math.min(full, line.width() / Math.max(1, wide));
         float half = full * TITLE_ROWS;
         if (one >= half * TWO_LINES_GAIN) return null;
-        java.util.List<net.minecraft.util.FormattedCharSequence> rows = null;
+        List<FormattedCharSequence> rows = null;
         for (int room = (wide + 1) / 2; room <= wide; room += 2) {
-            java.util.List<net.minecraft.util.FormattedCharSequence> split = font.split(lettering.text(), room);
+            List<FormattedCharSequence> split = font.split(lettering.text(), room);
             if (split.size() <= 2) {
                 rows = split;
                 break;
@@ -128,7 +134,7 @@ public final class CoverMarkers {
         }
         if (rows == null || rows.size() < 2) return null;
         float scale = half;
-        for (net.minecraft.util.FormattedCharSequence row : rows) scale = Math.min(scale, line.width() / Math.max(1, font.width(row)));
+        for (FormattedCharSequence row : rows) scale = Math.min(scale, line.width() / Math.max(1, font.width(row)));
         if (scale <= one * TWO_LINES_GAIN) return null;
         return new Rows(rows, scale, -(rows.size() * 9 - 1) / 2.0F);
     }
@@ -136,12 +142,12 @@ public final class CoverMarkers {
     private static final float TITLE_ROWS = 0.5F;
     private static final float TWO_LINES_GAIN = 1.15F;
 
-    public static java.util.List<net.minecraft.util.FormattedCharSequence> wrap(net.minecraft.client.gui.Font font, Lettering lettering, int room) {
-        if (lettering.lines() <= 1) return java.util.List.of(lettering.text().getVisualOrderText());
-        java.util.List<net.minecraft.util.FormattedCharSequence> split = font.split(lettering.text(), Math.max(20, room));
+    public static List<FormattedCharSequence> wrap(Font font, Lettering lettering, int room) {
+        if (lettering.lines() <= 1) return List.of(lettering.text().getVisualOrderText());
+        List<FormattedCharSequence> split = font.split(lettering.text(), Math.max(20, room));
         if (split.size() <= lettering.lines()) return split;
-        java.util.List<net.minecraft.util.FormattedCharSequence> kept = new java.util.ArrayList<>(split.subList(0, lettering.lines() - 1));
-        kept.add(net.minecraft.util.FormattedCharSequence.composite(split.get(lettering.lines() - 1), net.minecraft.util.FormattedCharSequence.forward("…", net.minecraft.network.chat.Style.EMPTY)));
+        List<FormattedCharSequence> kept = new ArrayList<>(split.subList(0, lettering.lines() - 1));
+        kept.add(FormattedCharSequence.composite(split.get(lettering.lines() - 1), FormattedCharSequence.forward("…", Style.EMPTY)));
         return kept;
     }
 
@@ -193,10 +199,10 @@ public final class CoverMarkers {
         return Math.abs(x - line.x()) <= line.width() / ACROSS / 2 && Math.abs(y - line.y()) <= line.size() / UP / 2;
     }
 
-    public static java.util.List<Component> plateText(FoliosBook book, Kind plate) {
+    public static List<Component> plateText(FoliosBook book, Kind plate) {
         boolean summary = !FoliosText.isBlank(book.coverText().summaryText());
         boolean subtitle = !FoliosText.isBlank(book.subtitle());
-        java.util.List<Component> out = new java.util.ArrayList<>();
+        List<Component> out = new ArrayList<>();
         if (plate == Kind.TITLE) {
             out.add(book.title());
             if (summary && subtitle) out.add(FoliosText.inline(book.subtitle()));

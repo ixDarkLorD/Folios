@@ -7,6 +7,10 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
+import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 final class LookupTooltip implements ClientTooltipComponent {
     private static final int FRAME = 20;
@@ -21,7 +25,7 @@ final class LookupTooltip implements ClientTooltipComponent {
     private final Component title;
     private final Component hold;
     private final int accent;
-    private java.util.@org.jspecify.annotations.Nullable List<net.minecraft.util.FormattedCharSequence> name;
+    private @Nullable List<FormattedCharSequence> name;
 
     LookupTooltip(BookLookup.Found found) {
         this.found = found;
@@ -32,7 +36,7 @@ final class LookupTooltip implements ClientTooltipComponent {
         this.accent = book != null ? 0xFF000000 | book.accent() : 0xFFF2C14E;
     }
 
-    private java.util.List<net.minecraft.util.FormattedCharSequence> name(Font font) {
+    private List<FormattedCharSequence> name(Font font) {
         if (name == null) name = font.split(title, Math.round(NAME_WIDTH / NAME_SCALE));
         return name;
     }
@@ -49,14 +53,14 @@ final class LookupTooltip implements ClientTooltipComponent {
     @Override
     public int getWidth(Font font) {
         int widest = font.width(hold);
-        for (net.minecraft.util.FormattedCharSequence line : this.name(font)) widest = Math.max(widest, (int) Math.ceil(font.width(line) * NAME_SCALE));
+        for (FormattedCharSequence line : this.name(font)) widest = Math.max(widest, (int) Math.ceil(font.width(line) * NAME_SCALE));
         return FRAME + GAP + widest;
     }
 
     @Override
     public void extractText(GuiGraphicsExtractor graphics, Font font, int x, int y) {
         int textY = y + TOP + Math.max(0, (FRAME - this.textHeight(font)) / 2);
-        for (net.minecraft.util.FormattedCharSequence line : this.name(font)) {
+        for (FormattedCharSequence line : this.name(font)) {
             graphics.pose().pushMatrix();
             graphics.pose().translate(x + FRAME + GAP, textY);
             graphics.pose().scale(NAME_SCALE, NAME_SCALE);

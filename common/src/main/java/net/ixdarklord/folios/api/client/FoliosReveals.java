@@ -3,6 +3,8 @@ package net.ixdarklord.folios.api.client;
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 
@@ -176,8 +178,8 @@ public final class FoliosReveals {
     private static final class Runes implements FoliosReveal {
         private static final int GLOW = 0x7FD8FF;
         private static final String SYMBOLS = "abcdefghijklmnopqrstuvwxyz";
-        private static final net.minecraft.network.chat.FontDescription FONT =
-                new net.minecraft.network.chat.FontDescription.Resource(Identifier.withDefaultNamespace("alt"));
+        private static final FontDescription FONT =
+                new FontDescription.Resource(Identifier.withDefaultNamespace("alt"));
 
         @Override
         public Look look(float progress, float x, float y) {
@@ -219,7 +221,7 @@ public final class FoliosReveals {
                 float glow = (float) Math.sin(age * Math.PI) * fade;
                 if (glow < 0.1F) continue;
                 char symbol = SYMBOLS.charAt((int) (FoliosReveal.noise(rune * 7 + (int) (seconds * 2)) * SYMBOLS.length()) % SYMBOLS.length());
-                painter.text(net.minecraft.network.chat.Component.literal(String.valueOf(symbol)).withStyle(style -> style.withFont(FONT)),
+                painter.text(Component.literal(String.valueOf(symbol)).withStyle(style -> style.withFont(FONT)),
                         x, y, (Math.round(glow * 210) << 24) | GLOW);
             }
         }

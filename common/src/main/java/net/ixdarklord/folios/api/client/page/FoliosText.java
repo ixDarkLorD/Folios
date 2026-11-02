@@ -24,6 +24,7 @@ import net.minecraft.network.chat.TextColor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.util.ExtraCodecs;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * Text written for a book, set out in lines to a width. It is a small part of Markdown, so long text reads well in
@@ -183,7 +185,7 @@ public final class FoliosText {
      * Runs something with a book as the one text is read for: its {@code {entry:...}} tags take its entries' names, and
      * {@code {item:...}} links to its pages. A book sets itself while it lays out its pages and searches them.
      */
-    public static <T> T in(FoliosBook book, java.util.function.Supplier<T> read) {
+    public static <T> T in(FoliosBook book, Supplier<T> read) {
         FoliosBook outer = FoliosText.book;
         FoliosText.book = book;
         try {
@@ -961,7 +963,7 @@ public final class FoliosText {
             }
             if (inside.startsWith("entity:")) {
                 Identifier id = Identifier.tryParse(inside.substring(7).strip());
-                net.minecraft.world.entity.EntityType<?> type = id != null ? BuiltInRegistries.ENTITY_TYPE.getOptional(id).orElse(null) : null;
+                EntityType<?> type = id != null ? BuiltInRegistries.ENTITY_TYPE.getOptional(id).orElse(null) : null;
                 if (type == null) return unknown(inside);
                 flush();
                 // Its name, a link showing it in a popup window.

@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.client.page;
 
+import net.ixdarklord.folios.api.client.page.FoliosAlign;
 import net.ixdarklord.folios.api.client.page.FoliosText;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -27,14 +28,14 @@ public record SpotlightPageElement(FoliosStack item, Optional<String> title, Str
     @Override
     public List<Laid> lay(FoliosLayout layout) {
         boolean named = title.isEmpty();
-        net.ixdarklord.folios.api.client.page.FoliosAlign align = layout.alignment();
+        FoliosAlign align = layout.alignment();
         return layout.flow(title.orElse(null), CARD + (named ? 12 : 0), text, (painter, y) -> {
             int left = FoliosLayout.place(painter, align, CARD);
             int middle = left + CARD / 2;
             FoliosPalette palette = painter.palette();
             painter.texture(layout.book().textures().spotlight(), left, y, CARD, CARD, 0, 0, 1, 1, palette.panel() | 0xFF000000);
             painter.fill(left + 5, y + 5, left + CARD - 5, y + CARD - 5, FoliosPalette.alpha(palette.accent(), 0x22));
-            ItemStack stack = item.at(painter.time());
+            ItemStack stack = item.at(painter.time(FoliosStack.CYCLE_SECONDS));
             painter.push();
             painter.translate(middle - 16, y + CARD / 2F - 16);
             painter.scale(2);

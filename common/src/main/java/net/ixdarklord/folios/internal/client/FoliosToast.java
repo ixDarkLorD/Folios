@@ -9,8 +9,11 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.client.gui.components.toasts.ToastManager;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.FormattedCharSequence;
+import org.jspecify.annotations.Nullable;
 
 public final class FoliosToast implements Toast {
     private static final int MARGIN = 8;
@@ -36,7 +39,7 @@ public final class FoliosToast implements Toast {
         this.duration = duration;
     }
 
-    public static void show(FoliosBook book, Component heading, Component name, @org.jspecify.annotations.Nullable FoliosIcon icon, boolean mastery) {
+    public static void show(FoliosBook book, Component heading, Component name, @Nullable FoliosIcon icon, boolean mastery) {
         Minecraft.getInstance().getToastManager().addToast(new FoliosToast(book, heading, name, icon != null ? icon : FoliosIcon.NONE, mastery, mastery ? 7000 : 5000));
     }
 
@@ -97,7 +100,7 @@ public final class FoliosToast implements Toast {
 
     private static FormattedCharSequence fit(Font font, Component text, int room) {
         if (font.width(text) <= room) return text.getVisualOrderText();
-        net.minecraft.network.chat.FormattedText head = font.substrByWidth(text, Math.max(0, room - font.width("…")));
-        return net.minecraft.locale.Language.getInstance().getVisualOrder(net.minecraft.network.chat.FormattedText.composite(head, net.minecraft.network.chat.FormattedText.of("…")));
+        FormattedText head = font.substrByWidth(text, Math.max(0, room - font.width("…")));
+        return Language.getInstance().getVisualOrder(FormattedText.composite(head, FormattedText.of("…")));
     }
 }

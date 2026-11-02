@@ -1,17 +1,22 @@
 package net.ixdarklord.folios.internal.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.ixdarklord.folios.api.FoliosBooks;
 import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.page.FoliosIcon;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.internal.client.paint.WorldPainter;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
@@ -20,6 +25,7 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public record FoliosCoverText(float x, float titleY, float subtitleY, float z, float width, @Nullable Identifier markers) implements SpecialModelRenderer<Identifier> {
@@ -38,7 +44,7 @@ public record FoliosCoverText(float x, float titleY, float subtitleY, float z, f
             if (lettering.kind() == CoverMarkers.Kind.RULE) this.rule(pose, collector, lettering, gilt, cover, light);
             else this.lines(pose, collector, font, lettering, CoverMarkers.color(lettering.kind(), gilt, cover), light);
         }
-        net.ixdarklord.folios.api.client.page.FoliosIcon icon = FoliosLibrary.coverIcon(id);
+        FoliosIcon icon = FoliosLibrary.coverIcon(id);
         CoverMarkers.Marked gem = marked.icon();
         if (gem != null && !icon.isEmpty()) {
             float unit = 1 / 16.0F;
@@ -60,7 +66,7 @@ public record FoliosCoverText(float x, float titleY, float subtitleY, float z, f
         pose.pushPose();
         pose.translate(line.x() * unit, line.y() * unit, (lettering.z() + 0.005F) * unit);
         pose.scale(unit, unit, unit);
-        collector.submitCustomGeometry(pose, net.minecraft.client.renderer.rendertype.RenderTypes.entityCutout(net.ixdarklord.folios.internal.client.paint.WorldPainter.WHITE), (last, consumer) -> {
+        collector.submitCustomGeometry(pose, RenderTypes.entityCutout(WorldPainter.WHITE), (last, consumer) -> {
             for (int index = 0; index < runs.length - 1; index++) {
                 float[] run = runs[index];
                 if (run[2] < 0.05F) continue;
@@ -72,10 +78,10 @@ public record FoliosCoverText(float x, float titleY, float subtitleY, float z, f
         pose.popPose();
     }
 
-    private static void quad(com.mojang.blaze3d.vertex.VertexConsumer consumer, PoseStack.Pose last, float ax, float ay, float bx, float by, float cx, float cy,
+    private static void quad(VertexConsumer consumer, PoseStack.Pose last, float ax, float ay, float bx, float by, float cx, float cy,
                              float dx, float dy, int color, int light) {
         for (float[] p : new float[][]{{ax, ay}, {bx, by}, {cx, cy}, {dx, dy}}) {
-            consumer.addVertex(last, p[0], p[1], 0).setColor(color).setUv(0.5F, 0.5F).setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
+            consumer.addVertex(last, p[0], p[1], 0).setColor(color).setUv(0.5F, 0.5F).setOverlay(OverlayTexture.NO_OVERLAY)
                     .setLight(light).setNormal(last, 0, 0, 1);
         }
     }
@@ -107,7 +113,7 @@ public record FoliosCoverText(float x, float titleY, float subtitleY, float z, f
         return FoliosBooks.bookOf(stack);
     }
 
-    public record Unbaked(float x, float titleY, float subtitleY, float z, float width, java.util.Optional<Identifier> markers) implements SpecialModelRenderer.Unbaked<Identifier> {
+    public record Unbaked(float x, float titleY, float subtitleY, float z, float width, Optional<Identifier> markers) implements SpecialModelRenderer.Unbaked<Identifier> {
         public static final MapCodec<Unbaked> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
                 Codec.FLOAT.optionalFieldOf("x", 8.0F).forGetter(Unbaked::x),
                 Codec.FLOAT.optionalFieldOf("title_y", 11.5F).forGetter(Unbaked::titleY),

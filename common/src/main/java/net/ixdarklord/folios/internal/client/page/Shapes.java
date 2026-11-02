@@ -5,7 +5,14 @@ import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.minecraft.client.gui.Font;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.FormattedCharSequence;
+import org.jspecify.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class Shapes {
     private Shapes() {}
@@ -49,7 +56,7 @@ public final class Shapes {
     private static final int[][] FRAME_COLUMNS = {{0, 20, 0}, {20, 58, 1}, {58, 78, 0}, {78, 116, 1}, {116, FRAME_W, 0}};
     private static final int[][] FRAME_ROWS = {{0, 20, 0}, {20, 160, 1}, {160, FRAME_H, 0}};
 
-    public static void pageFrame(FoliosPainter painter, Identifier texture, int width, int height, FoliosPageElement.@org.jspecify.annotations.Nullable Laid page, boolean right) {
+    public static void pageFrame(FoliosPainter painter, Identifier texture, int width, int height, FoliosPageElement.@Nullable Laid page, boolean right) {
         if (!(page instanceof FoliosPageElement.SpreadHalf)) {
             pageFrame(painter, texture, width, height);
             return;
@@ -81,7 +88,7 @@ public final class Shapes {
     }
 
     private static float[][] slices(int[][] cuts, int from, int to, int length) {
-        java.util.List<float[]> pieces = new java.util.ArrayList<>();
+        List<float[]> pieces = new ArrayList<>();
         int fixed = 0;
         int stretched = 0;
         for (int[] cut : cuts) {
@@ -105,14 +112,14 @@ public final class Shapes {
         return pieces.toArray(new float[0][]);
     }
 
-    public static void acrossFold(FoliosPainter painter, net.minecraft.util.FormattedCharSequence line, int y, int color, boolean right) {
-        net.minecraft.client.gui.Font font = painter.font();
+    public static void acrossFold(FoliosPainter painter, FormattedCharSequence line, int y, int color, boolean right) {
+        Font font = painter.font();
         int width = painter.pageWidth();
         int gap = painter.flat() ? SCREEN_SPINE : 0;
         int offset = right ? width + gap / 2 : -gap / 2;
         int[] x = {width - font.width(line) / 2};
         line.accept((index, style, codePoint) -> {
-            net.minecraft.util.FormattedCharSequence letter = net.minecraft.util.FormattedCharSequence.codepoint(codePoint, style);
+            FormattedCharSequence letter = FormattedCharSequence.codepoint(codePoint, style);
             int letterWidth = font.width(letter);
             if ((x[0] + letterWidth / 2.0F >= width) == right) painter.text(letter, x[0] - offset, y, color);
             x[0] += letterWidth;
@@ -338,7 +345,7 @@ public final class Shapes {
         }
         octagon(painter, x, y, width, rim, face);
         int ink = picked ? palette.heading() : hovered ? palette.accent() : FoliosPalette.mix(palette.muted(), palette.text(), 0.35F);
-        net.minecraft.network.chat.Component text = net.minecraft.network.chat.Component.literal(number);
+        Component text = Component.literal(number);
         painter.text(text, x + (width - painter.font().width(text)) / 2 + 1, y + 2, ink);
     }
 

@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.mixin.client;
 
+import net.ixdarklord.folios.api.FoliosBookItem;
 import net.ixdarklord.folios.internal.client.handheld.SharedBooks;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.player.PlayerModel;
@@ -19,7 +20,7 @@ public abstract class SharedBookPoseMixin {
             return;
         }
         if (state.attackTime > 0) return;
-        if (state.rightHandItemStack.getItem() instanceof net.ixdarklord.folios.api.FoliosBookItem && state.rightArmPose == HumanoidModel.ArmPose.ITEM) model.rightArm.xRot -= 0.3F;
-        if (state.leftHandItemStack.getItem() instanceof net.ixdarklord.folios.api.FoliosBookItem && state.leftArmPose == HumanoidModel.ArmPose.ITEM) model.leftArm.xRot -= 0.3F;
+        if (state.rightHandItemStack.getItem() instanceof FoliosBookItem && state.rightArmPose == HumanoidModel.ArmPose.ITEM) model.rightArm.xRot -= 0.3F;
+        if (state.leftHandItemStack.getItem() instanceof FoliosBookItem && state.leftArmPose == HumanoidModel.ArmPose.ITEM) model.leftArm.xRot -= 0.3F;
     }
 }
