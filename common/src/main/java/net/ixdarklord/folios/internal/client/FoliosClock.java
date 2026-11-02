@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.client;
 
+import net.ixdarklord.folios.internal.client.screen.BookCache;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Util;
 
@@ -10,6 +11,7 @@ public final class FoliosClock {
     private FoliosClock() {}
 
     public static synchronized long millis() {
+        BookCache.timed();
         long now = Util.getMillis();
         if (paused()) stopped += now - last;
         last = now;

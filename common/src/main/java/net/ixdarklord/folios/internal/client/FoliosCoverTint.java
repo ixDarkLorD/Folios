@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.client;
 
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import net.ixdarklord.folios.api.FoliosBooks;
 import net.ixdarklord.folios.api.client.FoliosBook;
@@ -13,7 +14,7 @@ import org.jspecify.annotations.Nullable;
 
 public record FoliosCoverTint(boolean accent) implements ItemTintSource {
     public static final Identifier TYPE = Folios.rl("guide_cover");
-    public static final MapCodec<FoliosCoverTint> MAP_CODEC = com.mojang.serialization.Codec.STRING.optionalFieldOf("part", "cover")
+    public static final MapCodec<FoliosCoverTint> MAP_CODEC = Codec.STRING.optionalFieldOf("part", "cover")
             .xmap(part -> new FoliosCoverTint(part.equals("accent")), tint -> tint.accent ? "accent" : "cover");
     private static final int FALLBACK = 0xFF3A2E58;
     private static final int FALLBACK_ACCENT = 0xFF8B6CFF;

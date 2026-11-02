@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.ixdarklord.folios.api.FoliosBooks;
 import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.internal.client.handheld.SharedBooks;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.ixdarklord.folios.internal.core.FoliosRegistry;
 import net.minecraft.client.Minecraft;
@@ -14,11 +15,14 @@ import net.minecraft.client.renderer.item.ItemModels;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.resources.model.ResolvableModel;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ItemOwner;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4fc;
 import org.jspecify.annotations.Nullable;
+
+import java.util.Optional;
 
 public final class FoliosBookItemModel implements ItemModel {
     public static final Identifier TYPE = Folios.rl("guide_book");
@@ -40,7 +44,7 @@ public final class FoliosBookItemModel implements ItemModel {
         FoliosBook book = id != null ? FoliosLibrary.book(id) : null;
         Identifier model = book != null ? book.itemModel() : null;
         boolean thirdPerson = displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || displayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
-        if (thirdPerson && owner instanceof net.minecraft.world.entity.Entity holder && net.ixdarklord.folios.internal.client.handheld.SharedBooks.isShown(holder)) return;
+        if (thirdPerson && owner instanceof Entity holder && SharedBooks.isShown(holder)) return;
         if (item.has(FoliosRegistry.READING.get()) && thirdPerson && book != null && book.models().open() != null) model = book.models().open();
         if (model != null && !resolving) {
             resolving = true;
@@ -57,7 +61,7 @@ public final class FoliosBookItemModel implements ItemModel {
         else fallback.update(output, item, resolver, displayContext, level, owner, seed);
     }
 
-    public record Unbaked(ItemModel.Unbaked fallback, java.util.Optional<ItemModel.Unbaked> flat, java.util.Optional<ItemModel.Unbaked> gui) implements ItemModel.Unbaked {
+    public record Unbaked(ItemModel.Unbaked fallback, Optional<ItemModel.Unbaked> flat, Optional<ItemModel.Unbaked> gui) implements ItemModel.Unbaked {
         public static final MapCodec<Unbaked> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
                 ItemModels.CODEC.fieldOf("fallback").forGetter(Unbaked::fallback),
                 ItemModels.CODEC.optionalFieldOf("flat").forGetter(Unbaked::flat),

@@ -3,7 +3,11 @@ package net.ixdarklord.folios.internal;
 import net.ixdarklord.coolcatcore.api.event.v2.common.PlayerEvents;
 import net.ixdarklord.coolcatcore.api.event.v2.common.ServerTickEvents;
 import net.ixdarklord.coolcatcore.api.network.Network;
+import net.ixdarklord.coolcatcore.api.registry.ReloadListeners;
 import net.ixdarklord.folios.internal.client.FoliosClientNetwork;
+import net.ixdarklord.folios.internal.core.Folios;
+import net.ixdarklord.folios.internal.quest.QuestReading;
+import net.ixdarklord.folios.internal.quest.QuestTracker;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -69,9 +73,9 @@ public final class FoliosNetwork {
                 FoliosSourceData.sendAll(serverPlayer);
             }
         });
-        net.ixdarklord.folios.internal.quest.QuestTracker.init();
+        QuestTracker.init();
         Network.registerClientbound(FoliosPayloads.Source.TYPE, FoliosPayloads.Source.STREAM_CODEC, (payload, context) -> FoliosSourceData.receive(payload));
-        net.ixdarklord.coolcatcore.api.registry.ReloadListeners.registerServer(net.ixdarklord.folios.internal.core.Folios.rl("sources"), FoliosSourceData.INSTANCE);
+        ReloadListeners.registerServer(Folios.rl("sources"), FoliosSourceData.INSTANCE);
         ServerTickEvents.END.register(FoliosSourceData::tick);
         Network.registerServerbound(FoliosPayloads.Reading.TYPE, FoliosPayloads.Reading.STREAM_CODEC, (payload, context) -> {
             if (context.getPlayer() instanceof ServerPlayer player) reading(player, payload);
@@ -88,7 +92,7 @@ public final class FoliosNetwork {
     }
 
     public static void open(ServerPlayer player, Identifier book, @Nullable String entry) {
-        net.ixdarklord.folios.internal.quest.QuestReading.opened(player, book);
+        QuestReading.opened(player, book);
         if (Network.canPlayerReceive(player, FoliosPayloads.Open.TYPE)) Network.sendToPlayer(player, new FoliosPayloads.Open(book, Optional.ofNullable(entry)));
     }
 
@@ -164,7 +168,7 @@ public final class FoliosNetwork {
     }
 
     public static void changed(ServerPlayer player, AdvancementHolder advancement, boolean done) {
-        net.ixdarklord.folios.internal.quest.QuestTracker.due(player);
+        QuestTracker.due(player);
         if (!tracked(advancement.id())) return;
         Changes changes = CHANGED.computeIfAbsent(player.getUUID(), uuid -> new Changes(new LinkedHashSet<>(), new LinkedHashSet<>()));
         (done ? changes.undone : changes.done).remove(advancement.id());

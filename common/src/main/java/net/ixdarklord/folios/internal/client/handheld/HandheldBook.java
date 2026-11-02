@@ -2,11 +2,13 @@ package net.ixdarklord.folios.internal.client.handheld;
 
 import net.ixdarklord.coolcatcore.api.network.Network;
 import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.page.FoliosPopup;
 import net.ixdarklord.folios.internal.FoliosPayloads;
 import net.ixdarklord.folios.internal.client.FoliosReader;
 import net.ixdarklord.folios.internal.client.FoliosSession;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.screen.FoliosBar;
+import net.ixdarklord.folios.internal.client.screen.FoliosScreen;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -19,6 +21,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public final class HandheldBook extends FoliosReader {
     static final float RAISE_TICKS = 8;
@@ -42,7 +45,7 @@ public final class HandheldBook extends FoliosReader {
     float[] leftPointer = {Float.NaN, Float.NaN};
     float[] rightPointer = {Float.NaN, Float.NaN};
     @Nullable List<Component> tooltip;
-    net.ixdarklord.folios.api.client.page.@Nullable FoliosPopup popup;
+    @Nullable FoliosPopup popup;
     final Matrix4f leftClip = new Matrix4f();
     final Matrix4f rightClip = new Matrix4f();
     boolean placed;
@@ -64,7 +67,7 @@ public final class HandheldBook extends FoliosReader {
     public static void openScreen(FoliosBook book, FoliosSession session, FoliosBook.@Nullable Location at, @Nullable InteractionHand hand) {
         Minecraft minecraft = Minecraft.getInstance();
         if (hand == null || minecraft.player == null || current != null) {
-            minecraft.gui.setScreen(new net.ixdarklord.folios.internal.client.screen.FoliosScreen(book, session, at, hand));
+            minecraft.gui.setScreen(new FoliosScreen(book, session, at, hand));
             return;
         }
         HandheldBook opened = new HandheldBook(book, session, at, hand, true);
@@ -129,13 +132,13 @@ public final class HandheldBook extends FoliosReader {
         if (!screenShown) {
             if (open >= 1) {
                 screenShown = true;
-                minecraft.gui.setScreen(new net.ixdarklord.folios.internal.client.screen.FoliosScreen(book, session, this.here(), this.hand));
+                minecraft.gui.setScreen(new FoliosScreen(book, session, this.here(), this.hand));
             } else if (minecraft.gui.screen() != null) {
                 this.close();
             }
             return;
         }
-        if (!(minecraft.gui.screen() instanceof net.ixdarklord.folios.internal.client.screen.FoliosScreen screen)) {
+        if (!(minecraft.gui.screen() instanceof FoliosScreen screen)) {
             this.close();
             return;
         }
@@ -159,7 +162,7 @@ public final class HandheldBook extends FoliosReader {
         Spot now = held ? spot : null;
         boolean shut = held && !this.isOpen();
         if (now != null && now.chapter().length() > 200) return;
-        if (java.util.Objects.equals(now, shared) && shut == sharedShut) return;
+        if (Objects.equals(now, shared) && shut == sharedShut) return;
         shared = now;
         sharedShut = shut;
         Network.sendToServer(now != null ? new FoliosPayloads.ReadingAt(true, book.id(), now.chapter(), now.page(), shut)

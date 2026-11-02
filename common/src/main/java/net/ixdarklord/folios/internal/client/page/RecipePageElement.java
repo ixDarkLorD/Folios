@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.client.page;
 
+import net.ixdarklord.folios.api.client.page.FoliosIcon;
 import net.ixdarklord.folios.api.client.page.FoliosText;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -14,6 +15,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.util.context.ContextMap;
 import net.minecraft.world.item.ItemStack;
@@ -29,6 +31,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -52,7 +55,7 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
         Map<SlotDisplay, List<ItemStack>> resolved = new IdentityHashMap<>();
         int room = recipes.size() * BOX + (recipes.size() - 1) * GAP;
         boolean named = title.isEmpty() && recipes.size() == 1;
-        net.ixdarklord.folios.api.client.page.FoliosIcon icon = layout.titleIcon();
+        FoliosIcon icon = layout.titleIcon();
         return new Body(room + (named ? FoliosLayout.TITLE_HEIGHT : 0), (painter, y) -> {
             int top = y;
             if (named) {
@@ -80,15 +83,15 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
             Component message = displays == null
                     ? Component.translatableWithFallback("folios.recipe.loading", "Loading recipe...")
                     : Component.translatableWithFallback("folios.recipe.missing", "No recipe %s", id.toString());
-            List<net.minecraft.util.FormattedCharSequence> lines = painter.font().split(message, right - left - 10);
+            List<FormattedCharSequence> lines = painter.font().split(message, right - left - 10);
             int lineY = y + BOX / 2 - lines.size() * 5;
-            for (net.minecraft.util.FormattedCharSequence line : lines) {
+            for (FormattedCharSequence line : lines) {
                 painter.text(line, (left + right) / 2 - painter.font().width(line) / 2, lineY, palette.muted());
                 lineY += 10;
             }
             return;
         }
-        RecipeDisplay display = displays.get(Mth.positiveModulo((int) (painter.time() / (FoliosStack.CYCLE_SECONDS * 3)), displays.size()));
+        RecipeDisplay display = displays.get(Mth.positiveModulo((int) (painter.time(FoliosStack.CYCLE_SECONDS * 3) / (FoliosStack.CYCLE_SECONDS * 3)), displays.size()));
         int gridX = left + 7;
         int gridY = y + 4;
         int resultX = right - 30;
@@ -116,7 +119,7 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
                 flame(painter, x + 5, gridY + 22);
                 Shapes.slot(painter, x, gridY + 36);
                 slot(painter, resolved, furnace.fuel(), x, gridY + 36, false);
-                Component time = Component.literal(String.format(java.util.Locale.ROOT, "%.1fs", furnace.duration() / 20.0F)).withStyle(ChatFormatting.ITALIC);
+                Component time = Component.literal(String.format(Locale.ROOT, "%.1fs", furnace.duration() / 20.0F)).withStyle(ChatFormatting.ITALIC);
                 painter.text(time, x + 22, gridY + 41, palette.muted());
             }
             case StonecutterRecipeDisplay cutting -> {
@@ -138,7 +141,7 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
         box(painter, resultX - 4, top - 4, resultX + 26, top + 26, true);
         slot(painter, resolved, display.result(), resultX + 2, top + 2, true);
         if (!stations.isEmpty()) {
-            ItemStack station = stations.get(Mth.positiveModulo((int) (painter.time() / FoliosStack.CYCLE_SECONDS), stations.size()));
+            ItemStack station = stations.get(Mth.positiveModulo((int) (painter.time(FoliosStack.CYCLE_SECONDS) / FoliosStack.CYCLE_SECONDS), stations.size()));
             int middle = resultX + 11;
             int stationTop = top + 31;
             painter.fill(middle - 1, top + 26, middle + 1, stationTop, frame(palette, false));
@@ -170,7 +173,7 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
     private static void slot(FoliosPainter painter, Map<SlotDisplay, List<ItemStack>> resolved, SlotDisplay display, int x, int y, boolean count) {
         List<ItemStack> stacks = stacks(resolved, display);
         if (stacks.isEmpty()) return;
-        ItemStack stack = stacks.get(Mth.positiveModulo((int) (painter.time() / FoliosStack.CYCLE_SECONDS), stacks.size()));
+        ItemStack stack = stacks.get(Mth.positiveModulo((int) (painter.time(FoliosStack.CYCLE_SECONDS) / FoliosStack.CYCLE_SECONDS), stacks.size()));
         painter.item(count ? stack : stack.copyWithCount(1), x + 1, y + 1);
     }
 
