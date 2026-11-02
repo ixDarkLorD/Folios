@@ -5,6 +5,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.ixdarklord.folios.api.client.page.FoliosIcon;
+import net.ixdarklord.folios.internal.client.CoverEmblem;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -12,6 +14,7 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
@@ -212,12 +215,12 @@ public final class CoverModel {
         return new Face(texture, points, flat, json.has("tintindex") ? json.get("tintindex").getAsInt() : -1, normal, board, turn, state, gem);
     }
 
-    public void draw(PoseStack pose, SubmitNodeCollector collector, int light, boolean left, float width, float top, float bottom, float outside, int cover, int accent, float open, org.joml.@Nullable Matrix3f relight) {
-        this.draw(pose, collector, light, left, width, top, bottom, outside, cover, accent, open, relight, net.ixdarklord.folios.api.client.page.FoliosIcon.NONE, 1);
+    public void draw(PoseStack pose, SubmitNodeCollector collector, int light, boolean left, float width, float top, float bottom, float outside, int cover, int accent, float open, @Nullable Matrix3f relight) {
+        this.draw(pose, collector, light, left, width, top, bottom, outside, cover, accent, open, relight, FoliosIcon.NONE, 1);
     }
 
     public void draw(PoseStack pose, SubmitNodeCollector collector, int light, boolean left, float width, float top, float bottom, float outside, int cover, int accent, float open,
-                     org.joml.@Nullable Matrix3f relight, net.ixdarklord.folios.api.client.page.FoliosIcon icon, float iconSize) {
+                     @Nullable Matrix3f relight, FoliosIcon icon, float iconSize) {
         boolean inset = gem != null && !icon.isEmpty();
         boolean opened = open >= 0.999F;
         float unlatch = Math.max(0, Math.min(1, open / LATCH));
@@ -256,7 +259,7 @@ public final class CoverModel {
             pose.scale(sign * width / 16.0F, -(bottom - top) / 16.0F, -width / 16.0F);
             pose.translate(gem.x, gem.y, gem.z + 0.01F);
             if (flipped) pose.scale(-1, 1, 1);
-            net.ixdarklord.folios.internal.client.CoverEmblem.draw(pose, collector, light, icon, gem.side, iconSize, accent);
+            CoverEmblem.draw(pose, collector, light, icon, gem.side, iconSize, accent);
             pose.popPose();
         }
     }

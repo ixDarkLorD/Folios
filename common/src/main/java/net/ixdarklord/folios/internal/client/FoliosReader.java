@@ -1,6 +1,8 @@
 package net.ixdarklord.folios.internal.client;
 
+import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings;
 import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.FoliosLinks;
 import net.ixdarklord.folios.api.client.FoliosReveal;
 import net.ixdarklord.folios.api.client.FoliosReveals;
 import net.ixdarklord.folios.api.client.FoliosCategory;
@@ -11,11 +13,15 @@ import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.api.client.page.FoliosPopup;
 import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.page.QuestPageElement;
 import net.ixdarklord.folios.internal.client.page.Shapes;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.paint.EdgeFadePainter;
+import net.ixdarklord.folios.internal.client.paint.PixelIcon;
+import net.ixdarklord.folios.internal.client.paint.RevealPainter;
+import net.ixdarklord.folios.internal.client.screen.FoliosBar;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
@@ -25,16 +31,22 @@ import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Style;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.InteractionHand;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntFunction;
 
@@ -46,7 +58,7 @@ public class FoliosReader implements AbstractPainter.Navigator {
     public final FoliosBook book;
     public FoliosSession session;
     public final FoliosMemory memory;
-    private final long openedAt = net.ixdarklord.folios.internal.client.FoliosClock.millis();
+    private final long openedAt = FoliosClock.millis();
     private final Map<String, List<FoliosPageElement.Laid>> chapters = new HashMap<>();
     private final Deque<Spot> history = new ArrayDeque<>();
 
@@ -79,12 +91,12 @@ public class FoliosReader implements AbstractPainter.Navigator {
         this(book, session, at, null);
     }
 
-    public FoliosReader(FoliosBook book, FoliosSession session, FoliosBook.@Nullable Location at, net.minecraft.world.@Nullable InteractionHand hand) {
+    public FoliosReader(FoliosBook book, FoliosSession session, FoliosBook.@Nullable Location at, @Nullable InteractionHand hand) {
         this.book = book;
         this.session = session;
         this.memory = FoliosMemory.forReading(book, hand);
         READ_BEFORE.computeIfAbsent(book.id(), id -> {
-            java.util.Set<String> read = new java.util.HashSet<>();
+            Set<String> read = new HashSet<>();
             for (FoliosEntry entry : book.entries().values()) if (memory.isRead(entry.id())) read.add(entry.id());
             return read;
         });
@@ -134,17 +146,17 @@ public class FoliosReader implements AbstractPainter.Navigator {
     }
 
     public float seconds() {
-        return (net.ixdarklord.folios.internal.client.FoliosClock.millis() - openedAt) / 1000.0F;
+        return (FoliosClock.millis() - openedAt) / 1000.0F;
     }
 
-    private long revealAt = net.ixdarklord.folios.internal.client.FoliosClock.millis();
+    private long revealAt = FoliosClock.millis();
 
     protected boolean revealHeld() {
         return false;
     }
 
     public void reveal() {
-        revealAt = net.ixdarklord.folios.internal.client.FoliosClock.millis();
+        revealAt = FoliosClock.millis();
     }
 
     public FoliosReveal.Use revealOf(Spot at) {
@@ -158,7 +170,7 @@ public class FoliosReader implements AbstractPainter.Navigator {
     public FoliosPainter revealing(FoliosPainter painter, Spot at, boolean right) {
         FoliosPageElement.Laid page = this.page(at, right ? 1 : 0);
         float progress = this.revealProgress(at, page, right);
-        return progress >= 1 ? painter : net.ixdarklord.folios.internal.client.paint.RevealPainter.of(painter, FoliosReveals.get(this.revealOf(at).effect()),
+        return progress >= 1 ? painter : RevealPainter.of(painter, FoliosReveals.get(this.revealOf(at).effect()),
                 progress, this.revealX(page, right));
     }
 
@@ -174,7 +186,7 @@ public class FoliosReader implements AbstractPainter.Navigator {
             page.draw(painter);
             if (lit > 0) this.drawFlash(painter, lit, true);
         } else {
-            net.ixdarklord.folios.internal.client.paint.RevealPainter.draw(painter, page, FoliosReveals.get(this.revealOf(at).effect()), progress,
+            RevealPainter.draw(painter, page, FoliosReveals.get(this.revealOf(at).effect()), progress,
                     this.revealX(page, right));
         }
     }
@@ -274,7 +286,7 @@ public class FoliosReader implements AbstractPainter.Navigator {
 
     private float revealProgress(Spot at, FoliosPageElement.@Nullable Laid page, boolean right) {
         FoliosReveal.Use use = this.revealOf(at);
-        if (use.seconds() <= 0 || !net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings.transitions()
+        if (use.seconds() <= 0 || !StyleSettings.transitions()
                 || use.once() && this.seen(at) || use.unread() && memory.isSeen(this.spreadKey(at))) {
             if (at.equals(spot) && flip == null && !this.revealHeld()) this.shown(at);
             return 1;
@@ -282,7 +294,7 @@ public class FoliosReader implements AbstractPainter.Navigator {
         if (flip != null) return at.equals(flip.to()) ? 0 : 1;
         if (this.revealHeld() && at.equals(spot)) return 0;
         if (!at.equals(spot)) return 1;
-        float elapsed = (net.ixdarklord.folios.internal.client.FoliosClock.millis() - revealAt) / (use.seconds() * 1000.0F);
+        float elapsed = (FoliosClock.millis() - revealAt) / (use.seconds() * 1000.0F);
         boolean together = page instanceof FoliosPageElement.SpreadHalf;
         if (elapsed >= (together ? 1 : 2)) {
             SEEN.add(this.seenKey(at));
@@ -291,8 +303,8 @@ public class FoliosReader implements AbstractPainter.Navigator {
         return Math.max(0, Math.min(1, together || !right ? elapsed : elapsed - 1));
     }
 
-    private static final java.util.Set<String> SEEN = new java.util.HashSet<>();
-    private static final java.util.Map<net.minecraft.resources.Identifier, java.util.Set<String>> READ_BEFORE = new java.util.HashMap<>();
+    private static final Set<String> SEEN = new HashSet<>();
+    private static final Map<Identifier, Set<String>> READ_BEFORE = new HashMap<>();
 
     private String spreadKey(Spot at) {
         return at.chapter + "|" + at.page;
@@ -310,7 +322,7 @@ public class FoliosReader implements AbstractPainter.Navigator {
     private boolean seen(Spot at) {
         if (SEEN.contains(this.seenKey(at))) return true;
         if (!at.chapter.startsWith("entry:")) return false;
-        java.util.Set<String> before = READ_BEFORE.get(book.id());
+        Set<String> before = READ_BEFORE.get(book.id());
         return before != null && before.contains(at.chapter.substring(6));
     }
 
@@ -436,7 +448,7 @@ public class FoliosReader implements AbstractPainter.Navigator {
         if (complete) {
             TROPHY.rainbow(painter, left, y - 1, painter.time(), 0xFFE0B23A);
         } else {
-            net.ixdarklord.folios.internal.client.screen.FoliosBar.pixels(painter, TROPHY, left, y - 1, 9, cup);
+            FoliosBar.pixels(painter, TROPHY, left, y - 1, 9, cup);
             painter.fill(left + 2, y, left + 3, y + 3, FoliosPalette.mix(cup, 0xFFFFFFFF, 0.45F));
         }
         if (complete) {
@@ -492,8 +504,8 @@ public class FoliosReader implements AbstractPainter.Navigator {
         return lines;
     }
 
-    private static final net.ixdarklord.folios.internal.client.paint.PixelIcon TROPHY = net.ixdarklord.folios.internal.client.paint.PixelIcon.of("trophy", 9, 9);
-    private static final net.ixdarklord.folios.internal.client.paint.PixelIcon TROPHY_SHEEN = net.ixdarklord.folios.internal.client.paint.PixelIcon.of("trophy_sheen", 9, 9, 10);
+    private static final PixelIcon TROPHY = PixelIcon.of("trophy", 9, 9);
+    private static final PixelIcon TROPHY_SHEEN = PixelIcon.of("trophy_sheen", 9, 9, 10);
 
     private static void flourish(FoliosPainter painter, int middle, int y) {
         FoliosPalette palette = painter.palette();
@@ -550,7 +562,7 @@ public class FoliosReader implements AbstractPainter.Navigator {
                 }
             }
         }
-        listed.sort(java.util.Comparator.comparing((Listed one) -> !one.open()).thenComparing(one -> one.name().toLowerCase(java.util.Locale.ROOT)));
+        listed.sort(Comparator.comparing((Listed one) -> !one.open()).thenComparing(one -> one.name().toLowerCase(Locale.ROOT)));
         List<Row> rows = new ArrayList<>();
         for (Listed one : listed) rows.add(one.row());
         return this.rows(Component.translatableWithFallback("folios.index", "Index"), rows.isEmpty() ? "Nothing to list yet." : null, rows);
@@ -661,11 +673,17 @@ public class FoliosReader implements AbstractPainter.Navigator {
             FoliosLayout.title(painter, title, FoliosLayout.CONTENT_TOP);
             int right = painter.contentRight();
             int barX = right - Shapes.SCROLLBAR;
-            float now = painter.time();
-            if (eased[0] < 0 || now < eased[1]) eased[0] = target[0];
-            else eased[0] += (target[0] - eased[0]) * Math.min(1, (now - eased[1]) * 14);
-            if (Math.abs(target[0] - eased[0]) < 0.05F) eased[0] = target[0];
-            eased[1] = now;
+            if (eased[0] < 0) {
+                eased[0] = target[0];
+                eased[1] = Float.NaN;
+            }
+            if (eased[0] != target[0]) {
+                float now = painter.time();
+                if (Float.isNaN(eased[1]) || now < eased[1]) eased[1] = now;
+                eased[0] += (target[0] - eased[0]) * Math.min(1, (now - eased[1]) * 14);
+                if (Math.abs(target[0] - eased[0]) < 0.05F) eased[0] = target[0];
+                eased[1] = eased[0] == target[0] ? Float.NaN : now;
+            }
             float offset = eased[0];
             int windowTop = top - SCROLL_PAD;
             int windowBottom = top + room + SCROLL_PAD;
@@ -744,7 +762,7 @@ public class FoliosReader implements AbstractPainter.Navigator {
             painter.pop();
         }
         if (row.fresh.getAsBoolean()) {
-            net.ixdarklord.folios.internal.client.screen.FoliosBar.sparkle(painter, x + width - 9, y + 2, x * 0.037F, palette.accent() | 0xFF000000);
+            FoliosBar.sparkle(painter, x + width - 9, y + 2, x * 0.037F, palette.accent() | 0xFF000000);
         }
         Name name = fit(painter.font(), row.label, width - 2);
         int nameColor = row.link == null ? palette.muted() : over ? palette.heading() : palette.text();
@@ -890,7 +908,7 @@ public class FoliosReader implements AbstractPainter.Navigator {
             painter.pop();
         }
         if (name.cut() && painter.hovered(left + 20, textY, textRight - left - 20, name.height())) painter.tooltip(row.label);
-        if (fresh) net.ixdarklord.folios.internal.client.screen.FoliosBar.sparkle(painter, right - 7, textY, y * 0.037F,
+        if (fresh) FoliosBar.sparkle(painter, right - 7, textY, y * 0.037F,
                 palette.accent() | 0xFF000000);
         if (progress >= 0) {
             QuestPageElement.stepped(painter, left + 20, textY + 11 + name.extra(), right - left - 21, progress, steps, complete ? 0xFF4CAF50 : palette.accent());
@@ -925,13 +943,13 @@ public class FoliosReader implements AbstractPainter.Navigator {
             Component tooltip = back ? Component.translatableWithFallback("folios.back", "Back")
                     : Component.translatableWithFallback("folios.previous", "Previous page");
             boolean over = pressable && painter.action(x, y - 1, size, size + 1, tooltip, () -> this.turn(-1));
-            if (over) painter.tooltip(net.ixdarklord.folios.internal.client.FoliosTooltips.of(tooltip, back ? Component.translatableWithFallback("folios.tip.back", "Backspace or the side mouse button") : Component.translatableWithFallback("folios.tip.turn", "Arrow keys or the mouse wheel")));
+            if (over) painter.tooltip(FoliosTooltips.of(tooltip, back ? Component.translatableWithFallback("folios.tip.back", "Backspace or the side mouse button") : Component.translatableWithFallback("folios.tip.turn", "Arrow keys or the mouse wheel")));
             Shapes.button(painter, x, y, back ? Shapes.Icon.BACK : Shapes.Icon.PREVIOUS, over);
         } else if (right && spot.page + 2 < this.chapter(spot.chapter).size()) {
             int x = width - layout.buttonX() - size;
             Component next = Component.translatableWithFallback("folios.next", "Next page");
             boolean over = pressable && painter.action(x, y - 1, size, size + 1, next, () -> this.turn(1));
-            if (over) painter.tooltip(net.ixdarklord.folios.internal.client.FoliosTooltips.of(next, Component.translatableWithFallback("folios.tip.turn", "Arrow keys or the mouse wheel")));
+            if (over) painter.tooltip(FoliosTooltips.of(next, Component.translatableWithFallback("folios.tip.turn", "Arrow keys or the mouse wheel")));
             Shapes.button(painter, x, y, Shapes.Icon.NEXT, over);
         }
     }
@@ -1019,7 +1037,7 @@ public class FoliosReader implements AbstractPainter.Navigator {
         Spot from = spot;
         spot = next;
         if (next.chapter.startsWith("entry:")) memory.markRead(next.chapter.substring(6));
-        flip = new Flip(this.page(from, 0), this.page(from, 1), this.page(next, 0), this.page(next, 1), forward, net.ixdarklord.folios.internal.client.FoliosClock.millis(), from, next);
+        flip = new Flip(this.page(from, 0), this.page(from, 1), this.page(next, 0), this.page(next, 1), forward, FoliosClock.millis(), from, next);
     }
 
     public void moveAlong(Spot next) {
@@ -1029,7 +1047,7 @@ public class FoliosReader implements AbstractPainter.Navigator {
 
     public float flipProgress() {
         if (flip == null) return 1;
-        float progress = (net.ixdarklord.folios.internal.client.FoliosClock.millis() - flip.start()) / FLIP_MILLIS;
+        float progress = (FoliosClock.millis() - flip.start()) / FLIP_MILLIS;
         if (progress >= 1) {
             revealAt = flip.start() + (long) FLIP_MILLIS;
             flip = null;
@@ -1070,9 +1088,9 @@ public class FoliosReader implements AbstractPainter.Navigator {
         return !history.isEmpty();
     }
 
-    private net.ixdarklord.folios.api.client.page.@Nullable FoliosPopup pinned;
+    private @Nullable FoliosPopup pinned;
 
-    public net.ixdarklord.folios.api.client.page.@Nullable FoliosPopup pinned() {
+    public @Nullable FoliosPopup pinned() {
         return pinned;
     }
 
@@ -1094,7 +1112,7 @@ public class FoliosReader implements AbstractPainter.Navigator {
 
     @Override
     public void follow(String link) {
-        net.ixdarklord.folios.api.client.FoliosLinks.Found found = net.ixdarklord.folios.api.client.FoliosLinks.find(link);
+        FoliosLinks.Found found = FoliosLinks.find(link);
         if (found != null) {
             if (!found.kind().isOpen(book, found.target()) || found.kind().press(book, found.target())) return;
             pinned = session.popup(link);

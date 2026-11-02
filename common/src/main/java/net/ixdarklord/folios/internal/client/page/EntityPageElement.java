@@ -19,6 +19,7 @@ import net.minecraft.world.entity.EntityType;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public record EntityPageElement(Identifier entity, Optional<String> title, String text, float zoom, float spin, float yaw, int height) implements FoliosPageElement {
     public static final MapCodec<EntityPageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
@@ -31,7 +32,7 @@ public record EntityPageElement(Identifier entity, Optional<String> title, Strin
             Codec.intRange(40, 130).optionalFieldOf("height", 74).forGetter(EntityPageElement::height)
     ).apply(instance, EntityPageElement::new));
 
-    static final java.util.concurrent.atomic.AtomicInteger SHOWN_IDS = new java.util.concurrent.atomic.AtomicInteger();
+    static final AtomicInteger SHOWN_IDS = new AtomicInteger();
 
     @Override
     public List<Laid> lay(FoliosLayout layout) {

@@ -3,7 +3,13 @@ package net.ixdarklord.folios.internal.client.build;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import net.ixdarklord.folios.api.client.FoliosBook;
+import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.internal.client.FoliosTooltips;
+import net.ixdarklord.folios.internal.client.handheld.HandheldBook;
 import net.ixdarklord.folios.internal.client.paint.WorldPainter;
+import net.ixdarklord.folios.internal.client.screen.FoliosScreen;
+import net.ixdarklord.folios.internal.config.FoliosClientConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -11,6 +17,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.ixdarklord.coolcatcanvas.api.client.vfx.GhostBlocks;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
@@ -18,8 +25,11 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
@@ -31,6 +41,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -57,7 +68,7 @@ public final class BuildGuide {
     }
 
     private final Component name;
-    private final net.ixdarklord.folios.api.client.@Nullable FoliosBook book;
+    private final @Nullable FoliosBook book;
     private final List<Part> parts = new ArrayList<>();
     private final BlockPos size;
     private @Nullable BlockPos anchor;
@@ -95,10 +106,10 @@ public final class BuildGuide {
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.2F, 0.8F));
     }
 
-    private static net.ixdarklord.folios.api.client.@Nullable FoliosBook reading() {
+    private static @Nullable FoliosBook reading() {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.gui.screen() instanceof net.ixdarklord.folios.internal.client.screen.FoliosScreen screen) return screen.reader().book;
-        net.ixdarklord.folios.internal.client.handheld.HandheldBook held = net.ixdarklord.folios.internal.client.handheld.HandheldBook.current();
+        if (minecraft.gui.screen() instanceof FoliosScreen screen) return screen.reader().book;
+        HandheldBook held = HandheldBook.current();
         return held != null ? held.book : null;
     }
 
@@ -246,7 +257,7 @@ public final class BuildGuide {
         if (boxes.isEmpty()) return;
         PoseStack pose = new PoseStack();
         pose.mulPose(new Matrix4f(camera.viewRotationMatrix));
-        net.minecraft.client.renderer.SubmitNodeStorage collector = new net.minecraft.client.renderer.SubmitNodeStorage();
+        SubmitNodeStorage collector = new SubmitNodeStorage();
         Matrix4f matrix = new Matrix4f(pose.last().pose());
         collector.submitCustomGeometry(pose, RenderTypes.entityTranslucent(WorldPainter.WHITE), (last, consumer) -> {
             for (float[] box : boxes) box(consumer, matrix, last, box, Float.floatToRawIntBits(box[6]));
@@ -266,7 +277,7 @@ public final class BuildGuide {
 
     private static void face(VertexConsumer consumer, Matrix4f matrix, PoseStack.Pose normals, int color, float... corners) {
         for (int at = 0; at < 12; at += 3) {
-            org.joml.Vector3f point = matrix.transformPosition(corners[at], corners[at + 1], corners[at + 2], new org.joml.Vector3f());
+            Vector3f point = matrix.transformPosition(corners[at], corners[at + 1], corners[at + 2], new Vector3f());
             consumer.addVertex(point.x, point.y, point.z).setColor(color).setUv(0.5F, 0.5F).setOverlay(OverlayTexture.NO_OVERLAY)
                     .setLight(LightCoordsUtil.FULL_BRIGHT).setNormal(normals, 0, 1, 0);
         }
@@ -282,13 +293,13 @@ public final class BuildGuide {
         Minecraft minecraft = Minecraft.getInstance();
         if (guide == null || minecraft.gui.hud.isHidden()) return;
         Font font = minecraft.font;
-        net.ixdarklord.folios.api.client.FoliosBook book = guide.book;
+        FoliosBook book = guide.book;
         int cover = book != null ? 0xFF000000 | book.cover() : 0xFF3B2618;
-        int gilt = book != null ? net.ixdarklord.folios.internal.client.FoliosTooltips.titleColor(book) : 0xFFF2E6CC;
-        int frame = book != null ? 0xFF000000 | net.ixdarklord.folios.internal.client.FoliosTooltips.frameColor(book) : 0xFFE8C66A;
-        int rule = net.ixdarklord.folios.api.client.page.FoliosPalette.mix(frame, cover, 0.45F);
-        int quiet = book != null ? net.ixdarklord.folios.internal.client.FoliosTooltips.detailColor(book)
-                : net.ixdarklord.folios.api.client.page.FoliosPalette.mix(gilt, cover, 0.45F);
+        int gilt = book != null ? FoliosTooltips.titleColor(book) : 0xFFF2E6CC;
+        int frame = book != null ? 0xFF000000 | FoliosTooltips.frameColor(book) : 0xFFE8C66A;
+        int rule = FoliosPalette.mix(frame, cover, 0.45F);
+        int quiet = book != null ? FoliosTooltips.detailColor(book)
+                : FoliosPalette.mix(gilt, cover, 0.45F);
         int total = guide.parts.size();
         float progress = total == 0 ? 0 : guide.placed / (float) total;
         Component title = guide.name.copy().withStyle(ChatFormatting.BOLD);
@@ -308,17 +319,17 @@ public final class BuildGuide {
         wide = Math.min(Math.max(wide, font.width(hint)), graphics.guiWidth() / 3);
         int tall = 9 + 4 + 6 + 4 + rows * ROW + (more > 0 ? 10 : 0) + 4 + 9;
         int inset = 13;
-        var corner = net.ixdarklord.folios.internal.config.FoliosClientConfig.BUILD_PANEL_CORNER.get();
-        boolean right = corner == net.ixdarklord.folios.internal.config.FoliosClientConfig.Corner.TOP_RIGHT
-                || corner == net.ixdarklord.folios.internal.config.FoliosClientConfig.Corner.BOTTOM_RIGHT;
-        boolean bottom = corner == net.ixdarklord.folios.internal.config.FoliosClientConfig.Corner.BOTTOM_LEFT
-                || corner == net.ixdarklord.folios.internal.config.FoliosClientConfig.Corner.BOTTOM_RIGHT;
-        int offsetX = net.ixdarklord.folios.internal.config.FoliosClientConfig.BUILD_PANEL_X.get();
-        int offsetY = net.ixdarklord.folios.internal.config.FoliosClientConfig.BUILD_PANEL_Y.get();
+        var corner = FoliosClientConfig.BUILD_PANEL_CORNER.get();
+        boolean right = corner == FoliosClientConfig.Corner.TOP_RIGHT
+                || corner == FoliosClientConfig.Corner.BOTTOM_RIGHT;
+        boolean bottom = corner == FoliosClientConfig.Corner.BOTTOM_LEFT
+                || corner == FoliosClientConfig.Corner.BOTTOM_RIGHT;
+        int offsetX = FoliosClientConfig.BUILD_PANEL_X.get();
+        int offsetY = FoliosClientConfig.BUILD_PANEL_Y.get();
         int edge = inset - MARGIN;
         int x = right ? graphics.guiWidth() - edge - wide - offsetX : edge + offsetX;
         int y = bottom ? graphics.guiHeight() - edge - tall - offsetY : edge + offsetY;
-        if (book != null) net.ixdarklord.folios.internal.client.FoliosTooltips.frame(graphics, x, y, wide, tall, book, 255, inset);
+        if (book != null) FoliosTooltips.frame(graphics, x, y, wide, tall, book, 255, inset);
         else graphics.fill(x - 4, y - 4, x + wide + 4, y + tall + 4, 0xE0201810);
         int nameRoom = wide - 8 - font.width(count);
         graphics.text(font, fit(font, title, nameRoom), x, y, gilt, true);
@@ -326,8 +337,8 @@ public final class BuildGuide {
         int at = y + 9 + 3;
         int barLeft = x + 1;
         int barRight = x + wide - 1;
-        int outline = net.ixdarklord.folios.api.client.page.FoliosPalette.mix(frame, cover, 0.25F);
-        progressBar(graphics, barLeft, at - 1, barRight - barLeft, progress, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(frame, cover, 0.45F));
+        int outline = FoliosPalette.mix(frame, cover, 0.25F);
+        progressBar(graphics, barLeft, at - 1, barRight - barLeft, progress, FoliosPalette.mix(frame, cover, 0.45F));
         at += 6 + 4;
         row = 0;
         for (Need need : guide.needs.values()) {
@@ -349,7 +360,7 @@ public final class BuildGuide {
         for (int px = 0; px < wide; px++) {
             float t = 1 - Math.abs(px + 0.5F - wide / 2.0F) / (wide / 2.0F);
             int alpha = Math.round(255 * t * t * (3 - 2 * t));
-            if (alpha > 4) graphics.fill(x + px, at + 1, x + px + 1, at + 2, net.ixdarklord.folios.api.client.page.FoliosPalette.alpha(rule, alpha));
+            if (alpha > 4) graphics.fill(x + px, at + 1, x + px + 1, at + 2, FoliosPalette.alpha(rule, alpha));
         }
         fitted(graphics, font, hint, x, at + 4, wide, quiet);
     }
@@ -362,9 +373,9 @@ public final class BuildGuide {
         graphics.fill(x1, y + 2, x1 + 1, y1, 0x50000000);
         graphics.fill(x1, y1, x1 + 1, y1 + 1, 0x28000000);
         graphics.fill(x + 1, y, x1 - 1, y + 1, rim);
-        graphics.fill(x + 1, y1 - 1, x1 - 1, y1, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(rim, 0xFF000000, 0.3F));
+        graphics.fill(x + 1, y1 - 1, x1 - 1, y1, FoliosPalette.mix(rim, 0xFF000000, 0.3F));
         graphics.fill(x, y + 1, x + 1, y1 - 1, rim);
-        graphics.fill(x1 - 1, y + 1, x1, y1 - 1, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(rim, 0xFF000000, 0.2F));
+        graphics.fill(x1 - 1, y + 1, x1, y1 - 1, FoliosPalette.mix(rim, 0xFF000000, 0.2F));
         graphics.fill(x + 1, y + 1, x1 - 1, y1 - 1, groove);
         graphics.fill(x + 1, y + 1, x1 - 1, y + 2, 0xFF0A0707);
         int inside = width - 2;
@@ -378,14 +389,14 @@ public final class BuildGuide {
         int left = x + 1;
         int right = left + filled;
         graphics.fill(left, y + 1, right, y1 - 1, fill);
-        graphics.fill(left, y + 1, right, y + 2, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFFFFFFFF, 0.45F));
-        graphics.fill(left, y + 2, right, y + 3, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFFFFFFFF, 0.18F));
-        graphics.fill(left, y1 - 2, right, y1 - 1, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFF000000, 0.3F));
+        graphics.fill(left, y + 1, right, y + 2, FoliosPalette.mix(fill, 0xFFFFFFFF, 0.45F));
+        graphics.fill(left, y + 2, right, y + 3, FoliosPalette.mix(fill, 0xFFFFFFFF, 0.18F));
+        graphics.fill(left, y1 - 2, right, y1 - 1, FoliosPalette.mix(fill, 0xFF000000, 0.3F));
         for (int tenth = 1; tenth < 10; tenth++) {
             int at = left + inside * tenth / 10;
-            if (at < right - 1) graphics.fill(at, y + 3, at + 1, y1 - 2, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFF000000, 0.18F));
+            if (at < right - 1) graphics.fill(at, y + 3, at + 1, y1 - 2, FoliosPalette.mix(fill, 0xFF000000, 0.18F));
         }
-        if (filled < inside && filled > 2) graphics.fill(right - 2, y + 2, right - 1, y1 - 2, net.ixdarklord.folios.api.client.page.FoliosPalette.mix(fill, 0xFFFFFFFF, 0.6F));
+        if (filled < inside && filled > 2) graphics.fill(right - 2, y + 2, right - 1, y1 - 2, FoliosPalette.mix(fill, 0xFFFFFFFF, 0.6F));
     }
 
     private static void fitted(GuiGraphicsExtractor graphics, Font font, Component text, int x, int y, int room, int color) {
@@ -395,8 +406,8 @@ public final class BuildGuide {
             return;
         }
         float scale = Math.max(0.75F, room / (float) wide);
-        java.util.List<net.minecraft.util.FormattedCharSequence> lines = wide * scale <= room
-                ? java.util.List.of(text.getVisualOrderText()) : font.split(text, Math.round(room / scale));
+        List<FormattedCharSequence> lines = wide * scale <= room
+                ? List.of(text.getVisualOrderText()) : font.split(text, Math.round(room / scale));
         if (lines.size() > 2) lines = lines.subList(0, 2);
         float height = lines.size() * 9 * scale;
         graphics.pose().pushMatrix();
@@ -406,9 +417,9 @@ public final class BuildGuide {
         graphics.pose().popMatrix();
     }
 
-    private static net.minecraft.util.FormattedCharSequence fit(Font font, Component text, int room) {
+    private static FormattedCharSequence fit(Font font, Component text, int room) {
         if (font.width(text) <= room) return text.getVisualOrderText();
-        net.minecraft.network.chat.FormattedText head = font.substrByWidth(text, Math.max(0, room - font.width("…")));
-        return net.minecraft.locale.Language.getInstance().getVisualOrder(net.minecraft.network.chat.FormattedText.composite(head, net.minecraft.network.chat.FormattedText.of("…")));
+        FormattedText head = font.substrByWidth(text, Math.max(0, room - font.width("…")));
+        return Language.getInstance().getVisualOrder(FormattedText.composite(head, FormattedText.of("…")));
     }
 }

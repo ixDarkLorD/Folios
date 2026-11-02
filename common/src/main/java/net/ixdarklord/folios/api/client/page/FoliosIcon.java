@@ -2,6 +2,9 @@ package net.ixdarklord.folios.api.client.page;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.serialization.JsonOps;
+import net.ixdarklord.folios.internal.client.paint.ScaledGuiItems;
+import net.ixdarklord.folios.internal.client.paint.ScreenAtlas;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
@@ -36,13 +39,13 @@ public final class FoliosIcon {
         if (json.isJsonObject()) {
             JsonObject object = json.getAsJsonObject();
             if (object.has("texture")) return texture(Identifier.parse(object.get("texture").getAsString()));
-            if (object.has("item")) return of(FoliosStack.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, object.get("item")).getOrThrow());
+            if (object.has("item")) return of(FoliosStack.CODEC.parse(JsonOps.INSTANCE, object.get("item")).getOrThrow());
         }
         if (json.isJsonPrimitive()) {
             String text = json.getAsString();
             if (text.endsWith(".png")) return texture(Identifier.parse(text));
         }
-        return of(FoliosStack.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, json).getOrThrow());
+        return of(FoliosStack.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow());
     }
 
     public boolean isEmpty() {
@@ -57,26 +60,36 @@ public final class FoliosIcon {
         return texture;
     }
 
+    /** As {@link #draw(FoliosPainter, int, int)}, with no tooltip: for an icon that only decorates, like a page's heading. */
+    public void drawQuiet(FoliosPainter painter, int x, int y) {
+        if (texture != null) painter.texture(texture, x, y, 16, 16, 0, 0, 1, 1, 0xFFFFFFFF);
+        else if (stack != null) painter.quietItem(stack.at(painter.time(FoliosStack.CYCLE_SECONDS)), x, y);
+    }
+
     /** Draws it on a page, 16 pixels square at (x, y). */
     public void draw(FoliosPainter painter, int x, int y) {
         if (texture != null) painter.texture(texture, x, y, 16, 16, 0, 0, 1, 1, 0xFFFFFFFF);
-        else if (stack != null) painter.item(stack.at(painter.time()), x, y);
+        else if (stack != null) painter.item(stack.at(painter.time(FoliosStack.CYCLE_SECONDS)), x, y);
     }
 
     /** Draws it on a screen, {@code size} pixels square at (x, y), with no tooltip. */
     public void draw(GuiGraphicsExtractor graphics, int x, int y, int size, float seconds) {
         if (texture != null) {
-            graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0, 0, size, size, size, size, size, size);
-        } else if (stack != null) {
-            if (size == 16) {
-                graphics.fakeItem(stack.at(seconds), x, y);
-            } else {
-                graphics.pose().pushMatrix();
-                graphics.pose().translate(x, y);
-                graphics.pose().scale(size / 16.0F, size / 16.0F);
-                graphics.fakeItem(stack.at(seconds), 0, 0);
-                graphics.pose().popMatrix();
+            if (!ScreenAtlas.blit(graphics, texture, x, y, x + size, y + size, 0, 0, 1, 1, 0xFFFFFFFF)) {
+                graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0, 0, size, size, size, size, size, size);
             }
+        } else if (stack != null) {
+            ScaledGuiItems.sharp(() -> {
+                if (size == 16) {
+                    graphics.fakeItem(stack.at(seconds), x, y);
+                } else {
+                    graphics.pose().pushMatrix();
+                    graphics.pose().translate(x, y);
+                    graphics.pose().scale(size / 16.0F, size / 16.0F);
+                    graphics.fakeItem(stack.at(seconds), 0, 0);
+                    graphics.pose().popMatrix();
+                }
+            });
         }
     }
 }

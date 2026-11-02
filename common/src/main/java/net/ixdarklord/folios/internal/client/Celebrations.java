@@ -14,6 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.component.FireworkExplosion;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +81,7 @@ public final class Celebrations {
     }
 
     private static void play(Minecraft minecraft, FoliosBook book, CelebrationSettings settings, String event, Component heading, Component name,
-                             @org.jspecify.annotations.Nullable FoliosIcon icon) {
+                             @Nullable FoliosIcon icon) {
         boolean mastery = event.equals("mastery");
         if (settings.on(event, "toast")) FoliosToast.show(book, heading, name, icon, mastery);
         if (settings.on(event, "sound")) {
