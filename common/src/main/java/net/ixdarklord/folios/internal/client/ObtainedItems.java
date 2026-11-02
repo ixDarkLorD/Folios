@@ -6,6 +6,7 @@ import net.ixdarklord.folios.api.client.FoliosEntry;
 import net.ixdarklord.folios.api.client.FoliosLock;
 import net.ixdarklord.folios.api.client.FoliosObjective;
 import net.ixdarklord.folios.api.client.page.FoliosStack;
+import net.ixdarklord.folios.internal.client.page.TextPage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -86,8 +87,8 @@ public final class ObtainedItems {
                 add(items, entry.lock());
                 for (FoliosEntry.Page page : entry.pages()) {
                     add(items, page.lock());
-                    if (page.page() instanceof net.ixdarklord.folios.internal.client.page.TextPage text) {
-                        for (net.ixdarklord.folios.internal.client.page.TextPage.Item item : text.elements()) add(items, item.lock());
+                    if (page.page() instanceof TextPage text) {
+                        for (TextPage.Item item : text.elements()) add(items, item.lock());
                     }
                 }
                 for (FoliosObjective objective : entry.objectives()) items.addAll(objective.obtained());

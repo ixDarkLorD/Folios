@@ -15,6 +15,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 
 public final class RevealPainter implements FoliosPainter {
     private static final int CELL = 6;
@@ -279,6 +280,11 @@ public final class RevealPainter implements FoliosPainter {
     }
 
     @Override
+    public float time(float step) {
+        return painter.time(step);
+    }
+
+    @Override
     public boolean flat() {
         return painter.flat();
     }
@@ -314,7 +320,7 @@ public final class RevealPainter implements FoliosPainter {
     }
 
     @Override
-    public void tooltip(java.util.List<Component> lines) {
+    public void tooltip(List<Component> lines) {
         painter.tooltip(lines);
     }
 

@@ -8,6 +8,8 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * What a page draws with. The same calls draw it on a screen and on the pages of a book held in the world, so a page
  * is written once for every kind of book.
@@ -46,6 +48,14 @@ public interface FoliosPainter {
     /** Seconds since the book was opened: for what moves or cycles on a page. */
     float time();
 
+    /**
+     * The time, held still between multiples of {@code step} seconds: for something that changes only every
+     * {@code step} seconds, like an item cycling through a tag. Lets a painter keep what it drew until the next step.
+     */
+    default float time(float step) {
+        return ((float) Math.floor(this.time() / step) + 0.5F) * step;
+    }
+
     /** Whether the page is on a screen (true), or on a book in the world (false). */
     boolean flat();
 
@@ -74,6 +84,11 @@ public interface FoliosPainter {
      */
     default void item(ItemStack stack, int x, int y, int argb) {
         if ((argb >>> 24) >= 128) this.item(stack, x, y);
+    }
+
+    /** As {@link #item(ItemStack, int, int)}, with no tooltip and no link: for an icon that only decorates, like a page's heading. */
+    default void quietItem(ItemStack stack, int x, int y) {
+        this.item(stack, x, y);
     }
 
     /**
@@ -164,7 +179,7 @@ public interface FoliosPainter {
     void tooltip(Component text);
 
     /** A tooltip of several lines: a name, then lines saying more. */
-    void tooltip(java.util.List<Component> lines);
+    void tooltip(List<Component> lines);
 
     void tooltip(ItemStack stack);
 }

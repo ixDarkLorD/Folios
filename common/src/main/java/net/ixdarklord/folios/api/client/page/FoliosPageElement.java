@@ -1,5 +1,7 @@
 package net.ixdarklord.folios.api.client.page;
 
+import net.ixdarklord.folios.api.client.FoliosObjective;
+
 import java.util.List;
 
 /**
@@ -47,7 +49,7 @@ public interface FoliosPageElement {
      * What the page asks the player to do, if it is a quest: an entry with objectives shows how far along they are on
      * its row, and a toast says when they are all done.
      */
-    default List<net.ixdarklord.folios.api.client.FoliosObjective> objectives() {
+    default List<FoliosObjective> objectives() {
         return List.of();
     }
 

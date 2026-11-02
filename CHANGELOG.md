@@ -1,5 +1,24 @@
 # Changelog
 
+## v3.1.2 Release | Nov 2, 2026
+Far fewer draw calls for screen-style books, which are now drawn once and reused, sharper item icons, hand-held books that work with Iris shaders, and a fix for the outline of locked pages.
+
+### 🎨 Changes
+- Screen-style books send far fewer draw calls. Book textures, icons, sprites and plain fills share one texture atlas, and items scaled up or down are rendered once into one shared texture instead of one texture each. In testing, an open book went from 56 draws a frame to 22 and a recipe page from 59 to 22, about 210 to 260 FPS.
+- An open screen-style book is drawn once into an off-screen image and reused while nothing on it changes, instead of being rebuilt every frame. Page turns, 3D scenes, animated textures and obfuscated text are drawn live. The result is pixel-identical to drawing the book directly. In testing, the front page went from about 377 to 455 FPS on 26.1.2 and from about 648 to 820 FPS on 26.3.
+- Decoration built from many small fills is drawn once into a texture and reused instead of being rebuilt every frame: the page edges, the title bar's ribbon and fold pocket, the tab tucks, and a hand-held book's torn edges, leaf edges and sketch lines.
+- A page heading's icon no longer shows an item tooltip or link when hovered.
+- Unselected tab icons and page heading icons are drawn smaller. At GUI scale 3 and up they keep a whole number of screen pixels per texel (about 10 to 12 pixels); at GUI scale 1 and 2, where no such size exists, they are drawn as a 12-pixel image with evenly sized pixels.
+- API: `FoliosPainter.quietItem` and `FoliosIcon.drawQuiet` draw an item or icon with no tooltip or link.
+- API: `FoliosPainter.time(step)` returns the time held still between steps of `step` seconds, so something that only changes every few seconds (like an item cycling through a tag) lets the book reuse what it drew in between.
+
+### 🐛 Fixes
+- Hand-held books: hover and clicks line up with the book again when a shader pack is active through Iris ([#1](https://github.com/ixDarkLorD/Folios/issues/1)). The hit test now uses the live model-view matrix and the view bob Iris applies, instead of assuming vanilla's hand setup.
+- Hand-held books: the dark specks along the page edges are gone. They were gaps between edge strips stacked at different depths.
+- Items drawn at 16 pixels on a page sit on a whole screen pixel, so recipe slots no longer show stray dark pixels and lines.
+- Items drawn larger than 16 pixels are drawn at the nearest size where every texel is a whole number of screen pixels, on a whole pixel, so enlarged items no longer show uneven, smeared texels.
+- The dashed outline around a locked page or element is drawn with its dashes 4 pixels apart again; 3.1.1 drew them 16 pixels apart.
+
 ## v3.1.1 Release | Oct 30, 2026
 Fixes for locked elements and the performance of locked pages, and a clearer name for one lock key.
 

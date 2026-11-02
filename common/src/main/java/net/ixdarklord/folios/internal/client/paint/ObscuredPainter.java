@@ -63,6 +63,11 @@ public final class ObscuredPainter implements FoliosPainter {
     }
 
     @Override
+    public float time(float step) {
+        return painter.time(step);
+    }
+
+    @Override
     public boolean flat() {
         return painter.flat();
     }

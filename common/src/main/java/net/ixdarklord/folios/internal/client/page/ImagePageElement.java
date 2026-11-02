@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.client.page;
 
+import net.ixdarklord.folios.api.client.page.FoliosAlign;
 import net.ixdarklord.folios.api.client.page.FoliosText;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -33,7 +34,7 @@ public record ImagePageElement(List<Identifier> images, Optional<String> title, 
         for (Identifier image : images) room = Math.max(room, fit(image, inner)[1]);
         int pictures = room + (border ? 4 : 0);
         int frame = pictures + (images.size() > 1 ? ARROWS : 0);
-        net.ixdarklord.folios.api.client.page.FoliosAlign align = layout.alignment();
+        FoliosAlign align = layout.alignment();
         return layout.flow(title.orElse(null), frame, text, (painter, y) -> {
             FoliosPalette palette = painter.palette();
             int count = images.size();

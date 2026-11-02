@@ -19,6 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -161,9 +162,9 @@ public final class ScenePopups {
             if (shown[0] == null || shown[0].isEmpty()) {
                 Shapes.panel(painter, 0, 0, WIDTH, HEIGHT);
                 Component message = now.message() != null ? now.message() : Component.translatableWithFallback("folios.showcase.empty", "Nothing to show");
-                List<net.minecraft.util.FormattedCharSequence> lines = painter.font().split(message, WIDTH - 12);
+                List<FormattedCharSequence> lines = painter.font().split(message, WIDTH - 12);
                 int top = HEIGHT / 2 - lines.size() * 10 / 2;
-                for (net.minecraft.util.FormattedCharSequence line : lines) {
+                for (FormattedCharSequence line : lines) {
                     painter.text(line, WIDTH / 2 - painter.font().width(line) / 2, top, painter.palette().muted());
                     top += 10;
                 }
