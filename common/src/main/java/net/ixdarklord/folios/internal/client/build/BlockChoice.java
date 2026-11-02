@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Either;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.tags.TagKey;
@@ -61,7 +62,7 @@ public final class BlockChoice {
             });
             parsed.ifRight(result -> {
                 properties = result.vagueProperties();
-                if (result.tag() instanceof net.minecraft.core.HolderSet.Named<Block> named) tag = named.key();
+                if (result.tag() instanceof HolderSet.Named<Block> named) tag = named.key();
                 for (Holder<Block> holder : result.tag()) found.add(withProperties(holder.value().defaultBlockState(), properties));
                 found.sort(Comparator.comparing(each -> BuiltInRegistries.BLOCK.getKey(each.getBlock()).toString()));
             });

@@ -2,6 +2,7 @@ package net.ixdarklord.folios.api.client.page;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.serialization.JsonOps;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.folios.internal.compat.RenderPipelines;
 import net.minecraft.resources.ResourceLocation;
@@ -36,13 +37,13 @@ public final class FoliosIcon {
         if (json.isJsonObject()) {
             JsonObject object = json.getAsJsonObject();
             if (object.has("texture")) return texture(ResourceLocation.parse(object.get("texture").getAsString()));
-            if (object.has("item")) return of(FoliosStack.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, object.get("item")).getOrThrow());
+            if (object.has("item")) return of(FoliosStack.CODEC.parse(JsonOps.INSTANCE, object.get("item")).getOrThrow());
         }
         if (json.isJsonPrimitive()) {
             String text = json.getAsString();
             if (text.endsWith(".png")) return texture(ResourceLocation.parse(text));
         }
-        return of(FoliosStack.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, json).getOrThrow());
+        return of(FoliosStack.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow());
     }
 
     public boolean isEmpty() {
@@ -57,10 +58,16 @@ public final class FoliosIcon {
         return texture;
     }
 
+    /** As {@link #draw(FoliosPainter, int, int)}, with no tooltip: for an icon that only decorates, like a page's heading. */
+    public void drawQuiet(FoliosPainter painter, int x, int y) {
+        if (texture != null) painter.texture(texture, x, y, 16, 16, 0, 0, 1, 1, 0xFFFFFFFF);
+        else if (stack != null) painter.quietItem(stack.at(painter.time(FoliosStack.CYCLE_SECONDS)), x, y);
+    }
+
     /** Draws it on a page, 16 pixels square at (x, y). */
     public void draw(FoliosPainter painter, int x, int y) {
         if (texture != null) painter.texture(texture, x, y, 16, 16, 0, 0, 1, 1, 0xFFFFFFFF);
-        else if (stack != null) painter.item(stack.at(painter.time()), x, y);
+        else if (stack != null) painter.item(stack.at(painter.time(FoliosStack.CYCLE_SECONDS)), x, y);
     }
 
     /** Draws it on a screen, {@code size} pixels square at (x, y), with no tooltip. */

@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -340,6 +341,6 @@ public record FoliosBook(ResourceLocation id, String name, String subtitle, Stri
             }
         }
         // Remembers that the index was built, even when nothing is in it.
-        itemIndex.putIfAbsent(net.minecraft.world.item.Items.AIR, new Location("", 0));
+        itemIndex.putIfAbsent(Items.AIR, new Location("", 0));
     }
 }

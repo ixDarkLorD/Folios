@@ -4,17 +4,27 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle;
+import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings;
+import net.ixdarklord.coolcatcore.api.config.ConfigTheme;
+import net.ixdarklord.folios.api.FoliosBookItem;
 import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.api.client.FoliosCategory;
+import net.ixdarklord.folios.api.client.FoliosStyles;
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.api.client.page.FoliosText;
+import net.ixdarklord.folios.internal.client.CoverMarkers;
+import net.ixdarklord.folios.internal.client.FoliosClock;
+import net.ixdarklord.folios.internal.client.FoliosLibrary;
 import net.ixdarklord.folios.internal.client.FoliosReader;
+import net.ixdarklord.folios.internal.client.FoliosTooltips;
 import net.ixdarklord.folios.internal.client.screen.FoliosBar;
 import net.ixdarklord.folios.internal.client.page.Shapes;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.paint.WorldPainter;
+import net.ixdarklord.folios.internal.client.screen.FoliosScreen;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -31,6 +41,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.ixdarklord.folios.internal.compat.LightCoordsUtil;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -44,7 +57,7 @@ public final class HandheldRenderer {
     private static final int PW = FoliosLayout.PAGE_WIDTH;
     private static final int PH = FoliosLayout.PAGE_HEIGHT;
     private static float leaves = 17.5F;
-    private static org.joml.@Nullable Matrix3f relight;
+    private static @Nullable Matrix3f relight;
     private static float opened = 1;
     private static float board = 10.5F;
     private static final float LEAVES_SHUT = 17.5F;
@@ -57,7 +70,7 @@ public final class HandheldRenderer {
 
     public static FoliosPalette palette(FoliosBook book) {
         int accent = 0xFF000000 | book.accent();
-        if (net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle.mode() == net.ixdarklord.coolcatcore.api.config.ConfigTheme.Mode.DARK) {
+        if (ConfigStyle.mode() == ConfigTheme.Mode.DARK) {
             int bright = FoliosPalette.mix(accent, 0xFFF1E7D0, 0.3F);
             return book.colors().over(new FoliosPalette(0xFF2B2620, 0xFFE2D8C4, 0xFF9C8F7C, 0xFFF6EEDC, bright,
                     FoliosPalette.mix(bright, 0xFFFFFFFF, 0.25F), 0xFF353028, 0xFF4B4337), true);
@@ -71,7 +84,7 @@ public final class HandheldRenderer {
         HandheldBook book = HandheldBook.current();
         if (book == null) return false;
         Minecraft minecraft = Minecraft.getInstance();
-        com.mojang.blaze3d.systems.RenderSystem.setShaderLights(LIGHT_0, LIGHT_1);
+        RenderSystem.setShaderLights(LIGHT_0, LIGHT_1);
         float raise = book.raise(partialTick);
         float open = book.open(partialTick);
         leaves = LEAVES_SHUT;
@@ -130,12 +143,15 @@ public final class HandheldRenderer {
         if (open > 0.4F && !rightCovered) {
             WorldPainter right = painter(pose, collector, lit, palette, book, pressable ? book.rightPointer : null, book.rightHits);
             Shapes.pageFrame(right, book.book.textures().frame(), PW, PH, staticRight, true);
-            deckle(right, book, 0, PW, true);
             if (book.sketch) {
-                Shapes.foreEdge(right, PW, 1, PH - 1, true, LEAVES_SHOWN);
-                sketch(right, true);
+                right.baked("hand_right_sketch", () -> {
+                    deckle(right, book, 0, PW, true);
+                    Shapes.foreEdge(right, PW, 1, PH - 1, true, LEAVES_SHOWN);
+                    sketch(right, true);
+                });
             }
             else {
+                right.baked("hand_right", () -> deckle(right, book, 0, PW, true));
                 printed(right, book, staticRight, () -> {
                     if (staticRight != null) book.drawRevealed(right, staticRight, flip == null ? book.spot : flip.staticRight(), true);
                 });
@@ -157,9 +173,9 @@ public final class HandheldRenderer {
         if (!asItem) spine(pose, collector, light, book, -fold, coverAngle);
 
         pose.pushPose();
-        org.joml.Matrix3f shutNormals = new org.joml.Matrix3f(pose.last().normal()).rotateY(Mth.PI);
+        Matrix3f shutNormals = new Matrix3f(pose.last().normal()).rotateY(Mth.PI);
         pose.mulPose(Axis.YP.rotation(coverAngle));
-        relight = shutNormals.mul(new org.joml.Matrix3f(pose.last().normal()).invert());
+        relight = shutNormals.mul(new Matrix3f(pose.last().normal()).invert());
         if (!asItem) {
             body(pose, collector, light, book, true);
             paper(pose, collector, lit, palette, book.book.textures().page(), -PW, 0, 0, PH, 0, !(staticLeft instanceof FoliosPageElement.SpreadHalf));
@@ -170,10 +186,17 @@ public final class HandheldRenderer {
             book.leftClip.set(toClip).mul(pose.last().pose());
             WorldPainter left = painter(pose, collector, lit, palette, book, pressable ? book.leftPointer : null, book.leftHits);
             Shapes.pageFrame(left, book.book.textures().frame(), PW, PH, staticLeft, false);
-            deckle(left, book, 0, PW, false);
-            Shapes.foreEdge(left, 0, 1, PH - 1, false, LEAVES_SHOWN);
-            if (book.sketch) sketch(left, false);
-            else {
+            if (book.sketch) {
+                left.baked("hand_left_sketch", () -> {
+                    deckle(left, book, 0, PW, false);
+                    Shapes.foreEdge(left, 0, 1, PH - 1, false, LEAVES_SHOWN);
+                    sketch(left, false);
+                });
+            } else {
+                left.baked("hand_left", () -> {
+                    deckle(left, book, 0, PW, false);
+                    Shapes.foreEdge(left, 0, 1, PH - 1, false, LEAVES_SHOWN);
+                });
                 printed(left, book, staticLeft, () -> {
                     if (staticLeft != null) book.drawRevealed(left, staticLeft, flip == null ? book.spot : flip.staticLeft(), false);
                 });
@@ -231,11 +254,14 @@ public final class HandheldRenderer {
         if (pages && !(flip != null && angle < COVERED)) {
             WorldPainter right = painter(pose, collector, light, palette, reader, null, NO_HITS);
             Shapes.pageFrame(right, frame, PW, PH, staticRight, true);
-            deckle(right, reader, 0, PW, true);
             if (sketch) {
-                Shapes.foreEdge(right, PW, 1, PH - 1, true, LEAVES_SHOWN);
-                sketch(right, true);
+                right.baked("shared_right_sketch", () -> {
+                    deckle(right, reader, 0, PW, true);
+                    Shapes.foreEdge(right, PW, 1, PH - 1, true, LEAVES_SHOWN);
+                    sketch(right, true);
+                });
             } else {
+                right.baked("shared_right", () -> deckle(right, reader, 0, PW, true));
                 printed(right, reader, staticRight, () -> {
                     if (staticRight != null) reader.drawRevealed(right, staticRight, flip == null ? reader.spot : flip.staticRight(), true);
                 });
@@ -262,10 +288,17 @@ public final class HandheldRenderer {
             pose.translate(-PW, 0, 0);
             WorldPainter left = painter(pose, collector, light, palette, reader, null, NO_HITS);
             Shapes.pageFrame(left, frame, PW, PH, staticLeft, false);
-            deckle(left, reader, 0, PW, false);
-            Shapes.foreEdge(left, 0, 1, PH - 1, false, LEAVES_SHOWN);
-            if (sketch) sketch(left, false);
-            else {
+            if (sketch) {
+                left.baked("shared_left_sketch", () -> {
+                    deckle(left, reader, 0, PW, false);
+                    Shapes.foreEdge(left, 0, 1, PH - 1, false, LEAVES_SHOWN);
+                    sketch(left, false);
+                });
+            } else {
+                left.baked("shared_left", () -> {
+                    deckle(left, reader, 0, PW, false);
+                    Shapes.foreEdge(left, 0, 1, PH - 1, false, LEAVES_SHOWN);
+                });
                 printed(left, reader, staticLeft, () -> {
                     if (staticLeft != null) reader.drawRevealed(left, staticLeft, flip == null ? reader.spot : flip.staticLeft(), false);
                 });
@@ -282,18 +315,18 @@ public final class HandheldRenderer {
     }
 
     static boolean isSketched(FoliosBook book) {
-        return !book.style().equals(net.ixdarklord.folios.api.client.FoliosStyles.HANDHELD);
+        return !book.style().equals(FoliosStyles.HANDHELD);
     }
 
     private static final float SKETCH_FOLD = 0.42F;
 
     private static boolean item(PoseStack pose, SubmitNodeCollector collector, int light, LocalPlayer player, HandheldBook book) {
-        net.minecraft.world.item.ItemStack stack = player.getItemInHand(book.hand != null ? book.hand : InteractionHand.MAIN_HAND);
-        if (!(stack.getItem() instanceof net.ixdarklord.folios.api.FoliosBookItem)) return false;
+        ItemStack stack = player.getItemInHand(book.hand != null ? book.hand : InteractionHand.MAIN_HAND);
+        if (!(stack.getItem() instanceof FoliosBookItem)) return false;
         Minecraft minecraft = Minecraft.getInstance();
         pose.pushPose();
         pose.scale(1 / ITEM_FIT, 1 / ITEM_FIT, 1 / ITEM_FIT);
-        minecraft.getItemRenderer().renderStatic(player, stack, net.minecraft.world.item.ItemDisplayContext.NONE, false, pose, collector.buffers(), minecraft.level,
+        minecraft.getItemRenderer().renderStatic(player, stack, ItemDisplayContext.NONE, false, pose, collector.buffers(), minecraft.level,
                 light, OverlayTexture.NO_OVERLAY, 0);
         pose.popPose();
         return true;
@@ -319,7 +352,7 @@ public final class HandheldRenderer {
     }
 
     private static final int BAR_GAP = 5;
-    private static final int SCREEN_BORDER = net.ixdarklord.folios.internal.client.screen.FoliosScreen.BORDER;
+    private static final int SCREEN_BORDER = FoliosScreen.BORDER;
 
     private static void bar(PoseStack pose, SubmitNodeCollector collector, int light, HandheldBook book, Matrix4f toClip) {
         book.barHits.clear();
@@ -329,11 +362,11 @@ public final class HandheldRenderer {
             book.openSince = 0;
             return;
         }
-        long now = net.ixdarklord.folios.internal.client.FoliosClock.millis();
+        long now = FoliosClock.millis();
         if (book.openSince == 0) book.openSince = now;
-        float appear = net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings.transitions() ? easeOut(Math.min(1, (now - book.openSince) / 220.0F)) : 1;
+        float appear = StyleSettings.transitions() ? easeOut(Math.min(1, (now - book.openSince) / 220.0F)) : 1;
         pose.pushPose();
-        int wide = net.ixdarklord.folios.internal.client.screen.FoliosScreen.BOOK_WIDTH;
+        int wide = FoliosScreen.BOOK_WIDTH;
         pose.translate(-wide / 2.0F, -SCREEN_BORDER - BAR_GAP - FoliosBar.HEIGHT, 0);
         book.barClip.set(toClip).mul(pose.last().pose());
         WorldPainter painter = new WorldPainter(pose, collector, light, bar.palette(), book.session, book, book.seconds(),
@@ -565,7 +598,7 @@ public final class HandheldRenderer {
     private static final float HOVER_OUT = 0.55F;
 
     private static void tabs(WorldPainter painter, FoliosReader book) {
-        Shapes.foreEdge(painter, PW, 1, PH - 1, true, LEAVES_SHOWN);
+        painter.baked("tabs_edge", () -> Shapes.foreEdge(painter, PW, 1, PH - 1, true, LEAVES_SHOWN));
         int gap = book.book.layout().tabSpacing();
         int x = PW - 1 + book.book.layout().tabX();
         int foot = PH - 4;
@@ -636,7 +669,7 @@ public final class HandheldRenderer {
             else book.book.icon().draw(painter, 0, 0);
         }
         painter.pop();
-        if (over) painter.tooltip(net.ixdarklord.folios.internal.client.FoliosTooltips.of(name, book.tabDetail(category, part)));
+        if (over) painter.tooltip(FoliosTooltips.of(name, book.tabDetail(category, part)));
         return fromFoot ? top : top + tall;
     }
 
@@ -682,8 +715,8 @@ public final class HandheldRenderer {
         ResourceLocation ornaments = book.book.models().cover();
         CoverModel model = ornaments != null ? CoverModel.get(ornaments) : null;
         if (model != null) model.draw(pose, collector, light, left, PW + EDGE, -EDGE, PH + EDGE, -leaves - board - 0.26F, cover,
-                0xFF000000 | book.book.accent(), opened, left ? relight : null, net.ixdarklord.folios.internal.client.FoliosLibrary.coverIcon(book.book.id()),
-                net.ixdarklord.folios.internal.client.FoliosLibrary.coverIconSize(book.book.id()));
+                0xFF000000 | book.book.accent(), opened, left ? relight : null, FoliosLibrary.coverIcon(book.book.id()),
+                FoliosLibrary.coverIconSize(book.book.id()));
     }
 
     private static final float SPINE_OUT = 0.75F * (PW + EDGE) / 10;
@@ -836,11 +869,11 @@ public final class HandheldRenderer {
         if (relight != null) relight.transform(facing).normalize();
         WorldPainter painter = new WorldPainter(pose, collector, light, ink, book.session, book, book.seconds(), Float.NaN, Float.NaN, new ArrayList<>())
                 .lightAs(facing);
-        net.ixdarklord.folios.internal.client.CoverMarkers.Markers marked = net.ixdarklord.folios.internal.client.CoverMarkers.of(ITEM_MODEL);
-        for (net.ixdarklord.folios.internal.client.CoverMarkers.Lettering lettering : net.ixdarklord.folios.internal.client.CoverMarkers.layout(book.book, marked,
+        CoverMarkers.Markers marked = CoverMarkers.of(ITEM_MODEL);
+        for (CoverMarkers.Lettering lettering : CoverMarkers.layout(book.book, marked,
                 FoliosBook.CoverText.TITLE, FoliosBook.CoverText.SUBTITLE, 0)) {
-            if (lettering.kind() == net.ixdarklord.folios.internal.client.CoverMarkers.Kind.RULE) coverRule(painter, lettering, gilt);
-            else coverLines(painter, lettering, net.ixdarklord.folios.internal.client.CoverMarkers.color(lettering.kind(), gilt, cover));
+            if (lettering.kind() == CoverMarkers.Kind.RULE) coverRule(painter, lettering, gilt);
+            else coverLines(painter, lettering, CoverMarkers.color(lettering.kind(), gilt, cover));
         }
         painter.end();
         pose.popPose();
@@ -908,11 +941,11 @@ public final class HandheldRenderer {
 
     private static final float PLATE_FACE = 1.4F;
 
-    private static void coverRule(WorldPainter painter, net.ixdarklord.folios.internal.client.CoverMarkers.Lettering lettering, int gilt) {
+    private static void coverRule(WorldPainter painter, CoverMarkers.Lettering lettering, int gilt) {
         FoliosBook.CoverText.Line line = lettering.line();
         float across = (PW + EDGE) / 10.0F;
         float up = (PH + 2 * EDGE) / 14.0F;
-        float[][] runs = net.ixdarklord.folios.internal.client.CoverMarkers.rule(line);
+        float[][] runs = CoverMarkers.rule(line);
         int cx = Math.round((line.x() - 3) * across);
         int cy = Math.round(-EDGE + (15 - line.y()) * up);
         int thick = Math.max(1, Math.round(line.size() * up));
@@ -929,20 +962,20 @@ public final class HandheldRenderer {
         }
     }
 
-    static List<net.minecraft.network.chat.Component> plateText(HandheldBook book, float[] at) {
+    static List<Component> plateText(HandheldBook book, float[] at) {
         if (Float.isNaN(at[0])) return List.of();
         float across = (PW + EDGE) / 10.0F;
         float up = (PH + 2 * EDGE) / 14.0F;
-        net.ixdarklord.folios.internal.client.CoverMarkers.Kind plate = net.ixdarklord.folios.internal.client.CoverMarkers.plateAt(
-                net.ixdarklord.folios.internal.client.CoverMarkers.of(ITEM_MODEL), 3 + at[0] / across, 15 - (at[1] + EDGE) / up);
-        return plate == null ? List.of() : net.ixdarklord.folios.internal.client.CoverMarkers.plateText(book.book, plate);
+        CoverMarkers.Kind plate = CoverMarkers.plateAt(
+                CoverMarkers.of(ITEM_MODEL), 3 + at[0] / across, 15 - (at[1] + EDGE) / up);
+        return plate == null ? List.of() : CoverMarkers.plateText(book.book, plate);
     }
 
-    private static void coverLines(WorldPainter painter, net.ixdarklord.folios.internal.client.CoverMarkers.Lettering lettering, int color) {
+    private static void coverLines(WorldPainter painter, CoverMarkers.Lettering lettering, int color) {
         FoliosBook.CoverText.Line line = lettering.line();
         float across = (PW + EDGE) / 10.0F;
         float up = (PH + 2 * EDGE) / 14.0F;
-        net.ixdarklord.folios.internal.client.CoverMarkers.Rows rows = net.ixdarklord.folios.internal.client.CoverMarkers.rows(painter.font(), lettering);
+        CoverMarkers.Rows rows = CoverMarkers.rows(painter.font(), lettering);
         painter.push();
         painter.translate((line.x() - 3) * across, -EDGE + (15 - line.y()) * up);
         painter.scale(rows.scale() * up);

@@ -4,7 +4,9 @@ import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.api.client.FoliosEntry;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.api.client.page.FoliosPopup;
 import net.ixdarklord.folios.internal.client.FoliosSession;
+import net.ixdarklord.folios.internal.client.screen.BookCache;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -95,12 +97,20 @@ public abstract class AbstractPainter implements FoliosPainter {
 
     @Override
     public float time() {
+        BookCache.timed();
         return time;
     }
 
-    private net.ixdarklord.folios.api.client.page.@Nullable FoliosPopup popupHovered;
+    @Override
+    public float time(float step) {
+        float steps = (float) Math.floor(time / step);
+        BookCache.until((steps + 1) * step);
+        return (steps + 0.5F) * step;
+    }
 
-    public net.ixdarklord.folios.api.client.page.@Nullable FoliosPopup popup() {
+    private @Nullable FoliosPopup popupHovered;
+
+    public @Nullable FoliosPopup popup() {
         return popupHovered;
     }
 
@@ -172,7 +182,7 @@ public abstract class AbstractPainter implements FoliosPainter {
     public boolean link(int x, int y, int width, int height, String target) {
         boolean over = this.hovered(x, y, width, height);
         if (over) {
-            net.ixdarklord.folios.api.client.page.FoliosPopup popup = session.popup(target);
+            FoliosPopup popup = session.popup(target);
             if (popup != null) this.popupHovered = popup;
             else this.tooltip(session.tooltip(target));
         }
@@ -233,6 +243,11 @@ public abstract class AbstractPainter implements FoliosPainter {
     @Override
     public void item(ItemStack stack, int x, int y) {
         this.item(stack, x, y, -1);
+    }
+
+    @Override
+    public void quietItem(ItemStack stack, int x, int y) {
+        this.quietItem(stack, x, y, -1);
     }
 
     public void quietItem(ItemStack stack, int x, int y, int argb) {

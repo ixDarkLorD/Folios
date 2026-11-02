@@ -1,12 +1,17 @@
 package net.ixdarklord.foliostest;
 
+import net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle;
+import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings;
+import net.ixdarklord.coolcatcore.api.config.ConfigTheme;
 import net.ixdarklord.coolcatcore.api.event.v2.client.ClientTickEvents;
 import net.ixdarklord.folios.internal.client.FoliosClient;
 import net.ixdarklord.folios.internal.client.build.BlockChoice;
 import net.ixdarklord.folios.internal.client.build.BuildGuide;
+import net.ixdarklord.folios.internal.client.screen.FoliosScreen;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
+import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.BlockPos;
@@ -23,6 +28,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
 import org.lwjgl.glfw.GLFW;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -133,12 +139,12 @@ public final class FoliosAutotest {
                 if (minecraft.screen != null) minecraft.screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
             }),
             new Step(70, minecraft -> {
-                wasDark = net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle.mode() == net.ixdarklord.coolcatcore.api.config.ConfigTheme.Mode.DARK;
-                if (!wasDark) net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings.toggleThemeMode();
+                wasDark = ConfigStyle.mode() == ConfigTheme.Mode.DARK;
+                if (!wasDark) StyleSettings.toggleThemeMode();
             }),
             new Step(20, minecraft -> shot(minecraft, "14_handheld_dark")),
             new Step(1, minecraft -> {
-                if (!wasDark) net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings.toggleThemeMode();
+                if (!wasDark) StyleSettings.toggleThemeMode();
             }),
             // Finishing the handbook's quest: each objective, the quest and mastery celebrated (the test book turns them on).
             new Step(20, minecraft -> {
@@ -185,7 +191,7 @@ public final class FoliosAutotest {
             // Links with popups (one pinned as a press pins it), headings' dividers, and a page mentioned in chat.
             new Step(1, minecraft -> FoliosClient.open(HANDBOOK, "basics/popups", null)),
             new Step(70, minecraft -> {
-                if (minecraft.screen instanceof net.ixdarklord.folios.internal.client.screen.FoliosScreen screen) screen.reader().follow("multiblock:world/builds#hut");
+                if (minecraft.screen instanceof FoliosScreen screen) screen.reader().follow("multiblock:world/builds#hut");
             }),
             new Step(30, minecraft -> shot(minecraft, "29_popups")),
             new Step(1, minecraft -> FoliosClient.open(HANDBOOK, "basics/first_steps", null)),
@@ -197,7 +203,7 @@ public final class FoliosAutotest {
                 if (minecraft.screen != null) minecraft.screen.onClose();
                 minecraft.player.connection.sendChat("See [[foliostest:handbook|basics/first_steps|1]] and [[foliostest:handbook|world/locked_note|0]]");
             }),
-            new Step(30, minecraft -> minecraft.setScreen(new net.minecraft.client.gui.screens.ChatScreen(""))),
+            new Step(30, minecraft -> minecraft.setScreen(new ChatScreen(""))),
             new Step(20, minecraft -> shot(minecraft, "31_mention")),
             new Step(40, minecraft -> Runtime.getRuntime().halt(0))
     );
@@ -210,7 +216,7 @@ public final class FoliosAutotest {
 
     public static void init() {
         if (!Boolean.getBoolean("folios.autotest")) return;
-        org.slf4j.LoggerFactory.getLogger("FoliosAutotest").info("Autotest on");
+        LoggerFactory.getLogger("FoliosAutotest").info("Autotest on");
         ClientTickEvents.END.register(FoliosAutotest::tick);
     }
 

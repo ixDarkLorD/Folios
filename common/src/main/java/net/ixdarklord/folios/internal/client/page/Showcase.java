@@ -9,8 +9,12 @@ import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.internal.client.build.BlockChoice;
+import net.minecraft.client.gui.Font;
 import net.minecraft.core.BlockPos;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,9 +131,9 @@ final class Showcase {
                 return;
             }
             Component message = state.message() != null ? state.message() : Component.translatableWithFallback("folios.showcase.empty", "Nothing to show");
-            List<net.minecraft.util.FormattedCharSequence> lines = painter.font().split(message, contentWidth - 12);
+            List<FormattedCharSequence> lines = painter.font().split(message, contentWidth - 12);
             int top = y + height / 2 - lines.size() * 10 / 2;
-            for (net.minecraft.util.FormattedCharSequence line : lines) {
+            for (FormattedCharSequence line : lines) {
                 painter.text(line, painter.pageWidth() / 2 - painter.font().width(line) / 2, top, painter.palette().muted());
                 top += 10;
             }
@@ -164,16 +168,16 @@ final class Showcase {
         String counter = (window.current() + 1) + "/" + count;
         Component name = window.name(window.current());
         int room = right - left - Shapes.BUTTON - 8;
-        net.minecraft.client.gui.Font font = painter.font();
+        Font font = painter.font();
         if (name == null) {
             painter.centeredText(Component.literal(counter), painter.pageWidth() / 2, y + 2, palette.muted());
             return;
         }
         String suffix = "  " + counter;
         int nameRoom = room - font.width(suffix);
-        net.minecraft.network.chat.FormattedText fitted = font.width(name) <= nameRoom ? name
-                : net.minecraft.network.chat.FormattedText.composite(font.substrByWidth(name, Math.max(0, nameRoom - font.width("…"))), net.minecraft.network.chat.FormattedText.of("…"));
-        net.minecraft.util.FormattedCharSequence line = net.minecraft.locale.Language.getInstance().getVisualOrder(fitted);
+        FormattedText fitted = font.width(name) <= nameRoom ? name
+                : FormattedText.composite(font.substrByWidth(name, Math.max(0, nameRoom - font.width("…"))), FormattedText.of("…"));
+        FormattedCharSequence line = Language.getInstance().getVisualOrder(fitted);
         int wide = font.width(line) + font.width(suffix);
         int x = painter.pageWidth() / 2 - wide / 2;
         painter.text(line, x, y + 2, palette.text());

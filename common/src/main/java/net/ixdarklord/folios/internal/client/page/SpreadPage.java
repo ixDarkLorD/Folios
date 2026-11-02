@@ -1,6 +1,8 @@
 package net.ixdarklord.folios.internal.client.page;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -11,9 +13,13 @@ import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.api.client.page.FoliosText;
+import net.ixdarklord.folios.internal.client.FoliosLibrary;
 import net.ixdarklord.folios.internal.client.build.BlockChoice;
 import net.ixdarklord.folios.internal.client.build.BuildGuide;
+import net.ixdarklord.folios.internal.core.Folios;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -41,7 +47,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
                 Codec.STRING.fieldOf("id").forGetter(Node::id),
                 Codec.INT.fieldOf("x").forGetter(Node::x),
                 Codec.INT.fieldOf("y").forGetter(Node::y),
-                ExtraCodecs.JSON.optionalFieldOf("icon", new com.google.gson.JsonPrimitive("minecraft:book")).forGetter(Node::icon),
+                ExtraCodecs.JSON.optionalFieldOf("icon", new JsonPrimitive("minecraft:book")).forGetter(Node::icon),
                 Codec.STRING.optionalFieldOf("entry").forGetter(Node::entry),
                 FoliosText.CODEC.optionalFieldOf("label").forGetter(Node::label)
         ).apply(instance, Node::new));
@@ -108,7 +114,7 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
         List<FormattedCharSequence> under = caption.subList(0, Math.min(caption.size(), Math.max(0, (g.contentBottom() - textTop) / 10)));
         Window window = this.window(layout, top, g, blocks);
         Component needed = needs == null ? null : Component.translatableWithFallback("folios.requires", "Blocks needed")
-                .append(" \u00B7 " + needs.total()).withStyle(net.minecraft.ChatFormatting.ITALIC);
+                .append(" \u00B7 " + needs.total()).withStyle(ChatFormatting.ITALIC);
         TextPlate plate = heading == null && under.isEmpty() && needed == null ? null : new TextPlate(layout, g, heading, needed, listTop, under, textTop);
         return List.of(new Half(painter -> this.half(new Part(painter, 0, g), window, plate, needs, heading != null, top, listTop)),
                 new Half(painter -> this.half(new Part(painter, 1, g), window, plate, needs, heading != null, top, listTop)));
@@ -149,10 +155,10 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
             if (laidFor != colours || view.texts().isEmpty()) {
                 laidFor = colours;
                 view.clearText();
-                net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
+                Font font = Minecraft.getInstance().font;
                 float detail = FoliosLayout.SCENE_DETAIL;
                 if (heading != null) {
-                    FormattedCharSequence bold = heading.copy().withStyle(net.minecraft.ChatFormatting.BOLD).getVisualOrderText();
+                    FormattedCharSequence bold = heading.copy().withStyle(ChatFormatting.BOLD).getVisualOrderText();
                     view.text(bold, (g.pw() - font.width(bold) / 2.0F) * detail, FoliosLayout.CONTENT_TOP * detail, palette.heading(), detail);
                 }
                 if (needed != null) {
@@ -189,15 +195,15 @@ public record SpreadPage(Optional<String> title, String text, Optional<ResourceL
         ResourceLocation book = layout.book().id();
         String named = build.get();
         ResourceLocation id = named.contains(":") ? ResourceLocation.tryParse(named) : book.withPath(book.getPath() + "/builds/" + named);
-        com.google.gson.JsonObject json = id == null ? null : net.ixdarklord.folios.internal.client.FoliosLibrary.build(id);
+        JsonObject json = id == null ? null : FoliosLibrary.build(id);
         if (json == null) {
-            net.ixdarklord.folios.internal.core.Folios.LOGGER.error("A spread of the guide {} names the build {}, which it doesn't have", book, named);
+            Folios.LOGGER.error("A spread of the guide {} names the build {}, which it doesn't have", book, named);
             return Map.of();
         }
         try {
             return BuildPageElement.read(json);
         } catch (Exception e) {
-            net.ixdarklord.folios.internal.core.Folios.LOGGER.error("Couldn't read the build {} of the guide {}: {}", id, book, e.getMessage());
+            Folios.LOGGER.error("Couldn't read the build {} of the guide {}: {}", id, book, e.getMessage());
             return Map.of();
         }
     }

@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.quest;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import net.ixdarklord.coolcatcore.api.event.v2.common.PlayerEvents;
 import net.ixdarklord.coolcatcore.api.event.v2.common.ServerTickEvents;
@@ -41,7 +42,7 @@ public final class QuestTracker extends SimpleJsonResourceReloadListener {
     private static final Set<UUID> DUE = new HashSet<>();
 
     private QuestTracker() {
-        super(new com.google.gson.Gson(), "folios/quests");
+        super(new Gson(), "folios/quests");
     }
 
     public static void init() {

@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.mixin.client;
 
+import net.ixdarklord.folios.internal.client.handheld.HandheldRenderer;
 import net.ixdarklord.folios.internal.core.FoliosRegistry;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -15,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AvatarRendererMixin {
     @Inject(method = "getArmPose", at = @At("HEAD"), cancellable = true)
     private static void folios$reading(AbstractClientPlayer player, InteractionHand hand, CallbackInfoReturnable<HumanoidModel.ArmPose> cir) {
-        if (net.ixdarklord.folios.internal.client.handheld.HandheldRenderer.drawingHands) {
+        if (HandheldRenderer.drawingHands) {
             cir.setReturnValue(HumanoidModel.ArmPose.EMPTY);
             return;
         }
