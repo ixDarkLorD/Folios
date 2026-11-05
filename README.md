@@ -21,6 +21,10 @@
   <img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/folios/forge.svg" alt="Forge" height="26">
 </p>
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ixDarkLorD/Folios/26.3/.github/media/card.jpg" alt="Folios: guide books on the screen or in your hands" width="900">
+</p>
+
 <hr>
 
 ## ✨ About
@@ -66,6 +70,15 @@ assets/<namespace>/lang/en_us.json  the book's words
 
 The [documentation](https://ixdarklord.github.io/Folios/docs/) covers every key, page type and option.
 
+## 📸 Screenshots
+
+| | |
+|:-:|:-:|
+| <img src="https://raw.githubusercontent.com/ixDarkLorD/Folios/26.3/.github/media/handheld.jpg" alt="A handheld book open in the player's hands"><br>**A book in your hands** | <img src="https://raw.githubusercontent.com/ixDarkLorD/Folios/26.3/.github/media/recipes.jpg" alt="Crafting recipes in a screen book"><br>**Recipes, drawn as the game shows them** |
+| <img src="https://raw.githubusercontent.com/ixDarkLorD/Folios/26.3/.github/media/builds.jpg" alt="Two builds turning in 3D on the page"><br>**Builds turning on the page** | <img src="https://raw.githubusercontent.com/ixDarkLorD/Folios/26.3/.github/media/build-guide.jpg" alt="A half-built hut with its next layer shown as ghost blocks"><br>**Builds you can follow, layer by layer** |
+| <img src="https://raw.githubusercontent.com/ixDarkLorD/Folios/26.3/.github/media/quests.jpg" alt="A quest page with its objectives"><br>**Quests that tick themselves off** | <img src="https://raw.githubusercontent.com/ixDarkLorD/Folios/26.3/.github/media/map-dark.jpg" alt="A map spread on dark paper"><br>**Maps of linked places, on dark paper** |
+| <img src="https://raw.githubusercontent.com/ixDarkLorD/Folios/26.3/.github/media/text.jpg" alt="A page of formatted text"><br>**Text in a small Markdown** | <img src="https://raw.githubusercontent.com/ixDarkLorD/Folios/26.3/.github/media/cover.jpg" alt="A handheld book's cover"><br>**Covers lettered with the book's name** |
+
 ## 📦 Download
 
 | CurseForge | Modrinth |
@@ -81,11 +94,11 @@ Each Minecraft version lives on its own branch.
 
 | Minecraft | Loaders | Branch | Status | Latest |
 |---|---|---|:-:|---|
-| **26.3** | Fabric, NeoForge | [`26.3`](https://github.com/ixDarkLorD/Folios/tree/26.3) | ✅ Supported | 26.3+1.0 |
-| **26.2** | Fabric, NeoForge | [`26.2`](https://github.com/ixDarkLorD/Folios/tree/26.2) | ✅ Supported | 26.2+1.0 |
-| **26.1 – 26.1.2** | Fabric, NeoForge | [`26.1.2`](https://github.com/ixDarkLorD/Folios/tree/26.1.2) | ✅ Supported | 26.1.2+1.0 |
-| **1.21 – 1.21.1** | Fabric, NeoForge, Forge | [`1.21-1.21.1`](https://github.com/ixDarkLorD/Folios/tree/1.21-1.21.1) | ✅ Supported | 1.21.1+1.0 |
-| **1.20.1** | Fabric, Forge | [`1.20.1`](https://github.com/ixDarkLorD/Folios/tree/1.20.1) | ✅ Supported | 1.20.1+1.0 |
+| **26.3** | Fabric, NeoForge | [`26.3`](https://github.com/ixDarkLorD/Folios/tree/26.3) | ✅ Supported | 3.1.2 |
+| **26.2** | Fabric, NeoForge | [`26.2`](https://github.com/ixDarkLorD/Folios/tree/26.2) | ✅ Supported | 3.1.2 |
+| **26.1 – 26.1.2** | Fabric, NeoForge | [`26.1.2`](https://github.com/ixDarkLorD/Folios/tree/26.1.2) | ✅ Supported | 3.1.2 |
+| **1.21 – 1.21.1** | Fabric, NeoForge, Forge | [`1.21-1.21.1`](https://github.com/ixDarkLorD/Folios/tree/1.21-1.21.1) | ✅ Supported | 3.1.2 |
+| **1.20.1** | Fabric, Forge | [`1.20.1`](https://github.com/ixDarkLorD/Folios/tree/1.20.1) | ✅ Supported | 3.1.2 |
 
 ## 🔌 For mod developers
 
@@ -101,13 +114,13 @@ repositories {
 }
 
 dependencies {
-    compileOnly "net.ixdarklord.folios:folios-common:26.1.2+3.0"            // in the common module
-    implementation "net.ixdarklord.folios:folios-fabric:26.1.2+3.0"         // in each loader's module
-    implementation "net.ixdarklord.coolcatlib:coolcatlib-fabric:26.1.2-6"   // and CoolCatLib, which Folios runs on
+    compileOnly "net.ixdarklord.folios:folios-common:3.1.2+26.1.2"              // in the common module
+    implementation "net.ixdarklord.folios:folios-fabric:3.1.2+26.1.2"           // in each loader's module
+    implementation "net.ixdarklord.coolcatlib:coolcatlib-fabric:8.0.0+26.1.2"   // and CoolCatLib, which Folios runs on
 }
 ```
 
-Artifacts are `net.ixdarklord.folios:folios-<module>:<minecraft>+<version>`, the module being `common`, `fabric`,
+Artifacts are `net.ixdarklord.folios:folios-<module>:<version>+<minecraft>`, the module being `common`, `fabric`,
 `neoforge` or `forge`. On 1.21.1 and older, use `modImplementation` for the loader jars. The
 [Maven's page](https://ixdarklord.github.io/ModResources/) lists every version, ready to copy.
 
