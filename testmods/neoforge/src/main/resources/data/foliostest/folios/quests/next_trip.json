@@ -5,5 +5,10 @@
     { "obtained": "minecraft:iron_ingot", "label": "Smelt an iron ingot" },
     { "carried": "minecraft:torch", "goal": 16, "label": "Carry sixteen torches" }
   ],
-  "rewards": { "items": ["minecraft:emerald*8"] }
+  "rewards": {
+    "items": ["minecraft:emerald*8"],
+    "commands": ["/effect give @s minecraft:speed 30 1", "xp add @s 5 levels"],
+    "function": "foliostest:trip_reward",
+    "note": "Rewards, a burst of **speed** and five levels:"
+  }
 }

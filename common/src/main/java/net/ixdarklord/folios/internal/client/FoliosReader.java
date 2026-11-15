@@ -2,12 +2,12 @@ package net.ixdarklord.folios.internal.client;
 
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings;
 import net.ixdarklord.folios.api.client.FoliosBook;
-import net.ixdarklord.folios.api.client.FoliosLinks;
-import net.ixdarklord.folios.api.client.FoliosReveal;
-import net.ixdarklord.folios.api.client.FoliosReveals;
 import net.ixdarklord.folios.api.client.FoliosCategory;
 import net.ixdarklord.folios.api.client.FoliosEntry;
+import net.ixdarklord.folios.api.client.FoliosLinks;
 import net.ixdarklord.folios.api.client.FoliosObjective;
+import net.ixdarklord.folios.api.client.FoliosReveal;
+import net.ixdarklord.folios.api.client.FoliosReveals;
 import net.ixdarklord.folios.api.client.page.FoliosIcon;
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
@@ -22,11 +22,12 @@ import net.ixdarklord.folios.internal.client.paint.EdgeFadePainter;
 import net.ixdarklord.folios.internal.client.paint.PixelIcon;
 import net.ixdarklord.folios.internal.client.paint.RevealPainter;
 import net.ixdarklord.folios.internal.client.screen.FoliosBar;
+import net.ixdarklord.folios.internal.config.FoliosClientConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.client.gui.Font;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
@@ -864,6 +865,7 @@ public class FoliosReader implements AbstractPainter.Navigator {
         int left = FoliosLayout.CONTENT_LEFT;
         int height = this.height(row, right - left);
         boolean over = row.link != null && painter.action(left - 2, y, right - left + 4, height - 1, null, () -> this.follow(row.link));
+        if (row.link != null && painter instanceof AbstractPainter collecting) collecting.linkSpot(left - 2, y, right - left + 4, height - 1, row.link);
         if (over) highlight(painter, left - 2, y, right + 2, y + height - 1, FoliosPalette.alpha(palette.accent(), 0x2A));
         boolean barred = this.barred(row);
         Name name = this.name(row, painter.font(), right - left);
@@ -1031,7 +1033,34 @@ public class FoliosReader implements AbstractPainter.Navigator {
 
     private void moveTo(Spot next, boolean forward) {
         this.leaf(next, forward);
-        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0F));
+        Minecraft minecraft = Minecraft.getInstance();
+        minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0F));
+        if (FoliosClientConfig.NARRATE_PAGES.get() && minecraft.getNarrator().isActive()) minecraft.getNarrator().saySystemNow(this.narration());
+    }
+
+    public Component narration() {
+        String chapter = spot.chapter;
+        if (chapter.startsWith("entry:")) {
+            FoliosEntry entry = book.entry(chapter.substring(6));
+            if (entry == null) return book.title();
+            FoliosSession.EntryPages pages = session.entry(entry.id());
+            StringBuilder said = new StringBuilder(entry.title().getString());
+            int first = pages.source(spot.page);
+            int last = pages.source(Math.min(spot.page + 1, Math.max(0, pages.pages().size() - 1)));
+            for (int index = first; index <= last && index < entry.pages().size(); index++) {
+                FoliosEntry.Page page = entry.pages().get(index);
+                if (!page.lock().isOpen()) continue;
+                String text = FoliosText.plain(FoliosText.in(book, () -> page.page().searchText())).strip();
+                if (!text.isEmpty()) said.append(". ").append(text);
+            }
+            return Component.literal(said.toString());
+        }
+        if (chapter.startsWith("category:")) {
+            FoliosCategory category = book.category(chapter.substring(9));
+            return category != null ? category.title() : book.title();
+        }
+        if (chapter.startsWith("search:")) return Component.translatableWithFallback("folios.narration.search", "Search results for %s", chapter.substring(7));
+        return book.title();
     }
 
     private void leaf(Spot next, boolean forward) {

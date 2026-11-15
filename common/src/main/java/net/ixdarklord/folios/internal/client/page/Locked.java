@@ -19,7 +19,6 @@ import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
-
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;

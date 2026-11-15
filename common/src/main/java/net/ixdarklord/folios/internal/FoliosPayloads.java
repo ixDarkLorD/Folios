@@ -146,6 +146,19 @@ public final class FoliosPayloads {
         }
     }
 
+    public record ChooseBook(int hand, Identifier book) implements CustomPacketPayload {
+        public static final Type<ChooseBook> TYPE = new Type<>(Folios.rl("choose_book"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, ChooseBook> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, ChooseBook::hand,
+                Identifier.STREAM_CODEC, ChooseBook::book,
+                ChooseBook::new);
+
+        @Override
+        public Type<ChooseBook> type() {
+            return TYPE;
+        }
+    }
+
     public record Viewing(Identifier book, String entry) implements CustomPacketPayload {
         public static final Type<Viewing> TYPE = new Type<>(Folios.rl("viewing"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Viewing> STREAM_CODEC = StreamCodec.composite(

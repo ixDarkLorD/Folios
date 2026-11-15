@@ -1,7 +1,6 @@
 package net.ixdarklord.folios.internal.client.paint;
 
 import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
-import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.minecraft.client.gui.Font;
@@ -15,7 +14,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
-public final class EdgeFadePainter implements FoliosPainter {
+public final class EdgeFadePainter implements FoliosPainter, GuiSurface, TooltipMore, DrawsAbove {
     private static final float MARGIN = 14;
 
     private final FoliosPainter painter;
@@ -157,6 +156,11 @@ public final class EdgeFadePainter implements FoliosPainter {
     }
 
     @Override
+    public boolean gui(int x, int y, int width, int height, Draw draw) {
+        return GuiSurface.gui(painter, x, y, width, height, draw);
+    }
+
+    @Override
     public void push() {
         stack.push(new float[]{offsetX, offsetY, scale});
         painter.push();
@@ -254,5 +258,15 @@ public final class EdgeFadePainter implements FoliosPainter {
     @Override
     public void tooltip(ItemStack stack) {
         painter.tooltip(stack);
+    }
+
+    @Override
+    public void moreTooltip(List<Component> lines) {
+        TooltipMore.more(painter, lines);
+    }
+
+    @Override
+    public void above(Runnable draw) {
+        DrawsAbove.above(painter, draw);
     }
 }

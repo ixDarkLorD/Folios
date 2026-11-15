@@ -3,24 +3,36 @@ package net.ixdarklord.folios.internal.quest;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
+import net.ixdarklord.folios.internal.config.FoliosServerConfig;
+import net.ixdarklord.folios.internal.core.Folios;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.RegistryOps;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.LevelBasedPermissionSet;
+import net.minecraft.server.permissions.PermissionLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public record QuestRewards(List<ItemStack> items, List<Choice> random, int rolls) {
+public record QuestRewards(List<ItemStack> items, List<Choice> random, int rolls, List<String> commands, @Nullable Identifier function,
+                           @Nullable String note) {
     private static final int MOST = 32;
 
     public record Choice(ItemStack stack, int weight) {}
 
     public boolean isEmpty() {
-        return items.isEmpty() && random.isEmpty();
+        return items.isEmpty() && random.isEmpty() && commands.isEmpty() && function == null;
+    }
+
+    public boolean givesItems() {
+        return !items.isEmpty() || !random.isEmpty();
     }
 
     public static QuestRewards read(JsonObject json, HolderLookup.Provider registries) {
@@ -41,7 +53,18 @@ public record QuestRewards(List<ItemStack> items, List<Choice> random, int rolls
             }
         }
         int rolls = json.has("random_rolls") ? Math.max(1, Math.min(MOST, json.get("random_rolls").getAsInt())) : 1;
-        return new QuestRewards(List.copyOf(items), List.copyOf(random), rolls);
+        List<String> commands = new ArrayList<>();
+        if (json.has("commands")) {
+            JsonElement written = json.get("commands");
+            for (JsonElement element : written.isJsonArray() ? written.getAsJsonArray() : List.of(written)) {
+                String command = element.getAsString().strip();
+                if (command.startsWith("/")) command = command.substring(1);
+                if (!command.isEmpty() && commands.size() < MOST) commands.add(command);
+            }
+        }
+        Identifier function = json.has("function") ? Identifier.tryParse(json.get("function").getAsString().strip()) : null;
+        String note = json.has("note") ? json.get("note").getAsString() : null;
+        return new QuestRewards(List.copyOf(items), List.copyOf(random), rolls, List.copyOf(commands), function, note);
     }
 
     private static ItemStack stack(JsonElement json, HolderLookup.Provider registries) {
@@ -78,6 +101,29 @@ public record QuestRewards(List<ItemStack> items, List<Choice> random, int rolls
             drop.setNoPickUpDelay();
             drop.setTarget(player.getUUID());
             drop.level().addFreshEntity(drop);
+        }
+        this.run(player);
+    }
+
+    private void run(ServerPlayer player) {
+        if (commands.isEmpty() && function == null) return;
+        MinecraftServer server = player.level().getServer();
+        PermissionLevel level = PermissionLevel.byId(FoliosServerConfig.REWARD_PERMISSION.get());
+        CommandSourceStack source = player.createCommandSourceStack().withPermission(LevelBasedPermissionSet.forLevel(level)).withSuppressedOutput();
+        if (FoliosServerConfig.REWARD_COMMANDS.get()) {
+            int most = FoliosServerConfig.REWARD_MOST_COMMANDS.get();
+            for (int index = 0; index < commands.size(); index++) {
+                if (index >= most) {
+                    Folios.LOGGER.warn("Quest reward for {} has more than {} commands; the rest were skipped", player.getScoreboardName(), most);
+                    break;
+                }
+                server.getCommands().performPrefixedCommand(source, commands.get(index));
+            }
+        }
+        if (function != null && FoliosServerConfig.REWARD_FUNCTIONS.get()) {
+            var found = server.getFunctions().get(function);
+            if (found.isPresent()) server.getFunctions().execute(found.get(), source);
+            else Folios.LOGGER.warn("Quest reward function {} doesn't exist", function);
         }
     }
 

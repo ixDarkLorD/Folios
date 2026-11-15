@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.client;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.api.client.FoliosEntry;
 import net.ixdarklord.folios.api.client.page.FoliosText;
@@ -17,7 +18,6 @@ import net.minecraft.network.chat.contents.PlainTextContents;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
-import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

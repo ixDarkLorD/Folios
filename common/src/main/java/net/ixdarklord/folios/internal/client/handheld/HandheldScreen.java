@@ -15,6 +15,7 @@ import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.screen.FoliosBar;
 import net.ixdarklord.folios.internal.client.screen.FoliosScreen;
 import net.ixdarklord.folios.internal.client.screen.PopupLayer;
+import net.ixdarklord.folios.internal.config.FoliosClientConfig;
 import net.ixdarklord.folios.internal.mixin.client.MouseHandlerAccessor;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -49,6 +50,11 @@ public final class HandheldScreen extends Screen {
             field.setFocused(true);
         });
         book.bar = this.bar;
+    }
+
+    @Override
+    public Component getNarrationMessage() {
+        return FoliosClientConfig.NARRATE_PAGES.get() ? book.narration() : super.getNarrationMessage();
     }
 
     @Override
