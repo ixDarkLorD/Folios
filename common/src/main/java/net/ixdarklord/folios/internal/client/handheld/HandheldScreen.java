@@ -17,11 +17,11 @@ import net.ixdarklord.folios.internal.client.screen.FoliosScreen;
 import net.ixdarklord.folios.internal.client.screen.PopupLayer;
 import net.ixdarklord.folios.internal.compat.CompatScreen;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
-import net.ixdarklord.folios.internal.compat.RenderPipelines;
-import net.minecraft.client.KeyMapping;
-import net.minecraft.client.gui.screens.Screen;
 import net.ixdarklord.folios.internal.compat.KeyEvent;
 import net.ixdarklord.folios.internal.compat.MouseButtonEvent;
+import net.ixdarklord.folios.internal.compat.RenderPipelines;
+import net.ixdarklord.folios.internal.config.FoliosClientConfig;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
@@ -50,6 +50,11 @@ public final class HandheldScreen extends CompatScreen {
             field.setFocused(true);
         });
         book.bar = this.bar;
+    }
+
+    @Override
+    public Component getNarrationMessage() {
+        return FoliosClientConfig.NARRATE_PAGES.get() ? book.narration() : super.getNarrationMessage();
     }
 
     @Override

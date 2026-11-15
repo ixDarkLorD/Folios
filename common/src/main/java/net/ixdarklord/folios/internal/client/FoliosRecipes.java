@@ -1,6 +1,7 @@
 package net.ixdarklord.folios.internal.client;
 
 import net.ixdarklord.folios.internal.compat.RecipeDisplay;
+import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
@@ -20,10 +21,15 @@ public final class FoliosRecipes {
         if (displays != null) return displays;
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) return null;
-        displays = level.getRecipeManager().byKey(recipe)
-                .map(holder -> RecipeDisplay.of(holder.value(), level.registryAccess()))
-                .map(List::of)
-                .orElse(List.of());
+        try {
+            displays = level.getRecipeManager().byKey(recipe)
+                    .map(holder -> RecipeDisplay.of(holder.value(), level.registryAccess()))
+                    .map(List::of)
+                    .orElse(List.of());
+        } catch (RuntimeException failure) {
+            Folios.LOGGER.warn("Couldn't read recipe {}", recipe, failure);
+            displays = List.of();
+        }
         KNOWN.put(recipe, displays);
         return displays;
     }

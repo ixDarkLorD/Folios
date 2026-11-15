@@ -14,7 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.Arrays;
 import java.util.List;
 
-public final class ScreenPainter extends AbstractPainter {
+public final class ScreenPainter extends AbstractPainter implements GuiSurface {
     private static final int UV = 1 << 14;
     private final GuiGraphicsExtractor graphics;
 
@@ -129,6 +129,25 @@ public final class ScreenPainter extends AbstractPainter {
     @Override
     protected void popped() {
         graphics.pose().popMatrix();
+    }
+
+    @Override
+    public boolean gui(int x, int y, int width, int height, Draw draw) {
+        BookCache.live();
+        float pointerX = this.localPointerX();
+        float pointerY = this.localPointerY();
+        int mouseX = Float.isNaN(pointerX) ? -10000 : (int) Math.floor(pointerX - x);
+        int mouseY = Float.isNaN(pointerY) ? -10000 : (int) Math.floor(pointerY - y);
+        graphics.enableScissor(x, y, x + width, y + height);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(x, y);
+        try {
+            draw.draw(graphics, mouseX, mouseY);
+        } finally {
+            graphics.pose().popMatrix();
+            graphics.disableScissor();
+        }
+        return true;
     }
 
     @Override

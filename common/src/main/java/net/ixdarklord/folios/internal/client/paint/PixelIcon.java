@@ -2,9 +2,9 @@ package net.ixdarklord.folios.internal.client.paint;
 
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
-import net.ixdarklord.folios.internal.core.Folios;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.folios.internal.compat.RenderPipelines;
+import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 

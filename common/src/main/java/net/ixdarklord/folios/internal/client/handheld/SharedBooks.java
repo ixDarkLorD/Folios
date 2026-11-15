@@ -8,16 +8,15 @@ import net.ixdarklord.folios.internal.FoliosPayloads;
 import net.ixdarklord.folios.internal.client.FoliosLibrary;
 import net.ixdarklord.folios.internal.client.FoliosReader;
 import net.ixdarklord.folios.internal.client.FoliosSession;
+import net.ixdarklord.folios.internal.compat.SubmitNodeCollector;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.ixdarklord.folios.internal.compat.SubmitNodeCollector;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.Util;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;

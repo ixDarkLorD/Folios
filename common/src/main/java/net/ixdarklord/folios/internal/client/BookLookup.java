@@ -3,9 +3,10 @@ package net.ixdarklord.folios.internal.client;
 import net.ixdarklord.folios.api.FoliosBooks;
 import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.api.client.FoliosEntry;
+import net.ixdarklord.folios.internal.client.viewer.Viewers;
+import net.ixdarklord.folios.internal.config.FoliosClientConfig;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
@@ -33,6 +34,7 @@ public final class BookLookup {
     private static long heldSince = -1;
     private static @Nullable ClientTooltipComponent pending;
     private static boolean held;
+    private static boolean fromViewer;
 
     public static @Nullable Found find(ItemStack stack) {
         LocalPlayer player = Minecraft.getInstance().player;
@@ -40,7 +42,13 @@ public final class BookLookup {
         Inventory inventory = player.getInventory();
         Found found = book(inventory.getSelected(), stack);
         for (int slot = 0; found == null && slot < inventory.getContainerSize(); slot++) found = book(inventory.getItem(slot), stack);
-        return found;
+        if (found != null || !FoliosClientConfig.LOOKUP_ANY_BOOK.get()) return found;
+        for (FoliosBook book : FoliosLibrary.books().values()) {
+            if (!FoliosLibrary.isListed(book.id()) || !FoliosLibrary.isLookedUpAnywhere(book.id())) continue;
+            found = book(FoliosBooks.createStack(book.id()), stack);
+            if (found != null) return found;
+        }
+        return null;
     }
 
     private static @Nullable Found book(ItemStack carried, ItemStack about) {
@@ -69,6 +77,7 @@ public final class BookLookup {
     public static @Nullable ClientTooltipComponent takePending() {
         ClientTooltipComponent taken = pending;
         pending = null;
+        if (taken == null && fromViewer && shown != null) return new LookupTooltip(shown);
         return taken;
     }
 
@@ -83,7 +92,17 @@ public final class BookLookup {
 
     public static void tick(Minecraft minecraft) {
         long now = FoliosClock.millis();
-        if (shown == null || now - shownAt > HOVER_MILLIS || !(minecraft.screen instanceof AbstractContainerScreen<?>)) {
+        if (minecraft.screen != null && Viewers.any() && (shown == null || fromViewer || now - shownAt > HOVER_MILLIS)) {
+            ItemStack viewed = Viewers.hovered();
+            fromViewer = false;
+            if (!viewed.isEmpty()) {
+                hovering(viewed);
+                fromViewer = shown != null && pending != null;
+                pending = null;
+            }
+        }
+        if (shown == null || now - shownAt > HOVER_MILLIS || minecraft.screen == null) {
+            fromViewer = false;
             shown = null;
             heldSince = -1;
             return;

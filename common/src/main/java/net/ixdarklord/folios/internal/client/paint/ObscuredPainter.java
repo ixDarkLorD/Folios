@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class ObscuredPainter implements FoliosPainter {
+public final class ObscuredPainter implements FoliosPainter, TooltipMore, DrawsAbove {
     private static final ResourceLocation RUNES = ResourceLocation.withDefaultNamespace("alt");
 
     private final FoliosPainter painter;
@@ -181,4 +181,14 @@ public final class ObscuredPainter implements FoliosPainter {
 
     @Override
     public void tooltip(ItemStack stack) {}
+
+    @Override
+    public void moreTooltip(List<Component> lines) {
+        TooltipMore.more(painter, lines);
+    }
+
+    @Override
+    public void above(Runnable draw) {
+        DrawsAbove.above(painter, draw);
+    }
 }

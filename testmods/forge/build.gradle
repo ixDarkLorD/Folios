@@ -18,3 +18,9 @@ loom {
         }
     }
 }
+
+// A recipe viewer in the dev run, picked with -Pdev_viewer=jei.
+// REI and EMI have no Forge build for 1.21.1, and the catalog lists no Forge JEI.
+dependencies {
+    if (project.findProperty("dev_viewer") == "jei") modLocalRuntime "mezz.jei:jei-1.21.1-forge:${libs.versions.jei.get()}"
+}

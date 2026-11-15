@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "minecraft:book" },
+    { "item": "minecraft:bookshelf" }
+  ],
+  "result": {
+    "id": "folios:guide_book",
+    "components": {
+      "folios:guide_book": "folios:library"
+    }
+  }
+}

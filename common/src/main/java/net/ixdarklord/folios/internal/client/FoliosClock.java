@@ -1,8 +1,8 @@
 package net.ixdarklord.folios.internal.client;
 
 import net.ixdarklord.folios.internal.client.screen.BookCache;
-import net.minecraft.client.Minecraft;
 import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
 
 public final class FoliosClock {
     private static long last = Util.getMillis();

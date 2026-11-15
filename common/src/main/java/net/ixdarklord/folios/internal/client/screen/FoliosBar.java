@@ -1,8 +1,5 @@
 package net.ixdarklord.folios.internal.client.screen;
 
-import net.ixdarklord.folios.internal.client.FoliosClock;
-import net.ixdarklord.folios.internal.client.FoliosTooltips;
-import net.ixdarklord.folios.internal.client.paint.PixelIcon;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyledEditBox;
@@ -12,20 +9,22 @@ import net.ixdarklord.folios.api.client.FoliosCategory;
 import net.ixdarklord.folios.api.client.FoliosEntry;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.internal.client.FoliosClock;
 import net.ixdarklord.folios.internal.client.FoliosReader;
+import net.ixdarklord.folios.internal.client.FoliosTooltips;
+import net.ixdarklord.folios.internal.client.paint.PixelIcon;
 import net.ixdarklord.folios.internal.client.paint.ScreenPainter;
+import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.locale.Language;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
-import net.minecraft.Util;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

@@ -7,37 +7,34 @@ import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyledEditBox;
 import net.ixdarklord.coolcatcore.api.config.ConfigTheme;
 import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.api.client.FoliosCategory;
-import net.ixdarklord.folios.api.client.FoliosEntry;
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
 import net.ixdarklord.folios.api.client.page.FoliosPopup;
 import net.ixdarklord.folios.internal.client.FoliosClock;
+import net.ixdarklord.folios.internal.client.FoliosLibrary;
 import net.ixdarklord.folios.internal.client.FoliosMentions;
 import net.ixdarklord.folios.internal.client.FoliosReader;
 import net.ixdarklord.folios.internal.client.FoliosSession;
-import net.ixdarklord.folios.internal.client.FoliosLibrary;
 import net.ixdarklord.folios.internal.client.FoliosTooltips;
 import net.ixdarklord.folios.internal.client.PageSize;
-import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.page.Shapes;
+import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.paint.PixelIcon;
 import net.ixdarklord.folios.internal.client.paint.ScreenPainter;
 import net.ixdarklord.folios.internal.compat.CompatScreen;
-import net.minecraft.ChatFormatting;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
 import net.ixdarklord.folios.internal.compat.KeyEvent;
 import net.ixdarklord.folios.internal.compat.MouseButtonEvent;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.ixdarklord.folios.internal.compat.RenderPipelines;
+import net.ixdarklord.folios.internal.config.FoliosClientConfig;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
-import net.minecraft.Util;
 import net.minecraft.world.InteractionHand;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -65,6 +62,11 @@ public final class FoliosScreen extends CompatScreen {
 
     public FoliosReader reader() {
         return reader;
+    }
+
+    @Override
+    public Component getNarrationMessage() {
+        return FoliosClientConfig.NARRATE_PAGES.get() ? reader.narration() : super.getNarrationMessage();
     }
     private final FoliosBook book;
     private final long openedAt = FoliosClock.millis();
@@ -124,8 +126,10 @@ public final class FoliosScreen extends CompatScreen {
         int chromeHeight = BORDER * 2 + BAR + BAR_GAP + 8;
         factor = Math.min(factor, Math.min((this.width / drawn - chromeWidth) / 2.0F / FoliosLayout.PAGE_WIDTH,
                 (this.height / drawn - chromeHeight) / (float) FoliosLayout.PAGE_HEIGHT));
-        this.pw = PageSize.width(factor);
-        this.ph = PageSize.height(factor);
+        float text = PageSize.textScale();
+        float laid = text > 1 ? Math.max(1, factor / text) : factor;
+        this.pw = PageSize.width(laid);
+        this.ph = PageSize.height(laid);
         this.bookWidth = pw * 2 + SPINE + BORDER * 2;
         this.bookHeight = ph + BORDER * 2;
         FoliosSession sized = FoliosLibrary.session(this.book.id(), pw, ph);
@@ -133,6 +137,7 @@ public final class FoliosScreen extends CompatScreen {
         int needWidth = bookWidth + TAB * 2 + 8;
         int needHeight = bookHeight + BAR + BAR_GAP + 8;
         this.scale = factor > 1 ? drawn : bookScale(needWidth, needHeight);
+        if (text > 1) this.scale = Math.min(this.scale * text, Math.min(this.width / (float) needWidth, this.height / (float) needHeight));
         this.originX = (this.width - bookWidth * this.scale) / 2;
         this.originY = (this.height - (bookHeight + BAR + BAR_GAP) * this.scale) / 2 + (BAR + BAR_GAP) * this.scale;
         this.search = this.addRenderableWidget(this.bar.search(this.search));
@@ -607,8 +612,8 @@ public final class FoliosScreen extends CompatScreen {
         List<FoliosCategory> categories = this.book.visibleCategories().stream().filter(FoliosCategory::isOpen).toList();
         int room = foot - top;
         boolean fits = categories.size() * (TAB_SMALL + gap) + TAB - TAB_SMALL <= room;
-        int shown = fits ? categories.size() : Math.max(1, (room - TAB_SMALL - PAGER_LABEL - (TAB - TAB_SMALL)) / (TAB_SMALL + gap));
-        int pages = (categories.size() + shown - 1) / shown;
+        int shown = fits ? Math.max(1, categories.size()) : Math.max(1, (room - TAB_SMALL - PAGER_LABEL - (TAB - TAB_SMALL)) / (TAB_SMALL + gap));
+        int pages = Math.max(1, (categories.size() + shown - 1) / shown);
         int last = (pages - 1) * shown;
         this.tabShown = shown;
         String openId = open != null ? open.id() : null;

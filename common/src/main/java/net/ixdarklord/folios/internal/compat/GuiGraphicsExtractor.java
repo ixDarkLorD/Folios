@@ -29,8 +29,8 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
-import org.lwjgl.opengl.GL11;
 import org.joml.Vector3f;
+import org.lwjgl.opengl.GL11;
 
 import java.util.List;
 import java.util.Optional;

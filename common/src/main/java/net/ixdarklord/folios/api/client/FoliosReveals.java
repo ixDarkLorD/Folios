@@ -1,8 +1,8 @@
 package net.ixdarklord.folios.api.client;
 
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
-import net.ixdarklord.folios.internal.core.Folios;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
+import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;

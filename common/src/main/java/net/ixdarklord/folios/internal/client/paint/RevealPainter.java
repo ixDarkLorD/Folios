@@ -16,7 +16,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
-public final class RevealPainter implements FoliosPainter {
+public final class RevealPainter implements FoliosPainter, GuiSurface, TooltipMore, DrawsAbove {
     private static final int CELL = 6;
     private static final int PICTURE_CELL = 12;
     private static final ResourceLocation RUNES = ResourceLocation.withDefaultNamespace("alt");
@@ -236,6 +236,13 @@ public final class RevealPainter implements FoliosPainter {
     }
 
     @Override
+    public boolean gui(int x, int y, int width, int height, Draw draw) {
+        float[][] corners = {{x, y}, {x + width, y}, {x, y + height}, {x + width, y + height}, {x + width / 2F, y + height / 2F}};
+        for (float[] corner : corners) if (this.look(corner[0], corner[1]).opacity() < 0.99F) return true;
+        return GuiSurface.gui(painter, x, y, width, height, draw);
+    }
+
+    @Override
     public void push() {
         stack.push(new float[]{offsetX, offsetY, scale});
         painter.push();
@@ -326,5 +333,15 @@ public final class RevealPainter implements FoliosPainter {
     @Override
     public void tooltip(ItemStack stack) {
         painter.tooltip(stack);
+    }
+
+    @Override
+    public void moreTooltip(List<Component> lines) {
+        TooltipMore.more(painter, lines);
+    }
+
+    @Override
+    public void above(Runnable draw) {
+        DrawsAbove.above(painter, draw);
     }
 }

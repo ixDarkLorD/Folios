@@ -9,3 +9,10 @@ dependencies {
     runtimeOnly files(project(":neoforge").tasks.named("jar").flatMap { it.archiveFile }).builtBy(":neoforge:jar")
     modImplementation("net.ixdarklord.coolcatlib:coolcatlib-neoforge:${coolcatlib_version}") { transitive = false }
 }
+
+// A recipe viewer in the dev run, picked with -Pdev_viewer=jei, -Pdev_viewer=rei or -Pdev_viewer=emi.
+dependencies {
+    if (project.findProperty("dev_viewer") == "jei") modLocalRuntime libs.jei.neoforge
+    if (project.findProperty("dev_viewer") == "rei") modLocalRuntime libs.rei.neoforge
+    if (project.findProperty("dev_viewer") == "emi") modLocalRuntime libs.emi.neoforge
+}

@@ -1,6 +1,7 @@
 package net.ixdarklord.folios.internal.client.page;
 
 import com.google.gson.JsonObject;
+import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
 import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.api.client.FoliosEntry;
 import net.ixdarklord.folios.api.client.FoliosLinks;
@@ -13,7 +14,6 @@ import net.ixdarklord.folios.internal.FoliosPayloads;
 import net.ixdarklord.folios.internal.client.FoliosLibrary;
 import net.ixdarklord.folios.internal.client.FoliosStructures;
 import net.ixdarklord.folios.internal.client.build.BlockChoice;
-import net.ixdarklord.coolcatcanvas.api.client.viewport.SceneViewport;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;

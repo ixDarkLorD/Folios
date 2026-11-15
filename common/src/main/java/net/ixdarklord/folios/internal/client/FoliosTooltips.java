@@ -2,13 +2,14 @@ package net.ixdarklord.folios.internal.client;
 
 import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
-import net.ixdarklord.folios.internal.core.Folios;
-import net.minecraft.client.gui.Font;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.folios.internal.compat.RenderPipelines;
+import net.ixdarklord.folios.internal.core.Folios;
+import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -92,14 +93,25 @@ public final class FoliosTooltips {
         int title = colors.getOrDefault("title", TITLE);
         int detail = colors.getOrDefault("detail", DETAIL);
         List<FormattedCharSequence> styled = new ArrayList<>(lines.size());
+        List<List<ItemStack>> rows = new ArrayList<>(lines.size());
         int width = 0;
+        int height = -2;
         for (int index = 0; index < lines.size(); index++) {
+            List<ItemStack> row = ItemRow.in(lines.get(index));
+            rows.add(row);
+            if (row != null) {
+                styled.add(FormattedCharSequence.EMPTY);
+                width = Math.max(width, ItemRow.width(row));
+                height += ItemRow.height(row);
+                continue;
+            }
             Component line = Component.empty().withColor(index == 0 ? title : detail).append(lines.get(index));
             styled.add(line.getVisualOrderText());
             width = Math.max(width, font.width(line));
+            height += 10;
         }
         boolean ruled = ruleBefore > 0 && ruleBefore < styled.size();
-        int height = styled.size() * 10 - 2 + (styled.size() > 1 ? 2 : 0) + (ruled ? RULE_GAP : 0);
+        height += (styled.size() > 1 ? 2 : 0) + (ruled ? RULE_GAP : 0);
         int x = mouseX + 12;
         int y = mouseY - 12;
         if (x + width > screenWidth) x = Math.max(x - 24 - width, 4);
@@ -112,6 +124,12 @@ public final class FoliosTooltips {
             if (ruled && index == ruleBefore) {
                 softRule(graphics, x, lineY + 1, width, detail);
                 lineY += RULE_GAP;
+            }
+            List<ItemStack> row = rows.get(index);
+            if (row != null) {
+                for (int at = 0; at < row.size(); at++) graphics.raw().renderFakeItem(row.get(at), x + at % ItemRow.COLUMNS * ItemRow.CELL, lineY + at / ItemRow.COLUMNS * ItemRow.CELL);
+                lineY += ItemRow.height(row) + (index == 0 ? 2 : 0);
+                continue;
             }
             graphics.text(font, styled.get(index), x, lineY, 0xFFFFFFFF, true);
             lineY += 10 + (index == 0 ? 2 : 0);

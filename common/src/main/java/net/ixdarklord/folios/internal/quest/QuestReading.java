@@ -4,9 +4,9 @@ import net.ixdarklord.folios.internal.FoliosNetwork;
 import net.ixdarklord.folios.internal.FoliosPayloads;
 import net.ixdarklord.folios.internal.config.FoliosServerConfig;
 import net.ixdarklord.folios.internal.core.Folios;
+import net.minecraft.Util;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.Util;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
