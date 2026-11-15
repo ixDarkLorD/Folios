@@ -19,6 +19,7 @@ import net.ixdarklord.folios.api.client.page.FoliosPageElements;
 import net.ixdarklord.folios.internal.FoliosHooks;
 import net.ixdarklord.folios.internal.FoliosSourceData;
 import net.ixdarklord.folios.internal.client.build.BuildGuide;
+import net.ixdarklord.folios.internal.client.export.ExportJob;
 import net.ixdarklord.folios.internal.client.handheld.HandheldBook;
 import net.ixdarklord.folios.internal.client.handheld.SharedBooks;
 import net.ixdarklord.folios.internal.client.page.BuildPageElement;
@@ -35,7 +36,8 @@ import net.ixdarklord.folios.internal.client.page.SpotlightPageElement;
 import net.ixdarklord.folios.internal.client.page.SpreadPage;
 import net.ixdarklord.folios.internal.client.page.StructurePageElement;
 import net.ixdarklord.folios.internal.client.page.TextPage;
-import net.ixdarklord.folios.internal.client.screen.FoliosScreen;
+import net.ixdarklord.folios.internal.client.page.ViewerRecipePageElement;
+import net.ixdarklord.folios.internal.client.screen.LibraryScreen;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.folios.internal.config.FoliosClientConfig;
 import net.ixdarklord.folios.internal.core.Folios;
@@ -61,6 +63,7 @@ public final class FoliosClient {
         FoliosPageElements.register(Folios.rl("spotlight"), SpotlightPageElement.CODEC);
         FoliosPageElements.register(Folios.rl("image"), ImagePageElement.CODEC);
         FoliosPageElements.register(Folios.rl("recipe"), RecipePageElement.CODEC);
+        FoliosPageElements.register(Folios.rl("viewer_recipe"), ViewerRecipePageElement.CODEC);
         FoliosPageElements.register(Folios.rl("entity"), EntityPageElement.CODEC);
         FoliosPageElements.register(Folios.rl("multiblock"), MultiblockPageElement.CODEC);
         FoliosPageElements.register(Folios.rl("structure"), StructurePageElement.CODEC);
@@ -138,6 +141,7 @@ public final class FoliosClient {
         KeyMappingRegistry.register(FoliosMentions.KEY);
         KeyMappingRegistry.register(BookLookup.KEY);
         ClientTickEvents.END.register(BookLookup::tick);
+        ClientTickEvents.END.register(ExportJob::tick);
         ClientCommandEvents.REGISTER.register((dispatcher, context) -> dispatcher.register(
                 LiteralArgumentBuilder.<SharedSuggestionProvider>literal("folios")
                         .then(LiteralArgumentBuilder.<SharedSuggestionProvider>literal("mention")
@@ -162,10 +166,30 @@ public final class FoliosClient {
                                             }
                                             pending = () -> open(id, null, null);
                                             return 1;
+                                        })))
+                        .then(LiteralArgumentBuilder.<SharedSuggestionProvider>literal("export")
+                                .then(RequiredArgumentBuilder.<SharedSuggestionProvider, String>argument("book", StringArgumentType.greedyString())
+                                        .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(FoliosLibrary.books().keySet().stream().map(ResourceLocation::toString), builder))
+                                        .executes(ctx -> {
+                                            ResourceLocation id = ResourceLocation.tryParse(StringArgumentType.getString(ctx, "book"));
+                                            if (id == null || FoliosLibrary.book(id) == null) {
+                                                ClientCommandEvents.sendError(Component.literal("No guide book with that id"));
+                                                return 0;
+                                            }
+                                            pending = () -> {
+                                                Component said = ExportJob.start(id);
+                                                Minecraft minecraft = Minecraft.getInstance();
+                                                if (minecraft.player != null) minecraft.player.sendSystemMessage(said);
+                                            };
+                                            return 1;
                                         })))));
     }
 
     public static boolean open(ResourceLocation id, @Nullable String entry, @Nullable InteractionHand hand) {
+        if (Folios.LIBRARY.equals(id)) {
+            Minecraft.getInstance().setScreen(new LibraryScreen(hand));
+            return true;
+        }
         FoliosBook book = FoliosLibrary.book(id);
         if (book == null) {
             Folios.LOGGER.warn("There is no guide book {}", id);

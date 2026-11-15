@@ -8,19 +8,20 @@ import net.ixdarklord.coolcatcore.api.registry.DeferredRegister;
 import net.ixdarklord.coolcatcore.api.registry.RegistryEntry;
 import net.ixdarklord.folios.api.FoliosBookItem;
 import net.ixdarklord.folios.internal.FoliosRecord;
+import net.ixdarklord.folios.internal.quest.PlayerQuests;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 
-import net.ixdarklord.folios.internal.quest.PlayerQuests;
 import java.util.Map;
 
 public final class FoliosRegistry {
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Folios.MOD_ID, Registries.ITEM);
 
     public static final String GUIDE_BOOK = "folios_book";
+    public static final String FROM_COMPENDIUM = "folios_from_compendium";
     public static final String READING = "folios_reading";
     private static final AttachmentRegistry ATTACHMENTS = AttachmentRegistry.create(Folios.MOD_ID);
     public static final Attachment<Map<ResourceLocation, FoliosRecord>> PLAYER_PROGRESS = ATTACHMENTS.builder("progress",

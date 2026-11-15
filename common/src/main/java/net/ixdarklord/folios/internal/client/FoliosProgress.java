@@ -2,10 +2,10 @@ package net.ixdarklord.folios.internal.client;
 
 import net.ixdarklord.folios.internal.FoliosPayloads;
 import net.ixdarklord.folios.internal.mixin.client.ClientAdvancementsAccessor;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientAdvancements;
-import net.minecraft.advancements.AdvancementProgress;
-import net.minecraft.advancements.Advancement;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashSet;

@@ -1,38 +1,52 @@
 package net.ixdarklord.folios.internal.client.page;
 
-import net.ixdarklord.folios.api.client.page.FoliosIcon;
-import net.ixdarklord.folios.api.client.page.FoliosText;
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.ixdarklord.folios.api.client.page.FoliosIcon;
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.api.client.page.FoliosRecipeLayout;
+import net.ixdarklord.folios.api.client.page.FoliosRecipeLayouts;
 import net.ixdarklord.folios.api.client.page.FoliosStack;
+import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.FoliosRecipes;
+import net.ixdarklord.folios.internal.client.ItemRow;
+import net.ixdarklord.folios.internal.client.paint.DrawsAbove;
+import net.ixdarklord.folios.internal.client.paint.TooltipMore;
+import net.ixdarklord.folios.internal.client.viewer.ViewerRecipe;
+import net.ixdarklord.folios.internal.client.viewer.Viewers;
 import net.ixdarklord.folios.internal.compat.Compat;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.util.Mth;
-import net.minecraft.world.item.ItemStack;
 import net.ixdarklord.folios.internal.compat.RecipeDisplay;
 import net.ixdarklord.folios.internal.compat.RecipeDisplay.FurnaceRecipeDisplay;
+import net.ixdarklord.folios.internal.compat.RecipeDisplay.GenericRecipeDisplay;
 import net.ixdarklord.folios.internal.compat.RecipeDisplay.ShapedCraftingRecipeDisplay;
 import net.ixdarklord.folios.internal.compat.RecipeDisplay.ShapelessCraftingRecipeDisplay;
 import net.ixdarklord.folios.internal.compat.RecipeDisplay.SlotDisplay;
 import net.ixdarklord.folios.internal.compat.RecipeDisplay.SmithingRecipeDisplay;
 import net.ixdarklord.folios.internal.compat.RecipeDisplay.StonecutterRecipeDisplay;
+import net.ixdarklord.folios.internal.config.FoliosClientConfig;
+import net.ixdarklord.folios.internal.core.Folios;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public record RecipePageElement(List<ResourceLocation> recipes, Optional<String> title, String text) implements FoliosPageElement {
     public static final MapCodec<RecipePageElement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
@@ -41,8 +55,11 @@ public record RecipePageElement(List<ResourceLocation> recipes, Optional<String>
             FoliosText.CODEC.optionalFieldOf("text", "").forGetter(RecipePageElement::text)
     ).apply(instance, RecipePageElement::new));
 
-    private static final int BOX = 62;
+    static final int BOX = 62;
     private static final int GAP = 4;
+    static final int LIFT = 6;
+    private static final float ARROW_SCALE = 1.5F;
+    private static final Set<ResourceLocation> FAILED = new HashSet<>();
 
     @Override
     public List<Laid> lay(FoliosLayout layout) {
@@ -52,49 +69,84 @@ public record RecipePageElement(List<ResourceLocation> recipes, Optional<String>
 
     Body body(FoliosLayout layout) {
         Map<SlotDisplay, List<ItemStack>> resolved = new IdentityHashMap<>();
-        int room = recipes.size() * BOX + (recipes.size() - 1) * GAP;
+        int room = recipes.size() * (LIFT + BOX) + (recipes.size() - 1) * GAP;
         boolean named = title.isEmpty() && recipes.size() == 1;
         FoliosIcon icon = layout.titleIcon();
+        int[][] mice = new int[recipes.size()][2];
         return new Body(room + (named ? FoliosLayout.TITLE_HEIGHT : 0), (painter, y) -> {
             int top = y;
             if (named) {
                 List<RecipeDisplay> first = FoliosRecipes.get(recipes.get(0));
-                if (first != null && !first.isEmpty()) {
-                    ItemStack made = stacks(resolved, first.get(0).result()).stream().findFirst().orElse(ItemStack.EMPTY);
-                    if (!made.isEmpty()) FoliosLayout.title(painter, made.getHoverName(), y, icon);
-                }
+                ItemStack made = first != null && !first.isEmpty() ? stacks(resolved, first.get(0).result()).stream().findFirst().orElse(ItemStack.EMPTY) : ItemStack.EMPTY;
+                ViewerRecipe viewed = made.isEmpty() ? Viewers.recipe(recipes.get(0)) : null;
+                if (viewed != null && !viewed.outputs().isEmpty()) made = viewed.outputs().get(0);
+                if (!made.isEmpty()) FoliosLayout.title(painter, made.getHoverName(), y, icon);
                 top += FoliosLayout.TITLE_HEIGHT;
             }
-            for (ResourceLocation recipe : recipes) {
-                draw(painter, resolved, recipe, top);
-                top += BOX + GAP;
+            for (int index = 0; index < recipes.size(); index++) {
+                draw(painter, resolved, recipes.get(index), top + LIFT, mice[index]);
+                top += LIFT + BOX + GAP;
             }
         });
     }
 
-    private static void draw(FoliosPainter painter, Map<SlotDisplay, List<ItemStack>> resolved, ResourceLocation id, int y) {
+    static void drawRecipe(FoliosPainter painter, ResourceLocation id, int y) {
+        draw(painter, new IdentityHashMap<>(), id, y, new int[2]);
+    }
+
+    private static void draw(FoliosPainter painter, Map<SlotDisplay, List<ItemStack>> resolved, ResourceLocation id, int y, int[] mouse) {
         FoliosPalette palette = painter.palette();
         int left = FoliosLayout.CONTENT_LEFT;
         int right = painter.contentRight();
         Shapes.panel(painter, left, y, right, y + BOX);
+        if (FoliosClientConfig.RECIPES_THROUGH_VIEWER.get() && !FAILED.contains(id)) {
+            try {
+                ViewerRecipe viewed = Viewers.recipe(id);
+                if (viewed != null && ViewerRecipePageElement.viewer(painter, viewed, left, y, right, BOX, mouse)) return;
+            } catch (RuntimeException | LinkageError failure) {
+                fail(id, "the recipe viewer", failure);
+            }
+        }
+        if (!FAILED.contains(id)) {
+            try {
+                Recipe<?> recipe = recipe(id);
+                FoliosRecipeLayout<Recipe<?>> layout = recipe == null ? null : FoliosRecipeLayouts.get(recipe);
+                if (layout != null) {
+                    RecipeCanvas.of(recipe, layout).draw(painter, left, y, right, BOX);
+                    return;
+                }
+            } catch (RuntimeException failure) {
+                fail(id, "its layout", failure);
+                Shapes.panel(painter, left, y, right, y + BOX);
+                message(painter, Component.translatableWithFallback("folios.recipe.error", "This recipe couldn't be drawn"), left, y, right, error(palette));
+                return;
+            }
+        }
         List<RecipeDisplay> displays = FoliosRecipes.get(id);
         if (displays == null || displays.isEmpty()) {
-            Component message = displays == null
+            message(painter, displays == null
                     ? Component.translatableWithFallback("folios.recipe.loading", "Loading recipe...")
-                    : Component.translatableWithFallback("folios.recipe.missing", "No recipe %s", id.toString());
-            List<FormattedCharSequence> lines = painter.font().split(message, right - left - 10);
-            int lineY = y + BOX / 2 - lines.size() * 5;
-            for (FormattedCharSequence line : lines) {
-                painter.text(line, (left + right) / 2 - painter.font().width(line) / 2, lineY, palette.muted());
-                lineY += 10;
-            }
+                    : Component.translatableWithFallback("folios.recipe.missing", "No recipe %s", id.toString()), left, y, right, palette.muted());
             return;
         }
         RecipeDisplay display = displays.get(Mth.positiveModulo((int) (painter.time(FoliosStack.CYCLE_SECONDS * 3) / (FoliosStack.CYCLE_SECONDS * 3)), displays.size()));
+        try {
+            if (!display(painter, resolved, display, left, y, right)) {
+                message(painter, Component.translatableWithFallback("folios.recipe.unknown", "This recipe can't be shown"), left, y, right, error(palette));
+            }
+        } catch (RuntimeException failure) {
+            fail(id, "its display", failure);
+            Shapes.panel(painter, left, y, right, y + BOX);
+            message(painter, Component.translatableWithFallback("folios.recipe.error", "This recipe couldn't be drawn"), left, y, right, error(palette));
+        }
+    }
+
+    private static boolean display(FoliosPainter painter, Map<SlotDisplay, List<ItemStack>> resolved, RecipeDisplay display, int left, int y, int right) {
+        FoliosPalette palette = painter.palette();
         int gridX = left + 7;
         int gridY = y + 4;
         int resultX = right - 30;
-        int resultY = y + BOX / 2 - 13;
+        int resultY = y + BOX / 2 - 10;
         if (display instanceof ShapedCraftingRecipeDisplay shaped) {
             grid(painter, resolved, gridX, gridY, 3, 3);
             for (int row = 0; row < shaped.height(); row++) {
@@ -127,35 +179,83 @@ public record RecipePageElement(List<ResourceLocation> recipes, Optional<String>
                 slot(painter, resolved, parts[index], gridX + index * 19, gridY + 18, false);
             }
         } else {
-            painter.text(Component.literal("?"), gridX + 24, gridY + 22, palette.muted());
+            if (!(display instanceof GenericRecipeDisplay generic)) return false;
+            List<SlotDisplay> inputs = generic.inputs();
+            if (inputs.isEmpty() && stacks(resolved, display.result()).isEmpty()) return false;
+            int pages = Math.max(1, (inputs.size() + 8) / 9);
+            int page = Mth.positiveModulo((int) (painter.time(FoliosStack.CYCLE_SECONDS * 2) / (FoliosStack.CYCLE_SECONDS * 2)), pages);
+            List<SlotDisplay> shown = inputs.subList(Math.min(inputs.size(), page * 9), Math.min(inputs.size(), page * 9 + 9));
+            int columns = Math.min(3, shown.size());
+            int rows = (shown.size() + 2) / 3;
+            int startX = gridX + (3 - columns) * 9;
+            int startY = y + (BOX - rows * 18) / 2;
+            for (int index = 0; index < shown.size(); index++) {
+                int x = startX + index % 3 * 18;
+                int top = startY + index / 3 * 18;
+                Shapes.slot(painter, x, top);
+                slot(painter, resolved, shown.get(index), x, top, true);
+            }
+            if (pages > 1) painter.text(Component.literal((page + 1) + "/" + pages), gridX, y + BOX - 9, palette.muted());
         }
-        List<ItemStack> stations = stacks(resolved, display.craftingStation());
-        int top = stations.isEmpty() ? resultY : y + 6;
-        Shapes.arrow(painter, resultX - 17, top + 10, palette.accent());
-        box(painter, resultX - 4, top - 4, resultX + 26, top + 26, true);
-        slot(painter, resolved, display.result(), resultX + 2, top + 2, true);
-        if (!stations.isEmpty()) {
-            ItemStack station = stations.get(Mth.positiveModulo((int) (painter.time(FoliosStack.CYCLE_SECONDS) / FoliosStack.CYCLE_SECONDS), stations.size()));
-            int middle = resultX + 11;
-            int stationTop = top + 31;
-            painter.fill(middle - 1, top + 26, middle + 1, stationTop, frame(palette, false));
-            box(painter, middle - 10, stationTop, middle + 10, stationTop + 20, false);
-            painter.item(station, middle - 8, stationTop + 2);
+        int top = resultY;
+        if (display instanceof FurnaceRecipeDisplay furnace && furnace.duration() > 0) {
+            float seconds = furnace.duration() / 20.0F;
+            float progress = (painter.time() % seconds) / seconds;
+            arrow(painter, resultX - 11.5F, top + 10, FoliosPalette.mix(palette.panel(), palette.line(), 0.75F), 1);
+            arrow(painter, resultX - 11.5F, top + 10, palette.accent(), progress);
+        } else {
+            arrow(painter, resultX - 11.5F, top + 10, palette.accent(), 1);
         }
+        Shapes.resultSlot(painter, resultX - 3, top - 3, 26);
+        slot(painter, resolved, display.result(), resultX + 1, top + 1, true);
+        station(painter, stacks(resolved, display.craftingStation()), right, y);
+        return true;
     }
 
-    private static int frame(FoliosPalette palette, boolean result) {
-        return FoliosPalette.mix(palette.line(), palette.accent(), result ? 0.55F : 0.3F);
+    static void arrow(FoliosPainter painter, float centerX, float centerY, int color, float shown) {
+        painter.push();
+        painter.translate(centerX - 9 * ARROW_SCALE / 2, centerY - 7 * ARROW_SCALE / 2);
+        painter.scale(ARROW_SCALE);
+        if (shown >= 1) Shapes.arrow(painter, 0, 0, color);
+        else painter.clip(0, 0, Math.round(9 * shown), 7, () -> Shapes.arrow(painter, 0, 0, color));
+        painter.pop();
     }
 
-    private static void box(FoliosPainter painter, int x0, int y0, int x1, int y1, boolean result) {
+    static void station(FoliosPainter painter, List<ItemStack> stations, int right, int y) {
+        if (stations.isEmpty()) return;
+        ItemStack station = stations.get(Mth.positiveModulo((int) (painter.time(FoliosStack.CYCLE_SECONDS) / FoliosStack.CYCLE_SECONDS), stations.size()));
+        int x0 = right - 16;
+        int y0 = y - LIFT + 1;
         FoliosPalette palette = painter.palette();
-        int edge = frame(palette, result);
-        int face = FoliosPalette.mix(palette.panel(), palette.accent(), result ? 0.16F : 0.07F);
-        painter.fill(x0 + 1, y0, x1 - 1, y1, edge);
-        painter.fill(x0, y0 + 1, x1, y1 - 1, edge);
-        painter.fill(x0 + 1, y0 + 1, x1 - 1, y1 - 1, face);
-        painter.fill(x0 + 2, y0 + 1, x1 - 2, y0 + 2, FoliosPalette.mix(face, 0xFFFFFFFF, 0.35F));
+        painter.fill(x0 - 1, y0 - 1, x0 + 15, y0 + 15, markerColor(palette));
+        Shapes.slot(painter, x0, y0, 14);
+        painter.push();
+        painter.translate(x0 + 2, y0 + 2);
+        painter.scale(0.625F);
+        painter.item(station, 0, 0);
+        painter.pop();
+    }
+
+    private static @Nullable Recipe<?> recipe(ResourceLocation id) {
+        ClientLevel level = Minecraft.getInstance().level;
+        return level == null ? null : level.getRecipeManager().byKey(id).orElse(null);
+    }
+
+    private static void fail(ResourceLocation id, String part, Throwable failure) {
+        if (FAILED.add(id)) Folios.LOGGER.warn("Couldn't draw recipe {} through {}", id, part, failure);
+    }
+
+    private static int error(FoliosPalette palette) {
+        return FoliosPalette.mix(palette.text(), 0xFFB3261E, 0.7F);
+    }
+
+    private static void message(FoliosPainter painter, Component message, int left, int y, int right, int color) {
+        List<FormattedCharSequence> lines = painter.font().split(message, right - left - 12);
+        int lineY = y + BOX / 2 - lines.size() * 5 + 1;
+        for (FormattedCharSequence line : lines) {
+            painter.text(line, (left + right) / 2 - painter.font().width(line) / 2, lineY, color);
+            lineY += 10;
+        }
     }
 
     private static void grid(FoliosPainter painter, Map<SlotDisplay, List<ItemStack>> resolved, int x, int y, int columns, int rows) {
@@ -165,21 +265,73 @@ public record RecipePageElement(List<ResourceLocation> recipes, Optional<String>
     }
 
     private static void slot(FoliosPainter painter, Map<SlotDisplay, List<ItemStack>> resolved, SlotDisplay display, int x, int y, boolean count) {
-        List<ItemStack> stacks = stacks(resolved, display);
-        if (stacks.isEmpty()) return;
+        items(painter, stacks(resolved, display), null, x, y, count);
+    }
+
+    static boolean items(FoliosPainter painter, List<ItemStack> stacks, @Nullable String tag, int x, int y, boolean count) {
+        if (stacks.isEmpty()) return false;
         ItemStack stack = stacks.get(Mth.positiveModulo((int) (painter.time(FoliosStack.CYCLE_SECONDS) / FoliosStack.CYCLE_SECONDS), stacks.size()));
         painter.item(count ? stack : stack.copyWithCount(1), x + 1, y + 1);
+        boolean hovered = painter.hovered(x + 1, y + 1, 16, 16);
+        if (stacks.size() < 2) return hovered;
+        DrawsAbove.above(painter, () -> choice(painter, x, y, tag != null));
+        if (hovered) TooltipMore.more(painter, accepts(tag, stacks));
+        return hovered;
+    }
+
+    private static final String[] TAG = {".#.#.", "#####", ".#.#.", "#####", ".#.#."};
+    private static final String[] LIST = {"#.###", ".....", "#.###", ".....", "#.###"};
+
+    private static int markerColor(FoliosPalette palette) {
+        return FoliosPalette.mix(palette.accent(), 0xFFFFFFFF, 0.4F);
+    }
+
+    private static void choice(FoliosPainter painter, int x, int y, boolean tag) {
+        int accent = painter.palette().accent();
+        int color = markerColor(painter.palette());
+        int shadow = FoliosPalette.mix(accent, 0xFF000000, 0.7F);
+        String[] glyph = tag ? TAG : LIST;
+        for (int pass = 0; pass < 2; pass++) {
+            int offset = pass == 0 ? 1 : 0;
+            int tint = pass == 0 ? shadow : color;
+            for (int row = 0; row < glyph.length; row++) {
+                for (int column = 0; column < glyph[row].length(); column++) {
+                    if (glyph[row].charAt(column) != '#') continue;
+                    int px = x + 2 + column + offset, py = y + 2 + row + offset;
+                    painter.fill(px, py, px + 1, py + 1, tint);
+                }
+            }
+        }
+    }
+
+    private static List<Component> accepts(@Nullable String tag, List<ItemStack> stacks) {
+        List<Component> lines = new ArrayList<>();
+        lines.add(tag != null
+                ? Component.translatableWithFallback("folios.recipe.any_tag", "Accepts any of #%s:", tag).withStyle(ChatFormatting.GRAY)
+                : Component.translatableWithFallback("folios.recipe.any", "Accepts any of:").withStyle(ChatFormatting.GRAY));
+        int shown = Math.min(stacks.size(), ItemRow.COLUMNS * 3);
+        lines.add(ItemRow.of(stacks.subList(0, shown)));
+        if (stacks.size() > shown) {
+            lines.add(Component.translatableWithFallback("folios.recipe.any_more", "and %s more", stacks.size() - shown).withStyle(ChatFormatting.DARK_GRAY));
+        }
+        return lines;
     }
 
     private static void flame(FoliosPainter painter, int x, int y) {
-        int color = 0xFFE8862A;
+        flame(painter, x, y, true);
+    }
+
+    static void flame(FoliosPainter painter, int x, int y, boolean lit) {
+        FoliosPalette palette = painter.palette();
+        int color = lit ? 0xFFE8862A : FoliosPalette.mix(palette.panel(), palette.line(), 0.75F);
+        int core = lit ? 0xFFF6D04D : color;
         painter.fill(x + 3, y, x + 5, y + 2, color);
         painter.fill(x + 2, y + 2, x + 6, y + 5, color);
         painter.fill(x + 1, y + 5, x + 7, y + 8, color);
-        painter.fill(x + 3, y + 5, x + 5, y + 8, 0xFFF6D04D);
+        painter.fill(x + 3, y + 5, x + 5, y + 8, core);
     }
 
-    private static List<ItemStack> stacks(Map<SlotDisplay, List<ItemStack>> resolved, SlotDisplay display) {
+    static List<ItemStack> stacks(Map<SlotDisplay, List<ItemStack>> resolved, SlotDisplay display) {
         return display.stacks();
     }
 

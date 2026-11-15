@@ -18,3 +18,10 @@ loom {
         }
     }
 }
+
+// A recipe viewer in the dev run, picked with -Pdev_viewer=jei, -Pdev_viewer=rei or -Pdev_viewer=emi.
+dependencies {
+    if (project.findProperty("dev_viewer") == "jei") modLocalRuntime libs.jei.forge
+    if (project.findProperty("dev_viewer") == "rei") modLocalRuntime libs.rei.forge
+    if (project.findProperty("dev_viewer") == "emi") modLocalRuntime "dev.emi:emi-forge:${emi_version}"
+}

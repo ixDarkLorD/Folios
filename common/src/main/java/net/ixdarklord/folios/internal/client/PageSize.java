@@ -1,6 +1,7 @@
 package net.ixdarklord.folios.internal.client;
 
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
+import net.ixdarklord.folios.internal.config.FoliosClientConfig;
 import net.minecraft.client.Minecraft;
 
 public final class PageSize {
@@ -34,7 +35,11 @@ public final class PageSize {
 
     public static float handheldFactor() {
         float readable = Minecraft.getInstance().getWindow().getWidth() * HANDHELD_SPAN / (FoliosLayout.PAGE_WIDTH * HANDHELD_PRINT);
-        return Math.max(1, Math.min(factor(), readable));
+        return Math.max(1, Math.min(factor(), readable) / textScale());
+    }
+
+    public static float textScale() {
+        return (float) Math.max(1, Math.min(2, FoliosClientConfig.TEXT_SCALE.get()));
     }
 
     public static int width(float factor) {

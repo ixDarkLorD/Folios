@@ -49,7 +49,15 @@ public sealed interface RecipeDisplay {
             return new SmithingRecipeDisplay(SlotDisplay.matching(smithing::isTemplateIngredient), base, SlotDisplay.matching(smithing::isAdditionIngredient),
                     smithing instanceof SmithingTransformRecipe ? result : base, SlotDisplay.of(Blocks.SMITHING_TABLE.asItem()));
         }
-        return null;
+        return generic(recipe, result);
+    }
+
+    private static @Nullable RecipeDisplay generic(Recipe<?> recipe, SlotDisplay result) {
+        List<SlotDisplay> inputs = new ArrayList<>();
+        for (Ingredient ingredient : recipe.getIngredients()) inputs.add(SlotDisplay.of(ingredient));
+        ItemStack icon = recipe.getToastSymbol();
+        if (inputs.isEmpty() && result.stacks().isEmpty()) return null;
+        return new GenericRecipeDisplay(inputs, result, icon.isEmpty() ? SlotDisplay.EMPTY : SlotDisplay.of(icon));
     }
 
     private static Item station(RecipeType<?> type) {
@@ -95,6 +103,8 @@ public sealed interface RecipeDisplay {
     record FurnaceRecipeDisplay(SlotDisplay ingredient, SlotDisplay fuel, SlotDisplay result, SlotDisplay craftingStation, int duration) implements RecipeDisplay {}
 
     record StonecutterRecipeDisplay(SlotDisplay input, SlotDisplay result, SlotDisplay craftingStation) implements RecipeDisplay {}
+
+    record GenericRecipeDisplay(List<SlotDisplay> inputs, SlotDisplay result, SlotDisplay craftingStation) implements RecipeDisplay {}
 
     record SmithingRecipeDisplay(SlotDisplay template, SlotDisplay base, SlotDisplay addition, SlotDisplay result, SlotDisplay craftingStation) implements RecipeDisplay {}
 }

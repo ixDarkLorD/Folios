@@ -4,7 +4,10 @@
   "compatibilityLevel": "JAVA_17",
   "package": "net.ixdarklord.folios.internal.mixin",
   "mixins": [
+    "LecternBlockEntityMixin",
+    "LecternBlockMixin",
     "PlayerAdvancementsMixin",
+    "ShapedRecipeMixin",
     "StructureTemplateAccessor"
   ],
   "client": [
@@ -15,12 +18,15 @@
     "client.SharedBookRenderMixin",
     "client.ClientAdvancementsAccessor",
     "client.ClientAdvancementsMixin",
+    "client.ClientTextTooltipAccessor",
     "client.ContainerLookupMixin",
+    "client.DrawableSpriteMixin",
     "client.ChatComponentMixin",
     "client.EditBoxAccessor",
     "client.GameRendererMixin",
     "client.GuiMixin",
     "client.GuiGraphicsLookupMixin",
+    "client.GuiGraphicsViewerMixin",
     "client.ItemInHandRendererMixin",
     "client.KeyboardLookupMixin",
     "client.LevelRenderHookMixin",

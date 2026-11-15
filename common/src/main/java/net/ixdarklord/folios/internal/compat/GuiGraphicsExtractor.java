@@ -14,6 +14,7 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import com.mojang.math.Axis;
+import net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle;
 import net.ixdarklord.folios.internal.client.screen.BookCache;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -143,7 +144,7 @@ public final class GuiGraphicsExtractor {
         if (visible(color)) {
             text.visit((style, part) -> {
                 if (style.isObfuscated()) BookCache.markDynamic();
-                return java.util.Optional.empty();
+                return Optional.empty();
             }, Style.EMPTY);
             this.endBlits();
             this.raw.drawString(font, text, x, y, color, shadow);
@@ -207,7 +208,7 @@ public final class GuiGraphicsExtractor {
         if ((color >>> 24) == 0) return;
         this.tint(color);
         ResourceLocation texture = new ResourceLocation(sprite.getNamespace(), "textures/gui/sprites/" + sprite.getPath() + ".png");
-        int[] size = net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle.textureSize(texture);
+        int[] size = ConfigStyle.textureSize(texture);
         int border = nineSliceBorder(texture);
         if (border <= 0) {
             this.raw.blit(texture, x, y, width, height, 0, 0, size[0], size[1], size[0], size[1]);

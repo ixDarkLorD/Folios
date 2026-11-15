@@ -7,11 +7,11 @@ import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.MapCodec;
 import net.ixdarklord.folios.api.FoliosFormat;
 import net.ixdarklord.folios.api.client.FoliosBook;
-import net.ixdarklord.folios.api.client.FoliosReveal;
-import net.ixdarklord.folios.api.client.FoliosReveals;
 import net.ixdarklord.folios.api.client.FoliosCategory;
 import net.ixdarklord.folios.api.client.FoliosEntry;
 import net.ixdarklord.folios.api.client.FoliosLock;
+import net.ixdarklord.folios.api.client.FoliosReveal;
+import net.ixdarklord.folios.api.client.FoliosReveals;
 import net.ixdarklord.folios.api.client.FoliosStyles;
 import net.ixdarklord.folios.api.client.page.FoliosIcon;
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
@@ -20,13 +20,15 @@ import net.ixdarklord.folios.api.client.page.FoliosPageElements;
 import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.handheld.CoverModel;
 import net.ixdarklord.folios.internal.client.page.ElementLayout;
+import net.ixdarklord.folios.internal.client.page.ErrorPage;
+import net.ixdarklord.folios.internal.client.page.ImagePageElement;
 import net.ixdarklord.folios.internal.client.page.Observed;
 import net.ixdarklord.folios.internal.client.page.Sprites;
 import net.ixdarklord.folios.internal.client.page.TextPage;
 import net.ixdarklord.folios.internal.client.paint.BakedFills;
-import net.ixdarklord.folios.internal.format.BookUpgrader;
-import net.ixdarklord.folios.internal.client.page.ErrorPage;
+import net.ixdarklord.folios.internal.client.paint.GifStrips;
 import net.ixdarklord.folios.internal.core.Folios;
+import net.ixdarklord.folios.internal.format.BookUpgrader;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
@@ -38,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -58,6 +61,9 @@ public final class FoliosLibrary {
     private static Map<ResourceLocation, Float> coverIconSizes = Map.of();
     private static Map<ResourceLocation, ElementLayout> layouts = Map.of();
     private static Map<ResourceLocation, CelebrationSettings> celebrations = Map.of();
+    public static final ResourceLocation LIBRARY = Folios.LIBRARY;
+    private static Set<ResourceLocation> unlisted = Set.of();
+    private static Set<ResourceLocation> carriedOnly = Set.of();
     private static final Map<ResourceLocation, FoliosSession> SESSIONS = new HashMap<>();
     private static final Map<ResourceLocation, FoliosSession> LARGER = new HashMap<>();
 
@@ -69,6 +75,14 @@ public final class FoliosLibrary {
 
     public static Map<ResourceLocation, FoliosBook> books() {
         return books;
+    }
+
+    public static boolean isListed(ResourceLocation book) {
+        return !unlisted.contains(book) && !book.equals(LIBRARY);
+    }
+
+    public static boolean isLookedUpAnywhere(ResourceLocation book) {
+        return !carriedOnly.contains(book);
     }
 
     public static @Nullable Component credit(ResourceLocation book) {
@@ -163,6 +177,8 @@ public final class FoliosLibrary {
         CoverModel.clear();
         CoverMarkers.clear();
         ObtainedItems.clear();
+        GifStrips.clear();
+        ImagePageElement.clear();
         Map<ResourceLocation, JsonObject> bookFiles = new LinkedHashMap<>();
         Map<ResourceLocation, Map<String, JsonObject>> parts = new HashMap<>();
         for (Map.Entry<ResourceLocation, Resource> file : FILES.listMatchingResources(manager).entrySet()) {
@@ -198,6 +214,8 @@ public final class FoliosLibrary {
         Map<ResourceLocation, Float> emblemSizes = new HashMap<>();
         Map<ResourceLocation, ElementLayout> setting = new HashMap<>();
         Map<ResourceLocation, CelebrationSettings> celebrating = new HashMap<>();
+        Set<ResourceLocation> hidden = new HashSet<>();
+        Set<ResourceLocation> carried = new HashSet<>();
         for (Map.Entry<ResourceLocation, JsonObject> file : bookFiles.entrySet()) {
             ResourceLocation id = file.getKey();
             try {
@@ -212,6 +230,8 @@ public final class FoliosLibrary {
                     if (cover.has("icon_size")) emblemSizes.put(id, Mth.clamp(cover.get("icon_size").getAsFloat(), 0.25F, 2.0F));
                 }
                 setting.put(id, ElementLayout.read(book, "The guide " + id));
+                if (book.has("listed") && !book.get("listed").getAsBoolean()) hidden.add(id);
+                if (book.has("lookup") && book.get("lookup").getAsString().equals("carried")) carried.add(id);
                 Map<String, JsonObject> categories = new LinkedHashMap<>();
                 Map<String, JsonObject> entries = new LinkedHashMap<>();
                 files.forEach((path, json) -> {
@@ -236,6 +256,8 @@ public final class FoliosLibrary {
         coverIconSizes = Map.copyOf(emblemSizes);
         layouts = Map.copyOf(setting);
         celebrations = Map.copyOf(celebrating);
+        unlisted = Set.copyOf(hidden);
+        carriedOnly = Set.copyOf(carried);
         SESSIONS.values().forEach(FoliosSession::close);
         SESSIONS.clear();
         LARGER.values().forEach(FoliosSession::close);

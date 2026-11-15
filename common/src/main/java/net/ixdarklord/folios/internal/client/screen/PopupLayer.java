@@ -7,8 +7,8 @@ import net.ixdarklord.folios.internal.client.FoliosReader;
 import net.ixdarklord.folios.internal.client.FoliosTooltips;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.paint.ScreenPainter;
-import net.minecraft.ChatFormatting;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
+import net.minecraft.ChatFormatting;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

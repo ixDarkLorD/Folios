@@ -4,29 +4,26 @@ import net.ixdarklord.coolcatcore.api.event.v2.common.PlayerEvents;
 import net.ixdarklord.coolcatcore.api.event.v2.common.ServerTickEvents;
 import net.ixdarklord.coolcatcore.api.network.Network;
 import net.ixdarklord.coolcatcore.api.registry.ReloadListeners;
+import net.ixdarklord.folios.api.FoliosBookItem;
+import net.ixdarklord.folios.api.FoliosBooks;
 import net.ixdarklord.folios.internal.client.FoliosClientNetwork;
 import net.ixdarklord.folios.internal.core.Folios;
+import net.ixdarklord.folios.internal.core.FoliosRegistry;
+import net.ixdarklord.folios.internal.mixin.StructureTemplateAccessor;
 import net.ixdarklord.folios.internal.quest.QuestReading;
 import net.ixdarklord.folios.internal.quest.QuestTracker;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.ixdarklord.folios.api.FoliosBookItem;
-import net.ixdarklord.folios.api.FoliosBooks;
-import net.ixdarklord.folios.internal.core.FoliosRegistry;
-import net.minecraft.util.Unit;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.ixdarklord.folios.internal.mixin.StructureTemplateAccessor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -47,6 +44,14 @@ public final class FoliosNetwork {
 
     private static final Map<UUID, FoliosPayloads.ReadingAt> SPREADS = new HashMap<>();
     private static final double READ_ALONG = 16;
+
+    private static void chooseBook(ServerPlayer player, FoliosPayloads.ChooseBook payload) {
+        if (payload.hand() < 0 || payload.hand() >= InteractionHand.values().length || payload.book().equals(Folios.LIBRARY)) return;
+        ItemStack held = player.getItemInHand(InteractionHand.values()[payload.hand()]);
+        if (!Folios.LIBRARY.equals(FoliosBooks.bookOf(held))) return;
+        held.getOrCreateTag().putString(FoliosRegistry.GUIDE_BOOK, payload.book().toString());
+        held.getOrCreateTag().putBoolean(FoliosRegistry.FROM_COMPENDIUM, true);
+    }
 
     private FoliosNetwork() {}
 
@@ -74,6 +79,9 @@ public final class FoliosNetwork {
         });
         Network.registerServerbound(FoliosPayloads.Progress.TYPE, FoliosPayloads.Progress.STREAM_CODEC, (payload, context) -> {
             if (context.getPlayer() instanceof ServerPlayer player) progress(player, payload);
+        });
+        Network.registerServerbound(FoliosPayloads.ChooseBook.TYPE, FoliosPayloads.ChooseBook.STREAM_CODEC, (payload, context) -> {
+            if (context.getPlayer() instanceof ServerPlayer player) chooseBook(player, payload);
         });
         PlayerEvents.LEAVE.register(player -> {
             CHANGED.remove(player.getUUID());

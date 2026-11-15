@@ -23,6 +23,7 @@ public final class BookCache {
     private @Nullable TextureTarget target;
     private boolean valid;
     private boolean dynamic;
+    private boolean unsupported;
     private boolean timed;
     private float until;
     private float recordedUntil;
@@ -56,6 +57,7 @@ public final class BookCache {
         target.clear(Minecraft.ON_OSX);
         target.bindWrite(false);
         dynamic = false;
+        unsupported = false;
         timed = false;
         recordedUntil = Float.POSITIVE_INFINITY;
         recording = this;
@@ -68,6 +70,12 @@ public final class BookCache {
             GuiGraphicsExtractor.drawingTo(null);
             RenderTarget main = minecraft.getMainRenderTarget();
             main.bindWrite(false);
+        }
+        if (unsupported) {
+            valid = false;
+            liveUntil = now + LIVE_MILLIS;
+            content.accept(graphics);
+            return true;
         }
         valid = !dynamic && !timed;
         if (!valid) liveUntil = now + LIVE_MILLIS;
@@ -128,6 +136,10 @@ public final class BookCache {
 
     public static void changed() {
         revision++;
+    }
+
+    public static void live() {
+        if (recording != null) recording.unsupported = true;
     }
 
     public static void markDynamic() {

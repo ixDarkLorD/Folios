@@ -1,7 +1,7 @@
 package net.ixdarklord.folios.internal.mixin.client;
 
-import net.ixdarklord.folios.internal.client.build.BuildGuide;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.ixdarklord.folios.internal.client.build.BuildGuide;
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

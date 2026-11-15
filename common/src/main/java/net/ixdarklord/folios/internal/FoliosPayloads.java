@@ -1,11 +1,11 @@
 package net.ixdarklord.folios.internal;
 
-import net.ixdarklord.folios.api.FoliosSources;
-import net.ixdarklord.folios.internal.core.Folios;
 import io.netty.buffer.ByteBuf;
 import net.ixdarklord.coolcatcore.api.network.CustomPacketPayload;
 import net.ixdarklord.coolcatcore.api.network.codec.ByteBufCodecs;
 import net.ixdarklord.coolcatcore.api.network.codec.StreamCodec;
+import net.ixdarklord.folios.api.FoliosSources;
+import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -129,6 +129,19 @@ public final class FoliosPayloads {
 
         @Override
         public Type<Claim> type() {
+            return TYPE;
+        }
+    }
+
+    public record ChooseBook(int hand, ResourceLocation book) implements CustomPacketPayload {
+        public static final Type<ChooseBook> TYPE = new Type<>(Folios.rl("choose_book"));
+        public static final StreamCodec<ByteBuf, ChooseBook> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, ChooseBook::hand,
+                ByteBufCodecs.RESOURCE_LOCATION, ChooseBook::book,
+                ChooseBook::new);
+
+        @Override
+        public Type<ChooseBook> type() {
             return TYPE;
         }
     }

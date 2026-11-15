@@ -1,10 +1,10 @@
 package net.ixdarklord.folios.internal.client.page;
 
-import net.ixdarklord.folios.internal.client.paint.PixelIcon;
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPageElement;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.api.client.page.FoliosPalette;
+import net.ixdarklord.folios.internal.client.paint.PixelIcon;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -39,8 +39,25 @@ public final class Shapes {
 
     public static void slot(FoliosPainter painter, int x, int y, int size) {
         FoliosPalette palette = painter.palette();
-        Sprites.draw(painter, Sprites.SLOT_BORDER, x, y, size, size, FoliosPalette.mix(palette.panel(), palette.line(), 0.55F));
-        Sprites.draw(painter, Sprites.SLOT_WELL, x, y, size, size, FoliosPalette.mix(palette.panel(), palette.paper(), 0.35F));
+        slot(painter, x, y, size, FoliosPalette.mix(palette.panel(), palette.line(), 0.45F));
+    }
+
+    public static void resultSlot(FoliosPainter painter, int x, int y, int size) {
+        FoliosPalette palette = painter.palette();
+        slot(painter, x, y, size, FoliosPalette.mix(palette.panel(), palette.accent(), 0.16F));
+    }
+
+    public static void slot(FoliosPainter painter, int x, int y, int size, int face) {
+        FoliosPalette palette = painter.palette();
+        int shade = FoliosPalette.mix(palette.line(), palette.text(), 0.45F);
+        int light = FoliosPalette.mix(palette.paper(), 0xFFFFFFFF, 0.7F);
+        painter.fill(x, y, x + size - 1, y + 1, shade);
+        painter.fill(x, y + 1, x + 1, y + size - 1, shade);
+        painter.fill(x + 1, y + size - 1, x + size, y + size, light);
+        painter.fill(x + size - 1, y + 1, x + size, y + size - 1, light);
+        painter.fill(x + size - 1, y, x + size, y + 1, face);
+        painter.fill(x, y + size - 1, x + 1, y + size, face);
+        painter.fill(x + 1, y + 1, x + size - 1, y + size - 1, face);
     }
 
     public static void pageFrame(FoliosPainter painter, ResourceLocation texture, int width, int height) {
@@ -356,5 +373,14 @@ public final class Shapes {
 
     public static void arrow(FoliosPainter painter, int x, int y, int color) {
         Sprites.draw(painter, Sprites.ARROW, x, y, color);
+    }
+
+    public static void bigArrow(FoliosPainter painter, int x, int y, int width, int height, int color) {
+        int scale = Math.max(1, Math.min(width / 9, height / 7));
+        painter.push();
+        painter.translate(x + (width - 9 * scale) / 2F, y + (height - 7 * scale) / 2F);
+        painter.scale(scale);
+        Sprites.draw(painter, Sprites.ARROW, 0, 0, color);
+        painter.pop();
     }
 }

@@ -13,10 +13,7 @@ import net.ixdarklord.folios.internal.client.page.ErrorPage;
 import net.ixdarklord.folios.internal.client.page.Locked;
 import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
