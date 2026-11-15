@@ -30,6 +30,19 @@
         { "advancement": "minecraft:end/root" },
         { "carried": "minecraft:ender_pearl", "goal": 4 }
       ]
+    },
+    {
+      "type": "image",
+      "title": "Moving pictures",
+      "image": "foliostest:textures/guide/orbit_strip.png",
+      "frames": 8,
+      "frame_time": 3,
+      "text": "A strip of eight frames, one under the other, set with `frames`."
+    },
+    {
+      "type": "image",
+      "image": ["foliostest:textures/guide/orbit_mcmeta.png", "foliostest:textures/guide/orbit.gif"],
+      "text": "A texture animated by its `.mcmeta`, and a GIF. Use the arrows to see both."
     }
   ]
 }

@@ -25,6 +25,12 @@
     ],
     "coolcatlib:client": [
       "net.ixdarklord.folios.internal.core.client.FoliosClientConstructor"
+    ],
+    "jei_mod_plugin": [
+      "net.ixdarklord.folios.internal.client.viewer.jei.FoliosJeiPlugin"
+    ],
+    "rei_client": [
+      "net.ixdarklord.folios.internal.client.viewer.rei.FoliosReiPlugin"
     ]
   },
   "mixins": [

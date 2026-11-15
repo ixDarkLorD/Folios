@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
-public abstract class AbstractPainter implements FoliosPainter {
+public abstract class AbstractPainter implements FoliosPainter, TooltipMore, DrawsAbove {
     public interface Navigator {
         void follow(String link);
 
@@ -174,6 +174,26 @@ public abstract class AbstractPainter implements FoliosPainter {
         return localX >= x && localX < x + width && localY >= y && localY < y + height;
     }
 
+    protected float localPointerX() {
+        return Float.isNaN(pointerX) ? Float.NaN : (pointerX - offsetX) / scale;
+    }
+
+    protected float localPointerY() {
+        return Float.isNaN(pointerY) ? Float.NaN : (pointerY - offsetY) / scale;
+    }
+
+    public record LinkSpot(float x0, float y0, float x1, float y1, String target) {}
+
+    private @Nullable List<LinkSpot> links;
+
+    public void collectLinks(@Nullable List<LinkSpot> into) {
+        this.links = into;
+    }
+
+    public void linkSpot(int x, int y, int width, int height, String target) {
+        if (links != null) links.add(new LinkSpot(offsetX + x * scale, offsetY + y * scale, offsetX + (x + width) * scale, offsetY + (y + height) * scale, target));
+    }
+
     private void mark(int x, int y, int width, int height, Runnable action) {
         hits.add(new Hit(offsetX + x * scale, offsetY + y * scale, offsetX + (x + width) * scale, offsetY + (y + height) * scale, action));
     }
@@ -187,6 +207,7 @@ public abstract class AbstractPainter implements FoliosPainter {
             else this.tooltip(session.tooltip(target));
         }
         mark(x, y, width, height, () -> navigator.follow(target));
+        this.linkSpot(x, y, width, height, target);
         return over;
     }
 
@@ -277,6 +298,12 @@ public abstract class AbstractPainter implements FoliosPainter {
 
     protected abstract void drawItem(ItemStack stack, int x, int y, int argb);
 
+    @Override
+    public void moreTooltip(List<Component> lines) {
+        if (tooltip != null) tooltip.addAll(lines);
+    }
+
+    @Override
     public void above(Runnable draw) {
         draw.run();
     }

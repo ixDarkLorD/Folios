@@ -2,17 +2,20 @@ package net.ixdarklord.folios.api;
 
 import net.ixdarklord.folios.internal.FoliosHooks;
 import net.ixdarklord.folios.internal.FoliosNetwork;
+import net.ixdarklord.folios.internal.core.Folios;
 import net.ixdarklord.folios.internal.core.FoliosRegistry;
 import net.ixdarklord.folios.internal.quest.QuestReading;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -55,7 +58,17 @@ public class FoliosBookItem extends Item {
 
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
-        Identifier id = this.book(player.getItemInHand(hand));
+        ItemStack held = player.getItemInHand(hand);
+        if (player.isSecondaryUseActive() && held.has(FoliosRegistry.FROM_COMPENDIUM.get())) {
+            if (!level.isClientSide()) {
+                held.set(FoliosRegistry.GUIDE_BOOK.get(), Folios.LIBRARY);
+                held.remove(FoliosRegistry.FROM_COMPENDIUM.get());
+                level.playSound(null, player.blockPosition(), SoundEvents.BOOK_PAGE_TURN, SoundSource.PLAYERS, 1, 1);
+                player.sendOverlayMessage(Component.translatableWithFallback("folios.library.returned", "Back to the Compendium"));
+            }
+            return InteractionResult.SUCCESS;
+        }
+        Identifier id = this.book(held);
         if (id == null) return InteractionResult.PASS;
         if (level.isClientSide()) FoliosHooks.openFromItem(id, hand);
         else if (player instanceof ServerPlayer reader) QuestReading.opened(reader, id);
@@ -74,6 +87,10 @@ public class FoliosBookItem extends Item {
         Identifier id = this.book(stack);
         Component credit = id != null ? FoliosHooks.bookCredit(id) : null;
         if (credit != null) builder.accept(credit.copy().withStyle(ChatFormatting.GRAY));
+        if (stack.has(FoliosRegistry.FROM_COMPENDIUM.get())) {
+            builder.accept(Component.translatableWithFallback("folios.library.return_hint", "Sneak and use to turn it back into the Compendium")
+                    .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+        }
     }
 
     @Override

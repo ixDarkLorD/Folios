@@ -5,3 +5,9 @@ dependencies {
     implementation project(":fabric")
     implementation("net.ixdarklord.coolcatlib:coolcatlib-fabric:${coolcatlib_version}") { transitive = false }
 }
+
+// A recipe viewer in the dev run, picked with -Pdev_viewer=jei or -Pdev_viewer=rei.
+dependencies {
+    if (project.findProperty("dev_viewer") == "jei") runtimeOnly libs.jei.fabric
+    if (project.findProperty("dev_viewer") == "rei") runtimeOnly libs.rei.fabric
+}
