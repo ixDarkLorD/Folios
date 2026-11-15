@@ -23,6 +23,8 @@ nav = [
     { "Start" = [
       { "Overview" = "docs/index.md" },
       { "Your first book" = "docs/getting-started.md" },
+      { "Reading" = "docs/reading.md" },
+      { "Exporting a book" = "docs/export.md" },
       { "Migrating to 3.0" = "docs/migrating-to-3.0.md" },
     ] },
     { "The book" = [
@@ -44,6 +46,7 @@ nav = [
       { "Spotlight" = "docs/elements/spotlight.md" },
       { "Image" = "docs/elements/image.md" },
       { "Recipe" = "docs/elements/recipe.md" },
+      { "Viewer recipe" = "docs/elements/viewer-recipe.md" },
       { "Entity" = "docs/elements/entity.md" },
       { "Multiblock" = "docs/elements/multiblock.md" },
       { "Structure" = "docs/elements/structure.md" },
@@ -63,6 +66,7 @@ nav = [
       { "Server quests" = "docs/api/quests.md" },
       { "Links and popups" = "docs/api/links.md" },
       { "Page elements" = "docs/api/page-elements.md" },
+      { "Recipe layouts" = "docs/api/recipe-layouts.md" },
       { "Reveal effects" = "docs/api/reveal-effects.md" },
       { "Styles" = "docs/api/styles.md" },
     ] },

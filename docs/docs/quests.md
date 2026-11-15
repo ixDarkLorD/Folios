@@ -126,7 +126,10 @@ entry read. A quest once done stays done.
 "rewards": {
   "items": ["minecraft:diamond*3", { "id": "minecraft:potion", "components": { ... } }],
   "random": [{ "item": "minecraft:emerald*4", "weight": 3 }, "minecraft:gold_ingot*8"],
-  "random_rolls": 1
+  "random_rolls": 1,
+  "commands": ["effect give @s minecraft:speed 30 1", "xp add @s 5 levels"],
+  "function": "mymod:rewards/first_trip",
+  "note": "Rewards, a burst of **speed** and five levels:"
 }
 ```
 
@@ -135,11 +138,25 @@ entry read. A quest once done stays done.
 | `items` | list of item stacks | none | Given every time: `"id"`, `"id*count"`, or a stack object. |
 | `random` | list | none | A random gift drawn from these: an item stack, or `{"item": ..., "weight": 3}` to be picked 3 times as often. |
 | `random_rolls` | integer | `1` | How many random gifts are drawn. |
+| `commands` | command, or list | none | Run when the reward is claimed, as the player who claims it, so `@s` and `~` are them. A leading `/` is left out. At most 16 are run (see the server settings). |
+| `function` | identifier | none | A data pack function, run as the player who claims the reward. |
+| `note` | text | `"Rewards:"` | The line shown over the reward's slots, to say what the commands or function give, since the page can't show it. |
 
 The quest page shows "Rewards:" over a grid of slots: each item with its count, and a wrapped gift with a question mark
 for the random ones (hover it for what it could be). Once the quest is done the panel is framed in the book's colour
 and says "Press to claim": pressing it asks the server, which gives the reward once, into the inventory or at the
-player's feet when it is full. It then shows as claimed.
+player's feet when it is full. It then shows as claimed. A reward of only commands or a function has no slots: write a
+`note` to say what it gives.
+
+Commands and functions run with the permission level set in the server settings (2, as command blocks have, unless
+changed), and the server can turn them off:
+
+| Setting (`config/folios-server.toml`, `rewards`) | Default | What it does |
+| --- | --- | --- |
+| `commands` | `true` | Rewards may run commands. |
+| `permissionLevel` | `2` | The permission level they run with, 0 to 4. |
+| `maxCommands` | `16` | The most commands one reward runs; more are skipped and logged. |
+| `functions` | `true` | Rewards may run a function. |
 
 ### Opening a quest
 

@@ -138,6 +138,13 @@ and `folios.list.and`, so a language can put them in its own order. A book's `"a
 `overflow`, `alignment`, `title_alignment` and `anchor` in book.json set every page of the book, unless a page or an
 element says otherwise. See [Setting pages](setting-pages.md).
 
+### Reading keys
+
+| Key | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `listed` | boolean | `true` | Whether the book is on the shelf of the [Compendium](reading.md#the-compendium). |
+| `lookup` | string | `"anywhere"` | Where [looking up an item](reading.md#looking-things-up) finds this book: `"anywhere"`, or `"carried"` for only when the player has it with them. |
+
 ## Reveal
 
 `reveal` is written in one of these ways:
