@@ -1,0 +1,77 @@
+package net.ixdarklord.folios.internal.client.viewer.jei;
+
+import mezz.jei.api.constants.VanillaTypes;
+import mezz.jei.api.gui.drawable.IScalableDrawable;
+import mezz.jei.api.recipe.IFocusGroup;
+import mezz.jei.api.recipe.category.IRecipeCategory;
+import mezz.jei.api.runtime.IJeiRuntime;
+import net.ixdarklord.folios.internal.client.viewer.ViewerBridge;
+import net.ixdarklord.folios.internal.client.viewer.ViewerRecipe;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+final class JeiBridge implements ViewerBridge {
+    static final String NAME = "jei";
+    private static final IScalableDrawable BARE = (graphics, x, y, width, height) -> {};
+
+    private record Found<T>(IRecipeCategory<T> category, T recipe) {}
+
+    private final IJeiRuntime runtime;
+    private @Nullable Map<Identifier, Found<?>> index;
+    private final Map<Identifier, Optional<ViewerRecipe>> made = new HashMap<>();
+
+    JeiBridge(IJeiRuntime runtime) {
+        this.runtime = runtime;
+    }
+
+    @Override
+    public String name() {
+        return NAME;
+    }
+
+    @Override
+    public ItemStack hovered() {
+        ItemStack listed = runtime.getIngredientListOverlay().getIngredientUnderMouse(VanillaTypes.ITEM_STACK);
+        if (listed != null && !listed.isEmpty()) return listed;
+        ItemStack marked = runtime.getBookmarkOverlay().getIngredientUnderMouse(VanillaTypes.ITEM_STACK);
+        if (marked != null && !marked.isEmpty()) return marked;
+        return runtime.getRecipesGui().getIngredientUnderMouse(VanillaTypes.ITEM_STACK).orElse(ItemStack.EMPTY);
+    }
+
+    @Override
+    public @Nullable ViewerRecipe recipe(Identifier id) {
+        return made.computeIfAbsent(id, key -> Optional.ofNullable(this.make(key))).orElse(null);
+    }
+
+    private @Nullable ViewerRecipe make(Identifier id) {
+        Found<?> found = this.index().get(id);
+        return found == null ? null : this.layout(found);
+    }
+
+    private <T> @Nullable ViewerRecipe layout(Found<T> found) {
+        IFocusGroup none = runtime.getJeiHelpers().getFocusFactory().getEmptyFocusGroup();
+        return runtime.getRecipeManager().createRecipeLayoutDrawable(found.category(), found.recipe(), none, BARE, 0)
+                .<ViewerRecipe>map(drawable -> new JeiRecipe<>(runtime, drawable)).orElse(null);
+    }
+
+    private Map<Identifier, Found<?>> index() {
+        if (index == null) {
+            Map<Identifier, Found<?>> found = new HashMap<>();
+            runtime.getRecipeManager().createRecipeCategoryLookup().get().forEach(category -> this.add(found, category));
+            index = found;
+        }
+        return index;
+    }
+
+    private <T> void add(Map<Identifier, Found<?>> into, IRecipeCategory<T> category) {
+        runtime.getRecipeManager().createRecipeLookup(category.getRecipeType()).get().forEach(recipe -> {
+            Identifier id = category.getIdentifier(recipe);
+            if (id != null) into.putIfAbsent(id, new Found<>(category, recipe));
+        });
+    }
+}

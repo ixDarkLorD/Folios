@@ -8,6 +8,7 @@ import net.ixdarklord.coolcatcore.api.registry.DeferredRegister;
 import net.ixdarklord.coolcatcore.api.registry.RegistryEntry;
 import net.ixdarklord.folios.api.FoliosBookItem;
 import net.ixdarklord.folios.internal.FoliosRecord;
+import net.ixdarklord.folios.internal.quest.PlayerQuests;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -16,7 +17,6 @@ import net.minecraft.util.Unit;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 
-import net.ixdarklord.folios.internal.quest.PlayerQuests;
 import java.util.Map;
 
 public final class FoliosRegistry {
@@ -25,6 +25,8 @@ public final class FoliosRegistry {
 
     public static final RegistryEntry<DataComponentType<Identifier>> GUIDE_BOOK = COMPONENTS.register("guide_book",
             () -> DataComponentType.<Identifier>builder().persistent(Identifier.CODEC).networkSynchronized(Identifier.STREAM_CODEC).build());
+    public static final RegistryEntry<DataComponentType<Unit>> FROM_COMPENDIUM = COMPONENTS.register("from_compendium",
+            () -> DataComponentType.<Unit>builder().persistent(Unit.CODEC).networkSynchronized(Unit.STREAM_CODEC).build());
     public static final RegistryEntry<DataComponentType<Unit>> READING = COMPONENTS.register("guide_reading",
             () -> DataComponentType.<Unit>builder().persistent(Unit.CODEC).networkSynchronized(Unit.STREAM_CODEC).ignoreSwapAnimation().build());
     private static final AttachmentRegistry ATTACHMENTS = AttachmentRegistry.create(Folios.MOD_ID);

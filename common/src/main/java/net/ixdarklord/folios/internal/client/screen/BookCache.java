@@ -171,6 +171,10 @@ public final class BookCache {
         revision++;
     }
 
+    public static void live() {
+        if (recording != null) recording.unsupported = true;
+    }
+
     public static void markDynamic() {
         if (recording != null) recording.dynamic = true;
     }

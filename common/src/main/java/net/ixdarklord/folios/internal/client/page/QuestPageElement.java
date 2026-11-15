@@ -252,12 +252,17 @@ public record QuestPageElement(List<FoliosObjective> objectives, Optional<String
         Component heading = this.rewardHeading();
         Label headed = heading != null ? label(font, heading, contentWidth - REWARD_INSET, MOST_LINES, SMALL) : null;
         int height = headed != null ? Label.height(headed.lines.size(), headed.scale) : 0;
-        if (this.givesItems()) height += (height > 0 ? SLOT_GAP : 0) + Grid.of(this.rewardSlots(), contentWidth - REWARD_INSET).height();
+        int slots = this.rewardSlots();
+        if (slots > 0) height += (height > 0 ? SLOT_GAP : 0) + Grid.of(slots, contentWidth - REWARD_INSET).height();
         return height;
     }
 
     private @Nullable Component rewardHeading() {
-        if (this.givesItems()) return Component.translatableWithFallback("folios.quest.rewards", "Rewards:");
+        if (this.givesItems()) {
+            ClientQuests.Quest sent = quest.map(ClientQuests::get).orElse(null);
+            if (sent != null && sent.rewards() != null && sent.rewards().has("note")) return FoliosText.inline(sent.rewards().get("note").getAsString());
+            return Component.translatableWithFallback("folios.quest.rewards", "Rewards:");
+        }
         return reward.map(QuestPageElement::rewardText).orElse(null);
     }
 
@@ -324,7 +329,7 @@ public record QuestPageElement(List<FoliosObjective> objectives, Optional<String
                 : Component.translatableWithFallback("folios.quest.claim_later", "Finish the quest to claim it");
         if (claimable) painter.action(left + FRAME_LEFT, panelTop, right - left - FRAME_LEFT, panel, state, () -> ClientQuests.claim(quest.get()));
         else if (!track.claimed() && painter.hovered(left + FRAME_LEFT, panelTop, right - left - FRAME_LEFT, panel)) painter.tooltip(state);
-        this.slots(painter, left + TEXT_LEFT, contentTop - 1, right - FRAME_PAD, track.claimed());
+        if (this.rewardSlots() > 0) this.slots(painter, left + TEXT_LEFT, contentTop - 1, right - FRAME_PAD, track.claimed());
     }
 
     private void slots(FoliosPainter painter, int x, int y, int end, boolean claimed) {
@@ -433,7 +438,7 @@ public record QuestPageElement(List<FoliosObjective> objectives, Optional<String
     private static final int TEXT_LEFT = FRAME_LEFT + FRAME_PAD;
     private static final int REWARD_INSET = TEXT_LEFT + FRAME_PAD;
     private static final int SCROLLBAR = 6;
-    private static final int REWARD_STOP = 11;
+    private static final int REWARD_STOP = 9;
     private static final int REWARD_GAP = 4;
     private static final int GOLD = 0xFFD9A63A;
     private static final int GOLD_RIM = 0xFF9C6F1C;
@@ -499,21 +504,19 @@ public record QuestPageElement(List<FoliosObjective> objectives, Optional<String
     }
 
     private static void reward(FoliosPainter painter, int x, int y, boolean complete, boolean claimed) {
-        orb(painter, x, y, 5, complete ? FoliosPalette.mix(GOLD, 0xFFFFFFFF, 0.15F) : GOLD);
+        orb(painter, x, y, 4, complete ? FoliosPalette.mix(GOLD, 0xFFFFFFFF, 0.15F) : GOLD);
         if (claimed) {
             checkMark(painter, x, y, 0xFFFFF8E6, GOLD_RIM);
             return;
         }
         int ribbon = 0xFFFFF4D6;
-        painter.fill(x - 2, y, x + 3, y + 3, GIFT_RED);
-        painter.fill(x + 2, y, x + 3, y + 3, GIFT_RED_DARK);
-        painter.fill(x - 3, y - 2, x + 4, y, GIFT_RED);
-        painter.fill(x - 3, y - 2, x + 4, y - 1, GIFT_RED_LIGHT);
-        painter.fill(x, y - 2, x + 1, y + 3, ribbon);
-        painter.fill(x - 2, y - 4, x, y - 2, ribbon);
-        painter.fill(x + 1, y - 4, x + 3, y - 2, ribbon);
-        painter.fill(x - 1, y - 3, x, y - 2, GIFT_RED_DARK);
-        painter.fill(x + 1, y - 3, x + 2, y - 2, GIFT_RED_DARK);
+        painter.fill(x - 1, y + 1, x + 2, y + 3, GIFT_RED);
+        painter.fill(x + 1, y + 1, x + 2, y + 3, GIFT_RED_DARK);
+        painter.fill(x - 2, y - 1, x + 3, y + 1, GIFT_RED);
+        painter.fill(x - 2, y - 1, x + 3, y, GIFT_RED_LIGHT);
+        painter.fill(x, y - 1, x + 1, y + 3, ribbon);
+        painter.fill(x - 1, y - 3, x, y - 1, ribbon);
+        painter.fill(x + 1, y - 3, x + 2, y - 1, ribbon);
     }
 
     private static void round(FoliosPainter painter, int x, int y, int radius, int color) {

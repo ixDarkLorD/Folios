@@ -26,7 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *     <li>{@code spotlight}: an item shown large ({@code item}, see {@link FoliosStack}), {@code title}, {@code text}.</li>
  *     <li>{@code image}: {@code images} (texture paths, shown in turn), {@code title}, {@code text}, {@code border}.</li>
  *     <li>{@code recipe}: {@code recipe} or {@code recipes} (up to two ids), {@code title}, {@code text}; crafting,
- *     smelting, stonecutting and smithing recipes are drawn as such.</li>
+ *     smelting, stonecutting and smithing recipes are drawn as such, a mod's through its {@link FoliosRecipeLayouts}, and any
+ *     other as its ingredients, an arrow and its result.</li>
  *     <li>{@code entity}: {@code entity} (a type id), {@code scale}, {@code offset}, {@code spin}, {@code title}, {@code text}.</li>
  *     <li>{@code multiblock}: a structure from {@code pattern} (layers top to bottom, each a list of rows) and
  *     {@code mapping} (character to block state, or to a tag of blocks any of which will do, {@code "#minecraft:logs"},

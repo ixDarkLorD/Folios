@@ -9,6 +9,7 @@ import java.util.Locale;
 public final class Folios {
     public static final String MOD_ID = "folios";
     public static final Logger LOGGER = LoggerFactory.getLogger("Folios");
+    public static final Identifier LIBRARY = rl("library");
 
     private Folios() {}
 

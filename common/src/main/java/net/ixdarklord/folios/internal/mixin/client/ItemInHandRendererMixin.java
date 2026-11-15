@@ -1,13 +1,13 @@
 package net.ixdarklord.folios.internal.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.ixdarklord.folios.internal.client.handheld.HandheldRenderer;
 import net.ixdarklord.folios.internal.client.handheld.HandheldBook;
+import net.ixdarklord.folios.internal.client.handheld.HandheldRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;

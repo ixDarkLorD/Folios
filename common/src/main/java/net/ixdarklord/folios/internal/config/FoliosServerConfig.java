@@ -24,6 +24,18 @@ public final class FoliosServerConfig {
             .comment("Reading counts only in a book the player has with them, or one the server opened for them.").build();
     static {
         BUILDER.pop();
+        BUILDER.push("rewards", "What a quest's rewards may do besides giving items.");
+    }
+    public static final ConfigValue<Boolean> REWARD_COMMANDS = BUILDER.bool("commands", true)
+            .comment("Rewards may run commands, as the player who claims them.").build();
+    public static final ConfigValue<Integer> REWARD_PERMISSION = BUILDER.intValue("permissionLevel", 2)
+            .range(0, 4).comment("The permission level reward commands and functions run with (2 is what command blocks have).").build();
+    public static final ConfigValue<Integer> REWARD_MOST_COMMANDS = BUILDER.intValue("maxCommands", 16)
+            .range(1, 32).comment("The most commands one reward may run; more are skipped and logged.").build();
+    public static final ConfigValue<Boolean> REWARD_FUNCTIONS = BUILDER.bool("functions", true)
+            .comment("Rewards may run a data pack function, as the player who claims them.").build();
+    static {
+        BUILDER.pop();
     }
 
     public static final Config CONFIG = BUILDER.build();
