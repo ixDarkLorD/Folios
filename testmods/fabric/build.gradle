@@ -4,6 +4,7 @@ apply from: rootProject.file("testmods/testmod.gradle")
 dependencies {
     implementation project(path: ":fabric", configuration: "namedElements")
     modImplementation("net.ixdarklord.coolcatlib:coolcatlib-fabric:${coolcatlib_version}") { transitive = false }
+    modImplementation("net.ixdarklord.coolcatlib:coolcatlib-canvas-fabric:${coolcatlib_version}") { transitive = false }
 }
 
 // A recipe viewer in the dev run, picked with -Pdev_viewer=jei, -Pdev_viewer=rei or -Pdev_viewer=emi.

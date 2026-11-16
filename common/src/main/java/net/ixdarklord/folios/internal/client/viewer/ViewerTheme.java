@@ -1,14 +1,11 @@
 package net.ixdarklord.folios.internal.client.viewer;
 
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
-import net.ixdarklord.folios.api.client.page.FoliosPalette;
-import net.ixdarklord.folios.internal.client.page.Shapes;
 import net.ixdarklord.folios.internal.mixin.client.ClientTextTooltipAccessor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,31 +27,6 @@ public final class ViewerTheme {
 
     public static boolean active() {
         return painter != null;
-    }
-
-    public static boolean replace(ResourceLocation name, int x, int y, int width, int height, int maskTop, int maskBottom, int maskLeft, int maskRight) {
-        FoliosPainter on = painter;
-        if (on == null || !name.getNamespace().equals("jei")) return false;
-        boolean whole = maskTop == 0 && maskBottom == 0 && maskLeft == 0 && maskRight == 0;
-        int shownX = x + maskLeft;
-        int shownY = y + maskTop;
-        int shownWidth = width - maskLeft - maskRight;
-        int shownHeight = height - maskTop - maskBottom;
-        FoliosPalette palette = on.palette();
-        switch (name.getPath()) {
-            case "slot", "output_slot" -> {
-                if (!whole) return false;
-                if (name.getPath().equals("output_slot")) Shapes.resultSlot(on, x, y, Math.min(width, height));
-                else Shapes.slot(on, x, y, Math.min(width, height));
-            }
-            case "recipe_arrow" -> on.clip(shownX, shownY, shownWidth, shownHeight, () -> Shapes.bigArrow(on, x, y, width, height,
-                    FoliosPalette.mix(palette.panel(), palette.line(), 0.75F)));
-            case "recipe_arrow_filled" -> on.clip(shownX, shownY, shownWidth, shownHeight, () -> Shapes.bigArrow(on, x, y, width, height, palette.accent()));
-            default -> {
-                return false;
-            }
-        }
-        return true;
     }
 
     public static boolean tooltip(List<ClientTooltipComponent> components) {

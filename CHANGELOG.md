@@ -1,5 +1,16 @@
 # Changelog
 
+## v3.3.0 Release | Unreleased
+A `/folios config` command for the mod's settings. Folios now needs CoolCatLib 8.3.0.
+
+### ✨ New Features
+- `/folios config` opens Folios' config screens, and `/folios config <name>` opens one of them (`client` or `server`).
+- `/folios config reload` reloads the config files after you edit them by hand, for operators.
+
+### 🎨 Changes
+- Every player can now see `/folios`, but its `quest` commands still need operator permission.
+- Folios now needs CoolCatLib 8.3.0 or newer.
+
 ## v3.2.0 Release | Nov 16, 2026
 Recipes of every kind drawn in the book's own look, with a recipe layout API for mods' machines, JEI keys and bookmarks, the Compendium of every installed book, books on lecterns, moving pictures, quest rewards that run commands, a text size setting and read-aloud pages, and exporting a book as a website. Books written for 3.1 load unchanged: every new key is optional.
 

@@ -6,6 +6,7 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import net.ixdarklord.coolcatcore.api.client.item.HeldItemSwaps;
 import net.ixdarklord.coolcatcore.api.client.registry.ItemRendererRegistry;
 import net.ixdarklord.coolcatcore.api.client.registry.KeyMappingRegistry;
+import net.ixdarklord.coolcatcore.api.command.ModCommands;
 import net.ixdarklord.coolcatcore.api.event.v2.client.ClientCommandEvents;
 import net.ixdarklord.coolcatcore.api.event.v2.client.ClientGuiEvents;
 import net.ixdarklord.coolcatcore.api.event.v2.client.ClientPlayerEvents;
@@ -140,8 +141,7 @@ public final class FoliosClient {
         KeyMappingRegistry.register(BookLookup.KEY);
         ClientTickEvents.END.register(BookLookup::tick);
         ClientTickEvents.END.register(ExportJob::tick);
-        ClientCommandEvents.REGISTER.register((dispatcher, context) -> dispatcher.register(
-                LiteralArgumentBuilder.<SharedSuggestionProvider>literal("folios")
+        ModCommands.registerClient(Folios.MOD_ID, ModCommands.ClientNames.MERGED, (root, context) -> root
                         .then(LiteralArgumentBuilder.<SharedSuggestionProvider>literal("mention")
                                 .then(RequiredArgumentBuilder.<SharedSuggestionProvider, String>argument("page", StringArgumentType.greedyString())
                                         .executes(ctx -> {
@@ -180,7 +180,7 @@ public final class FoliosClient {
                                                 if (minecraft.player != null) minecraft.player.sendSystemMessage(said);
                                             };
                                             return 1;
-                                        })))));
+                                        }))));
     }
 
     public static boolean open(ResourceLocation id, @Nullable String entry, @Nullable InteractionHand hand) {

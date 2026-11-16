@@ -23,7 +23,7 @@ final class ReiBridge implements ViewerBridge {
 
     private Map<ResourceLocation, Display> index = Map.of();
     private int indexed = -1;
-    private final Map<ResourceLocation, ReiRecipe<?>> made = new HashMap<>();
+    private final Map<ResourceLocation, ReiRecipe> made = new HashMap<>();
 
     @Override
     public String name() {

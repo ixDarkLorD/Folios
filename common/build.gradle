@@ -9,6 +9,7 @@ shadowJar {
 dependencies {
     // CoolCatLib: events, networking, registries, Canvas's scene viewports and style. Never bundled.
     modCompileOnly("net.ixdarklord.coolcatlib:coolcatlib-common:${coolcatlib_version}") { transitive = false }
+    modCompileOnly("net.ixdarklord.coolcatlib:coolcatlib-canvas-common:${coolcatlib_version}") { transitive = false }
     // Recipe viewers, for "show in guide" and viewer recipe pages. Optional: only used when one is installed.
     modCompileOnly libs.jei.api.common
     modCompileOnly libs.rei.api.common
