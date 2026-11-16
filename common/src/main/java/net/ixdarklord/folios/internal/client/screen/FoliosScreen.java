@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.client.screen;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle;
 import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings;
@@ -23,6 +24,7 @@ import net.ixdarklord.folios.internal.client.page.Shapes;
 import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.paint.PixelIcon;
 import net.ixdarklord.folios.internal.client.paint.ScreenPainter;
+import net.ixdarklord.folios.internal.client.viewer.Viewers;
 import net.ixdarklord.folios.internal.compat.CompatScreen;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.folios.internal.compat.KeyEvent;
@@ -36,6 +38,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -85,6 +88,8 @@ public final class FoliosScreen extends CompatScreen {
     private @Nullable FoliosPopup hoveredPopup;
     private final List<AbstractPainter.Hit> unpressable = new ArrayList<>();
     private @Nullable List<Component> tooltip;
+    private ItemStack hoveredItem = ItemStack.EMPTY;
+    private ItemStack bookItem = ItemStack.EMPTY;
     private float originX;
     private float originY;
     private float scale = 1;
@@ -273,6 +278,7 @@ public final class FoliosScreen extends CompatScreen {
         this.inputs++;
         if (!this.bar.typing() && FoliosMentions.KEY.matches(event.key(), event.scancode()) && this.mentionHovered()) return true;
         if (event.key() == GLFW.GLFW_KEY_ESCAPE && this.popups.escape(this.reader)) return true;
+        if (!this.bar.typing() && Viewers.key(InputConstants.getKey(event.key(), event.scancode()), this.hoveredItem)) return true;
         boolean typing = this.bar.typing();
         if (event.key() == GLFW.GLFW_KEY_F && event.hasControlDownWithQuirk() && this.search != null) {
             this.setFocused(this.search);
@@ -348,6 +354,7 @@ public final class FoliosScreen extends CompatScreen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         this.hits.clear();
         this.tooltip = null;
+        this.hoveredItem = ItemStack.EMPTY;
         this.hoveredPopup = null;
         float bx = this.bookX(mouseX);
         float by = this.bookY(mouseY);
@@ -373,10 +380,12 @@ public final class FoliosScreen extends CompatScreen {
                     state, this.seconds, offscreen -> {
                         this.drawBook(offscreen, bx, by);
                         this.bookTooltip = this.tooltip;
+                        this.bookItem = this.hoveredItem;
                         this.bookPopup = this.hoveredPopup;
                     });
             if (!drawn) {
                 this.tooltip = this.bookTooltip;
+                this.hoveredItem = this.bookItem;
                 this.hoveredPopup = this.bookPopup;
             }
         }
@@ -503,6 +512,7 @@ public final class FoliosScreen extends CompatScreen {
             painter.end();
         }
         if (painter.tooltipLines() != null) this.tooltip = painter.tooltipLines();
+        if (!painter.hoveredItem().isEmpty()) this.hoveredItem = painter.hoveredItem();
         if (painter.popup() != null) this.hoveredPopup = painter.popup();
     }
 

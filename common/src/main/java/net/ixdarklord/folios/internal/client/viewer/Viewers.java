@@ -1,5 +1,6 @@
 package net.ixdarklord.folios.internal.client.viewer;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,17 @@ public final class Viewers {
             }
         }
         return ItemStack.EMPTY;
+    }
+
+    public static boolean key(InputConstants.Key key, ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        for (ViewerBridge bridge : LIVE) {
+            try {
+                if (bridge.key(key, stack)) return true;
+            } catch (RuntimeException ignored) {
+            }
+        }
+        return false;
     }
 
     public static @Nullable ViewerRecipe recipe(ResourceLocation id) {
