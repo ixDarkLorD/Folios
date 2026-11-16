@@ -1,5 +1,34 @@
 # Changelog
 
+## v3.2.0 Release | Nov 16, 2026
+Recipes of every kind drawn in the book's own look, with a recipe layout API for mods' machines, JEI keys and bookmarks, the Compendium of every installed book, books on lecterns, moving pictures, quest rewards that run commands, a text size setting and read-aloud pages, and exporting a book as a website. Books written for 3.1 load unchanged: every new key is optional.
+
+### ✨ New Features
+- The `recipe` element draws any kind of recipe, including other mods' machines, with no recipe viewer needed: crafting, cooking, stonecutting and smithing as such, and any other as its ingredients, an arrow, the result and the block it is made at.
+- Recipe layouts, for mod developers: `FoliosRecipeLayouts.register` lays out a mod's machine recipes the way a recipe viewer's category does. A layout places slots, progress arrows, burning flames, gauges, chances, text and textures, and can draw with Minecraft's GUI graphics and give tooltips of its own, all in the book's look. On 1.21 and 1.20.1 layouts are registered by recipe class.
+- JEI: hovering an item in a recipe and pressing JEI's show-recipe key (**R**) or show-uses key (**U**) opens it in JEI, and a small button on each recipe's frame adds the recipe to JEI's bookmarks. New client settings `reading.bookmarkButton` and `reading.bookmarkCorner` hide the button or choose the corner it sits in.
+- Holding the look-up key (**B**) over an item in JEI's, REI's or EMI's item list, bookmarks or recipe screen opens the item's page.
+- Look-up now searches every installed book after the ones the player carries, so it works without the book at hand. A book can opt out with `"lookup": "carried"`, and the client setting `reading.lookupAnyBook` turns it off.
+- The Compendium: crafted from a book and a bookshelf. Using it opens a list of every installed guide book, with a search box; choosing one turns it into that book, and sneaking and using that book turns it back into the Compendium. On a lectern it lets whoever uses it pick a book to read. A book can keep off its shelf with `"listed": false`.
+- Guide books can be put on lecterns. Using the lectern opens the book for whoever uses it (reading there counts for quests); sneaking takes it back. The comparator signal and dropping the book when broken work as for a written book.
+- Moving pictures: the `image` element plays a strip of frames (`"frames"`, `"frame_time"`), textures animated by their `.mcmeta`, and GIFs, in screen and hand-held books.
+- Quest rewards can run `"commands"` and a data pack `"function"`, as the player who claims them, with a `"note"` to say what they give. New server settings under `rewards`: `commands`, `permissionLevel` (2), `maxCommands` (16) and `functions`.
+- Text size: the client setting `reading.textScale` (1.0 to 2.0) draws pages larger, keeping the book about the same size.
+- Read aloud: with the game's narrator on, a book reads its page as it opens and on every page turn. The client setting `reading.narratePages` turns it off.
+- `/folios export <book>` writes the book as a website in `.minecraft/folios-export/` that reads like the book: its spreads as drawn in game, page-turn buttons with a turning leaf, arrow keys and swipes, category tabs, search, and working links. A text version of every entry sits beside it for search engines and screen readers.
+
+### 🎨 Changes
+- Recipe slots that take a tag show a `#` in their corner, and slots that take a list of items show a list mark; their tooltip shows every item they accept as icons (and the tag's name, on 26.1 and later).
+- The block a recipe is made at is shown as a small badge on its frame's top-right corner, with room kept above the frame for it.
+- Item slots on pages are drawn in Minecraft's inset style, in the book's colours; the result slot matches a recipe viewer's in size and sits centred beside the grid, with a larger arrow.
+- The furnace arrow in cooking recipes fills up over the cooking time.
+- The reward marker at the end of a quest's path is 2 pixels smaller.
+
+### 🐛 Fixes
+- A recipe that can't be drawn shows a message in the middle of its frame instead of breaking the page, and the error goes to the log.
+- Recipe slot marks and chance labels are drawn over their items instead of behind them.
+- A book with no categories no longer crashes when opened.
+
 ## v3.1.2 Release | Nov 2, 2026
 Faster screen-style books on 1.20.1 and 1.21, which are now drawn once and reused, smaller tab icons, and a fix for the outline of locked pages.
 
