@@ -121,12 +121,15 @@
     </header>
     <div class="fh-grid">
       {% set features = [
-        ['🧩', 'Every kind of page', 'Text with a small Markdown, spotlights, images, crafting, smelting, stonecutting and smithing recipes, maps, links and spreads across the fold.'],
+        ['🧩', 'Every kind of page', "Text with a small Markdown, spotlights, moving pictures, recipes of every kind, other mods' machines too, maps, links and spreads across the fold."],
         ['🏗️', 'Builds you can follow', 'Turning 3D scenes of entities and builds, and a button that stands the build in the world as ghost blocks, layer by layer.'],
         ['🏆', 'Quests and progress', 'Objectives followed live, toasts when a quest is done, and celebrations when a category or the whole book is mastered.'],
         ['✨', 'Pages that reveal', 'Ink, burn, runes and more: each spread can reveal itself with an effect, once or every time it is turned to.'],
         ['🎨', 'Yours to restyle', 'Books are files in a resource pack. Packs can add, translate and restyle them, and F3 + T reloads them while you write.'],
-        ['🔌', 'Made for mods', 'Open books from code, show your content on pages as live lists, and add your own page types, reveal effects and objectives.'],
+        ['🔌', 'Made for mods', "Open books from code, lay out your machines' recipes, show your content on pages as live lists, and add your own page types, reveal effects and objectives."],
+        ['📚', 'Every guide on one shelf', 'The Compendium lists every installed guide book to choose from, and any guide book can sit on a lectern for everyone to read.'],
+        ['🔎', 'Works with recipe viewers', "Look items up from JEI, REI and EMI, open JEI's recipes and uses from any page, and bookmark a book's recipes in JEI."],
+        ['🌐', 'Books on the web', 'Export a book as a website that reads like the book, with page turns, tabs, search and working links.'],
       ] %}
       {% for icon, title, text in features %}
         <article class="fh-card" data-reveal style="--i: {{ loop.index0 }}" data-glow>
