@@ -374,13 +374,4 @@ public final class Shapes {
     public static void arrow(FoliosPainter painter, int x, int y, int color) {
         Sprites.draw(painter, Sprites.ARROW, x, y, color);
     }
-
-    public static void bigArrow(FoliosPainter painter, int x, int y, int width, int height, int color) {
-        int scale = Math.max(1, Math.min(width / 9, height / 7));
-        painter.push();
-        painter.translate(x + (width - 9 * scale) / 2F, y + (height - 7 * scale) / 2F);
-        painter.scale(scale);
-        Sprites.draw(painter, Sprites.ARROW, 0, 0, color);
-        painter.pop();
-    }
 }

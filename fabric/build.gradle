@@ -8,4 +8,5 @@ publisher {
 // CoolCatLib, which Folios is built on: compiled against and in the dev runs, never bundled.
 dependencies {
     implementation("net.ixdarklord.coolcatlib:coolcatlib-fabric:${coolcatlib_version}") { transitive = false }
+    implementation("net.ixdarklord.coolcatlib:coolcatlib-canvas-fabric:${coolcatlib_version}") { transitive = false }
 }

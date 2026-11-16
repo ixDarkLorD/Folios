@@ -1,9 +1,9 @@
 package net.ixdarklord.folios.internal.client.screen;
 
-import net.ixdarklord.coolcatcanvas.internal.client.gui.style.ConfigStyle;
-import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyleSettings;
-import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyledEditBox;
 import net.ixdarklord.coolcatcore.api.config.ConfigTheme;
+import net.ixdarklord.coolcatcore.internal.client.gui.style.ConfigStyle;
+import net.ixdarklord.coolcatcore.internal.client.gui.style.StyleSettings;
+import net.ixdarklord.coolcatcore.internal.client.gui.style.StyledEditBox;
 import net.ixdarklord.folios.api.client.FoliosBook;
 import net.ixdarklord.folios.api.client.FoliosCategory;
 import net.ixdarklord.folios.api.client.FoliosEntry;

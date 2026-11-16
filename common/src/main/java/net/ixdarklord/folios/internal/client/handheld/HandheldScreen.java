@@ -2,7 +2,7 @@ package net.ixdarklord.folios.internal.client.handheld;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
-import net.ixdarklord.coolcatcanvas.internal.client.gui.style.StyledEditBox;
+import net.ixdarklord.coolcatcore.internal.client.gui.style.StyledEditBox;
 import net.ixdarklord.folios.api.client.page.FoliosLayout;
 import net.ixdarklord.folios.api.client.page.FoliosPainter;
 import net.ixdarklord.folios.internal.client.FoliosClock;
