@@ -17,7 +17,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
-public final class RevealPainter implements FoliosPainter, GuiSurface, TooltipMore, DrawsAbove {
+public final class RevealPainter implements FoliosPainter, GuiSurface, TooltipMore, DrawsAbove, ItemHover {
     private static final int CELL = 6;
     private static final int PICTURE_CELL = 12;
     private static final FontDescription RUNES = new FontDescription.Resource(Identifier.withDefaultNamespace("alt"));
@@ -344,5 +344,10 @@ public final class RevealPainter implements FoliosPainter, GuiSurface, TooltipMo
     @Override
     public void above(Runnable draw) {
         DrawsAbove.above(painter, draw);
+    }
+
+    @Override
+    public void hoverItem(ItemStack stack) {
+        ItemHover.hover(painter, stack);
     }
 }

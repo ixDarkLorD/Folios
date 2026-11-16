@@ -32,6 +32,8 @@
   "folios.recipe.any_tag": "Accepts any of #%s:",
   "folios.recipe.any_more": "and %s more",
   "folios.recipe.chance": "%s%% chance",
+  "folios.recipe.bookmark": "Bookmark in JEI",
+  "folios.recipe.unbookmark": "Remove from JEI bookmarks",
   "folios.quest": "Quest",
   "folios.quest.complete": "Complete",
   "folios.quest.progress": "%s of %s done",

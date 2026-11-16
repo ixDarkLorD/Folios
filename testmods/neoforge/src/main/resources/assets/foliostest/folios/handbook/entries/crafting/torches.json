@@ -13,11 +13,10 @@
       "recipe": "minecraft:lantern"
     },
     {
-      "type": "viewer_recipe",
-      "title": "Drawn by a recipe viewer",
-      "recipe": ["minecraft:iron_ingot_from_blasting_raw_iron", "minecraft:campfire", "minecraft:soul_lantern"],
-      "item": "minecraft:blast_furnace",
-      "text": "With **JEI** or **REI** installed, any mod's recipe shows here as the viewer draws it. Click an ingredient to look it up."
+      "type": "recipe",
+      "title": "Blasting",
+      "recipe": "minecraft:iron_ingot_from_blasting_raw_iron",
+      "text": "Every kind of recipe is drawn by the book, with or without JEI or REI."
     }
   ]
 }
