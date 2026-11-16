@@ -33,9 +33,10 @@ public final class FoliosClientConfig {
     public static final ConfigValue<Boolean> LOOKUP_ANY_BOOK = BUILDER.bool("lookupAnyBook", true)
             .comment("Holding the look-up key over an item opens its page in any installed book, not only books you carry.",
                     "Books you carry are always tried first, and a book can ask to be looked up only when carried.").build();
-    public static final ConfigValue<Boolean> RECIPES_THROUGH_VIEWER = BUILDER.bool("recipesThroughViewer", false)
-            .comment("Draw books' recipes with the installed recipe viewer (JEI, REI or EMI) instead of the book's own drawing,",
-                    "laid out as the viewer lays them out. Viewer recipe pages always use the viewer.").build();
+    public static final ConfigValue<Boolean> BOOKMARK_BUTTON = BUILDER.bool("bookmarkButton", true)
+            .comment("With JEI installed, a small button on each recipe adds it to JEI's bookmarks.").build();
+    public static final ConfigValue<Corner> BOOKMARK_CORNER = BUILDER.enumValue("bookmarkCorner", Corner.BOTTOM_RIGHT)
+            .comment("Which corner of a recipe's frame the bookmark button sits in.").build();
     static {
         BUILDER.pop();
     }

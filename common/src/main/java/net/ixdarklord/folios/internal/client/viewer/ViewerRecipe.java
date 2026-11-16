@@ -21,6 +21,20 @@ public interface ViewerRecipe {
 
     List<ItemStack> stations();
 
+    default ItemStack under(int mouseX, int mouseY) {
+        return ItemStack.EMPTY;
+    }
+
+    default boolean canBookmark() {
+        return false;
+    }
+
+    default boolean bookmarked() {
+        return false;
+    }
+
+    default void toggleBookmark() {}
+
     default boolean followsPose() {
         return true;
     }

@@ -36,7 +36,6 @@ import net.ixdarklord.folios.internal.client.page.SpotlightPageElement;
 import net.ixdarklord.folios.internal.client.page.SpreadPage;
 import net.ixdarklord.folios.internal.client.page.StructurePageElement;
 import net.ixdarklord.folios.internal.client.page.TextPage;
-import net.ixdarklord.folios.internal.client.page.ViewerRecipePageElement;
 import net.ixdarklord.folios.internal.client.screen.LibraryScreen;
 import net.ixdarklord.folios.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.folios.internal.config.FoliosClientConfig;
@@ -63,7 +62,6 @@ public final class FoliosClient {
         FoliosPageElements.register(Folios.rl("spotlight"), SpotlightPageElement.CODEC);
         FoliosPageElements.register(Folios.rl("image"), ImagePageElement.CODEC);
         FoliosPageElements.register(Folios.rl("recipe"), RecipePageElement.CODEC);
-        FoliosPageElements.register(Folios.rl("viewer_recipe"), ViewerRecipePageElement.CODEC);
         FoliosPageElements.register(Folios.rl("entity"), EntityPageElement.CODEC);
         FoliosPageElements.register(Folios.rl("multiblock"), MultiblockPageElement.CODEC);
         FoliosPageElements.register(Folios.rl("structure"), StructurePageElement.CODEC);
