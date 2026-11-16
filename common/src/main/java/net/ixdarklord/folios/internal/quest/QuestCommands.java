@@ -6,7 +6,8 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import net.ixdarklord.coolcatcore.api.event.v2.common.CommandEvents;
+import net.ixdarklord.coolcatcore.api.command.ModCommands;
+import net.ixdarklord.folios.internal.core.Folios;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -25,16 +26,15 @@ final class QuestCommands {
     private QuestCommands() {}
 
     static void init() {
-        CommandEvents.REGISTER.register((dispatcher, context, selection) -> dispatcher.register(Commands.literal("folios")
-                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
-                .then(Commands.literal("quest")
+        ModCommands.register(Folios.MOD_ID, "folios", (root, context, selection) -> root
+                .then(Commands.literal("quest").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.literal("list").executes(QuestCommands::list))
                         .then(onQuest("status", QuestCommands::status))
                         .then(onQuest("complete", QuestCommands::complete))
                         .then(onQuest("reset", QuestCommands::reset))
                         .then(Commands.literal("flag").then(Commands.argument("players", EntityArgument.players())
                                 .then(Commands.argument("flag", StringArgumentType.string())
-                                        .then(Commands.argument("on", BoolArgumentType.bool()).executes(QuestCommands::flag))))))));
+                                        .then(Commands.argument("on", BoolArgumentType.bool()).executes(QuestCommands::flag)))))));
     }
 
     @FunctionalInterface

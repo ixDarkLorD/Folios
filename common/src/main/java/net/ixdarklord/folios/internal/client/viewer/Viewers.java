@@ -31,7 +31,7 @@ public final class Viewers {
             try {
                 ItemStack stack = bridge.hovered();
                 if (!stack.isEmpty()) return stack;
-            } catch (RuntimeException ignored) {
+            } catch (RuntimeException | LinkageError ignored) {
             }
         }
         return ItemStack.EMPTY;
@@ -42,7 +42,7 @@ public final class Viewers {
         for (ViewerBridge bridge : LIVE) {
             try {
                 if (bridge.key(key, stack)) return true;
-            } catch (RuntimeException ignored) {
+            } catch (RuntimeException | LinkageError ignored) {
             }
         }
         return false;
