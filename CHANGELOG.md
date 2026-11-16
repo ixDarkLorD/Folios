@@ -1,6 +1,6 @@
 # Changelog
 
-## v3.3.0 Release | Unreleased
+## v3.3.0 Release | Nov 16, 2026
 A `/folios config` command for the mod's settings, and Folios works with recent JEI versions again. Folios now needs CoolCatLib 9.0.0.
 
 ### ✨ New Features
