@@ -8,6 +8,7 @@ dependencies {
     compileOnly project(":neoforge")
     runtimeOnly files(project(":neoforge").tasks.named("jar").flatMap { it.archiveFile }).builtBy(":neoforge:jar")
     implementation("net.ixdarklord.coolcatlib:coolcatlib-neoforge:${coolcatlib_version}") { transitive = false }
+    implementation("net.ixdarklord.coolcatlib:coolcatlib-canvas-neoforge:${coolcatlib_version}") { transitive = false }
 }
 
 // A recipe viewer in the dev run, picked with -Pdev_viewer=jei or -Pdev_viewer=rei.
