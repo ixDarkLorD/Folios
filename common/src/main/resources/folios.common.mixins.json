@@ -19,7 +19,6 @@
     "client.ClientAdvancementsMixin",
     "client.ClientTextTooltipAccessor",
     "client.ContainerLookupMixin",
-    "client.DrawableSpriteMixin",
     "client.ChatComponentMixin",
     "client.GameRendererMixin",
     "client.GuiMixin",

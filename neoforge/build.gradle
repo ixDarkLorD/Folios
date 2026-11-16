@@ -10,6 +10,7 @@ publisher {
 // CoolCatLib, which Folios is built on: compiled against and in the dev runs, never bundled.
 dependencies {
     modImplementation("net.ixdarklord.coolcatlib:coolcatlib-neoforge:${coolcatlib_version}") { transitive = false }
+    modImplementation("net.ixdarklord.coolcatlib:coolcatlib-canvas-neoforge:${coolcatlib_version}") { transitive = false }
     // REI's NeoForge annotation, for the plugin hook. Optional: only used when REI is installed.
     modCompileOnly libs.rei.api.neoforge
 }
