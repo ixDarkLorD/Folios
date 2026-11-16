@@ -46,7 +46,6 @@ nav = [
       { "Spotlight" = "docs/elements/spotlight.md" },
       { "Image" = "docs/elements/image.md" },
       { "Recipe" = "docs/elements/recipe.md" },
-      { "Viewer recipe" = "docs/elements/viewer-recipe.md" },
       { "Entity" = "docs/elements/entity.md" },
       { "Multiblock" = "docs/elements/multiblock.md" },
       { "Structure" = "docs/elements/structure.md" },

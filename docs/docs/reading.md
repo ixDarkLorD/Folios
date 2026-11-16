@@ -38,11 +38,18 @@ A book can ask to be looked up only when carried with `"lookup": "carried"` in i
 
 ## Recipes
 
-Books draw their recipes themselves, in the book's look, whether or not a recipe viewer is installed.
+Books draw their recipes themselves, in the book's look, whether or not a recipe viewer is installed. With **JEI**
+installed:
+
+- Hovering an item in a recipe and pressing JEI's show-recipe key (**R** by default) or show-uses key (**U**) opens it
+  in JEI, as over an item in an inventory.
+- A small button on each recipe's frame adds the recipe to JEI's bookmarks, or takes it off again. Where the
+  installed JEI can't bookmark whole recipes, it bookmarks what the recipe makes, or isn't shown.
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| `recipesThroughViewer` | `false` | Draw books' recipes with the installed recipe viewer (JEI or REI) instead, laid out as the viewer lays them out. Viewer recipe pages always use the viewer. |
+| `bookmarkButton` | `true` | Show the JEI bookmark button on recipes. |
+| `bookmarkCorner` | `BOTTOM_RIGHT` | Which corner of a recipe's frame the button sits in: `TOP_LEFT`, `TOP_RIGHT`, `BOTTOM_LEFT` or `BOTTOM_RIGHT`. |
 
 ## Text size
 

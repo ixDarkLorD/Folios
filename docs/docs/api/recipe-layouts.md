@@ -116,6 +116,5 @@ drawing of it.
 
 ## With a recipe viewer
 
-Recipes are drawn by the book, through layouts like these, even when JEI or REI is installed. A player who would rather
-see the viewer's drawing can turn on `recipesThroughViewer` (see [Reading](../reading.md#recipes)); the
-[viewer recipe](../elements/viewer-recipe.md) element always uses the viewer.
+Recipes are always drawn by the book, through layouts like these, even when JEI or REI is installed. With JEI, its
+show-recipe and show-uses keys work over a layout's slots, and the bookmark button bookmarks the recipe in JEI.

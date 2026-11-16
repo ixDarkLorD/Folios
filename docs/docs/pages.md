@@ -66,7 +66,6 @@ and `text`, shown with it. A page's own `text` comes before its elements.
 | [`spotlight`](elements/spotlight.md) | One item shown large on a card; pressing it elsewhere in the book comes back here. |
 | [`image`](elements/image.md) | Pictures, one at a time, with arrows to step through them. |
 | [`recipe`](elements/recipe.md) | One or two recipes, drawn as the game shows them. |
-| [`viewer_recipe`](elements/viewer-recipe.md) | Any mod's recipe, drawn by JEI or REI. |
 | [`entity`](elements/entity.md) | A creature turning in a window of its own. |
 | [`multiblock`](elements/multiblock.md) | A build from a pattern, with its requirement list and the build guide in the world. |
 | [`structure`](elements/structure.md) | Structures from data packs, several to a window. |

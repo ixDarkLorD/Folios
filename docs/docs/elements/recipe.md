@@ -12,9 +12,8 @@ its slots, arrows, flames and gauges in the book's look. Any other kind of recip
 an arrow, the result, and the block it is made at; one with more than nine ingredients shows them nine at a time, in
 turn. No recipe viewer is needed for any of it.
 
-A player with **JEI** or **REI** installed can have recipes drawn by the viewer instead, laid out exactly as the viewer
-lays them out, by turning on `recipesThroughViewer` in their [client settings](../reading.md#recipes). In a book held
-in the hands the page always draws it itself.
+With **JEI** installed, JEI's show-recipe and show-uses keys work over the recipe's items, and a small button on the
+frame bookmarks the recipe in JEI (see [Reading](../reading.md#recipes)).
 
 | Key | Type | Default | What it does |
 | --- | --- | --- | --- |
