@@ -25,6 +25,7 @@ import net.ixdarklord.folios.internal.client.paint.AbstractPainter;
 import net.ixdarklord.folios.internal.client.paint.PixelIcon;
 import net.ixdarklord.folios.internal.client.paint.ScreenAtlas;
 import net.ixdarklord.folios.internal.client.paint.ScreenPainter;
+import net.ixdarklord.folios.internal.client.viewer.Viewers;
 import net.ixdarklord.folios.internal.config.FoliosClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -38,6 +39,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix3x2f;
 import org.jspecify.annotations.Nullable;
 
@@ -87,6 +89,8 @@ public final class FoliosScreen extends Screen {
     private @Nullable FoliosPopup hoveredPopup;
     private final List<AbstractPainter.Hit> unpressable = new ArrayList<>();
     private @Nullable List<Component> tooltip;
+    private ItemStack hoveredItem = ItemStack.EMPTY;
+    private ItemStack bookItem = ItemStack.EMPTY;
     private float originX;
     private float originY;
     private float scale = 1;
@@ -275,6 +279,7 @@ public final class FoliosScreen extends Screen {
         this.inputs++;
         if (!this.bar.typing() && FoliosMentions.KEY.matches(event) && this.mentionHovered()) return true;
         if (event.key() == InputConstants.KEY_ESCAPE && this.popups.escape(this.reader)) return true;
+        if (!this.bar.typing() && Viewers.key(InputConstants.getKey(event), this.hoveredItem)) return true;
         boolean typing = this.bar.typing();
         if (event.key() == InputConstants.KEY_F && event.hasControlDownWithQuirk() && this.search != null) {
             this.setFocused(this.search);
@@ -350,6 +355,7 @@ public final class FoliosScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         this.hits.clear();
         this.tooltip = null;
+        this.hoveredItem = ItemStack.EMPTY;
         this.hoveredPopup = null;
         float bx = this.bookX(mouseX);
         float by = this.bookY(mouseY);
@@ -375,10 +381,12 @@ public final class FoliosScreen extends Screen {
                     state, this.seconds, offscreen -> {
                         this.drawBook(offscreen, bx, by);
                         this.bookTooltip = this.tooltip;
+                        this.bookItem = this.hoveredItem;
                         this.bookPopup = this.hoveredPopup;
                     });
             if (!drawn) {
                 this.tooltip = this.bookTooltip;
+                this.hoveredItem = this.bookItem;
                 this.hoveredPopup = this.bookPopup;
             }
         }
@@ -508,6 +516,7 @@ public final class FoliosScreen extends Screen {
             painter.end();
         }
         if (painter.tooltipLines() != null) this.tooltip = painter.tooltipLines();
+        if (!painter.hoveredItem().isEmpty()) this.hoveredItem = painter.hoveredItem();
         if (painter.popup() != null) this.hoveredPopup = painter.popup();
     }
 

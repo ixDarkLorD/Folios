@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
-public abstract class AbstractPainter implements FoliosPainter, TooltipMore, DrawsAbove {
+public abstract class AbstractPainter implements FoliosPainter, TooltipMore, DrawsAbove, ItemHover {
     public interface Navigator {
         void follow(String link);
 
@@ -64,6 +64,7 @@ public abstract class AbstractPainter implements FoliosPainter, TooltipMore, Dra
     private float offsetY;
     private float scale = 1;
     private @Nullable List<Component> tooltip;
+    private ItemStack hoveredItem = ItemStack.EMPTY;
 
     @Override
     public int pageWidth() {
@@ -116,6 +117,15 @@ public abstract class AbstractPainter implements FoliosPainter, TooltipMore, Dra
 
     public @Nullable List<Component> tooltipLines() {
         return tooltip;
+    }
+
+    public ItemStack hoveredItem() {
+        return hoveredItem;
+    }
+
+    @Override
+    public void hoverItem(ItemStack stack) {
+        hoveredItem = stack;
     }
 
     @Override
@@ -280,6 +290,7 @@ public abstract class AbstractPainter implements FoliosPainter, TooltipMore, Dra
         if (stack.isEmpty() || (argb >>> 24) == 0) return;
         this.drawItem(stack, x, y, argb);
         if (!this.hovered(x, y, 16, 16)) return;
+        hoveredItem = stack;
         this.tooltip(stack);
         FoliosBook.Location about = session.book().about(stack);
         FoliosBook.Location here = navigator.here();

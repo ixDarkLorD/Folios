@@ -15,6 +15,7 @@ import net.ixdarklord.folios.api.client.page.FoliosText;
 import net.ixdarklord.folios.internal.client.FoliosRecipes;
 import net.ixdarklord.folios.internal.client.ItemRow;
 import net.ixdarklord.folios.internal.client.paint.DrawsAbove;
+import net.ixdarklord.folios.internal.client.paint.PixelIcon;
 import net.ixdarklord.folios.internal.client.paint.TooltipMore;
 import net.ixdarklord.folios.internal.client.viewer.ViewerRecipe;
 import net.ixdarklord.folios.internal.client.viewer.Viewers;
@@ -75,7 +76,6 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
         int room = recipes.size() * (LIFT + BOX) + (recipes.size() - 1) * GAP;
         boolean named = title.isEmpty() && recipes.size() == 1;
         FoliosIcon icon = layout.titleIcon();
-        int[][] mice = new int[recipes.size()][2];
         return new Body(room + (named ? FoliosLayout.TITLE_HEIGHT : 0), (painter, y) -> {
             int top = y;
             if (named) {
@@ -87,29 +87,22 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
                 top += FoliosLayout.TITLE_HEIGHT;
             }
             for (int index = 0; index < recipes.size(); index++) {
-                draw(painter, resolved, recipes.get(index), top + LIFT, mice[index]);
+                draw(painter, resolved, recipes.get(index), top + LIFT);
                 top += LIFT + BOX + GAP;
             }
         });
     }
 
-    static void drawRecipe(FoliosPainter painter, Identifier id, int y) {
-        draw(painter, new IdentityHashMap<>(), id, y, new int[2]);
+    private static void draw(FoliosPainter painter, Map<SlotDisplay, List<ItemStack>> resolved, Identifier id, int y) {
+        drawRecipe(painter, resolved, id, y);
+        bookmark(painter, id, y);
     }
 
-    private static void draw(FoliosPainter painter, Map<SlotDisplay, List<ItemStack>> resolved, Identifier id, int y, int[] mouse) {
+    private static void drawRecipe(FoliosPainter painter, Map<SlotDisplay, List<ItemStack>> resolved, Identifier id, int y) {
         FoliosPalette palette = painter.palette();
         int left = FoliosLayout.CONTENT_LEFT;
         int right = painter.contentRight();
         Shapes.panel(painter, left, y, right, y + BOX);
-        if (FoliosClientConfig.RECIPES_THROUGH_VIEWER.get() && !FAILED.contains(id)) {
-            try {
-                ViewerRecipe viewed = Viewers.recipe(id);
-                if (viewed != null && ViewerRecipePageElement.viewer(painter, viewed, left, y, right, BOX, mouse)) return;
-            } catch (RuntimeException | LinkageError failure) {
-                fail(id, "the recipe viewer", failure);
-            }
-        }
         List<RecipeDisplay> displays = FoliosRecipes.get(id);
         if (displays == null || displays.isEmpty()) {
             message(painter, displays == null
@@ -218,6 +211,48 @@ public record RecipePageElement(List<Identifier> recipes, Optional<String> title
         if (shown >= 1) Shapes.arrow(painter, 0, 0, color);
         else painter.clip(0, 0, Math.round(9 * shown), 7, () -> Shapes.arrow(painter, 0, 0, color));
         painter.pop();
+    }
+
+    private static final PixelIcon RIBBON = PixelIcon.of("bookmark", 7, 9);
+    private static final PixelIcon RIBBON_EDGE = PixelIcon.of("bookmark_edge", 7, 9);
+
+    private static void bookmark(FoliosPainter painter, Identifier id, int y) {
+        if (!FoliosClientConfig.BOOKMARK_BUTTON.get() || FAILED.contains(id)) return;
+        ViewerRecipe viewed;
+        try {
+            viewed = Viewers.recipe(id);
+            if (viewed == null || !viewed.canBookmark()) return;
+        } catch (RuntimeException | LinkageError failure) {
+            fail(id, "the recipe viewer's bookmarks", failure);
+            return;
+        }
+        int left = FoliosLayout.CONTENT_LEFT;
+        int right = painter.contentRight();
+        int width = 7;
+        int height = 9;
+        FoliosClientConfig.Corner corner = FoliosClientConfig.BOOKMARK_CORNER.get();
+        int x = switch (corner) {
+            case TOP_LEFT, BOTTOM_LEFT -> left + 3;
+            case TOP_RIGHT, BOTTOM_RIGHT -> right - width - 3;
+        };
+        int top = switch (corner) {
+            case TOP_LEFT -> y + 3;
+            case TOP_RIGHT -> y + 14;
+            case BOTTOM_LEFT, BOTTOM_RIGHT -> y + BOX - height - 3;
+        };
+        boolean marked = viewed.bookmarked();
+        Component name = marked ? Component.translatableWithFallback("folios.recipe.unbookmark", "Remove from JEI bookmarks")
+                : Component.translatableWithFallback("folios.recipe.bookmark", "Bookmark in JEI");
+        boolean hovered = painter.action(x - 1, top - 1, width + 2, height + 2, name, viewed::toggleBookmark);
+        FoliosPalette palette = painter.palette();
+        int face = marked ? palette.accent() : FoliosPalette.mix(palette.paper(), 0xFFFFFFFF, 0.5F);
+        if (hovered) face = FoliosPalette.mix(face, marked ? 0xFFFFFFFF : palette.accent(), marked ? 0.25F : 0.35F);
+        int edge = FoliosPalette.mix(marked ? palette.accent() : palette.line(), 0xFF000000, marked ? 0.45F : 0.35F);
+        int fill = face;
+        DrawsAbove.above(painter, () -> {
+            RIBBON.draw(painter, x, top, fill);
+            RIBBON_EDGE.draw(painter, x, top, edge);
+        });
     }
 
     static void station(FoliosPainter painter, List<ItemStack> stations, int right, int y) {

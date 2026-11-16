@@ -14,7 +14,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
-public final class EdgeFadePainter implements FoliosPainter, GuiSurface, TooltipMore, DrawsAbove {
+public final class EdgeFadePainter implements FoliosPainter, GuiSurface, TooltipMore, DrawsAbove, ItemHover {
     private static final float MARGIN = 14;
 
     private final FoliosPainter painter;
@@ -268,5 +268,10 @@ public final class EdgeFadePainter implements FoliosPainter, GuiSurface, Tooltip
     @Override
     public void above(Runnable draw) {
         DrawsAbove.above(painter, draw);
+    }
+
+    @Override
+    public void hoverItem(ItemStack stack) {
+        ItemHover.hover(painter, stack);
     }
 }
